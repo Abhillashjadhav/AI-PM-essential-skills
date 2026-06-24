@@ -1,0 +1,36 @@
+name: PR Review Agent
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+
+concurrency:
+  group: pr-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+  id-token: write
+
+jobs:
+  review:
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout PR branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Run Claude Code PR review
+        uses: anthropics/claude-code-action@v1
+        with:
+          claude_code_oauth_token: ${{ secrets.CLAUDESECRET }}
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          prompt: "/review-pr"
+          claude_args: '--max-turns 30 --allowedTools "Read,Edit,Write,Glob,Grep,LS,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,mcp__github_comment__update_claude_comment"'
+          use_commit_signing: true
