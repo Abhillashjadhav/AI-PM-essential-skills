@@ -21,5 +21,14 @@ A skill ships when:
 - Skills that produce unverifiable output (fabricated metrics, invented pricing)
 - Skills without explicit failure guardrails
 
+## Skill routing (fallback for not-yet-enabled sessions)
+Plugin skills fire natively once `.claude/settings.json` (marketplace + `enabledPlugins`) is committed to the repo and the session trusts project settings. Sessions started before that commit, or where the plugin was installed mid-session rather than picked up from committed settings, won't have it in their invocable set yet. For those sessions, when a request matches one of the descriptions below, read that skill's SKILL.md from `pm-tactical/skills/` and follow it exactly, as if it had fired natively:
+
+- Model choice / "which model should I use" / cost-per-task → `pm-tactical/skills/model-complexity-router/SKILL.md`
+- Generate an artifact and validate it against a spec / self-QA → `pm-tactical/skills/builder-validator/SKILL.md`
+- Improve or tune an existing prompt → `pm-tactical/skills/prompt-optimizer-loop/SKILL.md`
+- Audit MCP connectors / context filling up too fast → `pm-tactical/skills/cli-over-mcp-auditor/SKILL.md`
+- Set up project memory / remember stakeholders across sessions → `pm-tactical/skills/pm-context-system/SKILL.md`
+
 ## Repo owner
 Abhillash Jadhav — github.com/Abhillashjadhav
