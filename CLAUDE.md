@@ -30,5 +30,13 @@ Plugin skills fire natively once `.claude/settings.json` (marketplace + `enabled
 - Audit MCP connectors / context filling up too fast → `pm-tactical/skills/cli-over-mcp-auditor/SKILL.md`
 - Set up project memory / remember stakeholders across sessions → `pm-tactical/skills/pm-context-system/SKILL.md`
 
+## Session header protocol
+On the first substantial prompt of a session, run whichever of model-complexity-router, cli-over-mcp-auditor, and pm-context-system have something to say *at that moment* and combine their lines into ONE compact header (max 4 lines) above the task response, instead of three separate interruptions. Each skill stays silent when it has nothing useful to say — an empty check contributes zero lines to the header, not a placeholder line.
+
+This header is a formatting convenience for the first prompt only, not a firing-frequency limit. Each skill keeps following its own SKILL.md trigger rules afterward, independently of the header and of each other:
+- model-complexity-router keeps firing its own compact line on every later distinct task handoff (not just the first).
+- pm-context-system keeps proposing its one-line "Log to memory" entry whenever a later decision or fact worth keeping surfaces (not just the first).
+- cli-over-mcp-auditor's proactive check is genuinely once per session — its Step 0 doesn't re-fire after the first prompt.
+
 ## Repo owner
 Abhillash Jadhav — github.com/Abhillashjadhav

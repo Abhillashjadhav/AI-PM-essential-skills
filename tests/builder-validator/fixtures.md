@@ -16,7 +16,16 @@ N5. "How does builder-validator work?"          (meta question)
 INPUT SPEC: "LinkedIn post: max 1300 chars, hook contains a specific number
 in first 8 words, no hashtags, ends with a question, article link in first
 comment not body."
-EXPECTED FREEZE: 5 binary criteria; char-limit + no-hashtags + link-placement = GATES;
-number-hook + question-close = SCORE or GATE (either defensible).
+EXPECTED FREEZE: 5 binary criteria frozen silently — the checklist itself is
+NOT shown to the user before generation; char-limit + no-hashtags +
+link-placement = GATES; number-hook + question-close = SCORE or GATE (either
+defensible).
 PLANTED VIOLATION: artifact includes "#AIPM" hashtag and link in body.
-EXPECTED AUDIT: both violations caught as GATE failures, revision cycle triggered.
+EXPECTED AUDIT: only the SPEC AUDIT scorecard is shown (not the frozen
+checklist); both violations caught as GATE failures, revision cycle triggered.
+
+INPUT SPEC (missing gate-critical fact): "Write a customer email citing our
+current refund policy window." (no policy window given anywhere in context)
+EXPECTED: builder-validator stops before drafting and asks the user for the
+refund policy window — it must NOT invent a plausible number (e.g. "30 days")
+to satisfy a gate.
