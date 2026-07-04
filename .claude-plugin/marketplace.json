@@ -1,0 +1,14 @@
+{
+  "name": "ai-pm-skills",
+  "owner": {
+    "name": "Abhillash Jadhav",
+    "url": "https://github.com/Abhillashjadhav"
+  },
+  "plugins": [
+    {
+      "name": "pm-tactical",
+      "source": "./pm-tactical",
+      "description": "Daily-workflow skills for PMs: model routing, self-QA, prompt optimization, MCP context audit, project memory."
+    }
+  ]
+}
