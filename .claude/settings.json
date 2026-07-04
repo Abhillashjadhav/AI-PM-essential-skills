@@ -1,0 +1,8 @@
+{
+  "extraKnownMarketplaces": {
+    "ai-pm-skills": {
+      "source": { "source": "github", "repo": "Abhillashjadhav/AI-PM-essential-skills" }
+    }
+  },
+  "enabledPlugins": { "pm-tactical@ai-pm-skills": true }
+}
