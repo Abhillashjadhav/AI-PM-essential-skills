@@ -21,5 +21,14 @@ A skill ships when:
 - Skills that produce unverifiable output (fabricated metrics, invented pricing)
 - Skills without explicit failure guardrails
 
+## Skill routing (Claude Code web fallback)
+Native plugin auto-fire works in CLI/desktop; Claude Code web sessions do not load plugin skills into the invocable set. When a request in a web session matches one of the descriptions below, read that skill's SKILL.md from `pm-tactical/skills/` and follow it exactly, as if it had fired natively:
+
+- Model choice / "which model should I use" / cost-per-task → `pm-tactical/skills/model-complexity-router/SKILL.md`
+- Generate an artifact and validate it against a spec / self-QA → `pm-tactical/skills/builder-validator/SKILL.md`
+- Improve or tune an existing prompt → `pm-tactical/skills/prompt-optimizer-loop/SKILL.md`
+- Audit MCP connectors / context filling up too fast → `pm-tactical/skills/cli-over-mcp-auditor/SKILL.md`
+- Set up project memory / remember stakeholders across sessions → `pm-tactical/skills/pm-context-system/SKILL.md`
+
 ## Repo owner
 Abhillash Jadhav — github.com/Abhillashjadhav

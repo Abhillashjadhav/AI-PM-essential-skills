@@ -164,6 +164,12 @@ Nothing in Anthropic's official skill library covers this PM-specific surface. T
 
 ---
 
+## Known constraints
+
+- `pm-tactical` installs and enables correctly in Claude Code web, but web sessions do not load plugin skills into the invocable set (verified 2026-07-04). Native auto-fire works on CLI/desktop. On web, the supported path is the CLAUDE.md "Skill routing (Claude Code web fallback)" section, which tells Claude to read and follow the matching SKILL.md manually.
+
+---
+
 ## Contributing
 
 PRs welcome. Every PR is reviewed by the repo's PR agent before merge.
