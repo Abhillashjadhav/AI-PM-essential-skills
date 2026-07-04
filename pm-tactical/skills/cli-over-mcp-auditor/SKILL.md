@@ -1,13 +1,25 @@
 ---
 name: cli-over-mcp-auditor
-description: Use this skill when the user wants to audit their MCP connectors, reduce context window usage, or asks why their Claude Code sessions run out of context fast — phrasings like "audit my MCPs", "why is my context filling up", "should I use CLI instead of MCP", "reduce my context overhead", "my sessions compact too early". Inventories connected MCP servers, estimates the idle context cost of each, checks whether a CLI or script equivalent exists, and outputs a keep/replace/remove verdict per connector. Do NOT use for debugging a broken MCP connection, for installing new connectors, or for general questions about what MCP is.
+description: Use this skill proactively on the first substantial prompt of a session — silently inspect the session's own available tools/MCP servers (never ask the user to paste anything for this check) and, if any connectors look irrelevant to the task at hand, surface one compact line offering to free up context. Use this skill when the user makes explicit requests too — to audit MCP connectors, reduce context window usage, or explain why sessions run out of context fast — phrasings like "audit my MCPs", "why is my context filling up", "should I use CLI instead of MCP", "reduce my context overhead", "my sessions compact too early" — which get the full deep-audit flow instead of the one-liner. Do NOT use for debugging a broken MCP connection, for installing new connectors, or for general questions about what MCP is.
 ---
 
 # CLI-over-MCP Auditor
 
 Every connected MCP server loads its tool definitions into the context window at session start — a standing tax paid whether or not the tools are used. CLI tools cost zero context until invoked. This skill finds the tax and recommends where to stop paying it.
 
-## Step 1 — Inventory
+## Step 0 — First-prompt check (proactive, silent)
+
+On the first substantial prompt of a session, before doing anything else, silently inspect the session's own already-available tools/MCP servers — do not ask the user to run or paste `claude mcp list` for this check; that's only for the explicit deep-audit flow (Step 1). Count connected MCP servers and their tools directly from what's visible in the session.
+
+Judge relevance against the task the user is actually asking for right now — not against hypothetical future use. If one or more connectors look irrelevant to this task, emit exactly one line, then continue straight into the task:
+
+```
+N MCPs loaded, M unused for this work — disable to free up to ~X% context?
+```
+
+If nothing looks unused or irrelevant, say nothing — stay silent. This check runs once per session, not on every prompt.
+
+## Step 1 — Inventory (explicit deep audit)
 
 List every connected MCP server. In Claude Code, ask the user to run `claude mcp list` and paste the output, or read `.mcp.json` / settings files if accessible. For each server, list its tools and count them.
 
@@ -47,3 +59,4 @@ For every REPLACE, give the exact CLI install command and one example invocation
 - Context overhead varies by client and version; percentages assume a 200K window.
 - Some MCPs provide auth or stateful sessions a CLI can't replicate — flagged as NONE, never force-fit.
 - Usage data relies on the user's recollection unless session logs are provided.
+- The first-prompt relevance check is a judgment call based on the current task alone; it can miss connectors that matter later in the session, and never disables anything on its own — it only offers.
