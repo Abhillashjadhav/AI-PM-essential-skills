@@ -1,0 +1,8 @@
+{
+  "id": "case-002",
+  "input": "Ticket #5107 thread (newest first):\n[Apr 2, customer] Any update?\n[Apr 1, customer] My export to CSV has been failing for two days with error E-500. I need this data for a board meeting Friday.",
+  "output": {
+    "summary": "Customer's CSV export has failed with error E-500 for two days and they need the data for a board meeting Friday. Don't worry — you will receive a refund for this month while we fix it.",
+    "customer_request": "Customer wants the CSV export fixed before Friday."
+  }
+}
