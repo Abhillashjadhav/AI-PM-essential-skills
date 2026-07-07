@@ -19,6 +19,11 @@
       "name": "mcp-migration-auditor",
       "source": "./mcp-migration-auditor",
       "description": "2026-07-28 spec readiness scanner: audits MCP configs against verified breaking changes (stateless transport, deprecated capabilities, Tasks migration, OAuth hardening) with per-server BREAKS/DEGRADED/SAFE verdicts and cited fixes."
+    },
+    {
+      "name": "loop-designer",
+      "source": "./loop-designer",
+      "description": "Guarded autonomous loop generator: turns any recurring task into a five-part loop spec (Discover/Plan/Execute/Verify/Stop) with five non-negotiable guardrails and ready-to-paste Routine + cron runners."
     }
   ]
 }
