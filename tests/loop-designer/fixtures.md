@@ -15,6 +15,7 @@ N2. "Optimize my system prompt"                        (prompt-optimizer-loop's 
 N3. "Summarize new GitHub issues" (one-off, no recurrence asked)
 N4. "My cron job isn't firing, debug it"               (debugging an existing loop)
 N5. "What's the difference between cron and launchd?"  (knowledge question)
+N6. "Run /pr-review every 10 minutes until CI is green" (built-in /loop's job — run-now-on-interval in the current session, no loop to design)
 
 # Gate 3 — Functional known-answer (end-to-end)
 

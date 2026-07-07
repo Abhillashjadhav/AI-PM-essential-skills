@@ -23,7 +23,7 @@ claude plugin install loop-designer@ai-pm-skills
 Summarize new GitHub issues in acme/support-widget every morning — turn this into a loop.
 ```
 
-Also fires on: "run this on a schedule", "automate this daily", "build me a loop", "make this recurring", "design a loop for…", "loop this task". (For "improve this prompt", use prompt-optimizer-loop — different job.)
+Also fires on: "run this on a schedule", "automate this daily", "build me a loop", "make this recurring", "design a loop for…", "loop this task". Two neighbors it routes away from: "improve this prompt" is prompt-optimizer-loop's job, and "run X every 10 minutes right now" is Claude Code's built-in `/loop` command — loop-designer *designs* durable guarded loops for Routines/cron; it doesn't run anything.
 
 After a minimal interview (goal, inputs, destination, schedule — one message), you get:
 
