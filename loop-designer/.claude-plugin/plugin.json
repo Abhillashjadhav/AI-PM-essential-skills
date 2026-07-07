@@ -1,0 +1,10 @@
+{
+  "name": "loop-designer",
+  "version": "0.1.0",
+  "description": "One skill that turns any recurring task into a guarded autonomous loop. loop-designer interviews minimally (goal, inputs, output destination, schedule), then generates a five-part loop spec (Discover, Plan, Execute, Verify by a separate verifier checklist, Stop-or-Repeat), a non-negotiable guardrails block (max-iterations cap, cost ceiling, seen-log cross-run dedup, no-destructive-actions allowlist, completion/trip notification), and two ready-to-paste artifacts: a Claude Code Routine prompt for cloud scheduled runs and a local cron/launchd variant. Architecture generalized from a production daily-radar loop, not invented.",
+  "author": {
+    "name": "Abhillash Jadhav",
+    "url": "https://github.com/Abhillashjadhav"
+  },
+  "keywords": ["automation", "loops", "routines", "cron", "guardrails", "ai-pm"]
+}
