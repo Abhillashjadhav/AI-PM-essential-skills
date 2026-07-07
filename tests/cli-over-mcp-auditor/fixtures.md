@@ -1,7 +1,7 @@
 # Gate 2 — Triggers
-FIRE (explicit deep audit): "audit my MCPs" | "why is my context filling up so fast" | "should I use the GitHub CLI instead of the MCP" | "reduce my context overhead" | "my sessions compact too early"
+FIRE (explicit deep audit): "audit my MCPs for context cost" | "why is my context filling up so fast" | "should I use the GitHub CLI instead of the MCP" | "reduce my context overhead" | "my sessions compact too early"
 FIRE (proactive first-prompt check, no user-pasted list): first substantial prompt of a session where the session has MCP servers connected that look irrelevant to the task just asked — e.g. session has GitHub + Slack + Weather MCPs connected and the user's first prompt is "fix this CSS bug" (no mention of MCPs, no pasted list, no explicit audit request)
-NO-FIRE: "my Notion MCP won't connect" (debug) | "install the Slack MCP" (install) | "what is MCP?" (knowledge) | "audit my CLAUDE.md" (context-auditor's job) | "how many tokens did this session use" (token-cost-estimator's job) | second/third substantial prompt in the same session (first-prompt check already ran once) | first prompt where all connected MCPs are relevant to the task (nothing to flag, stays silent)
+NO-FIRE: "my Notion MCP won't connect" (debug) | "install the Slack MCP" (install) | "what is MCP?" (knowledge) | "audit my CLAUDE.md" (context-auditor's job) | "how many tokens did this session use" (token-cost-estimator's job) | "audit my MCP setup" / "will my MCP servers break" (mcp-migration-auditor's job — spec compatibility, not context cost) | second/third substantial prompt in the same session (first-prompt check already ran once) | first prompt where all connected MCPs are relevant to the task (nothing to flag, stays silent)
 
 # Gate 3 — Functional known-answer
 
