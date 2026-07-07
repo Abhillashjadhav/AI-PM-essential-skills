@@ -34,6 +34,8 @@ You get back, in one pass:
 
 A complete worked example (spec → all three artifacts → harness run on real cases) ships in `skills/eval-engine/examples/`.
 
+**Precedence note:** this repo's standalone [eval-rubric-generator](../eval-rubric-generator/) skill claims several of the same trigger phrasings ("write an eval", "how do I test this AI feature", "define good"). eval-engine supersedes it — its binary checklist is roughly Artifact 1 of this skill's three. If you have both installed, requests matching those phrasings should route here; consider removing eval-rubric-generator from `~/.claude/skills/` to avoid the collision.
+
 ## Before / after
 
 | Without | With |
