@@ -9,6 +9,11 @@
       "name": "pm-tactical",
       "source": "./pm-tactical",
       "description": "Daily-workflow skills for PMs: model routing, self-QA, prompt optimization, MCP context audit, project memory."
+    },
+    {
+      "name": "pm-verifier",
+      "source": "./pm-verifier",
+      "description": "Spec-to-eval-harness engine: turns any feature spec into binary quality gates, a calibrated LLM-judge rubric, and a runnable pure-Python eval harness."
     }
   ]
 }

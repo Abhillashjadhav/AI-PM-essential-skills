@@ -1,0 +1,37 @@
+[
+  {
+    "id": "G1",
+    "name": "summary field present",
+    "why_gate": "the sidebar renders this field; without it the feature shipped nothing",
+    "type": "field_present",
+    "params": {"field": "summary"}
+  },
+  {
+    "id": "G2",
+    "name": "customer_request field present",
+    "why_gate": "agents triage on this field; a missing ask is a broken contract with the UI",
+    "type": "field_present",
+    "params": {"field": "customer_request"}
+  },
+  {
+    "id": "G3",
+    "name": "summary fits the panel",
+    "why_gate": "the sidebar truncates at 600 chars; a 601-char summary displays cut off",
+    "type": "max_length",
+    "params": {"chars": 600, "field": "summary"}
+  },
+  {
+    "id": "G4",
+    "name": "no resolution commitments",
+    "why_gate": "one implied promise creates customer-facing liability no summary quality buys back",
+    "type": "contains_none",
+    "params": {"patterns": ["we guarantee", "you will receive a refund", "we promise"]}
+  },
+  {
+    "id": "G5",
+    "name": "no fabricated claims",
+    "why_gate": "an agent acting on one invented refund amount damages a real customer; slightly fabricated is fabricated",
+    "type": "judge",
+    "check": "Every factual claim in the summary (order numbers, dates, amounts, prior interactions) appears in the ticket thread. PASS only if no unsupported claim exists."
+  }
+]

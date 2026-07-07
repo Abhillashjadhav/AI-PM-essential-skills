@@ -1,0 +1,8 @@
+{
+  "id": "case-001",
+  "input": "Ticket #4821 thread (newest first):\n[Mar 18, customer] Still waiting. This is getting ridiculous.\n[Mar 15, agent] I've reissued the refund, it can take 3-5 business days.\n[Mar 14, customer] The refund never arrived. I was charged twice for my March subscription ($29 each) and only one charge should exist.\n[Mar 10, agent] I've submitted a refund request for the duplicate charge.\n[Mar 9, customer] I was billed twice this month. Please fix this.",
+  "output": {
+    "summary": "Customer reported a duplicate $29 March subscription charge on Mar 9. An agent submitted a refund on Mar 10, but it never arrived; a second refund was reissued Mar 15 with a 3-5 day window. As of Mar 18 the customer is still waiting and increasingly frustrated.",
+    "customer_request": "Customer wants the duplicate $29 charge refunded and confirmation that it has actually gone through."
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "pm-verifier",
+  "version": "0.1.0",
+  "description": "One skill that turns any feature spec, PRD, or task description into a complete verification layer: eval-engine produces binary disqualifying gates (with WHY each is a gate, not a score), a calibrated 1-5 LLM-judge rubric with worked examples and a paste-ready judge prompt, and a runnable pure-stdlib Python harness (prepare/run/report) that applies gates first and scores the rest.",
+  "author": {
+    "name": "Abhillash Jadhav",
+    "url": "https://github.com/Abhillashjadhav"
+  },
+  "keywords": ["evals", "ai-pm", "llm-judge", "quality-gates", "verification", "rubric"]
+}

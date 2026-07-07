@@ -1,0 +1,5 @@
+{
+  "gate_answers": {"G5": "PASS"},
+  "scores": {"C1": 5, "C2": 4, "C3": 5, "C4": 5, "C5": 5},
+  "notes": "C2 scored 4 not 5 — 'confirmation that it has gone through' is a reasonable but inferred reading of 'Still waiting'; the customer never states it explicitly."
+}

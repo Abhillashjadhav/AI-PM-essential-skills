@@ -1,0 +1,42 @@
+[
+  {
+    "id": "C1",
+    "name": "completeness",
+    "definition": "the summary captures the facts an agent needs to respond",
+    "anchor_1": "omits the core problem or the latest development in the thread",
+    "anchor_5": "an agent could respond correctly without opening the thread — problem, key events, and current status all present",
+    "worked_example": "'Customer reports double billing in March.' for a thread that also contains two failed refund attempts and an escalation scores 2 — core problem present, but the agent walks in blind to the failed refunds."
+  },
+  {
+    "id": "C2",
+    "name": "request accuracy",
+    "definition": "customer_request states what the customer is actually asking for",
+    "anchor_1": "states a request the customer never made, or restates the problem instead of the ask",
+    "anchor_5": "the ask is specific and matches the customer's own latest framing, including any changed ask mid-thread",
+    "worked_example": "customer_request says 'Customer wants a refund' but the thread's last message says 'at this point just cancel my account' — scores 1; the ask changed and the field missed it."
+  },
+  {
+    "id": "C3",
+    "name": "sentiment fidelity",
+    "definition": "the summary preserves the customer's emotional register",
+    "anchor_1": "frustrated or angry customer reads as neutral (or the reverse)",
+    "anchor_5": "sentiment is stated or clearly conveyed and matches the thread's latest tone",
+    "worked_example": "thread contains 'this is the third time I'm explaining this, absolutely unacceptable' and the summary notes 'customer is frustrated after three explanations' — scores 5."
+  },
+  {
+    "id": "C4",
+    "name": "chronological coherence",
+    "definition": "the summary tells the story in event order",
+    "anchor_1": "events ordered as displayed (newest-first), producing a backwards narrative",
+    "anchor_5": "chronological story regardless of display order, with the current state last",
+    "worked_example": "'Customer escalated. Earlier, a refund was attempted. Originally reported double billing.' scores 2 — facts present but the narrative runs backwards."
+  },
+  {
+    "id": "C5",
+    "name": "clarity",
+    "definition": "an agent can absorb the summary in one read",
+    "anchor_1": "requires re-reading; run-on sentences, ticket jargon, or copied raw log lines",
+    "anchor_5": "plain sentences, one idea each, no filler; reads in under ten seconds",
+    "worked_example": "a 3-sentence summary with one fact per sentence and no quoted log output scores 5, even though it leaves some detail to the thread."
+  }
+]
