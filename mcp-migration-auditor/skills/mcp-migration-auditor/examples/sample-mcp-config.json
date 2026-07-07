@@ -1,0 +1,22 @@
+{
+  "mcpServers": {
+    "ticket-gateway": {
+      "type": "http",
+      "url": "https://mcp.internal.example.com/tickets",
+      "headers": {
+        "Mcp-Session-Id": "pool-7-sticky",
+        "Authorization": "Bearer ${TICKET_GATEWAY_TOKEN}"
+      },
+      "note": "load-balanced behind session-affinity gateway; session store in Redis"
+    },
+    "research-assistant": {
+      "command": "npx",
+      "args": ["-y", "research-assistant-mcp", "--use-sampling", "--sampling-model", "claude-sonnet-5"],
+      "note": "asks the client to run LLM completions via MCP sampling"
+    },
+    "local-files": {
+      "command": "python3",
+      "args": ["/opt/tools/local_files_mcp.py", "--root", "~/Documents"]
+    }
+  }
+}

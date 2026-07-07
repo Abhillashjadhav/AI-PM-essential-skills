@@ -1,0 +1,10 @@
+{
+  "name": "mcp-migration-auditor",
+  "version": "0.1.0",
+  "description": "One skill that scans MCP server configs (.mcp.json, claude_desktop_config.json, settings files) against the verified breaking changes in the MCP 2026-07-28 specification release candidate — stateless transport (Mcp-Session-Id removed), roots/sampling/logging deprecations, experimental Tasks migration, OAuth hardening — and outputs a per-server BREAKS/DEGRADED/SAFE table with rule citations and a prioritized migration checklist. Every audit rule cites an official source; stdio-only setups get an honest all-clear, not false alarms.",
+  "author": {
+    "name": "Abhillash Jadhav",
+    "url": "https://github.com/Abhillashjadhav"
+  },
+  "keywords": ["mcp", "migration", "spec-2026-07-28", "audit", "ai-pm", "compatibility"]
+}

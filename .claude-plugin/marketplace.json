@@ -14,6 +14,11 @@
       "name": "pm-verifier",
       "source": "./pm-verifier",
       "description": "Spec-to-eval-harness engine: turns any feature spec into binary quality gates, a calibrated LLM-judge rubric, and a runnable pure-Python eval harness."
+    },
+    {
+      "name": "mcp-migration-auditor",
+      "source": "./mcp-migration-auditor",
+      "description": "2026-07-28 spec readiness scanner: audits MCP configs against verified breaking changes (stateless transport, deprecated capabilities, Tasks migration, OAuth hardening) with per-server BREAKS/DEGRADED/SAFE verdicts and cited fixes."
     }
   ]
 }
