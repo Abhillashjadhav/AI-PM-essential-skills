@@ -1,24 +1,21 @@
-name: PR Review Agent
+name: PR Quality Gates
 
 on:
   pull_request:
     types: [opened, synchronize, reopened, ready_for_review]
 
 concurrency:
-  group: pr-review-${{ github.event.pull_request.number }}
+  group: pr-quality-${{ github.event.pull_request.number }}
   cancel-in-progress: true
 
 permissions:
-  contents: write
-  pull-requests: write
-  issues: write
-  id-token: write
+  contents: read
 
 jobs:
-  review:
-    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+  required-checks:
+    name: Deterministic required checks
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 10
     steps:
       - name: Checkout PR branch
         uses: actions/checkout@v4
@@ -26,10 +23,46 @@ jobs:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
-      - name: Run Claude Code PR review
+      - name: Test deterministic gate runner
+        run: python3 -m unittest discover -s .github/tests -v
+
+      - name: Run required checks
+        run: >-
+          python3 .github/scripts/pr_required_checks.py
+          --base ${{ github.event.pull_request.base.sha }}
+          --head ${{ github.event.pull_request.head.sha }}
+          --head-ref ${{ github.event.pull_request.head.ref }}
+
+  optional-claude-review:
+    name: OPTIONAL Claude review
+    needs: required-checks
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      id-token: write
+    env:
+      CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDESECRET }}
+    steps:
+      - name: Report optional review unavailable
+        if: env.CLAUDE_CODE_OAUTH_TOKEN == ''
+        run: echo "OPTIONAL Claude review skipped because CLAUDESECRET is not configured."
+
+      - name: Checkout PR branch for optional review
+        if: env.CLAUDE_CODE_OAUTH_TOKEN != ''
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+
+      - name: Run OPTIONAL Claude review
+        if: env.CLAUDE_CODE_OAUTH_TOKEN != ''
         uses: anthropics/claude-code-action@v1
         with:
-          claude_code_oauth_token: ${{ secrets.CLAUDESECRET }}
+          claude_code_oauth_token: ${{ env.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
           prompt: "/review-pr"
           claude_args: '--max-turns 30 --allowedTools "Read,Edit,Write,Glob,Grep,LS,mcp__github_file_ops__commit_files,mcp__github_file_ops__delete_files,mcp__github_comment__update_claude_comment"'
