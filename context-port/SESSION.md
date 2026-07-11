@@ -6,7 +6,7 @@
 - Current phase: Phase 15 — release readiness
 - Current branch: `context-port/015-release-readiness`
 - Latest merged commit: `773f8f122c6e8072041609d485415b9036615e08`
-- Tests passed: 102
+- Tests passed: 103
 - Line coverage: `UNKNOWN` — No coverage instrumentation dependency is configured.
 - Repository health: `healthy`
 
@@ -59,7 +59,7 @@
 
 ## Repository health
 
-- Tests: `passed` (102)
+- Tests: `passed` (103)
 - Syntax: `passed` (26 Python files)
 - Working tree clean at collection: `true`
 - `origin/main` matches latest merged commit: `true`
