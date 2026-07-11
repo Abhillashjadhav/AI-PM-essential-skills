@@ -1,10 +1,10 @@
 # ContextPort handoff
 
-This handoff follows completion of Phase 13 implementation. Finish the current PR lifecycle, then pause before starting Phase 14 unless a human explicitly resumes the roadmap.
+This handoff follows completion of Phase 14 implementation. Finish PR #22, then begin only the Phase 15 release-readiness audit when the roadmap resumes.
 
 ## Resume command
 
-After confirming PR #21 is merged:
+After confirming PR #22 is merged:
 
 ```sh
 cd ~/code/AI-PM-essential-skills
@@ -21,7 +21,7 @@ Do not revisit or rewrite Phase 2, Phase 3, old restacks, rebases, or safety bra
 Resume ContextPort from context-port/STATE.md and context-port/HANDOFF.md.
 
 Verify main and PR #21 first. Do not touch historical Phase 2/3 branches.
-Start Phase 14 only: consolidate public documentation, operator guidance, navigation, capability/status labels, privacy boundaries, and synthetic-demo instructions. Keep ContextPort standalone under context-port/, add no production dependency, access no real export, and perform no browser or assistant write. Follow one saved prompt, one feature branch, tests/evaluation, one independently reviewed PR, and stop at any explicit gate.
+Start Phase 15 only: perform a requirement-by-requirement release-readiness audit over the public standalone product. Verify tests, schemas, packaging/install artifacts, synthetic demo, docs, privacy gates, authorship, and clean public scope. Produce a saved prompt, auditable readiness report, tests/evaluation, and one independently reviewed PR. Do not select a license, publish a release, access a real export, automate a browser, or write to an assistant. Stop with explicit human decisions for licensing, publication, real Claude ZIP access, and any browser/assistant write.
 ```
 
 ## Real Claude ZIP gate
@@ -34,16 +34,15 @@ Do not launch browser automation and do not write to ChatGPT or Claude without s
 
 ## What is ready
 
-The synthetic migration MVP is complete through Phase 13: validated neutral data, segregation, review, approved dry-run planning, independent reconciliation, incremental change planning, fail-closed destination capability assessment, CLI, package artifacts, local installer, and a revision-bound synthetic demonstration.
+The synthetic migration MVP is complete through Phase 14: validated neutral data, segregation, review, approved dry-run planning, independent reconciliation, incremental change planning, fail-closed destination capability assessment, CLI, package artifacts, local installer, revision-bound synthetic demonstration, and consolidated public operator/privacy documentation.
 
 This does not prove real-export compatibility or live destination reconstruction. Those claims remain `UNKNOWN` and `UNSUPPORTED`, respectively.
 
 ## Remaining work
 
-1. Phase 14 documentation consolidation.
-2. Phase 15 release-readiness audit.
-3. Human decisions before any release: repository license and publication approval.
-4. Fresh approval before real Claude ZIP access.
-5. Fresh approval before browser automation or assistant writes.
+1. Phase 15 release-readiness audit.
+2. Human decisions before any release: repository license and publication approval.
+3. Fresh approval before real Claude ZIP access.
+4. Fresh approval before browser automation or assistant writes.
 
 The authoritative detailed snapshot, PR list, checks, gates, and unsupported inventory is in `STATE.md`.
