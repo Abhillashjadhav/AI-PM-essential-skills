@@ -2,6 +2,8 @@ import copy
 import importlib.util
 import json
 import sys
+import subprocess
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -78,6 +80,23 @@ class ReleaseReadinessTests(unittest.TestCase):
         self.assertIn("Real Claude export compatibility remains `UNKNOWN`", rendered)
         self.assertIn("ChatGPT reconstruction writes remain `UNSUPPORTED`", rendered)
         self.assertIn("Release publication performed: `false`", rendered)
+
+    def test_audited_revision_ignores_only_generated_artifact_commits(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = Path(directory)
+            (repository / "context-port" / "reports").mkdir(parents=True)
+            subprocess.run(["git", "init", "-b", "main"], cwd=repository, check=True, capture_output=True)
+            subprocess.run(["git", "config", "user.name", "Synthetic"], cwd=repository, check=True)
+            subprocess.run(["git", "config", "user.email", "synthetic@example.invalid"], cwd=repository, check=True)
+            (repository / "context-port" / "readiness.py").write_text("VALUE = 1\n")
+            subprocess.run(["git", "add", "."], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-m", "implementation"], cwd=repository, check=True, capture_output=True)
+            implementation = subprocess.run(["git", "rev-parse", "HEAD"], cwd=repository, check=True, capture_output=True, text=True).stdout.strip()
+            (repository / "context-port" / "SESSION.md").write_text("generated\n")
+            (repository / "context-port" / "reports" / "RELEASE_READINESS.json").write_text("{}\n")
+            subprocess.run(["git", "add", "."], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-m", "generated artifacts"], cwd=repository, check=True, capture_output=True)
+            self.assertEqual(readiness._audited_revision(repository), implementation)
 
 
 if __name__ == "__main__":

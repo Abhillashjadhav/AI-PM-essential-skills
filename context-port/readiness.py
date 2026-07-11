@@ -48,8 +48,25 @@ def _cli_version(context_port: Path) -> str:
     raise ReadinessError("CLI_VERSION missing")
 
 
-def _branch_identities(repository: Path) -> list[dict[str, str]]:
-    raw = _run(repository, "git", "log", "--format=%H%x09%an%x09%ae%x09%cn%x09%ce", "main..HEAD")
+def _audited_revision(repository: Path) -> str:
+    return _run(
+        repository,
+        "git",
+        "log",
+        "-1",
+        "--format=%H",
+        "HEAD",
+        "--",
+        "context-port",
+        ":(exclude)context-port/SESSION.md",
+        ":(exclude)context-port/SESSION.json",
+        ":(exclude)context-port/reports/RELEASE_READINESS.md",
+        ":(exclude)context-port/reports/RELEASE_READINESS.json",
+    )
+
+
+def _branch_identities(repository: Path, audited_revision: str) -> list[dict[str, str]]:
+    raw = _run(repository, "git", "log", "--format=%H%x09%an%x09%ae%x09%cn%x09%ce", f"main..{audited_revision}")
     records = []
     for line in raw.splitlines():
         commit, author, author_email, committer, committer_email = line.split("\t")
@@ -95,8 +112,6 @@ def _demo(repository: Path) -> dict[str, Any]:
     raw = _run(repository, "python3", "context-port/demo.py")
     report = json.loads(raw)
     return {
-        "revision": report["revision"],
-        "report_sha256": report["demo_report_sha256"],
         "writes_performed": report["writes_performed"],
         "network_calls_performed": report["network_calls_performed"],
         "browser_automation_performed": report["browser_automation_performed"],
@@ -127,7 +142,8 @@ def collect_readiness(repository: Path) -> dict[str, Any]:
         "package": project["version"],
         "build_backend": contextport_build.VERSION,
     }
-    identities = _branch_identities(repository)
+    audited_revision = _audited_revision(repository)
+    identities = _branch_identities(repository, audited_revision)
     expected_name, expected_email = EXPECTED_IDENTITY
     identity_pass = all(
         item["author"] == expected_name
@@ -146,7 +162,7 @@ def collect_readiness(repository: Path) -> dict[str, Any]:
     schema = _schema_evidence(context_port)
     evidence = {
         "readiness_version": READINESS_VERSION,
-        "audited_revision": _run(repository, "git", "rev-parse", "HEAD"),
+        "audited_revision": audited_revision,
         "latest_merged_commit": session_state["latest_merged_commit"],
         "current_branch": session_state["current_branch"],
         "versions": versions,
