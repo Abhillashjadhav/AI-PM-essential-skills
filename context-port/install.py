@@ -21,10 +21,15 @@ INSTALLER_VERSION = "0.1"
 class InstallError(RuntimeError):
     """Raised when installation cannot proceed without overwriting or network use."""
 
+    def __init__(self, message: str, *, writes_performed: bool = False) -> None:
+        super().__init__(message)
+        self.writes_performed = writes_performed
 
-def _executable(target: Path, name: str) -> Path:
-    directory = "Scripts" if os.name == "nt" else "bin"
-    suffix = ".exe" if os.name == "nt" else ""
+
+def _executable(target: Path, name: str, platform: str | None = None) -> Path:
+    platform = os.name if platform is None else platform
+    directory = "Scripts" if platform == "nt" else "bin"
+    suffix = ".exe" if platform == "nt" else ""
     return target / directory / f"{name}{suffix}"
 
 
@@ -51,6 +56,10 @@ def install(target: Path) -> dict[str, object]:
     if plan["status"] != "ready":
         raise InstallError(f"target already exists; refusing to overwrite: {target}")
     target.parent.mkdir(parents=True, exist_ok=True)
+    try:
+        target.mkdir(exist_ok=False)
+    except FileExistsError as exc:
+        raise InstallError(f"target appeared during installation; refusing to overwrite: {target}") from exc
     with tempfile.TemporaryDirectory(prefix="contextport-build-") as directory:
         wheel_directory = Path(directory)
         wheel = wheel_directory / contextport_build.build_wheel(wheel_directory)
@@ -69,9 +78,11 @@ def install(target: Path) -> dict[str, object]:
     capabilities = subprocess.run([str(command), "capabilities"], check=True, capture_output=True, text=True)
     capability_report = json.loads(capabilities.stdout)
     if version.stdout.strip() != f"ContextPort {contextport_build.VERSION}":
-        raise InstallError("installed version verification failed")
+        raise InstallError("installed version verification failed", writes_performed=True)
     if capability_report.get("network_required") is not False:
-        raise InstallError("installed capability verification failed")
+        raise InstallError("installed capability verification failed", writes_performed=True)
+    if capability_report.get("destination_writes_supported") is not False:
+        raise InstallError("installed destination-write boundary verification failed", writes_performed=True)
     return {
         **plan,
         "status": "installed_verified",
@@ -91,10 +102,29 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("target", type=Path, help="new installation directory; must not already exist")
     parser.add_argument("--install", action="store_true", help="perform the planned local installation")
     arguments = parser.parse_args(argv)
+    target = arguments.target.expanduser().resolve()
     try:
-        report = install(arguments.target) if arguments.install else plan_install(arguments.target)
+        report = install(target) if arguments.install else plan_install(target)
     except (InstallError, OSError, subprocess.SubprocessError, ValueError) as exc:
-        print(f"FAIL: {exc}", file=sys.stderr)
+        partial = (
+            exc.writes_performed
+            if isinstance(exc, InstallError)
+            else target.exists() and arguments.install
+        )
+        report = {
+            "installer_version": INSTALLER_VERSION,
+            "status": "install_failed",
+            "target": str(target),
+            "package_version": contextport_build.VERSION,
+            "network_allowed": False,
+            "dependencies_allowed": False,
+            "overwrite_allowed": False,
+            "writes_performed": partial,
+            "partial_target_retained": partial,
+            "error_type": type(exc).__name__,
+            "error": str(exc),
+        }
+        print(json.dumps(report, indent=2, sort_keys=True))
         return 2
     print(json.dumps(report, indent=2, sort_keys=True))
     return 0 if report["status"] in {"ready", "installed_verified"} else 3
