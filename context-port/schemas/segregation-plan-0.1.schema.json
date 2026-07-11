@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:segregation-plan:0.1",
+  "title": "ContextPort Segregation Plan 0.1",
+  "type": "object",
+  "required": ["segregation_version", "status"],
+  "properties": {
+    "segregation_version": {"const": "0.1"},
+    "status": {"enum": ["ready", "decision_required"]}
+  },
+  "$defs": {
+    "conversation": {
+      "type": "object",
+      "required": ["conversation_id", "source_ref", "title", "ordinal", "message_ids", "message_count"],
+      "properties": {
+        "conversation_id": {"type": "string", "minLength": 1},
+        "source_ref": {"type": "string", "minLength": 1},
+        "title": {"type": "string"},
+        "ordinal": {"type": "integer", "minimum": 0},
+        "message_ids": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "message_count": {"type": "integer", "minimum": 0}
+      }
+    }
+  },
+  "oneOf": [
+    {
+      "properties": {"status": {"const": "ready"}},
+      "required": ["source_artifact_sha256", "groups", "membership", "summary", "content_emitted", "plan_sha256"],
+      "properties": {
+        "source_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "groups": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["group_kind", "project_id", "source_ref", "title", "mapping_status", "destination_container_id", "conversations"],
+            "properties": {
+              "group_kind": {"enum": ["project", "ungrouped"]},
+              "project_id": {"type": ["string", "null"]},
+              "source_ref": {"type": ["string", "null"]},
+              "title": {"type": ["string", "null"]},
+              "mapping_status": {"enum": ["mapped", "unmapped", "not_applicable"]},
+              "destination_container_id": {"type": ["string", "null"]},
+              "conversations": {"type": "array", "items": {"$ref": "#/$defs/conversation"}}
+            }
+          }
+        },
+        "membership": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["conversation_id", "group_project_id"],
+            "properties": {
+              "conversation_id": {"type": "string", "minLength": 1},
+              "group_project_id": {"type": ["string", "null"]}
+            }
+          }
+        },
+        "summary": {
+          "type": "object",
+          "required": ["project_groups", "ungrouped_groups", "conversations", "messages"]
+        },
+        "content_emitted": {"const": false},
+        "plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+      }
+    },
+    {
+      "properties": {
+        "status": {"const": "decision_required"},
+        "reason": {"const": "ambiguous_project_mapping"},
+        "plan_emitted": {"const": false},
+        "ambiguities": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "required": ["source_project_id", "destination_container_ids"],
+            "properties": {
+              "source_project_id": {"type": "string", "minLength": 1},
+              "destination_container_ids": {
+                "type": "array",
+                "minItems": 2,
+                "items": {"type": "string", "minLength": 1}
+              }
+            }
+          }
+        }
+      },
+      "required": ["reason", "ambiguities", "plan_emitted"]
+    }
+  ]
+}
