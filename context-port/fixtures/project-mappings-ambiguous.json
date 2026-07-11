@@ -1,0 +1,7 @@
+{
+  "mapping_version": "0.1",
+  "project_mappings": [
+    {"source_project_id": "project-a", "destination_container_id": "destination-a"},
+    {"source_project_id": "project-a", "destination_container_id": "destination-c"}
+  ]
+}

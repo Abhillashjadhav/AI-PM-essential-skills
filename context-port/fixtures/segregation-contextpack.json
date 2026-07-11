@@ -1,0 +1,44 @@
+{
+  "format": "contextpack",
+  "format_version": "0.1",
+  "manifest": {
+    "generator": "contextport-synthetic-fixture",
+    "generator_version": "0.1",
+    "created_at": "2026-07-11T00:00:00Z",
+    "privacy": "synthetic",
+    "source": {
+      "system": "synthetic-assistant",
+      "artifact_ref": "fixture://source/segregation-001",
+      "artifact_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"
+    }
+  },
+  "projects": [
+    {"id": "project-a", "source_ref": "source-project-a", "title": "Duplicate Synthetic Title"},
+    {"id": "project-b", "source_ref": "source-project-b", "title": "Duplicate Synthetic Title"}
+  ],
+  "conversations": [
+    {"id": "conversation-a", "source_ref": "source-conversation-a", "project_id": "project-a", "title": "Same Conversation Title", "ordinal": 0},
+    {"id": "conversation-b", "source_ref": "source-conversation-b", "project_id": "project-b", "title": "Same Conversation Title", "ordinal": 0},
+    {"id": "conversation-u", "source_ref": "source-conversation-u", "project_id": null, "title": "Ungrouped Synthetic Conversation", "ordinal": 0}
+  ],
+  "messages": [
+    {"id": "message-a", "source_ref": "source-message-a", "conversation_id": "conversation-a", "role": "user", "ordinal": 0, "content": [{"source_ref": "source-block-a", "kind": "unknown", "ordinal": 0, "reason": "Synthetic inert content."}]},
+    {"id": "message-b", "source_ref": "source-message-b", "conversation_id": "conversation-b", "role": "assistant", "ordinal": 0, "content": [{"source_ref": "source-block-b", "kind": "unknown", "ordinal": 0, "reason": "Synthetic inert content."}]},
+    {"id": "message-u", "source_ref": "source-message-u", "conversation_id": "conversation-u", "role": "user", "ordinal": 0, "content": [{"source_ref": "source-block-u", "kind": "unknown", "ordinal": 0, "reason": "Synthetic inert content."}]}
+  ],
+  "attachments": [],
+  "transformations": [],
+  "dispositions": [
+    {"source_ref": "source-project-a", "item_type": "project", "status": "copied"},
+    {"source_ref": "source-project-b", "item_type": "project", "status": "copied"},
+    {"source_ref": "source-conversation-a", "item_type": "conversation", "status": "copied"},
+    {"source_ref": "source-conversation-b", "item_type": "conversation", "status": "copied"},
+    {"source_ref": "source-conversation-u", "item_type": "conversation", "status": "copied"},
+    {"source_ref": "source-message-a", "item_type": "message", "status": "copied"},
+    {"source_ref": "source-message-b", "item_type": "message", "status": "copied"},
+    {"source_ref": "source-message-u", "item_type": "message", "status": "copied"},
+    {"source_ref": "source-block-a", "item_type": "content_block", "status": "copied"},
+    {"source_ref": "source-block-b", "item_type": "content_block", "status": "copied"},
+    {"source_ref": "source-block-u", "item_type": "content_block", "status": "copied"}
+  ]
+}
