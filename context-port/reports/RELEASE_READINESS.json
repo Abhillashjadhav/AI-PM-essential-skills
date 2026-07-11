@@ -1,0 +1,189 @@
+{
+  "audited_revision": "c5da23be56526633d283d755ae43fdb9b854deaa",
+  "authorship_pass": true,
+  "automated_checks": {
+    "authorship": true,
+    "context_port_only_scope": true,
+    "no_private_export_artifacts_tracked": true,
+    "no_private_runtime_dependency": true,
+    "no_production_dependencies": true,
+    "schemas_parse": true,
+    "sdist_reproducible": true,
+    "session_fresh": true,
+    "synthetic_demo_no_browser": true,
+    "synthetic_demo_offline": true,
+    "synthetic_demo_zero_writes": true,
+    "synthetic_reconciliation_clean": true,
+    "tests_passed": true,
+    "versions_consistent": true,
+    "wheel_reproducible": true
+  },
+  "branch_commits": [
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "c5da23be56526633d283d755ae43fdb9b854deaa",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "a5bc6806e6a8d9333620e93418490b11f420b3df",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "99f12a7dc6597615159d7548828010d2fa8f0e2c",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "0c8eb235fd059e8bd06dfc56973d140fd1629deb",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "43f0ff6752249bfee7e4c9f5601384cb0e8cca08",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "f9e90f32d5b680769e63f2e7814a6185c8952532",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "6b5ebae766a026e49e5448e7c52000cc674552c4",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "e91a9f4e24ea0cc9bf88f3dade5aba89c64d51b2",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "114b004214343f029808b9d16b04a74afcd7ba40",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "c0217be6e4d861b03106d0d9fdd9c5810d67f239",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    }
+  ],
+  "changed_paths": [
+    "context-port/HANDOFF.md",
+    "context-port/README.md",
+    "context-port/SESSION.json",
+    "context-port/SESSION.md",
+    "context-port/STATE.md",
+    "context-port/contextport.py",
+    "context-port/contextport_build.py",
+    "context-port/docs/CONTRIBUTION_WORKFLOW.md",
+    "context-port/docs/README.md",
+    "context-port/docs/RELEASE_READINESS.md",
+    "context-port/docs/SESSION.md",
+    "context-port/evals/015-release-readiness.md",
+    "context-port/prompts/015-release-readiness.md",
+    "context-port/readiness.py",
+    "context-port/schemas/release-readiness-0.1.schema.json",
+    "context-port/schemas/session-0.1.schema.json",
+    "context-port/session.py",
+    "context-port/tests/test_cli.py",
+    "context-port/tests/test_readiness.py",
+    "context-port/tests/test_session.py"
+  ],
+  "context_port_only_scope": true,
+  "coverage": {
+    "line_coverage": "UNKNOWN",
+    "reason": "No coverage instrumentation dependency is configured.",
+    "test_files": 14
+  },
+  "current_branch": "context-port/015-release-readiness",
+  "demo": {
+    "browser_automation_performed": false,
+    "destination_status": "UNSUPPORTED",
+    "network_calls_performed": false,
+    "reconciliation_differences": 0,
+    "report_sha256": "6e2757e2fe5248e12ba1aadc0785bcd36934fd7cfa0d0c4e79e857a965996809",
+    "revision": "c5da23be56526633d283d755ae43fdb9b854deaa",
+    "writes_performed": false
+  },
+  "failed_automated_checks": [],
+  "human_gates": {
+    "browser_or_assistant_write_approved": false,
+    "public_license_selected": false,
+    "real_claude_zip_access_approved": false,
+    "release_publication_approved": false
+  },
+  "known_unsupported_capabilities": [
+    "Consumer ChatGPT reconstruction writes",
+    "Destination inventory observation",
+    "Package-index publication",
+    "Browser automation",
+    "Claude or ChatGPT writes",
+    "Truncation or summarization",
+    "Destructive delete/overwrite"
+  ],
+  "latest_merged_commit": "773f8f122c6e8072041609d485415b9036615e08",
+  "package": {
+    "sdist_reproducible": true,
+    "sdist_sha256": "52b23da7d7f8d0f95416d11d61380da090541d51cd6563197e084fff8a9552bd",
+    "wheel_reproducible": true,
+    "wheel_sha256": "2c24b25fd1394d3f1232bb602c970abf9cbdb532d4301abaf396e723f8c3bd80"
+  },
+  "private_export_artifacts_tracked": false,
+  "private_runtime_dependency": false,
+  "production_dependencies": [],
+  "public_release_status": "blocked_human_decisions",
+  "publication_performed": false,
+  "readiness_report_sha256": "5165511ef55bf0894b45e44e813f2732415a3c44af53d46e5d170f009958aa53",
+  "readiness_version": "0.1",
+  "release_blockers": [
+    {
+      "id": "public_license",
+      "status": "DECISION_REQUIRED"
+    },
+    {
+      "id": "release_publication",
+      "status": "APPROVAL_REQUIRED"
+    }
+  ],
+  "schemas": {
+    "schemas": 10,
+    "status": "passed"
+  },
+  "session_fresh": true,
+  "synthetic_mvp_status": "ready",
+  "tests": {
+    "command": "python3 -m unittest discover -s context-port/tests -q",
+    "passed": 102,
+    "status": "passed"
+  },
+  "versions": {
+    "build_backend": "0.1.0",
+    "cli": "0.1.0",
+    "package": "0.1.0"
+  },
+  "versions_consistent": true,
+  "working_tree_clean_except_generated_reports": true
+}
