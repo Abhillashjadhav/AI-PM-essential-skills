@@ -15,6 +15,14 @@ python3 context-port/contextport.py capabilities
 
 Standard Python wheel and source-distribution metadata is available in `context-port/pyproject.toml`; see [packaging](docs/PACKAGING.md). No package has been published.
 
+Preview a new isolated local installation without writing:
+
+```sh
+python3 context-port/install.py ~/.local/contextport
+```
+
+Add `--install` only after reviewing the plan. The installer refuses existing targets; see [installer safety](docs/INSTALLER.md).
+
 ```sh
 python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
 ```
