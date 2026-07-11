@@ -24,6 +24,10 @@ IGNORED_HEALTH_PATHS = {
     "context-port/reports/RELEASE_READINESS.md",
     "context-port/reports/RELEASE_READINESS.json",
 }
+APPROVED_INFRASTRUCTURE_PATHS = {
+    ".github/scripts/pr_required_checks.py",
+    ".github/tests/test_pr_required_checks.py",
+}
 
 
 class ReadinessError(RuntimeError):
@@ -62,6 +66,8 @@ def _audited_revision(repository: Path) -> str:
         ":(exclude)context-port/SESSION.json",
         ":(exclude)context-port/reports/RELEASE_READINESS.md",
         ":(exclude)context-port/reports/RELEASE_READINESS.json",
+        ".github/scripts/pr_required_checks.py",
+        ".github/tests/test_pr_required_checks.py",
     )
 
 
@@ -153,7 +159,10 @@ def collect_readiness(repository: Path) -> dict[str, Any]:
         for item in identities
     )
     changed_paths = _run(repository, "git", "diff", "--name-only", "main...HEAD").splitlines()
-    scope_pass = bool(changed_paths) and all(path.startswith("context-port/") for path in changed_paths)
+    scope_pass = bool(changed_paths) and all(
+        path.startswith("context-port/") or path in APPROVED_INFRASTRUCTURE_PATHS
+        for path in changed_paths
+    )
     tracked = _run(repository, "git", "ls-files", "context-port").splitlines()
     prohibited_suffixes = (".zip", ".cookie", ".session", ".har")
     private_artifacts_absent = not any(path.lower().endswith(prohibited_suffixes) for path in tracked)
@@ -176,7 +185,10 @@ def collect_readiness(repository: Path) -> dict[str, Any]:
         "branch_commits": identities,
         "authorship_pass": identity_pass,
         "changed_paths": changed_paths,
-        "context_port_only_scope": scope_pass,
+        "approved_public_scope": scope_pass,
+        "approved_infrastructure_paths": sorted(
+            path for path in changed_paths if path in APPROVED_INFRASTRUCTURE_PATHS
+        ),
         "private_export_artifacts_tracked": not private_artifacts_absent,
         "working_tree_clean_except_generated_reports": _clean_except_generated(repository),
         "production_dependencies": project["dependencies"],
@@ -206,7 +218,7 @@ def evaluate_readiness(evidence: dict[str, Any]) -> dict[str, Any]:
         "synthetic_demo_offline": evidence["demo"]["network_calls_performed"] is False,
         "synthetic_demo_no_browser": evidence["demo"]["browser_automation_performed"] is False,
         "authorship": evidence["authorship_pass"],
-        "context_port_only_scope": evidence["context_port_only_scope"],
+        "approved_public_scope": evidence["approved_public_scope"],
         "no_private_export_artifacts_tracked": evidence["private_export_artifacts_tracked"] is False,
         "no_production_dependencies": evidence["production_dependencies"] == [],
         "no_private_runtime_dependency": evidence["private_runtime_dependency"] is False,

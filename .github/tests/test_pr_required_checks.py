@@ -27,6 +27,11 @@ class RequiredCheckTests(unittest.TestCase):
         )
         self.assertEqual(findings, [])
 
+    def test_privacy_check_allows_only_canonical_public_session_artifact(self):
+        self.assertEqual(checks.privacy_findings(["context-port/SESSION.json"], []), [])
+        findings = checks.privacy_findings(["context-port/nested/SESSION.json"], [])
+        self.assertEqual(findings, ["private filename: context-port/nested/SESSION.json"])
+
     def test_existing_skill_impact_uses_base_roots(self):
         roots = {"context-auditor", "plugins/example/skills/demo"}
         paths = ["context-auditor/SKILL.md", "context-port/README.md"]
