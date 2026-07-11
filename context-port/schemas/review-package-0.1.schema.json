@@ -1,0 +1,20 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:review-package:0.1",
+  "title": "ContextPort Review Package 0.1",
+  "type": "object",
+  "required": ["review_version", "status", "segregation_plan_sha256", "source_artifact_sha256", "selection", "groups", "disposition_counts", "required_confirmations", "message_text_emitted", "unknown_raw_payload_emitted", "review_package_sha256"],
+  "properties": {
+    "review_version": {"const": "0.1"},
+    "status": {"const": "awaiting_human_review"},
+    "segregation_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "selection": {"type": "object", "required": ["algorithm", "maximum_conversations_per_group", "all_groups_represented"]},
+    "groups": {"type": "array"},
+    "disposition_counts": {"type": "object"},
+    "required_confirmations": {"type": "array", "minItems": 5, "items": {"type": "string"}},
+    "message_text_emitted": {"const": false},
+    "unknown_raw_payload_emitted": {"const": false},
+    "review_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
