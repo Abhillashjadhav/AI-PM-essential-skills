@@ -8,6 +8,7 @@
 - [Privacy and safety](PRIVACY.md)
 - [CLI contract](CLI.md)
 - [Synthetic demonstration](DEMO.md)
+- [Generated session memory](SESSION.md)
 - [Packaging](PACKAGING.md) and [local installer](INSTALLER.md)
 
 ## Architecture and contracts

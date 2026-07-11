@@ -26,6 +26,7 @@ MODULES = (
     "reconstruction.py",
     "review.py",
     "segregation.py",
+    "session.py",
     "sync.py",
 )
 DATA_GLOBS = ("schemas/*.json", "docs/*.md")

@@ -63,6 +63,14 @@ Evaluation reports belong in `context-port/evals/`; other generated or reviewed 
 
 ## Draft pull request
 
+Before creating the PR, regenerate and commit canonical session memory:
+
+```sh
+python3 context-port/contextport.py handoff
+```
+
+After the PR exists, regenerate once more so `open_prs` reflects it, then update the branch and rerun checks. Never hand-edit `SESSION.md` or `SESSION.json`.
+
 - Push only the current feature branch.
 - Open one draft PR; never mark it ready, merge it, or publish a release without approval.
 - Complete every PR-template section. Use `None` only when supported by evidence.

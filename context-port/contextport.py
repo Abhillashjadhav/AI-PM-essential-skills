@@ -32,6 +32,7 @@ EXIT_CODES = {
     "reconciliation_differences": 5,
     "sync_conflict": 6,
     "destination_unsupported": 7,
+    "session_stale": 8,
 }
 
 
@@ -46,6 +47,7 @@ def capabilities() -> dict[str, Any]:
         "commands": [
             "capabilities",
             "chatgpt-adapt",
+            "handoff",
             "inspect",
             "reconcile-plan",
             "reconstruct-plan",
@@ -359,6 +361,9 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--version", action="version", version=f"ContextPort {CLI_VERSION}")
     subparsers = parser.add_subparsers(dest="command", required=True)
     subparsers.add_parser("capabilities", help="print deterministic machine-readable CLI capabilities")
+    handoff_parser = subparsers.add_parser("handoff", help="regenerate canonical SESSION.md and SESSION.json")
+    handoff_parser.add_argument("--repository", type=Path, default=Path.cwd())
+    handoff_parser.add_argument("--check", action="store_true", help="check freshness without writing")
     validate_parser = subparsers.add_parser("validate", help="validate one ContextPack JSON document")
     validate_parser.add_argument("path", type=Path)
     inspect_parser = subparsers.add_parser("inspect", help="inspect JSON structure locally without emitting values")
@@ -409,6 +414,19 @@ def main(argv: list[str] | None = None) -> int:
     arguments = parser.parse_args(argv)
     if arguments.command == "capabilities":
         print(json.dumps(capabilities(), indent=2, sort_keys=True))
+        return EXIT_CODES["success"]
+    if arguments.command == "handoff":
+        from session import SessionError, generate_session
+
+        try:
+            fresh, state = generate_session(arguments.repository, check=arguments.check)
+        except (SessionError, OSError, ValueError, RecursionError) as exc:
+            print(f"FAIL: {exc}", file=sys.stderr)
+            return EXIT_CODES["invalid_input"]
+        if arguments.check and not fresh:
+            print("STALE: regenerate with `contextport handoff`", file=sys.stderr)
+            return EXIT_CODES["session_stale"]
+        print(json.dumps({"status": "fresh" if arguments.check else "generated", "session": state}, indent=2, sort_keys=True))
         return EXIT_CODES["success"]
     if arguments.command == "validate":
         return _validate_file(arguments.path)
