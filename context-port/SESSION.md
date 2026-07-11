@@ -33,7 +33,7 @@
 
 ## Open PRs
 
-- None
+- [#23](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/23) — feat(context-port): add deterministic release readiness (`context-port/015-release-readiness`)
 
 ## Merged PRs
 

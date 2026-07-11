@@ -177,7 +177,16 @@
       "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/10"
     }
   ],
-  "open_prs": [],
+  "open_prs": [
+    {
+      "baseRefName": "main",
+      "headRefName": "context-port/015-release-readiness",
+      "isDraft": true,
+      "number": 23,
+      "title": "feat(context-port): add deterministic release readiness",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/23"
+    }
+  ],
   "real_claude_zip_gate": "Fresh explicit human approval is required before locating, listing, hashing, extracting, opening, inspecting, parsing, copying, or uploading a real Claude ZIP.",
   "remaining_phases": [
     {
