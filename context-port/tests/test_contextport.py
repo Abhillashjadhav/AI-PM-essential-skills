@@ -11,6 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 MODULE_PATH = ROOT / "contextport.py"
 VALID_FIXTURE = ROOT / "fixtures" / "contextpack-valid.json"
 INVALID_FIXTURE = ROOT / "fixtures" / "contextpack-invalid.json"
+INSPECTION_FIXTURE = ROOT / "fixtures" / "synthetic-claude-export-shape.json"
+SCHEMA = ROOT / "schemas" / "contextpack-0.1.schema.json"
 
 SPEC = importlib.util.spec_from_file_location("contextport", MODULE_PATH)
 contextport = importlib.util.module_from_spec(SPEC)
@@ -94,6 +96,53 @@ class ContextPackValidationTests(unittest.TestCase):
         self.assertIn("PASS", valid.stdout)
         self.assertEqual(invalid.returncode, 1)
         self.assertIn("6 error(s)", invalid.stdout)
+
+    def test_public_schema_is_json_and_matches_validator_version(self):
+        schema = json.loads(SCHEMA.read_text(encoding="utf-8"))
+        self.assertEqual(schema["properties"]["format_version"]["const"], contextport.FORMAT_VERSION)
+        self.assertEqual(schema["properties"]["format"]["const"], contextport.FORMAT)
+        conditions = schema["$defs"]["content_block"]["allOf"]
+        required_by_kind = {
+            condition["if"]["properties"]["kind"]["const"]: set(condition["then"]["required"])
+            for condition in conditions
+        }
+        self.assertEqual(required_by_kind["text"], {"text", "sha256"})
+        self.assertEqual(required_by_kind["attachment"], {"attachment_id"})
+        self.assertEqual(required_by_kind["unknown"], {"reason"})
+
+    def test_inspector_reports_shapes_without_scalar_values(self):
+        report = contextport.inspect_file(INSPECTION_FIXTURE, "synthetic")
+        encoded = json.dumps(report, sort_keys=True)
+        self.assertFalse(report["values_emitted"])
+        self.assertEqual(report["schema_interpretation"], "UNKNOWN")
+        self.assertIn("$/synthetic_projects/*/synthetic_conversations/*/synthetic_messages/*/synthetic_content", encoded)
+        self.assertNotIn("Fictional Observatory", encoded)
+        self.assertNotIn("This is fictional fixture text.", encoded)
+
+    def test_inspector_uses_unambiguous_escaped_paths(self):
+        report = contextport.inspect_structure({"field/with~markers": [1]})
+        paths = {observation["path"] for observation in report}
+        self.assertIn("$/field~1with~0markers", paths)
+        self.assertIn("$/field~1with~0markers/*", paths)
+
+    def test_inspector_cli_requires_explicit_classification(self):
+        result = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "inspect", str(INSPECTION_FIXTURE)],
+            check=False,
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("--classification", result.stderr)
+
+    def test_inspector_rejects_duplicate_json_keys(self):
+        duplicate_fixture = ROOT / "tests" / "duplicate-keys.tmp.json"
+        try:
+            duplicate_fixture.write_text('{"field": 1, "field": {}}', encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "duplicate JSON object key"):
+                contextport.inspect_file(duplicate_fixture, "synthetic")
+        finally:
+            duplicate_fixture.unlink(missing_ok=True)
 
 
 if __name__ == "__main__":

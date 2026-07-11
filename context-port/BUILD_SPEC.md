@@ -6,6 +6,8 @@ ContextPort is a human-supervised system for representing and reconciling conver
 
 ContextPort is a fully standalone public component. Its installation, runtime, tests, documentation, and verification evidence must be complete within `context-port/` and must not require access to private repositories, services, prompts, agents, or orchestration. External development reviews may inform changes, but only generic, redacted, non-proprietary artifacts that remain independently understandable may be committed here.
 
+ContextPort does not design or implement a general product-engineering operating system. Planning systems, private review layers, and future software-delivery agents are outside this project's architecture and roadmap.
+
 This bootstrap phase defines the product and verification contract only. It does not implement parsers, connectors, browser automation, account writes, or migration behavior.
 
 ## 2. Reliability vocabulary
@@ -52,7 +54,7 @@ Committed fixtures must be synthetic and must not claim compatibility with unver
 
 ## 5. ContextPack neutral format
 
-ContextPack is a planned, versioned, assistant-neutral package. Its concrete serialized schema is deferred until approved source inspection establishes real requirements.
+ContextPack is a versioned, assistant-neutral package. Version `0.1` defines an experimental public schema for synthetic development; it does not claim compatibility with a real assistant export. Source-specific schema requirements remain deferred until approved source inspection provides evidence.
 
 At minimum, the schema is expected to represent:
 

@@ -1,0 +1,147 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:contextpack:0.1",
+  "title": "ContextPack 0.1",
+  "type": "object",
+  "required": ["format", "format_version", "manifest", "projects", "conversations", "messages", "attachments", "transformations", "dispositions"],
+  "properties": {
+    "format": {"const": "contextpack"},
+    "format_version": {"const": "0.1"},
+    "manifest": {
+      "type": "object",
+      "required": ["generator", "generator_version", "created_at", "privacy", "source"],
+      "properties": {
+        "generator": {"type": "string", "minLength": 1},
+        "generator_version": {"type": "string", "minLength": 1},
+        "created_at": {"type": "string", "minLength": 1},
+        "privacy": {"enum": ["synthetic", "private"]},
+        "source": {
+          "type": "object",
+          "required": ["system", "artifact_ref", "artifact_sha256"],
+          "properties": {
+            "system": {"type": "string", "minLength": 1},
+            "artifact_ref": {"type": "string", "minLength": 1},
+            "artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+          }
+        }
+      }
+    },
+    "projects": {"type": "array", "items": {"$ref": "#/$defs/project"}},
+    "conversations": {"type": "array", "items": {"$ref": "#/$defs/conversation"}},
+    "messages": {"type": "array", "items": {"$ref": "#/$defs/message"}},
+    "attachments": {"type": "array", "items": {"$ref": "#/$defs/attachment"}},
+    "transformations": {"type": "array", "items": {"$ref": "#/$defs/transformation"}},
+    "dispositions": {"type": "array", "items": {"$ref": "#/$defs/disposition"}}
+  },
+  "$defs": {
+    "identity": {
+      "type": "object",
+      "required": ["id", "source_ref"],
+      "properties": {
+        "id": {"type": "string", "minLength": 1},
+        "source_ref": {"type": "string", "minLength": 1}
+      }
+    },
+    "project": {
+      "allOf": [
+        {"$ref": "#/$defs/identity"},
+        {"type": "object", "required": ["title"], "properties": {"title": {"type": "string"}}}
+      ]
+    },
+    "conversation": {
+      "allOf": [
+        {"$ref": "#/$defs/identity"},
+        {
+          "type": "object",
+          "required": ["project_id", "title", "ordinal"],
+          "properties": {
+            "project_id": {"type": ["string", "null"]},
+            "title": {"type": "string"},
+            "ordinal": {"type": "integer", "minimum": 0}
+          }
+        }
+      ]
+    },
+    "message": {
+      "allOf": [
+        {"$ref": "#/$defs/identity"},
+        {
+          "type": "object",
+          "required": ["conversation_id", "role", "ordinal", "content"],
+          "properties": {
+            "conversation_id": {"type": "string", "minLength": 1},
+            "role": {"enum": ["user", "assistant", "system", "tool", "unknown"]},
+            "ordinal": {"type": "integer", "minimum": 0},
+            "content": {"type": "array", "items": {"$ref": "#/$defs/content_block"}}
+          }
+        }
+      ]
+    },
+    "content_block": {
+      "type": "object",
+      "required": ["source_ref", "kind", "ordinal"],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 1},
+        "kind": {"enum": ["text", "attachment", "unknown"]},
+        "ordinal": {"type": "integer", "minimum": 0},
+        "text": {"type": "string"},
+        "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+        "attachment_id": {"type": "string", "minLength": 1},
+        "reason": {"type": "string", "minLength": 1},
+        "raw": true
+      },
+      "allOf": [
+        {
+          "if": {"properties": {"kind": {"const": "text"}}, "required": ["kind"]},
+          "then": {"required": ["text", "sha256"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "attachment"}}, "required": ["kind"]},
+          "then": {"required": ["attachment_id"]}
+        },
+        {
+          "if": {"properties": {"kind": {"const": "unknown"}}, "required": ["kind"]},
+          "then": {"required": ["reason"]}
+        }
+      ]
+    },
+    "attachment": {
+      "allOf": [
+        {"$ref": "#/$defs/identity"},
+        {
+          "type": "object",
+          "required": ["filename", "media_type", "payload_status"],
+          "properties": {
+            "filename": {"type": "string", "minLength": 1},
+            "media_type": {"type": "string", "minLength": 1},
+            "payload_status": {"enum": ["referenced", "unsupported"]}
+          }
+        }
+      ]
+    },
+    "transformation": {
+      "allOf": [
+        {"$ref": "#/$defs/identity"},
+        {
+          "type": "object",
+          "required": ["kind", "reason"],
+          "properties": {
+            "kind": {"type": "string", "minLength": 1},
+            "reason": {"type": "string", "minLength": 1}
+          }
+        }
+      ]
+    },
+    "disposition": {
+      "type": "object",
+      "required": ["source_ref", "item_type", "status"],
+      "properties": {
+        "source_ref": {"type": "string", "minLength": 1},
+        "item_type": {"enum": ["project", "conversation", "message", "content_block", "attachment"]},
+        "status": {"enum": ["copied", "transformed", "skipped", "failed", "ambiguous", "unsupported"]},
+        "reason": {"type": "string", "minLength": 1},
+        "transformation_id": {"type": "string", "minLength": 1}
+      }
+    }
+  }
+}

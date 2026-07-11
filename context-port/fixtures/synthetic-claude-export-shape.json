@@ -1,0 +1,28 @@
+{
+  "synthetic_export_version": "fixture-1",
+  "synthetic_projects": [
+    {
+      "synthetic_id": "project-001",
+      "synthetic_title": "Fictional Observatory",
+      "synthetic_conversations": [
+        {
+          "synthetic_id": "conversation-001",
+          "synthetic_title": "Invented Telescope Notes",
+          "synthetic_messages": [
+            {
+              "synthetic_role": "user",
+              "synthetic_content": "This is fictional fixture text."
+            },
+            {
+              "synthetic_role": "assistant",
+              "synthetic_content": [
+                {"synthetic_type": "text", "synthetic_text": "A fictional response."},
+                {"synthetic_type": "unsupported-widget", "synthetic_payload": null}
+              ]
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}
