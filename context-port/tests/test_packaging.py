@@ -5,6 +5,8 @@ import tempfile
 import tomllib
 import unittest
 import zipfile
+import subprocess
+import sys
 from pathlib import Path
 
 
@@ -41,15 +43,42 @@ class PackagingTests(unittest.TestCase):
                 self.assertIn("contextport_data/schemas/contextpack-0.1.schema.json", names)
                 self.assertIn(f"{backend.DIST_INFO}/entry_points.txt", names)
                 self.assertIn(f"{backend.DIST_INFO}/RECORD", names)
+                metadata = archive.read(f"{backend.DIST_INFO}/METADATA").decode()
+                self.assertIn(f"Summary: {backend.SUMMARY}\n", metadata)
+                self.assertIn(f"Author-email: {backend.AUTHOR_NAME} <{backend.AUTHOR_EMAIL}>\n", metadata)
+                self.assertIn(f"Project-URL: Repository, {backend.PROJECT_URL}\n", metadata)
+                self.assertIn("Description-Content-Type: text/markdown\n", metadata)
+                self.assertIn("# ContextPort", metadata)
 
     def test_sdist_contains_build_runtime_tests_and_docs(self):
-        with tempfile.TemporaryDirectory() as directory:
-            archive_path = Path(directory) / backend.build_sdist(directory)
+        with tempfile.TemporaryDirectory() as first_dir, tempfile.TemporaryDirectory() as second_dir:
+            archive_path = Path(first_dir) / backend.build_sdist(first_dir)
+            second = Path(second_dir) / backend.build_sdist(second_dir)
+            self.assertEqual(hashlib.sha256(archive_path.read_bytes()).digest(), hashlib.sha256(second.read_bytes()).digest())
             with tarfile.open(archive_path) as archive:
                 names = set(archive.getnames())
             prefix = f"contextport-{backend.VERSION}/"
-            for required in ("pyproject.toml", "contextport_build.py", "contextport.py", "tests/test_cli.py", "docs/CLI.md"):
+            for required in ("PKG-INFO", "pyproject.toml", "contextport_build.py", "contextport.py", "tests/test_cli.py", "docs/CLI.md"):
                 self.assertIn(prefix + required, names)
+
+    def test_wheel_installs_offline_and_console_entry_point_runs(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            wheel_dir = root / "wheel"
+            environment = root / "venv"
+            wheel_dir.mkdir()
+            wheel = wheel_dir / backend.build_wheel(wheel_dir)
+            subprocess.run([sys.executable, "-m", "venv", "--without-pip", str(environment)], check=True)
+            subprocess.run(
+                [sys.executable, "-m", "pip", "--python", str(environment), "install", "--no-deps", "--no-index", str(wheel)],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            executable = environment / "bin" / "contextport"
+            result = subprocess.run([str(executable), "--version"], check=False, capture_output=True, text=True)
+            self.assertEqual(result.returncode, 0)
+            self.assertEqual(result.stdout, "ContextPort 0.1.0\n")
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import csv
+import gzip
 import hashlib
 import io
 import tarfile
@@ -13,6 +14,10 @@ from pathlib import Path
 
 NAME = "contextport"
 VERSION = "0.1.0"
+SUMMARY = "Local-first, human-supervised conversational context portability"
+AUTHOR_NAME = "Abhillash Jadhav"
+AUTHOR_EMAIL = "abhilashjadhav@gmail.com"
+PROJECT_URL = "https://github.com/Abhillashjadhav/AI-PM-essential-skills/tree/main/context-port"
 DIST_INFO = f"{NAME}-{VERSION}.dist-info"
 MODULES = (
     "chatgpt_adapter.py",
@@ -32,14 +37,17 @@ def _root() -> Path:
 
 
 def _metadata() -> bytes:
+    readme = (_root() / "README.md").read_text(encoding="utf-8")
     return (
         "Metadata-Version: 2.2\n"
         f"Name: {NAME}\n"
         f"Version: {VERSION}\n"
-        "Summary: Local-first, human-supervised conversational context portability\n"
+        f"Summary: {SUMMARY}\n"
         "Requires-Python: >=3.11\n"
-        "Author-email: Abhillash Jadhav <abhilashjadhav@gmail.com>\n"
-        "\n"
+        f"Author-email: {AUTHOR_NAME} <{AUTHOR_EMAIL}>\n"
+        f"Project-URL: Repository, {PROJECT_URL}\n"
+        "Description-Content-Type: text/markdown\n"
+        "\n" + readme + "\n"
     ).encode()
 
 
@@ -107,12 +115,18 @@ def build_sdist(sdist_directory, config_settings=None) -> str:
     included = ["README.md", "pyproject.toml", "contextport_build.py", *MODULES]
     for pattern in (*DATA_GLOBS, "tests/*.py"):
         included.extend(path.relative_to(root).as_posix() for path in sorted(root.glob(pattern)))
-    with tarfile.open(Path(sdist_directory) / filename, "w:gz", format=tarfile.PAX_FORMAT) as archive:
-        for relative in sorted(set(included)):
-            content = (root / relative).read_bytes()
-            info = tarfile.TarInfo(f"{NAME}-{VERSION}/{relative}")
-            info.size = len(content)
-            info.mtime = 0
-            info.mode = 0o644
-            archive.addfile(info, io.BytesIO(content))
+    files = [(relative, (root / relative).read_bytes()) for relative in sorted(set(included))]
+    files.append(("PKG-INFO", _metadata()))
+    target = Path(sdist_directory) / filename
+    with target.open("wb") as raw:
+        with gzip.GzipFile(filename="", mode="wb", fileobj=raw, mtime=0, compresslevel=9) as compressed:
+            with tarfile.open(fileobj=compressed, mode="w", format=tarfile.PAX_FORMAT) as archive:
+                for relative, content in sorted(files):
+                    info = tarfile.TarInfo(f"{NAME}-{VERSION}/{relative}")
+                    info.size = len(content)
+                    info.mtime = 0
+                    info.mode = 0o644
+                    info.uid = info.gid = 0
+                    info.uname = info.gname = ""
+                    archive.addfile(info, io.BytesIO(content))
     return filename

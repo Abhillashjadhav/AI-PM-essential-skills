@@ -9,7 +9,7 @@ The wheel exposes:
 - versioned JSON schemas and public contract documentation under `contextport_data/`;
 - standard wheel metadata and integrity records.
 
-Wheel bytes are deterministic for an unchanged checkout. Build artifacts belong in a temporary or ignored `dist/` directory and are not release evidence until their hashes and installed behavior are independently verified.
+Wheel and source-distribution bytes are deterministic for an unchanged checkout. The source archive includes standard root `PKG-INFO`; wheel metadata includes the declared readme and repository URL. Build artifacts belong in a temporary or ignored `dist/` directory and are not release evidence until their hashes and installed behavior are independently verified.
 
 No package has been uploaded or published. The availability of the `contextport` name on any package index is `UNKNOWN` until the release approval phase.
 
