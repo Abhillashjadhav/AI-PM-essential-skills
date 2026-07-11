@@ -38,7 +38,16 @@
     "writes_performed": {"const": false},
     "network_calls_performed": {"const": false},
     "browser_automation_performed": {"const": false},
-    "summary": {"type": "object", "required": ["operations", "supported", "unsupported"]},
+    "summary": {
+      "type": "object",
+      "required": ["operations", "supported", "unsupported"],
+      "properties": {
+        "operations": {"type": "integer", "minimum": 0},
+        "supported": {"const": 0},
+        "unsupported": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
     "adapter_report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
   }
 }

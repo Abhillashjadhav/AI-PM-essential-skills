@@ -59,10 +59,42 @@ class ChatGPTAdapterTests(unittest.TestCase):
         with self.assertRaisesRegex(adapter.ChatGPTAdapterError, "approved"):
             adapter.build_chatgpt_adapter_report(plan)
 
+    def test_self_digested_incomplete_plan_is_rejected(self):
+        plan = {
+            "reconstruction_version": "0.1",
+            "status": "dry_run_ready",
+            "review_decision": "approve",
+            "writes_performed": False,
+        }
+        with self.assertRaisesRegex(adapter.ChatGPTAdapterError, "missing required"):
+            adapter.build_chatgpt_adapter_report(plan)
+
+    def test_non_object_operation_fails_cleanly_in_cli(self):
+        plan = copy.deepcopy(self.plan)
+        plan["operations"] = [7]
+        digest_input = {key: value for key, value in plan.items() if key != "reconstruction_plan_sha256"}
+        plan["reconstruction_plan_sha256"] = adapter.canonical_digest(digest_input)
+        import tempfile
+
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "bad-plan.json"
+            path.write_text(json.dumps(plan))
+            result = subprocess.run(
+                [sys.executable, str(ROOT / "contextport.py"), "chatgpt-adapt", str(path)],
+                check=False,
+                capture_output=True,
+                text=True,
+            )
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("every operation must be an object", result.stderr)
+
     def test_public_schema_matches_adapter_version(self):
         schema = json.loads((ROOT / "schemas" / "chatgpt-adapter-report-0.1.schema.json").read_text())
         self.assertEqual(schema["properties"]["adapter_version"]["const"], adapter.ADAPTER_VERSION)
         self.assertFalse(schema["properties"]["writes_performed"]["const"])
+        summary = schema["properties"]["summary"]
+        self.assertEqual(summary["properties"]["supported"]["const"], 0)
+        self.assertEqual(summary["properties"]["operations"]["minimum"], 0)
 
     def test_cli_emits_blocked_report_without_writes(self):
         result = subprocess.run(

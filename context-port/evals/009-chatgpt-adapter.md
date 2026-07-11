@@ -6,14 +6,14 @@ PASS
 
 ## Evidence
 
-- VERIFIED: 66 dependency-free unit tests passed on 2026-07-11.
-- VERIFIED: the adapter accepts only approved, digest-valid dry-run reconstruction plans.
+- VERIFIED: 68 dependency-free unit tests passed on 2026-07-11.
+- VERIFIED: the adapter accepts only structurally complete, approval-declaring, digest-valid dry-run reconstruction plans.
 - VERIFIED: every input operation is retained and classified `UNSUPPORTED`; none is discarded.
 - VERIFIED: output is deterministic and reports zero writes, network calls, and browser automation.
 - VERIFIED: API Platform projects are explicitly not treated as consumer ChatGPT Projects.
 - VERIFIED: the CLI returns a distinct `7` status for a successful but unsupported capability assessment.
 - VERIFIED: all fixtures are synthetic and no API credential is required.
-- UNSUPPORTED: no public consumer ChatGPT API for reconstructing Projects, chats, or historical messages was verified.
+- UNSUPPORTED: a bounded review of the cited public documentation did not verify a consumer ChatGPT API for reconstructing Projects, chats, or historical messages.
 - UNKNOWN: future availability of a public reconstruction API.
 
 ## Commands
