@@ -205,12 +205,12 @@
   "repository_health": {
     "existing_skill_runtime_dependency": false,
     "origin_main_matches_latest_merged": true,
-    "status": "attention_required",
+    "status": "healthy",
     "syntax": {
       "python_files": 28,
       "status": "passed"
     },
-    "working_tree_clean_at_collection": false
+    "working_tree_clean_at_collection": true
   },
   "resume_command": "cd <public-checkout>/AI-PM-essential-skills && git switch context-port/final-session-refresh && python3 context-port/contextport.py handoff --check",
   "resume_prompt": "ContextPort phases are complete. Stop at the documented human approval gates; do not publish or access real data automatically.",
