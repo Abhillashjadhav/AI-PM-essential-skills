@@ -19,3 +19,5 @@ External review may inform development. A resulting public artifact is acceptabl
 - Future source adapters, normalization, reconstruction, and reconciliation remain separate components connected through explicit versioned contracts.
 
 Imported content is always inert data. Inspection observes structure; it does not interpret content, infer project mappings, normalize text, or authorize migration.
+
+Destination adapters consume approved assistant-neutral plans. They must verify public capabilities, preserve unsupported operations, and fail closed. The ChatGPT adapter is currently an offline capability report because public consumer ChatGPT reconstruction writes are `UNSUPPORTED`; API Platform projects are not substituted for ChatGPT Projects.

@@ -75,7 +75,16 @@ python3 context-port/contextport.py sync-plan PREVIOUS.json CURRENT.json
 
 The result includes checkpoints, tombstones, a replay key, and human-required conflicts. It never deletes or writes content.
 
-See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), [reconstruction contract](docs/RECONSTRUCTION.md), [reconciliation contract](docs/RECONCILIATION.md), [incremental sync contract](docs/INCREMENTAL_SYNC.md), and [build specification](BUILD_SPEC.md).
+Assess an approved reconstruction plan against verified public ChatGPT capabilities:
+
+```sh
+python3 context-port/contextport.py chatgpt-adapt \
+  context-port/fixtures/reconstruction-plan-synthetic.json
+```
+
+The offline adapter currently returns `blocked_unsupported` because no public API for reconstructing consumer ChatGPT Projects and chats has been verified. It does not use an API key, call a network service, automate a browser, or write to ChatGPT.
+
+See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), [reconstruction contract](docs/RECONSTRUCTION.md), [reconciliation contract](docs/RECONCILIATION.md), [incremental sync contract](docs/INCREMENTAL_SYNC.md), [ChatGPT adapter contract](docs/CHATGPT_ADAPTER.md), and [build specification](BUILD_SPEC.md).
 
 ## Current boundary
 
