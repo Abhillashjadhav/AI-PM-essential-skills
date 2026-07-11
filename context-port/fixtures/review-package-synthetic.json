@@ -1,0 +1,41 @@
+{
+  "disposition_counts": {"copied": 11},
+  "groups": [
+    {
+      "conversation_count": 1,
+      "destination_container_id": "destination-a",
+      "group_kind": "project",
+      "mapping_status": "mapped",
+      "project_id": "project-a",
+      "samples": [{"attachment_references": 0, "content_kind_counts": {"unknown": 1}, "conversation_id": "conversation-a", "message_count": 1, "ordinal": 0, "role_sequence": ["user"], "title": "Same Conversation Title"}],
+      "title": "Duplicate Synthetic Title"
+    },
+    {
+      "conversation_count": 1,
+      "destination_container_id": "destination-b",
+      "group_kind": "project",
+      "mapping_status": "mapped",
+      "project_id": "project-b",
+      "samples": [{"attachment_references": 0, "content_kind_counts": {"unknown": 1}, "conversation_id": "conversation-b", "message_count": 1, "ordinal": 0, "role_sequence": ["assistant"], "title": "Same Conversation Title"}],
+      "title": "Duplicate Synthetic Title"
+    },
+    {
+      "conversation_count": 1,
+      "destination_container_id": null,
+      "group_kind": "ungrouped",
+      "mapping_status": "not_applicable",
+      "project_id": null,
+      "samples": [{"attachment_references": 0, "content_kind_counts": {"unknown": 1}, "conversation_id": "conversation-u", "message_count": 1, "ordinal": 0, "role_sequence": ["user"], "title": "Ungrouped Synthetic Conversation"}],
+      "title": null
+    }
+  ],
+  "message_text_emitted": false,
+  "required_confirmations": ["project_boundaries", "conversation_titles_and_order", "roles_and_content_kinds", "attachment_and_unsupported_dispositions", "destination_mappings_and_transformations"],
+  "review_package_sha256": "19585cbb29e210da6eb0eaf8e7bbec467d8f4b9ae7bf9e2a9fe3d6652cab93cb",
+  "review_version": "0.1",
+  "segregation_plan_sha256": "5561ccdec52ab9bad51cc14b96289a0ee65ae6ac9749fdc9bd23e073b4a44825",
+  "selection": {"algorithm": "first-and-last-per-group-v1", "all_groups_represented": true, "maximum_conversations_per_group": 2},
+  "source_artifact_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "status": "awaiting_human_review",
+  "unknown_raw_payload_emitted": false
+}

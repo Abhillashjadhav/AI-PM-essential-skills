@@ -1,0 +1,13 @@
+{
+  "decision_version": "0.1",
+  "review_package_sha256": "19585cbb29e210da6eb0eaf8e7bbec467d8f4b9ae7bf9e2a9fe3d6652cab93cb",
+  "decision": "reject",
+  "confirmations": {
+    "project_boundaries": false,
+    "conversation_titles_and_order": true,
+    "roles_and_content_kinds": true,
+    "attachment_and_unsupported_dispositions": true,
+    "destination_mappings_and_transformations": false
+  },
+  "note": "Synthetic rejection fixture."
+}
