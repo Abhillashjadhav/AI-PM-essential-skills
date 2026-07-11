@@ -6,6 +6,13 @@ ContextPort is a standalone, human-supervised system for representing and reconc
 
 Requirements: Python 3 and a checkout of this repository. There are no production dependencies.
 
+Discover the stable CLI surface:
+
+```sh
+python3 context-port/contextport.py --version
+python3 context-port/contextport.py capabilities
+```
+
 ```sh
 python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
 ```
@@ -84,7 +91,7 @@ python3 context-port/contextport.py chatgpt-adapt \
 
 The offline adapter currently returns `blocked_unsupported` because no public API for reconstructing consumer ChatGPT Projects and chats has been verified. It does not use an API key, call a network service, automate a browser, or write to ChatGPT.
 
-See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), [reconstruction contract](docs/RECONSTRUCTION.md), [reconciliation contract](docs/RECONCILIATION.md), [incremental sync contract](docs/INCREMENTAL_SYNC.md), [ChatGPT adapter contract](docs/CHATGPT_ADAPTER.md), and [build specification](BUILD_SPEC.md).
+See [the CLI contract](docs/CLI.md), [ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), [reconstruction contract](docs/RECONSTRUCTION.md), [reconciliation contract](docs/RECONCILIATION.md), [incremental sync contract](docs/INCREMENTAL_SYNC.md), [ChatGPT adapter contract](docs/CHATGPT_ADAPTER.md), and [build specification](BUILD_SPEC.md).
 
 ## Current boundary
 
