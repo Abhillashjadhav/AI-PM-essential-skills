@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:reconciliation-report:0.1",
+  "title": "ContextPort Reconciliation Report 0.1",
+  "type": "object",
+  "required": ["reconciliation_version", "status", "source_artifact_sha256", "reconstruction_plan_sha256", "writer_status_flags_used", "differences", "difference_counts", "summary", "reconciliation_report_sha256"],
+  "properties": {
+    "reconciliation_version": {"const": "0.1"},
+    "status": {"enum": ["clean", "failed"]},
+    "source_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "reconstruction_plan_sha256": {"type": "string"},
+    "writer_status_flags_used": {"const": false},
+    "differences": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["category", "item_type", "source_id", "detail"],
+        "properties": {
+          "category": {"enum": ["integrity_failure", "omission", "extra", "duplicate", "content_difference", "ordering_difference", "unverifiable"]},
+          "item_type": {"type": "string"},
+          "source_id": {"type": "string"},
+          "detail": {"type": "string"}
+        }
+      }
+    },
+    "difference_counts": {"type": "object"},
+    "summary": {"type": "object"},
+    "reconciliation_report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
