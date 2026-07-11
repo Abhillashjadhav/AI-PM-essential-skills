@@ -336,6 +336,18 @@ def main(argv: list[str] | None = None) -> int:
     )
     segregate_parser.add_argument("path", type=Path, help="validated ContextPack JSON document")
     segregate_parser.add_argument("--mappings", type=Path, help="optional project mapping JSON document")
+    review_package_parser = subparsers.add_parser(
+        "review-package", help="build a deterministic metadata-only human review package"
+    )
+    review_package_parser.add_argument("path", type=Path, help="validated ContextPack JSON document")
+    review_package_parser.add_argument("--mappings", type=Path, help="optional project mapping JSON document")
+    review_html_parser = subparsers.add_parser("review-html", help="render a review package as standalone HTML")
+    review_html_parser.add_argument("path", type=Path, help="review package JSON document")
+    review_decision_parser = subparsers.add_parser(
+        "review-decision", help="validate a human decision against a review package"
+    )
+    review_decision_parser.add_argument("package", type=Path, help="review package JSON document")
+    review_decision_parser.add_argument("decision", type=Path, help="human decision JSON document")
     arguments = parser.parse_args(argv)
     if arguments.command == "validate":
         return _validate_file(arguments.path)
@@ -368,6 +380,52 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
         return 3 if result["status"] == "decision_required" else 0
+    if arguments.command == "review-package":
+        from review import ReviewError, build_review_package
+        from segregation import SegregationError, segregate
+
+        try:
+            document = json.loads(
+                arguments.path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys
+            )
+            mappings = (
+                json.loads(arguments.mappings.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+                if arguments.mappings
+                else None
+            )
+            plan = segregate(document, mappings, validator=validate)
+            if plan["status"] != "ready":
+                print(json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True))
+                return 3
+            package = build_review_package(document, plan)
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.path}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(package, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
+    if arguments.command == "review-html":
+        from review import render_review_html
+
+        try:
+            package = json.loads(arguments.path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+            rendered = render_review_html(package)
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.path}: {exc}", file=sys.stderr)
+            return 2
+        print(rendered)
+        return 0
+    if arguments.command == "review-decision":
+        from review import validate_decision
+
+        try:
+            package = json.loads(arguments.package.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+            decision = json.loads(arguments.decision.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+            validated = validate_decision(package, decision)
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.decision}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(validated, ensure_ascii=False, indent=2, sort_keys=True))
+        return 4 if validated["decision"] == "reject" else 0
     return 2
 
 
