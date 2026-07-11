@@ -348,6 +348,13 @@ def main(argv: list[str] | None = None) -> int:
     )
     review_decision_parser.add_argument("package", type=Path, help="review package JSON document")
     review_decision_parser.add_argument("decision", type=Path, help="human decision JSON document")
+    reconstruct_parser = subparsers.add_parser(
+        "reconstruct-plan", help="build an approved assistant-neutral dry-run reconstruction plan"
+    )
+    reconstruct_parser.add_argument("path", type=Path, help="validated ContextPack JSON document")
+    reconstruct_parser.add_argument("--mappings", type=Path, required=True)
+    reconstruct_parser.add_argument("--review-package", type=Path, required=True)
+    reconstruct_parser.add_argument("--decision", type=Path, required=True)
     arguments = parser.parse_args(argv)
     if arguments.command == "validate":
         return _validate_file(arguments.path)
@@ -426,6 +433,30 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(validated, ensure_ascii=False, indent=2, sort_keys=True))
         return 4 if validated["decision"] == "reject" else 0
+    if arguments.command == "reconstruct-plan":
+        from reconstruction import build_reconstruction_plan
+        from review import build_review_package
+        from segregation import segregate
+
+        try:
+            load = lambda path: json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+            document = load(arguments.path)
+            mappings = load(arguments.mappings)
+            supplied_package = load(arguments.review_package)
+            decision = load(arguments.decision)
+            segregation_plan = segregate(document, mappings, validator=validate)
+            if segregation_plan["status"] != "ready":
+                print(json.dumps(segregation_plan, ensure_ascii=False, indent=2, sort_keys=True))
+                return 3
+            expected_package = build_review_package(document, segregation_plan)
+            if supplied_package != expected_package:
+                raise ValueError("supplied review package does not exactly match approved inputs")
+            plan = build_reconstruction_plan(document, segregation_plan, supplied_package, decision)
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.path}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0
     return 2
 
 

@@ -47,7 +47,19 @@ python3 context-port/contextport.py review-html \
 
 Both commands write to stdout. ContextPort does not launch a browser or overwrite a file.
 
-See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), and [build specification](BUILD_SPEC.md).
+Build an approved assistant-neutral dry-run reconstruction plan:
+
+```sh
+python3 context-port/contextport.py reconstruct-plan \
+  context-port/fixtures/segregation-contextpack.json \
+  --mappings context-port/fixtures/project-mappings-valid.json \
+  --review-package context-port/fixtures/review-package-synthetic.json \
+  --decision context-port/fixtures/review-decision-approved.json
+```
+
+The command performs no destination write. It fails if the review package, approval, segregation plan, or source digest does not match.
+
+See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), [reconstruction contract](docs/RECONSTRUCTION.md), and [build specification](BUILD_SPEC.md).
 
 ## Current boundary
 
