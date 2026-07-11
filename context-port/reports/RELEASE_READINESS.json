@@ -1,5 +1,5 @@
 {
-  "audited_revision": "c5da23be56526633d283d755ae43fdb9b854deaa",
+  "audited_revision": "4ba9a0e377e3cf0117dd58b51c2079d004cdbb39",
   "authorship_pass": true,
   "automated_checks": {
     "authorship": true,
@@ -19,6 +19,20 @@
     "wheel_reproducible": true
   },
   "branch_commits": [
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "4ba9a0e377e3cf0117dd58b51c2079d004cdbb39",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
+    {
+      "author": "Abhillash Jadhav",
+      "author_email": "abhilashjadhav@gmail.com",
+      "commit": "945fdf43447fc174d6a4febc8a75938ff750848f",
+      "committer": "Abhillash Jadhav",
+      "committer_email": "abhilashjadhav@gmail.com"
+    },
     {
       "author": "Abhillash Jadhav",
       "author_email": "abhilashjadhav@gmail.com",
@@ -105,6 +119,8 @@
     "context-port/evals/015-release-readiness.md",
     "context-port/prompts/015-release-readiness.md",
     "context-port/readiness.py",
+    "context-port/reports/RELEASE_READINESS.json",
+    "context-port/reports/RELEASE_READINESS.md",
     "context-port/schemas/release-readiness-0.1.schema.json",
     "context-port/schemas/session-0.1.schema.json",
     "context-port/session.py",
@@ -124,8 +140,6 @@
     "destination_status": "UNSUPPORTED",
     "network_calls_performed": false,
     "reconciliation_differences": 0,
-    "report_sha256": "6e2757e2fe5248e12ba1aadc0785bcd36934fd7cfa0d0c4e79e857a965996809",
-    "revision": "c5da23be56526633d283d755ae43fdb9b854deaa",
     "writes_performed": false
   },
   "failed_automated_checks": [],
@@ -147,16 +161,16 @@
   "latest_merged_commit": "773f8f122c6e8072041609d485415b9036615e08",
   "package": {
     "sdist_reproducible": true,
-    "sdist_sha256": "52b23da7d7f8d0f95416d11d61380da090541d51cd6563197e084fff8a9552bd",
+    "sdist_sha256": "f34d7f21e0c5741631720b61fa4ca8aa9cc53cd93f53734ff7edd457c33ffabb",
     "wheel_reproducible": true,
-    "wheel_sha256": "2c24b25fd1394d3f1232bb602c970abf9cbdb532d4301abaf396e723f8c3bd80"
+    "wheel_sha256": "4bc59c90887e8467690e19a6a66ef2c9e428f8e102e2492a7e4cbd3d4e570e32"
   },
   "private_export_artifacts_tracked": false,
   "private_runtime_dependency": false,
   "production_dependencies": [],
   "public_release_status": "blocked_human_decisions",
   "publication_performed": false,
-  "readiness_report_sha256": "5165511ef55bf0894b45e44e813f2732415a3c44af53d46e5d170f009958aa53",
+  "readiness_report_sha256": "434a5163cfde878f80534242fc1245962dec46ccc5a9ebed4ddeec7166add494",
   "readiness_version": "0.1",
   "release_blockers": [
     {
@@ -176,7 +190,7 @@
   "synthetic_mvp_status": "ready",
   "tests": {
     "command": "python3 -m unittest discover -s context-port/tests -q",
-    "passed": 102,
+    "passed": 103,
     "status": "passed"
   },
   "versions": {
