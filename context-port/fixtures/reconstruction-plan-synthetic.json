@@ -1,0 +1,22 @@
+{
+  "reconstruction_version": "0.1",
+  "status": "dry_run_ready",
+  "source_artifact_sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+  "segregation_plan_sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb",
+  "review_package_sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc",
+  "review_decision": "approve",
+  "operations": [
+    {
+      "operation_id": "container:synthetic-project",
+      "kind": "ensure_container",
+      "idempotency_key": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd",
+      "depends_on": [],
+      "target": {"container_ref": "synthetic-target"},
+      "payload": {"source_project_id": "synthetic-project", "title": "Synthetic Project"}
+    }
+  ],
+  "dispositions": [],
+  "writes_performed": false,
+  "summary": {"operations": 1, "containers": 1, "conversations": 0, "messages": 0},
+  "reconstruction_plan_sha256": "6985c64aede1c9cff5c6b92cb95e4d2d666ccce89e8196547c02d318d288706e"
+}
