@@ -47,6 +47,7 @@ def capabilities() -> dict[str, Any]:
         "commands": [
             "capabilities",
             "chatgpt-adapt",
+            "claude-convert",
             "handoff",
             "inspect",
             "reconcile-plan",
@@ -415,6 +416,11 @@ def main(argv: list[str] | None = None) -> int:
         "chatgpt-adapt", help="assess a reconstruction plan against verified public ChatGPT capabilities"
     )
     chatgpt_parser.add_argument("plan", type=Path)
+    claude_parser = subparsers.add_parser(
+        "claude-convert", help="convert an approved local Claude export without inference"
+    )
+    claude_parser.add_argument("export", type=Path)
+    claude_parser.add_argument("output", type=Path)
     arguments = parser.parse_args(argv)
     if arguments.command == "capabilities":
         print(json.dumps(capabilities(), indent=2, sort_keys=True))
@@ -583,6 +589,16 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
         return 7 if report["status"] == "blocked_unsupported" else 0
+    if arguments.command == "claude-convert":
+        from claude_converter import ClaudeConversionError, write_migration
+
+        try:
+            digests = write_migration(arguments.export, arguments.output)
+        except (ClaudeConversionError, OSError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.export}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps({"status": "converted", "files": digests}, indent=2, sort_keys=True))
+        return 0
     return 2
 
 
