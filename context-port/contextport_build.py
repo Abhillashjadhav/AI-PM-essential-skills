@@ -24,6 +24,7 @@ MODULES = (
     "contextport.py",
     "reconciliation.py",
     "reconstruction.py",
+    "readiness.py",
     "review.py",
     "segregation.py",
     "session.py",
