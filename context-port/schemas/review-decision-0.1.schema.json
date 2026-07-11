@@ -1,0 +1,24 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:review-decision:0.1",
+  "title": "ContextPort Review Decision 0.1",
+  "type": "object",
+  "required": ["decision_version", "review_package_sha256", "decision", "confirmations"],
+  "properties": {
+    "decision_version": {"const": "0.1"},
+    "review_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "decision": {"enum": ["approve", "reject"]},
+    "confirmations": {
+      "type": "object",
+      "required": ["project_boundaries", "conversation_titles_and_order", "roles_and_content_kinds", "attachment_and_unsupported_dispositions", "destination_mappings_and_transformations"],
+      "properties": {
+        "project_boundaries": {"type": "boolean"},
+        "conversation_titles_and_order": {"type": "boolean"},
+        "roles_and_content_kinds": {"type": "boolean"},
+        "attachment_and_unsupported_dispositions": {"type": "boolean"},
+        "destination_mappings_and_transformations": {"type": "boolean"}
+      }
+    },
+    "note": {"type": "string"}
+  }
+}

@@ -34,7 +34,20 @@ python3 context-port/contextport.py segregate \
 
 The plan preserves stable project and conversation boundaries without emitting message content. Ambiguous mappings return `decision_required` and a distinct nonzero exit status.
 
-See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), and [build specification](BUILD_SPEC.md).
+Build a metadata-only review package and render its offline HTML form:
+
+```sh
+python3 context-port/contextport.py review-package \
+  context-port/fixtures/segregation-contextpack.json \
+  --mappings context-port/fixtures/project-mappings-valid.json
+
+python3 context-port/contextport.py review-html \
+  context-port/fixtures/review-package-synthetic.json
+```
+
+Both commands write to stdout. ContextPort does not launch a browser or overwrite a file.
+
+See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), and [build specification](BUILD_SPEC.md).
 
 ## Current boundary
 
