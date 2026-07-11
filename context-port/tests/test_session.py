@@ -75,6 +75,16 @@ class SessionArtifactTests(unittest.TestCase):
             self.assertEqual(first_json, (repository / "context-port" / "SESSION.json").read_text())
             self.assertEqual(first_markdown, (repository / "context-port" / "SESSION.md").read_text())
 
+    def test_tracked_generated_artifact_as_first_porcelain_entry_is_ignored(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = self.make_repository(directory)
+            observation = {"status": "passed", "passed": 1, "command": "synthetic"}
+            session.generate_session(repository, open_prs=[], test_result=observation)
+            subprocess.run(["git", "add", "context-port/SESSION.json", "context-port/SESSION.md"], cwd=repository, check=True)
+            subprocess.run(["git", "commit", "-m", "docs: add session"], cwd=repository, check=True, capture_output=True)
+            (repository / "context-port" / "SESSION.json").write_text("{}\n")
+            self.assertTrue(session._worktree_clean(repository))
+
     def test_repository_branch_and_main_changes_update_session(self):
         with tempfile.TemporaryDirectory() as directory:
             repository = self.make_repository(directory)

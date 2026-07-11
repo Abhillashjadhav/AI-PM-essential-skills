@@ -6,7 +6,7 @@
 - Current phase: No active phase
 - Current branch: `context-port/final-session-refresh`
 - Latest merged commit: `0acce40a7b56549eb57cfe3ed7bd552942a7ed61`
-- Tests passed: 106
+- Tests passed: 107
 - Line coverage: `UNKNOWN` — No coverage instrumentation dependency is configured.
 - Repository health: `attention_required`
 
@@ -34,7 +34,7 @@
 
 ## Open PRs
 
-- None
+- [#25](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/25) — docs(context-port): refresh session after converter merge (`context-port/final-session-refresh`)
 
 ## Merged PRs
 
@@ -62,7 +62,7 @@
 
 ## Repository health
 
-- Tests: `passed` (106)
+- Tests: `passed` (107)
 - Syntax: `passed` (28 Python files)
 - Working tree clean at collection: `false`
 - `origin/main` matches latest merged commit: `true`

@@ -190,7 +190,16 @@
       "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/10"
     }
   ],
-  "open_prs": [],
+  "open_prs": [
+    {
+      "baseRefName": "main",
+      "headRefName": "context-port/final-session-refresh",
+      "isDraft": false,
+      "number": 25,
+      "title": "docs(context-port): refresh session after converter merge",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/25"
+    }
+  ],
   "real_claude_zip_gate": "Fresh explicit human approval is required before locating, listing, hashing, extracting, opening, inspecting, parsing, copying, or uploading a real Claude ZIP.",
   "remaining_phases": [],
   "repository_health": {
@@ -208,7 +217,7 @@
   "session_version": "0.1",
   "tests": {
     "command": "python3 -m unittest discover -s context-port/tests -q",
-    "passed": 106,
+    "passed": 107,
     "status": "passed"
   }
 }
