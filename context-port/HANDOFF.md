@@ -20,7 +20,7 @@ Do not revisit or rewrite Phase 2, Phase 3, old restacks, rebases, or safety bra
 ```text
 Resume ContextPort from context-port/STATE.md and context-port/HANDOFF.md.
 
-Verify main and PR #21 first. Do not touch historical Phase 2/3 branches.
+Verify main and confirm PR #22 is merged first. Do not touch historical Phase 2/3 branches.
 Start Phase 15 only: perform a requirement-by-requirement release-readiness audit over the public standalone product. Verify tests, schemas, packaging/install artifacts, synthetic demo, docs, privacy gates, authorship, and clean public scope. Produce a saved prompt, auditable readiness report, tests/evaluation, and one independently reviewed PR. Do not select a license, publish a release, access a real export, automate a browser, or write to an assistant. Stop with explicit human decisions for licensing, publication, real Claude ZIP access, and any browser/assistant write.
 ```
 
