@@ -57,6 +57,20 @@ class SessionArtifactTests(unittest.TestCase):
             self.assertEqual(session.render_json(first), session.render_json(second))
             self.assertEqual(session.render_markdown(first), session.render_markdown(second))
 
+    def test_generated_artifacts_are_fresh_on_repeated_run(self):
+        with tempfile.TemporaryDirectory() as directory:
+            repository = self.make_repository(directory)
+            observation = {"status": "passed", "passed": 1, "command": "synthetic"}
+            session.generate_session(repository, open_prs=[], test_result=observation)
+            first_json = (repository / "context-port" / "SESSION.json").read_text()
+            first_markdown = (repository / "context-port" / "SESSION.md").read_text()
+            fresh, _ = session.generate_session(
+                repository, check=True, open_prs=[], test_result=observation
+            )
+            self.assertTrue(fresh)
+            self.assertEqual(first_json, (repository / "context-port" / "SESSION.json").read_text())
+            self.assertEqual(first_markdown, (repository / "context-port" / "SESSION.md").read_text())
+
     def test_repository_branch_and_main_changes_update_session(self):
         with tempfile.TemporaryDirectory() as directory:
             repository = self.make_repository(directory)

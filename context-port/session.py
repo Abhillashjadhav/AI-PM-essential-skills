@@ -187,7 +187,7 @@ def collect_session(
     remaining = [{"number": number, "name": PHASES[number]} for number in sorted(set(PHASES) - completed_numbers)]
     tests = test_result or _tests(repository)
     syntax = _syntax(context_port)
-    worktree_clean = _run(repository, "git", "status", "--porcelain") == ""
+    worktree_clean = _worktree_clean(repository)
     origin_main = _run(repository, "git", "rev-parse", "origin/main") if _has_ref(repository, "origin/main") else None
     license_present = any((repository / name).is_file() for name in ("LICENSE", "LICENSE.md", "LICENSE.txt"))
     blockers = []
@@ -230,6 +230,17 @@ def collect_session(
 def _has_ref(repository: Path, ref: str) -> bool:
     result = subprocess.run(["git", "show-ref", "--verify", "--quiet", f"refs/remotes/{ref}"], cwd=repository)
     return result.returncode == 0
+
+
+def _worktree_clean(repository: Path) -> bool:
+    generated = {"context-port/SESSION.md", "context-port/SESSION.json"}
+    for line in _run(repository, "git", "status", "--porcelain", "--untracked-files=all").splitlines():
+        path = line[3:]
+        if " -> " in path:
+            return False
+        if path not in generated:
+            return False
+    return True
 
 
 def _resume_prompt(current_phase: dict[str, Any] | None, remaining: list[dict[str, Any]]) -> str:
@@ -310,8 +321,14 @@ def _pr_lines(records: list[dict[str, Any]]) -> list[str]:
     return [f"- [#{item['number']}]({item['url']}) — {item['title']} (`{item['headRefName']}`)" for item in records]
 
 
-def generate_session(repository: Path, *, check: bool = False) -> tuple[bool, dict[str, Any]]:
-    state = collect_session(repository)
+def generate_session(
+    repository: Path,
+    *,
+    check: bool = False,
+    open_prs: list[dict[str, Any]] | None = None,
+    test_result: dict[str, Any] | None = None,
+) -> tuple[bool, dict[str, Any]]:
+    state = collect_session(repository, open_prs=open_prs, test_result=test_result)
     outputs = {
         repository / "context-port" / "SESSION.json": render_json(state),
         repository / "context-port" / "SESSION.md": render_markdown(state),
