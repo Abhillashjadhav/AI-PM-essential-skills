@@ -355,6 +355,11 @@ def main(argv: list[str] | None = None) -> int:
     reconstruct_parser.add_argument("--mappings", type=Path, required=True)
     reconstruct_parser.add_argument("--review-package", type=Path, required=True)
     reconstruct_parser.add_argument("--decision", type=Path, required=True)
+    reconcile_parser = subparsers.add_parser(
+        "reconcile-plan", help="independently compare a ContextPack with a reconstruction plan"
+    )
+    reconcile_parser.add_argument("source", type=Path)
+    reconcile_parser.add_argument("plan", type=Path)
     arguments = parser.parse_args(argv)
     if arguments.command == "validate":
         return _validate_file(arguments.path)
@@ -457,6 +462,17 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True))
         return 0
+    if arguments.command == "reconcile-plan":
+        from reconciliation import reconcile
+
+        try:
+            load = lambda path: json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+            report = reconcile(load(arguments.source), load(arguments.plan))
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.plan}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+        return 0 if report["status"] == "clean" else 5
     return 2
 
 
