@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:reconstruction-plan:0.1",
+  "title": "ContextPort Reconstruction Plan 0.1",
+  "type": "object",
+  "required": ["reconstruction_version", "status", "source_artifact_sha256", "segregation_plan_sha256", "review_package_sha256", "review_decision", "operations", "dispositions", "writes_performed", "summary", "reconstruction_plan_sha256"],
+  "properties": {
+    "reconstruction_version": {"const": "0.1"},
+    "status": {"const": "dry_run_ready"},
+    "source_artifact_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "segregation_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_package_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "review_decision": {"const": "approve"},
+    "operations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operation_id", "kind", "idempotency_key", "depends_on", "target", "payload"],
+        "properties": {
+          "operation_id": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["ensure_container", "ensure_conversation", "append_message"]},
+          "idempotency_key": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+          "depends_on": {"type": "array", "items": {"type": "string"}},
+          "target": {"type": "object"},
+          "payload": {"type": "object"}
+        }
+      }
+    },
+    "dispositions": {"type": "array"},
+    "writes_performed": {"const": false},
+    "summary": {"type": "object", "required": ["operations", "containers", "conversations", "messages"]},
+    "reconstruction_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
