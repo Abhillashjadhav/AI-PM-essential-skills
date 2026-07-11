@@ -35,7 +35,7 @@ class PublicCLITests(unittest.TestCase):
         self.assertFalse(report["destination_writes_supported"])
         self.assertEqual(report["runtime_dependencies"], [])
         self.assertEqual(sorted(report["commands"]), report["commands"])
-        self.assertEqual(sorted(report["exit_codes"].values()), list(range(8)))
+        self.assertEqual(sorted(report["exit_codes"].values()), list(range(9)))
 
     def test_help_lists_every_declared_command(self):
         help_result = run_cli("--help")

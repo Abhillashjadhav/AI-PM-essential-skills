@@ -1,0 +1,28 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:session:0.1",
+  "title": "ContextPort generated session 0.1",
+  "type": "object",
+  "required": ["session_version", "contextport_version", "current_phase", "current_branch", "latest_merged_commit", "completed_phases", "remaining_phases", "open_prs", "merged_prs", "current_blockers", "tests", "coverage", "repository_health", "resume_command", "resume_prompt", "real_claude_zip_gate", "browser_write_gate", "known_unsupported_capabilities"],
+  "properties": {
+    "session_version": {"const": "0.1"},
+    "contextport_version": {"type": "string"},
+    "current_phase": {"type": ["object", "null"]},
+    "current_branch": {"type": "string", "minLength": 1},
+    "latest_merged_commit": {"type": "string", "pattern": "^[0-9a-f]{40}$"},
+    "completed_phases": {"type": "array"},
+    "remaining_phases": {"type": "array"},
+    "open_prs": {"type": "array"},
+    "merged_prs": {"type": "array"},
+    "current_blockers": {"type": "array"},
+    "tests": {"type": "object"},
+    "coverage": {"type": "object"},
+    "repository_health": {"type": "object"},
+    "resume_command": {"type": "string"},
+    "resume_prompt": {"type": "string"},
+    "real_claude_zip_gate": {"type": "string"},
+    "browser_write_gate": {"type": "string"},
+    "known_unsupported_capabilities": {"type": "array", "items": {"type": "string"}}
+  },
+  "additionalProperties": false
+}
