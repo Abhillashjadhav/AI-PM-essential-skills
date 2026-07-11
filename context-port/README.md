@@ -13,6 +13,8 @@ python3 context-port/contextport.py --version
 python3 context-port/contextport.py capabilities
 ```
 
+Standard Python wheel and source-distribution metadata is available in `context-port/pyproject.toml`; see [packaging](docs/PACKAGING.md). No package has been published.
+
 ```sh
 python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
 ```
