@@ -1,5 +1,7 @@
 # ContextPort state
 
+> Legacy phase snapshot. Canonical current state is generated in [SESSION.md](SESSION.md) and [SESSION.json](SESSION.json). Do not maintain this file as working memory.
+
 Snapshot: 2026-07-11, recorded on `context-port/014-documentation` before the Phase 14 squash merge.
 
 ## Current phase

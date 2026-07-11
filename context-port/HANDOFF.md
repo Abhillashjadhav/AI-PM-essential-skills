@@ -1,5 +1,7 @@
 # ContextPort handoff
 
+> Legacy phase handoff. Canonical current handoff is generated in [SESSION.md](SESSION.md) and [SESSION.json](SESSION.json). Do not maintain this file as working memory.
+
 This handoff follows completion of Phase 14 implementation. Finish PR #22, then begin only the Phase 15 release-readiness audit when the roadmap resumes.
 
 ## Resume command

@@ -70,6 +70,8 @@ class ReleaseReadinessTests(unittest.TestCase):
         changed = evidence()
         changed["tests"]["passed"] = 100
         self.assertNotEqual(first["readiness_report_sha256"], readiness.evaluate_readiness(changed)["readiness_report_sha256"])
+        schema = json.loads((ROOT / "schemas" / "release-readiness-0.1.schema.json").read_text())
+        self.assertEqual(schema["properties"]["readiness_version"]["const"], readiness.READINESS_VERSION)
 
     def test_markdown_preserves_truthful_boundaries(self):
         rendered = readiness.render_markdown(readiness.evaluate_readiness(evidence()))

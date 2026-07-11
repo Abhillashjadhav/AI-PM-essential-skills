@@ -14,4 +14,4 @@ Create generated canonical session artifacts (`SESSION.md` and `SESSION.json`) a
 
 ## Status
 
-In progress.
+Complete. All automated synthetic-MVP gates pass. Public release remains blocked by explicit human decisions for licensing and publication; no release was published and no real-data/browser/write gate was crossed.
