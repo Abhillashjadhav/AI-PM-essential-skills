@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:sync-plan:0.1",
+  "title": "ContextPort Sync Plan 0.1",
+  "type": "object",
+  "required": ["sync_version", "status", "checkpoints", "changes", "tombstones", "conflicts", "automatic_apply_performed", "automatic_conflict_resolution", "replay_key"],
+  "properties": {
+    "sync_version": {"const": "0.1"},
+    "status": {"enum": ["ready", "conflict"]},
+    "checkpoints": {"type": "object"},
+    "changes": {"type": "array"},
+    "tombstones": {"type": "array"},
+    "conflicts": {"type": "array"},
+    "automatic_apply_performed": {"const": false},
+    "automatic_conflict_resolution": {"const": false},
+    "replay_key": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}
