@@ -1,0 +1,206 @@
+{
+  "browser_write_gate": "Fresh explicit human approval is required before browser automation or any ChatGPT or Claude write.",
+  "completed_phases": [
+    {
+      "name": "bootstrap",
+      "number": 1
+    },
+    {
+      "name": "ContextPack schema",
+      "number": 2
+    },
+    {
+      "name": "safe export inspection",
+      "number": 3
+    },
+    {
+      "name": "project segregation",
+      "number": 4
+    },
+    {
+      "name": "human review UI",
+      "number": 5
+    },
+    {
+      "name": "context reconstruction",
+      "number": 6
+    },
+    {
+      "name": "reconciliation reviewer",
+      "number": 7
+    },
+    {
+      "name": "incremental sync",
+      "number": 8
+    },
+    {
+      "name": "ChatGPT adapter",
+      "number": 9
+    },
+    {
+      "name": "CLI",
+      "number": 10
+    },
+    {
+      "name": "packaging",
+      "number": 11
+    },
+    {
+      "name": "installer",
+      "number": 12
+    },
+    {
+      "name": "synthetic demo",
+      "number": 13
+    },
+    {
+      "name": "documentation",
+      "number": 14
+    }
+  ],
+  "contextport_version": "0.1.0",
+  "coverage": {
+    "line_coverage": "UNKNOWN",
+    "reason": "No coverage instrumentation dependency is configured.",
+    "test_files": 13
+  },
+  "current_blockers": [
+    {
+      "detail": "No repository license file is present.",
+      "id": "public_license",
+      "status": "decision_required"
+    },
+    {
+      "detail": "No release may be published without explicit human approval.",
+      "id": "release_publication",
+      "status": "approval_required"
+    }
+  ],
+  "current_branch": "context-port/015-release-readiness",
+  "current_phase": {
+    "name": "release readiness",
+    "number": 15
+  },
+  "known_unsupported_capabilities": [
+    "Consumer ChatGPT reconstruction writes",
+    "Destination inventory observation",
+    "Package-index publication",
+    "Browser automation",
+    "Claude or ChatGPT writes",
+    "Truncation or summarization",
+    "Destructive delete/overwrite"
+  ],
+  "latest_merged_commit": "773f8f122c6e8072041609d485415b9036615e08",
+  "merged_prs": [
+    {
+      "commit": "773f8f122c6e8072041609d485415b9036615e08",
+      "number": 22,
+      "title": "docs(context-port): consolidate public operator guidance",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/22"
+    },
+    {
+      "commit": "1d55d8ab8576c9e04110a98cb2ac94d6730cd077",
+      "number": 21,
+      "title": "feat(context-port): add truthful synthetic migration demo",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/21"
+    },
+    {
+      "commit": "e4211148cffa3b634635e58c60c6463cb2ee1e53",
+      "number": 20,
+      "title": "feat(context-port): add fail-closed local installer",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/20"
+    },
+    {
+      "commit": "b7c225a4d0635cd6cb022cd1ac025d14ce1ea1ba",
+      "number": 19,
+      "title": "feat(context-port): add dependency-free packaging",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/19"
+    },
+    {
+      "commit": "988e53a92704b8641df408af7bb653fcd0a052df",
+      "number": 18,
+      "title": "feat(context-port): publish stable CLI surface",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/18"
+    },
+    {
+      "commit": "d95cab91c22cf49a691ab9ac2e7f88f4ed9271f8",
+      "number": 17,
+      "title": "feat(context-port): add fail-closed ChatGPT adapter",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/17"
+    },
+    {
+      "commit": "c3370279bc87bb9089f96722abca630f842cd000",
+      "number": 16,
+      "title": "feat(context-port): add incremental sync planner",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/16"
+    },
+    {
+      "commit": "65790ec2ad0d9b3a71714d0e48cc17800195c742",
+      "number": 15,
+      "title": "feat(context-port): add independent reconciliation reviewer",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/15"
+    },
+    {
+      "commit": "6442af39a0c9db38dce074c075a840953dc87f41",
+      "number": 14,
+      "title": "feat(context-port): add reconstruction planning engine",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/14"
+    },
+    {
+      "commit": "31decd270395ff9e0a9a03cd3266c65c9c1741ce",
+      "number": 13,
+      "title": "feat(context-port): add offline human review UI",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/13"
+    },
+    {
+      "commit": "5e3c15d0bb3c4b9169cd3a1963eb96b6325ccf80",
+      "number": 12,
+      "title": "feat(context-port): add project segregation engine",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/12"
+    },
+    {
+      "commit": "5a3ede593549e222a9099578e8966d12dc460156",
+      "number": 9,
+      "title": "feat(context-port): add safe synthetic export inspection",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/9"
+    },
+    {
+      "commit": "84bebc4a17eb181fc78dd3b5f34f85a01cef6e7e",
+      "number": 8,
+      "title": "feat(context-port): define ContextPack 0.1 contract",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/8"
+    },
+    {
+      "commit": "115a1d80b872b0dbb0b418d2c7f1e79bf799837d",
+      "number": 10,
+      "title": "chore(context-port): establish bootstrap specification and workflow",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/10"
+    }
+  ],
+  "open_prs": [],
+  "real_claude_zip_gate": "Fresh explicit human approval is required before locating, listing, hashing, extracting, opening, inspecting, parsing, copying, or uploading a real Claude ZIP.",
+  "remaining_phases": [
+    {
+      "name": "release readiness",
+      "number": 15
+    }
+  ],
+  "repository_health": {
+    "existing_skill_runtime_dependency": false,
+    "origin_main_matches_latest_merged": true,
+    "status": "healthy",
+    "syntax": {
+      "python_files": 24,
+      "status": "passed"
+    },
+    "working_tree_clean_at_collection": true
+  },
+  "resume_command": "cd <public-checkout>/AI-PM-essential-skills && git switch context-port/015-release-readiness && python3 context-port/contextport.py handoff --check",
+  "resume_prompt": "Resume ContextPort Phase 15 (release readiness) from SESSION.json. Verify repository health and approval gates before continuing.",
+  "session_version": "0.1",
+  "tests": {
+    "command": "python3 -m unittest discover -s context-port/tests -q",
+    "passed": 98,
+    "status": "passed"
+  }
+}
