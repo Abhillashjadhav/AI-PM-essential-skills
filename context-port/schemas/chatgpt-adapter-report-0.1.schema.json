@@ -1,0 +1,53 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:contextport:schema:chatgpt-adapter-report:0.1",
+  "title": "ContextPort ChatGPT Adapter Report 0.1",
+  "type": "object",
+  "required": ["adapter_version", "destination", "status", "source_reconstruction_plan_sha256", "capability_evidence", "operation_assessments", "writes_performed", "network_calls_performed", "browser_automation_performed", "summary", "adapter_report_sha256"],
+  "properties": {
+    "adapter_version": {"const": "0.1"},
+    "destination": {"const": "chatgpt_consumer"},
+    "status": {"const": "blocked_unsupported"},
+    "source_reconstruction_plan_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "capability_evidence": {
+      "type": "object",
+      "required": ["classification", "verified_at", "scope", "finding", "api_platform_projects_are_destination_equivalent"],
+      "properties": {
+        "classification": {"const": "UNSUPPORTED"},
+        "verified_at": {"type": "string", "format": "date"},
+        "scope": {"type": "string"},
+        "finding": {"type": "string"},
+        "api_platform_projects_are_destination_equivalent": {"const": false}
+      }
+    },
+    "operation_assessments": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["operation_id", "kind", "capability_status", "reason_code", "source_operation", "write_attempted"],
+        "properties": {
+          "operation_id": {"type": "string", "minLength": 1},
+          "kind": {"enum": ["ensure_container", "ensure_conversation", "append_message"]},
+          "capability_status": {"const": "UNSUPPORTED"},
+          "reason_code": {"const": "PUBLIC_CHATGPT_WRITE_API_NOT_VERIFIED"},
+          "source_operation": {"type": "object"},
+          "write_attempted": {"const": false}
+        }
+      }
+    },
+    "writes_performed": {"const": false},
+    "network_calls_performed": {"const": false},
+    "browser_automation_performed": {"const": false},
+    "summary": {
+      "type": "object",
+      "required": ["operations", "supported", "unsupported"],
+      "properties": {
+        "operations": {"type": "integer", "minimum": 0},
+        "supported": {"const": 0},
+        "unsupported": {"type": "integer", "minimum": 0}
+      },
+      "additionalProperties": false
+    },
+    "adapter_report_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"}
+  }
+}

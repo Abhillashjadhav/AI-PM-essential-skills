@@ -364,6 +364,10 @@ def main(argv: list[str] | None = None) -> int:
     sync_parser.add_argument("previous", type=Path)
     sync_parser.add_argument("current", type=Path)
     sync_parser.add_argument("--peer-state", type=Path)
+    chatgpt_parser = subparsers.add_parser(
+        "chatgpt-adapt", help="assess a reconstruction plan against verified public ChatGPT capabilities"
+    )
+    chatgpt_parser.add_argument("plan", type=Path)
     arguments = parser.parse_args(argv)
     if arguments.command == "validate":
         return _validate_file(arguments.path)
@@ -493,6 +497,17 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True))
         return 6 if plan["status"] == "conflict" else 0
+    if arguments.command == "chatgpt-adapt":
+        from chatgpt_adapter import build_chatgpt_adapter_report
+
+        try:
+            plan = json.loads(arguments.plan.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+            report = build_chatgpt_adapter_report(plan)
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.plan}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
+        return 7 if report["status"] == "blocked_unsupported" else 0
     return 2
 
 
