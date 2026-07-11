@@ -4,6 +4,8 @@
 
 ContextPort is a human-supervised system for representing and reconciling conversational context across supported assistants. It will preserve provenance and content boundaries while making omissions and unsupported behavior explicit.
 
+ContextPort is a fully standalone public component. Its installation, runtime, tests, documentation, and verification evidence must be complete within `context-port/` and must not require access to private repositories, services, prompts, agents, or orchestration. External development reviews may inform changes, but only generic, redacted, non-proprietary artifacts that remain independently understandable may be committed here.
+
 This bootstrap phase defines the product and verification contract only. It does not implement parsers, connectors, browser automation, account writes, or migration behavior.
 
 ## 2. Reliability vocabulary
@@ -156,7 +158,13 @@ Conversation content, project names, attachments, account identifiers, export fi
 
 ## 12. Installation
 
-Installation is **UNSUPPORTED** in this bootstrap phase because no executable tool or production dependencies are created. A later implementation PR must document supported platforms, runtime and version constraints, reproducible installation, dependency verification, configuration, secret handling, uninstall behavior, and an offline synthetic smoke test.
+ContextPack `0.1` validation is usable directly from a public checkout with Python 3 and no production dependencies:
+
+```sh
+python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
+```
+
+This is a source-checkout interface, not a packaged release. Reproducible package installation, formal Python-version support, configuration, secret handling, and uninstall behavior remain **UNSUPPORTED** until the release-readiness phase. The validator operates locally and the synthetic smoke test performs no network access.
 
 ## 13. Truthful demonstration evidence
 
