@@ -23,6 +23,14 @@ python3 context-port/install.py ~/.local/contextport
 
 Add `--install` only after reviewing the plan. The installer refuses existing targets; see [installer safety](docs/INSTALLER.md).
 
+Run the truthful end-to-end synthetic migration demonstration:
+
+```sh
+python3 context-port/demo.py
+```
+
+The demo ends with a clean independent reconciliation and an explicit unsupported ChatGPT write boundary. See [demo evidence](docs/DEMO.md).
+
 ```sh
 python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
 ```
