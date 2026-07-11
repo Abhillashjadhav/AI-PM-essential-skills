@@ -9,6 +9,7 @@ import json
 import re
 import sys
 from collections import Counter
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
@@ -19,6 +20,17 @@ DISPOSITIONS = {"copied", "transformed", "skipped", "failed", "ambiguous", "unsu
 ITEM_TYPES = {"project", "conversation", "message", "content_block", "attachment"}
 ROLES = {"user", "assistant", "system", "tool", "unknown"}
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
+MAX_INSPECTION_BYTES = 50 * 1024 * 1024
+MAX_INSPECTION_NODES = 1_000_000
+
+
+def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"duplicate JSON object key {key!r}")
+        result[key] = value
+    return result
 
 
 def _is_string(value: Any) -> bool:
@@ -226,6 +238,70 @@ def validate(document: Any) -> list[str]:
     return sorted(errors)
 
 
+def _json_type(value: Any) -> str:
+    if value is None:
+        return "null"
+    if isinstance(value, bool):
+        return "boolean"
+    if isinstance(value, int):
+        return "integer"
+    if isinstance(value, float):
+        return "number"
+    if isinstance(value, str):
+        return "string"
+    if isinstance(value, list):
+        return "array"
+    return "object"
+
+
+def inspect_structure(document: Any) -> list[dict[str, Any]]:
+    """Inventory JSON paths and types without returning scalar values."""
+    observations: dict[str, dict[str, Any]] = {}
+    pending: list[tuple[str, Any]] = [("$", document)]
+    visited = 0
+    while pending:
+        path, value = pending.pop()
+        visited += 1
+        if visited > MAX_INSPECTION_NODES:
+            raise ValueError(f"inspection exceeds {MAX_INSPECTION_NODES} JSON nodes")
+        observation = observations.setdefault(path, {"path": path, "types": set(), "occurrences": 0})
+        observation["types"].add(_json_type(value))
+        observation["occurrences"] += 1
+        if isinstance(value, dict):
+            for key in sorted(value, reverse=True):
+                escaped_key = key.replace("~", "~0").replace("/", "~1")
+                pending.append((f"{path}/{escaped_key}", value[key]))
+        elif isinstance(value, list):
+            for item in reversed(value):
+                pending.append((f"{path}/*", item))
+    return [
+        {"path": item["path"], "types": sorted(item["types"]), "occurrences": item["occurrences"]}
+        for item in sorted(observations.values(), key=lambda item: item["path"])
+    ]
+
+
+def inspect_file(path: Path, classification: str) -> dict[str, Any]:
+    """Inspect a JSON artifact locally without emitting content values."""
+    if path.stat().st_size > MAX_INSPECTION_BYTES:
+        raise ValueError(f"artifact exceeds {MAX_INSPECTION_BYTES} byte inspection limit")
+    raw = path.read_bytes()
+    if len(raw) > MAX_INSPECTION_BYTES:
+        raise ValueError(f"artifact exceeds {MAX_INSPECTION_BYTES} byte inspection limit")
+    document = json.loads(raw.decode("utf-8"), object_pairs_hook=_reject_duplicate_keys)
+    return {
+        "report_version": "0.1",
+        "classification": classification,
+        "artifact_name": path.name,
+        "artifact_bytes": len(raw),
+        "artifact_sha256": hashlib.sha256(raw).hexdigest(),
+        "inspected_at": datetime.now(timezone.utc).isoformat(),
+        "top_level_type": _json_type(document),
+        "observations": inspect_structure(document),
+        "values_emitted": False,
+        "schema_interpretation": "UNKNOWN",
+    }
+
+
 def _validate_file(path: Path) -> int:
     try:
         document = json.loads(path.read_text(encoding="utf-8"))
@@ -247,9 +323,25 @@ def main(argv: list[str] | None = None) -> int:
     subparsers = parser.add_subparsers(dest="command", required=True)
     validate_parser = subparsers.add_parser("validate", help="validate one ContextPack JSON document")
     validate_parser.add_argument("path", type=Path)
+    inspect_parser = subparsers.add_parser("inspect", help="inspect JSON structure locally without emitting values")
+    inspect_parser.add_argument("path", type=Path)
+    inspect_parser.add_argument(
+        "--classification",
+        required=True,
+        choices=("synthetic", "approved-private"),
+        help="declare whether the artifact is synthetic or separately approved private input",
+    )
     arguments = parser.parse_args(argv)
     if arguments.command == "validate":
         return _validate_file(arguments.path)
+    if arguments.command == "inspect":
+        try:
+            report = inspect_file(arguments.path, arguments.classification)
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.path}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(report, indent=2, sort_keys=True))
+        return 0
     return 2
 
 

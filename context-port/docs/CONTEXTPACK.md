@@ -63,6 +63,8 @@ python3 context-port/contextport.py validate context-port/fixtures/contextpack-v
 
 The command prints every detected error and returns a nonzero exit status when validation fails. It performs no network calls and uses only the Python standard library.
 
+The published structural schema is `schemas/contextpack-0.1.schema.json`. The dependency-free validator additionally enforces cross-record identities, exact text digests, ordinal uniqueness, transformation references, and disposition coverage that JSON Schema alone does not express.
+
 ## Explicitly unsupported in version 0.1
 
 - Claims about real Claude or ChatGPT export schemas.
