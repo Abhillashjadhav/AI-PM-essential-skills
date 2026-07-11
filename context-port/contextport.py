@@ -331,6 +331,11 @@ def main(argv: list[str] | None = None) -> int:
         choices=("synthetic", "approved-private"),
         help="declare whether the artifact is synthetic or separately approved private input",
     )
+    segregate_parser = subparsers.add_parser(
+        "segregate", help="build a deterministic project and conversation membership plan"
+    )
+    segregate_parser.add_argument("path", type=Path, help="validated ContextPack JSON document")
+    segregate_parser.add_argument("--mappings", type=Path, help="optional project mapping JSON document")
     arguments = parser.parse_args(argv)
     if arguments.command == "validate":
         return _validate_file(arguments.path)
@@ -342,6 +347,27 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(report, indent=2, sort_keys=True))
         return 0
+    if arguments.command == "segregate":
+        from segregation import SegregationError, segregate
+
+        try:
+            document = json.loads(
+                arguments.path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys
+            )
+            mappings = (
+                json.loads(
+                    arguments.mappings.read_text(encoding="utf-8"),
+                    object_pairs_hook=_reject_duplicate_keys,
+                )
+                if arguments.mappings
+                else None
+            )
+            result = segregate(document, mappings, validator=validate)
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.path}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(result, ensure_ascii=False, indent=2, sort_keys=True))
+        return 3 if result["status"] == "decision_required" else 0
     return 2
 
 
