@@ -16,12 +16,48 @@ from typing import Any
 
 FORMAT = "contextpack"
 FORMAT_VERSION = "0.1"
+CLI_VERSION = "0.1.0"
 DISPOSITIONS = {"copied", "transformed", "skipped", "failed", "ambiguous", "unsupported"}
 ITEM_TYPES = {"project", "conversation", "message", "content_block", "attachment"}
 ROLES = {"user", "assistant", "system", "tool", "unknown"}
 SHA256 = re.compile(r"^[0-9a-f]{64}$")
 MAX_INSPECTION_BYTES = 50 * 1024 * 1024
 MAX_INSPECTION_NODES = 1_000_000
+EXIT_CODES = {
+    "success": 0,
+    "validation_failed": 1,
+    "invalid_input": 2,
+    "decision_required": 3,
+    "review_rejected": 4,
+    "reconciliation_differences": 5,
+    "sync_conflict": 6,
+    "destination_unsupported": 7,
+}
+
+
+def capabilities() -> dict[str, Any]:
+    """Return a deterministic public inventory without probing accounts or networks."""
+    return {
+        "cli_version": CLI_VERSION,
+        "contextpack_version": FORMAT_VERSION,
+        "runtime_dependencies": [],
+        "network_required": False,
+        "destination_writes_supported": False,
+        "commands": [
+            "capabilities",
+            "chatgpt-adapt",
+            "inspect",
+            "reconcile-plan",
+            "reconstruct-plan",
+            "review-decision",
+            "review-html",
+            "review-package",
+            "segregate",
+            "sync-plan",
+            "validate",
+        ],
+        "exit_codes": EXIT_CODES,
+    }
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -320,7 +356,9 @@ def _validate_file(path: Path) -> int:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="contextport", description=__doc__)
+    parser.add_argument("--version", action="version", version=f"ContextPort {CLI_VERSION}")
     subparsers = parser.add_subparsers(dest="command", required=True)
+    subparsers.add_parser("capabilities", help="print deterministic machine-readable CLI capabilities")
     validate_parser = subparsers.add_parser("validate", help="validate one ContextPack JSON document")
     validate_parser.add_argument("path", type=Path)
     inspect_parser = subparsers.add_parser("inspect", help="inspect JSON structure locally without emitting values")
@@ -369,6 +407,9 @@ def main(argv: list[str] | None = None) -> int:
     )
     chatgpt_parser.add_argument("plan", type=Path)
     arguments = parser.parse_args(argv)
+    if arguments.command == "capabilities":
+        print(json.dumps(capabilities(), indent=2, sort_keys=True))
+        return EXIT_CODES["success"]
     if arguments.command == "validate":
         return _validate_file(arguments.path)
     if arguments.command == "inspect":
