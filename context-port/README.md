@@ -72,4 +72,6 @@ See [privacy and safety](docs/PRIVACY.md) before handling any non-synthetic arti
 
 The complete public documentation map is in [docs/README.md](docs/README.md). Architecture, contracts, schemas, fixtures, tests, evaluation evidence, saved prompts, state, and handoff records all live inside `context-port/`.
 
+Canonical cross-session working memory is generated in [SESSION.md](SESSION.md) and [SESSION.json](SESSION.json) with `contextport handoff`; these files are never maintained manually.
+
 ContextPort has no runtime dependency on any private repository or internal reviewer. Private development systems are not named, exposed, copied, or required by the public product.

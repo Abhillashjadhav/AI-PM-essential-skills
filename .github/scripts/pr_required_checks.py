@@ -22,6 +22,9 @@ PRIVATE_FILENAMES = {
     "credentials.json",
     "session.json",
 }
+PUBLIC_GENERATED_PATHS = {
+    "context-port/SESSION.json",
+}
 
 
 def git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -65,7 +68,11 @@ def added_lines(base: str, head: str) -> list[str]:
 
 
 def privacy_findings(paths: list[str], lines: list[str]) -> list[str]:
-    findings = [f"private filename: {path}" for path in paths if Path(path).name.lower() in PRIVATE_FILENAMES]
+    findings = [
+        f"private filename: {path}"
+        for path in paths
+        if Path(path).name.lower() in PRIVATE_FILENAMES and path not in PUBLIC_GENERATED_PATHS
+    ]
     for number, line in enumerate(lines, start=1):
         for label, pattern in SECRET_PATTERNS.items():
             if pattern.search(line):
