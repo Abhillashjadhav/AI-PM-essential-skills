@@ -56,13 +56,17 @@
     {
       "name": "documentation",
       "number": 14
+    },
+    {
+      "name": "release readiness",
+      "number": 15
     }
   ],
   "contextport_version": "0.1.0",
   "coverage": {
     "line_coverage": "UNKNOWN",
     "reason": "No coverage instrumentation dependency is configured.",
-    "test_files": 14
+    "test_files": 15
   },
   "current_blockers": [
     {
@@ -76,11 +80,8 @@
       "status": "approval_required"
     }
   ],
-  "current_branch": "context-port/015-release-readiness",
-  "current_phase": {
-    "name": "release readiness",
-    "number": 15
-  },
+  "current_branch": "context-port/final-session-refresh",
+  "current_phase": null,
   "known_unsupported_capabilities": [
     "Consumer ChatGPT reconstruction writes",
     "Destination inventory observation",
@@ -90,8 +91,20 @@
     "Truncation or summarization",
     "Destructive delete/overwrite"
   ],
-  "latest_merged_commit": "773f8f122c6e8072041609d485415b9036615e08",
+  "latest_merged_commit": "0acce40a7b56549eb57cfe3ed7bd552942a7ed61",
   "merged_prs": [
+    {
+      "commit": "0acce40a7b56549eb57cfe3ed7bd552942a7ed61",
+      "number": 24,
+      "title": "feat(context-port): add real Claude export converter",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/24"
+    },
+    {
+      "commit": "9c06c6c25e1eca8bd54755cfaf6e0e37a4ca8e4c",
+      "number": 23,
+      "title": "feat(context-port): add deterministic release readiness",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/23"
+    },
     {
       "commit": "773f8f122c6e8072041609d485415b9036615e08",
       "number": 22,
@@ -180,36 +193,31 @@
   "open_prs": [
     {
       "baseRefName": "main",
-      "headRefName": "context-port/015-release-readiness",
-      "isDraft": true,
-      "number": 23,
-      "title": "feat(context-port): add deterministic release readiness",
-      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/23"
+      "headRefName": "context-port/final-session-refresh",
+      "isDraft": false,
+      "number": 25,
+      "title": "docs(context-port): refresh session after converter merge",
+      "url": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/25"
     }
   ],
   "real_claude_zip_gate": "Fresh explicit human approval is required before locating, listing, hashing, extracting, opening, inspecting, parsing, copying, or uploading a real Claude ZIP.",
-  "remaining_phases": [
-    {
-      "name": "release readiness",
-      "number": 15
-    }
-  ],
+  "remaining_phases": [],
   "repository_health": {
     "existing_skill_runtime_dependency": false,
     "origin_main_matches_latest_merged": true,
     "status": "healthy",
     "syntax": {
-      "python_files": 26,
+      "python_files": 28,
       "status": "passed"
     },
     "working_tree_clean_at_collection": true
   },
-  "resume_command": "cd <public-checkout>/AI-PM-essential-skills && git switch context-port/015-release-readiness && python3 context-port/contextport.py handoff --check",
-  "resume_prompt": "Resume ContextPort Phase 15 (release readiness) from SESSION.json. Verify repository health and approval gates before continuing.",
+  "resume_command": "cd <public-checkout>/AI-PM-essential-skills && git switch context-port/final-session-refresh && python3 context-port/contextport.py handoff --check",
+  "resume_prompt": "ContextPort phases are complete. Stop at the documented human approval gates; do not publish or access real data automatically.",
   "session_version": "0.1",
   "tests": {
     "command": "python3 -m unittest discover -s context-port/tests -q",
-    "passed": 103,
+    "passed": 107,
     "status": "passed"
   }
 }

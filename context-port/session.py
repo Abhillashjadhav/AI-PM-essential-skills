@@ -239,7 +239,20 @@ def _worktree_clean(repository: Path) -> bool:
         "context-port/reports/RELEASE_READINESS.md",
         "context-port/reports/RELEASE_READINESS.json",
     }
-    for line in _run(repository, "git", "status", "--porcelain", "--untracked-files=all").splitlines():
+    try:
+        result = subprocess.run(
+            ["git", "status", "--porcelain=v1", "-z", "--untracked-files=all"],
+            cwd=repository,
+            check=True,
+            capture_output=True,
+        )
+    except (OSError, subprocess.CalledProcessError) as exc:
+        detail = exc.stderr.decode(errors="replace").strip() if isinstance(exc, subprocess.CalledProcessError) else str(exc)
+        raise SessionError(f"command failed: git status --porcelain=v1 -z --untracked-files=all: {detail}") from exc
+    for entry in result.stdout.split(b"\0"):
+        if not entry:
+            continue
+        line = entry.decode("utf-8", errors="surrogateescape")
         path = line[3:]
         if " -> " in path:
             return False
