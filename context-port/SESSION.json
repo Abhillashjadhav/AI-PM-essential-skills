@@ -62,7 +62,7 @@
   "coverage": {
     "line_coverage": "UNKNOWN",
     "reason": "No coverage instrumentation dependency is configured.",
-    "test_files": 13
+    "test_files": 14
   },
   "current_blockers": [
     {
@@ -190,7 +190,7 @@
     "origin_main_matches_latest_merged": true,
     "status": "healthy",
     "syntax": {
-      "python_files": 24,
+      "python_files": 26,
       "status": "passed"
     },
     "working_tree_clean_at_collection": true
@@ -200,7 +200,7 @@
   "session_version": "0.1",
   "tests": {
     "command": "python3 -m unittest discover -s context-port/tests -q",
-    "passed": 98,
+    "passed": 102,
     "status": "passed"
   }
 }
