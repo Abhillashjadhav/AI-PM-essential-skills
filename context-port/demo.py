@@ -4,7 +4,9 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
+import platform
 import re
 import subprocess
 import sys
@@ -44,12 +46,12 @@ def _revision(root: Path) -> str:
     return revision
 
 
-def run_demo(root: Path, revision: str) -> dict[str, Any]:
+def run_demo(root: Path) -> dict[str, Any]:
     """Run every safe synthetic migration stage and return observable evidence."""
-    if not REVISION.fullmatch(revision):
-        raise DemoError("revision must be a full lowercase Git commit")
+    revision = _revision(root)
     fixtures = root / "fixtures"
-    document = _load(fixtures / "segregation-contextpack.json")
+    source_path = fixtures / "segregation-contextpack.json"
+    document = _load(source_path)
     mappings = _load(fixtures / "project-mappings-valid.json")
     decision = _load(fixtures / "review-decision-approved.json")
 
@@ -75,6 +77,60 @@ def run_demo(root: Path, revision: str) -> dict[str, Any]:
     if adapter_report["status"] != "blocked_unsupported":
         raise DemoError("ChatGPT adapter did not fail closed")
 
+    source_inventory = {
+        "projects": len(document["projects"]),
+        "conversations": len(document["conversations"]),
+        "messages": len(document["messages"]),
+        "attachments": len(document["attachments"]),
+    }
+    source_inventory["inventory_sha256"] = review.canonical_digest(source_inventory)
+    stage = lambda name, status="VERIFIED": {
+        "stage": name,
+        "status": status,
+        "exit_state": "completed",
+        "exit_code": 0,
+    }
+    stages = [
+        {**stage("contextpack_validation"), "errors": 0},
+        {
+            **stage("project_segregation"),
+            "plan_sha256": segregation_plan["plan_sha256"],
+            "groups": segregation_plan["summary"]["project_groups"]
+            + segregation_plan["summary"]["ungrouped_groups"],
+            "conversations": segregation_plan["summary"]["conversations"],
+        },
+        {
+            **stage("human_review_fixture"),
+            "review_package_sha256": review_package["review_package_sha256"],
+            "decision": validated_decision["decision"],
+        },
+        {
+            **stage("reconstruction_dry_run"),
+            "plan_sha256": reconstruction_plan["reconstruction_plan_sha256"],
+            "operations": reconstruction_plan["summary"]["operations"],
+            "writes_performed": reconstruction_plan["writes_performed"],
+        },
+        {
+            **stage("independent_reconciliation"),
+            "report_sha256": reconciliation_report["reconciliation_report_sha256"],
+            "differences": reconciliation_report["summary"]["differences"],
+        },
+        {
+            **stage("chatgpt_capability_assessment", "UNSUPPORTED"),
+            "adapter_report_sha256": adapter_report["adapter_report_sha256"],
+            "operations_not_written": adapter_report["summary"]["unsupported"],
+            "writes_performed": adapter_report["writes_performed"],
+        },
+    ]
+    not_copied = [
+        {
+            "operation_id": item["operation_id"],
+            "kind": item["kind"],
+            "status": "unsupported",
+            "reason": item["reason_code"],
+        }
+        for item in adapter_report["operation_assessments"]
+    ]
     report = {
         "demo_version": DEMO_VERSION,
         "revision": revision,
@@ -84,60 +140,44 @@ def run_demo(root: Path, revision: str) -> dict[str, Any]:
             "real_claude_export_compatibility": "UNKNOWN",
             "chatgpt_reconstruction_writes": "UNSUPPORTED",
         },
-        "stages": [
-            {"stage": "contextpack_validation", "status": "VERIFIED", "errors": 0},
-            {
-                "stage": "project_segregation",
-                "status": "VERIFIED",
-                "plan_sha256": segregation_plan["plan_sha256"],
-                "groups": (
-                    segregation_plan["summary"]["project_groups"]
-                    + segregation_plan["summary"]["ungrouped_groups"]
-                ),
-                "conversations": segregation_plan["summary"]["conversations"],
-            },
-            {
-                "stage": "human_review_fixture",
-                "status": "VERIFIED",
-                "review_package_sha256": review_package["review_package_sha256"],
-                "decision": validated_decision["decision"],
-            },
-            {
-                "stage": "reconstruction_dry_run",
-                "status": "VERIFIED",
-                "plan_sha256": reconstruction_plan["reconstruction_plan_sha256"],
-                "operations": reconstruction_plan["summary"]["operations"],
-                "writes_performed": reconstruction_plan["writes_performed"],
-            },
-            {
-                "stage": "independent_reconciliation",
-                "status": "VERIFIED",
-                "report_sha256": reconciliation_report["reconciliation_report_sha256"],
-                "differences": reconciliation_report["summary"]["differences"],
-            },
-            {
-                "stage": "chatgpt_capability_assessment",
-                "status": "UNSUPPORTED",
-                "adapter_report_sha256": adapter_report["adapter_report_sha256"],
-                "operations_not_written": adapter_report["summary"]["unsupported"],
-                "writes_performed": adapter_report["writes_performed"],
-            },
-        ],
-        "source_inventory": {
-            "projects": len(document["projects"]),
-            "conversations": len(document["conversations"]),
-            "messages": len(document["messages"]),
-            "attachments": len(document["attachments"]),
+        "stages": stages,
+        "source": {
+            "artifact": source_path.name,
+            "artifact_sha256": hashlib.sha256(source_path.read_bytes()).hexdigest(),
+            "declared_source_sha256": document["manifest"]["source"]["artifact_sha256"],
+            "inventory": source_inventory,
+        },
+        "destination_inventory": {
+            "status": "UNSUPPORTED",
+            "observed": False,
+            "projects": None,
+            "conversations": None,
+            "messages": None,
+            "inventory_sha256": None,
+            "reason": "PUBLIC_CHATGPT_WRITE_API_NOT_VERIFIED",
         },
         "writes_performed": False,
         "network_calls_performed": False,
         "browser_automation_performed": False,
-        "everything_not_copied": [
-            {
-                "destination": "chatgpt_consumer",
-                "count": adapter_report["summary"]["unsupported"],
-                "reason": "PUBLIC_CHATGPT_WRITE_API_NOT_VERIFIED",
-            }
+        "dispositions": {
+            "copied": [],
+            "transformed": [],
+            "skipped": [],
+            "ambiguous": [],
+            "failed": [],
+            "unsupported": not_copied,
+        },
+        "everything_not_copied": not_copied,
+        "environment": {
+            "python": platform.python_version(),
+            "platform": sys.platform,
+            "real_export_access": False,
+            "destination_observation": False,
+        },
+        "limitations": [
+            {"capability": "real_claude_export_parsing", "status": "UNKNOWN"},
+            {"capability": "consumer_chatgpt_reconstruction", "status": "UNSUPPORTED"},
+            {"capability": "destination_inventory_observation", "status": "UNSUPPORTED"},
         ],
     }
     report["demo_report_sha256"] = review.canonical_digest(report)
@@ -146,12 +186,10 @@ def run_demo(root: Path, revision: str) -> dict[str, Any]:
 
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="contextport-demo", description=__doc__)
-    parser.add_argument("--revision", help="full Git revision; defaults to the current checkout HEAD")
     arguments = parser.parse_args(argv)
     root = Path(__file__).resolve().parent
     try:
-        revision = arguments.revision or _revision(root)
-        report = run_demo(root, revision)
+        report = run_demo(root)
     except (DemoError, OSError, ValueError, subprocess.SubprocessError) as exc:
         print(f"FAIL: {exc}", file=sys.stderr)
         return 2
