@@ -233,7 +233,12 @@ def _has_ref(repository: Path, ref: str) -> bool:
 
 
 def _worktree_clean(repository: Path) -> bool:
-    generated = {"context-port/SESSION.md", "context-port/SESSION.json"}
+    generated = {
+        "context-port/SESSION.md",
+        "context-port/SESSION.json",
+        "context-port/reports/RELEASE_READINESS.md",
+        "context-port/reports/RELEASE_READINESS.json",
+    }
     for line in _run(repository, "git", "status", "--porcelain", "--untracked-files=all").splitlines():
         path = line[3:]
         if " -> " in path:

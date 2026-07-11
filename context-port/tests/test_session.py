@@ -64,6 +64,10 @@ class SessionArtifactTests(unittest.TestCase):
             session.generate_session(repository, open_prs=[], test_result=observation)
             first_json = (repository / "context-port" / "SESSION.json").read_text()
             first_markdown = (repository / "context-port" / "SESSION.md").read_text()
+            reports = repository / "context-port" / "reports"
+            reports.mkdir()
+            (reports / "RELEASE_READINESS.json").write_text("{}\n")
+            (reports / "RELEASE_READINESS.md").write_text("# Synthetic report\n")
             fresh, _ = session.generate_session(
                 repository, check=True, open_prs=[], test_result=observation
             )
