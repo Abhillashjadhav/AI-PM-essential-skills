@@ -24,7 +24,17 @@ python3 context-port/contextport.py inspect context-port/fixtures/synthetic-clau
 
 Real export inspection requires separate human approval. Supplying `approved-private` records an approval classification in the local report; it does not grant approval by itself.
 
-See [the ContextPack contract](docs/CONTEXTPACK.md) for the data model and current limitations, and [the build specification](BUILD_SPEC.md) for the planned system.
+Build a deterministic segregation plan from the synthetic ContextPack:
+
+```sh
+python3 context-port/contextport.py segregate \
+  context-port/fixtures/segregation-contextpack.json \
+  --mappings context-port/fixtures/project-mappings-valid.json
+```
+
+The plan preserves stable project and conversation boundaries without emitting message content. Ambiguous mappings return `decision_required` and a distinct nonzero exit status.
+
+See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), and [build specification](BUILD_SPEC.md).
 
 ## Current boundary
 
