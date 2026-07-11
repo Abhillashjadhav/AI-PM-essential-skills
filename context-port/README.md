@@ -67,7 +67,15 @@ python3 context-port/contextport.py reconcile-plan SOURCE.json PLAN.json
 
 A clean report requires zero source-versus-plan differences and never trusts writer success flags.
 
-See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), [reconstruction contract](docs/RECONSTRUCTION.md), [reconciliation contract](docs/RECONCILIATION.md), and [build specification](BUILD_SPEC.md).
+Detect incremental changes without applying them:
+
+```sh
+python3 context-port/contextport.py sync-plan PREVIOUS.json CURRENT.json
+```
+
+The result includes checkpoints, tombstones, a replay key, and human-required conflicts. It never deletes or writes content.
+
+See [the ContextPack contract](docs/CONTEXTPACK.md), [project segregation contract](docs/PROJECT_SEGREGATION.md), [human review contract](docs/HUMAN_REVIEW.md), [reconstruction contract](docs/RECONSTRUCTION.md), [reconciliation contract](docs/RECONCILIATION.md), [incremental sync contract](docs/INCREMENTAL_SYNC.md), and [build specification](BUILD_SPEC.md).
 
 ## Current boundary
 

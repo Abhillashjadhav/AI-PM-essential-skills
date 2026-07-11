@@ -360,6 +360,10 @@ def main(argv: list[str] | None = None) -> int:
     )
     reconcile_parser.add_argument("source", type=Path)
     reconcile_parser.add_argument("plan", type=Path)
+    sync_parser = subparsers.add_parser("sync-plan", help="detect incremental ContextPack changes and conflicts")
+    sync_parser.add_argument("previous", type=Path)
+    sync_parser.add_argument("current", type=Path)
+    sync_parser.add_argument("--peer-state", type=Path)
     arguments = parser.parse_args(argv)
     if arguments.command == "validate":
         return _validate_file(arguments.path)
@@ -473,6 +477,22 @@ def main(argv: list[str] | None = None) -> int:
             return 2
         print(json.dumps(report, ensure_ascii=False, indent=2, sort_keys=True))
         return 0 if report["status"] == "clean" else 5
+    if arguments.command == "sync-plan":
+        from sync import plan_sync
+
+        try:
+            load = lambda path: json.loads(path.read_text(encoding="utf-8"), object_pairs_hook=_reject_duplicate_keys)
+            plan = plan_sync(
+                load(arguments.previous),
+                load(arguments.current),
+                load(arguments.peer_state) if arguments.peer_state else None,
+                validator=validate,
+            )
+        except (OSError, UnicodeError, json.JSONDecodeError, ValueError, RecursionError) as exc:
+            print(f"FAIL {arguments.current}: {exc}", file=sys.stderr)
+            return 2
+        print(json.dumps(plan, ensure_ascii=False, indent=2, sort_keys=True))
+        return 6 if plan["status"] == "conflict" else 0
     return 2
 
 
