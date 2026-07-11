@@ -21,6 +21,7 @@ PROJECT_URL = "https://github.com/Abhillashjadhav/AI-PM-essential-skills/tree/ma
 DIST_INFO = f"{NAME}-{VERSION}.dist-info"
 MODULES = (
     "chatgpt_adapter.py",
+    "claude_converter.py",
     "contextport.py",
     "reconciliation.py",
     "reconstruction.py",
