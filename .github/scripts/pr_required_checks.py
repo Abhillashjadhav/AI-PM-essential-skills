@@ -88,9 +88,9 @@ def syntax_errors(paths: list[str]) -> list[str]:
 
 def run_tests() -> int:
     commands: list[list[str]] = []
-    if Path(".github/tests").is_dir():
+    if any(Path(".github/tests").rglob("test*.py")):
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", ".github/tests", "-v"])
-    if Path("context-port/tests").is_dir():
+    if any(Path("context-port/tests").rglob("test*.py")):
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", "context-port/tests", "-v"])
     for command in commands:
         completed = subprocess.run(command, check=False)

@@ -12,9 +12,10 @@ SPEC.loader.exec_module(checks)
 
 class RequiredCheckTests(unittest.TestCase):
     def test_privacy_check_detects_high_signal_secrets_and_private_files(self):
+        synthetic_token = "ghp" + "_" + "abcdefghijklmnopqrstuvwxyz123456"
         findings = checks.privacy_findings(
             ["context-port/session.json"],
-            ["token = 'ghp_abcdefghijklmnopqrstuvwxyz123456'"],
+            [f"token = '{synthetic_token}'"],
         )
         self.assertTrue(any("private filename" in finding for finding in findings))
         self.assertTrue(any("GitHub token" in finding for finding in findings))
