@@ -11,7 +11,8 @@ python3 context-port/contextport.py capabilities
 ## Output contract
 
 - Successful data-producing commands print JSON or HTML to standard output.
-- Diagnostics and invalid-input errors print to standard error.
+- A well-formed ContextPack that fails semantic validation returns status `1` and prints the complete human-readable validation report to stdout. This is an expected validation result, not a CLI usage failure.
+- Malformed input, I/O failures, and CLI usage errors return status `2` and print diagnostics to standard error.
 - ContextPort never overwrites an output file; callers may redirect stdout to a new protected local file.
 - Outputs derived from real conversations are private even when they contain only metadata.
 - `capabilities` is deterministic and does not probe accounts, files, environment secrets, or networks.

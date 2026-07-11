@@ -50,6 +50,13 @@ class PublicCLITests(unittest.TestCase):
         self.assertEqual(result.stdout, "")
         self.assertIn("invalid choice", result.stderr)
 
+    def test_semantic_validation_failure_is_a_stdout_result(self):
+        result = run_cli("validate", str(ROOT / "fixtures" / "contextpack-invalid.json"))
+        self.assertEqual(result.returncode, 1)
+        self.assertIn("FAIL", result.stdout)
+        self.assertIn("error(s)", result.stdout)
+        self.assertEqual(result.stderr, "")
+
 
 if __name__ == "__main__":
     unittest.main()
