@@ -15,5 +15,27 @@ jobs:
       - uses: actions/checkout@v4
       - name: Check repository integrity
         run: python3 scripts/check_repository_integrity.py
+      - name: Validate documented standalone-skill copy paths
+        run: |
+          skill_root="$(mktemp -d)/skills"
+          mkdir -p "$skill_root"
+          cp -r token-cost-estimator "$skill_root/"
+          cp -r eval-rubric-generator "$skill_root/"
+          cp -r context-auditor "$skill_root/"
+          cp -r concise-rewriter "$skill_root/"
+          test -f "$skill_root/token-cost-estimator/SKILL.md"
+          test -f "$skill_root/eval-rubric-generator/SKILL.md"
+          test -f "$skill_root/context-auditor/SKILL.md"
+          test -f "$skill_root/concise-rewriter/SKILL.md"
+      - name: Run documented ContextPort quick start
+        run: |
+          python3 context-port/contextport.py --version
+          python3 context-port/contextport.py capabilities
+          python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
+          python3 context-port/demo.py
+      - name: Run infrastructure tests
+        run: python3 -m unittest discover -s .github/tests -q
       - name: Run ContextPort unit tests
         run: python3 -m unittest discover -s context-port/tests -q
+      - name: Compile Python sources
+        run: python3 -m compileall -q scripts context-port
