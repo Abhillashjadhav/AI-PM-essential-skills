@@ -1,31 +1,25 @@
-# pm-claude-skills
+# AI PM Essential Skills
 
-**4 Claude Code skills built specifically for AI Product Managers.**  
-Not in Anthropic's official library. Not in the cookbook. Shipped and tested.
+This repository contains four Claude Code skills for AI Product Manager workflows and the standalone ContextPort toolkit under [`context-port/`](context-port/). ContextPort is not one of the four skills.
 
-Each skill solves a problem that costs AI PMs real time and real money — before, during, and after they ship.
+## Repository structure
 
----
-
-## Skills
-
-| Skill | What it does | Install link |
+| Path | Contents | Evidence status |
 |---|---|---|
-| [token-cost-estimator](./token-cost-estimator/) | Pre-flight cost + latency comparison across model choices | [↗](#token-cost-estimator) |
-| [eval-rubric-generator](./eval-rubric-generator/) | Turns a feature spec into a binary pass/fail eval checklist | [↗](#eval-rubric-generator) |
-| [context-auditor](./context-auditor/) | Scans any context file and flags the 4 known failure modes | [↗](#context-auditor) |
-| [concise-rewriter](./concise-rewriter/) | Compresses verbose output and reports a real token delta | [↗](#concise-rewriter) |
+| [`token-cost-estimator/`](token-cost-estimator/) | A skill instruction for comparing projected inference cost and latency. | Manual skill fixture not included in this repository. Model and pricing information must be verified against current official pricing before use. |
+| [`eval-rubric-generator/`](eval-rubric-generator/) | A skill instruction for turning a feature requirement into a binary evaluation rubric. | Manual skill fixture not included in this repository. |
+| [`context-auditor/`](context-auditor/) | A skill instruction for reviewing supplied context for poisoning, distraction, confusion, and clash. | Manual skill fixture not included in this repository. |
+| [`concise-rewriter/`](concise-rewriter/) | A skill instruction for rewriting supplied text more concisely and reporting a token delta. | Manual skill fixture not included in this repository. |
+| [`context-port/`](context-port/) | A standalone, local-first toolkit with its own CLI, synthetic fixtures, unit tests, and documentation. | See [ContextPort evidence](#contextport-evidence). |
 
----
+The plugin directories elsewhere in the repository are separate products and are not part of this four-skill set.
 
-## Install all four (2 minutes)
+## Install the four skills
 
 ```bash
-# Clone the repo
-git clone https://github.com/Abhillashjadhav/pm-claude-skills
-cd pm-claude-skills
+git clone https://github.com/Abhillashjadhav/AI-PM-essential-skills.git
+cd AI-PM-essential-skills
 
-# Install to your personal Claude Code skills directory
 mkdir -p ~/.claude/skills
 cp -r token-cost-estimator ~/.claude/skills/
 cp -r eval-rubric-generator ~/.claude/skills/
@@ -33,155 +27,42 @@ cp -r context-auditor ~/.claude/skills/
 cp -r concise-rewriter ~/.claude/skills/
 ```
 
-Skills hot-reload — no restart needed. Invoke any skill via its slash command.
+Claude Code installation behavior, skill discovery, and hot reload behavior are not continuously verified by this repository. Review the installed [`SKILL.md`](token-cost-estimator/SKILL.md) files in your target Claude Code environment before relying on them.
 
----
+## Evidence and validation
 
-## token-cost-estimator
+This repository does **not** make a blanket claim that every product is shipped or tested. The evidence is deliberately separated:
 
-**Invoke:** `/token-cost-estimator`
+- **Automated structural validation:** [`scripts/check_repository_integrity.py`](scripts/check_repository_integrity.py) checks the four declared skill directories, their `SKILL.md` files, README-local links, README-mentioned fixtures, and ContextPort quick-start paths.
+- **Automated tests:** ContextPort has Python unit tests in [`context-port/tests/`](context-port/tests/). They exercise the local toolkit using committed synthetic fixtures; they do not run Claude Code skills or external assistant services.
+- **Manual fixtures and expected outputs:** fixture documents under [`tests/`](tests/) and examples in product directories are review inputs and expected outputs. They are not automated behavioural tests unless a test command explicitly consumes them.
+- **Recorded behavioural model runs:** no recorded model-run evidence is claimed for the four standalone skills. ContextPort's committed evaluation notes document synthetic, deterministic checks rather than external-model runs.
+- **Unverified behaviour:** cross-runtime compatibility, external skill-library coverage, current model availability, current model pricing, and live Claude Code invocation behavior are unverified here. Any model or price used as an example is illustrative only and must be checked against current official pricing.
 
-Most teams pick a model and discover the bill later. This skill flips that.
+See [`docs/VALIDATION.md`](docs/VALIDATION.md) for evidence boundaries and exact reviewer commands.
 
-Paste a prompt + your candidate models → get a projected cost and latency comparison before a single token runs in production. Built for the AI PM who owns inference economics, not just feature specs.
+## ContextPort evidence
 
-**What it does:**
-- Estimates input + output token count for your prompt
-- Projects cost across multiple Claude models side by side
-- Surfaces latency tradeoff (speed vs. quality vs. cost)
-- Flags if a smaller model is likely sufficient for the task
+ContextPort's evidence is scoped to deterministic local behavior over committed synthetic fixtures. Its capability matrix labels real-export compatibility `UNKNOWN` and consumer ChatGPT reconstruction writes `UNSUPPORTED`; it does not establish live assistant migration behavior.
 
-**Test input:**
-```
-/token-cost-estimator
+## ContextPort quick start
 
-Prompt: [paste your system prompt here]
-Models to compare: claude-opus-4-6, claude-sonnet-4-6, claude-haiku-4-5
-Expected output length: ~500 tokens
-```
+ContextPort is a separate toolkit. Its quick start uses only committed synthetic fixtures:
 
-**Expected output:** A side-by-side cost + latency table with a recommendation.
-
----
-
-## eval-rubric-generator
-
-**Invoke:** `/eval-rubric-generator`
-
-The most important thing an AI PM can do before shipping is define what "good" looks like. Most skip it. This skill forces the discipline.
-
-Paste a feature spec or product requirement → get a binary yes/no rubric back. Every dimension is pass/fail — no partial credit, no vibes. Plug the output directly into your eval harness or LLM-as-judge setup.
-
-**What it does:**
-- Reads your spec and extracts the core output requirements
-- Generates 5–10 binary (yes/no) evaluation criteria
-- Labels each criterion as a hard gate (ship-blocker) or soft check
-- Outputs in a format ready to drop into Braintrust, DeepEval, or a manual review sheet
-
-**Test input:**
-```
-/eval-rubric-generator
-
-Feature spec: A customer support agent that answers billing questions.
-It should be accurate, cite the correct policy, avoid hallucinating charges,
-and escalate when it cannot answer with confidence.
+```bash
+python3 context-port/contextport.py --version
+python3 context-port/contextport.py capabilities
+python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
+python3 context-port/demo.py
+python3 -m unittest discover -s context-port/tests -q
 ```
 
-**Expected output:** A numbered pass/fail rubric with gate labels.
-
----
-
-## context-auditor
-
-**Invoke:** `/context-auditor`
-
-Context poisoning is the #1 silent killer of agent reliability. Most teams find out in production.
-
-This skill scans your CLAUDE.md, system prompt, or any assembled context file and flags the four known context failure modes before your agent sees them. Based on Drew Breunig's failure taxonomy — the framework Anthropic references but doesn't ship a diagnostic for.
-
-**The four failure modes it checks:**
-1. **Context Poisoning** — a hallucination or stale fact has made it into the context and will be repeated downstream
-2. **Context Distraction** — the context is so long the model over-indexes on history instead of the current task
-3. **Context Confusion** — superfluous information is present that degrades response quality
-4. **Context Clash** — conflicting instructions or facts exist in the same context window
-
-**Test input:**
-```
-/context-auditor
-
-[paste your CLAUDE.md or system prompt here]
-```
-
-**Expected output:** A flag-by-flag audit with line-level citations and a severity rating (Critical / Warning / Clean).
-
----
-
-## concise-rewriter
-
-**Invoke:** `/concise-rewriter`
-
-Verbose model output costs money twice — once in output tokens, once in the time it takes someone to read it. This skill fixes both.
-
-Paste any LLM output → get a compressed version back, plus a real before/after token count and percentage reduction. Not a summary. A rewrite that preserves every piece of meaning while stripping everything the model added for padding.
-
-**What it does:**
-- Rewrites the output at the same information density, shorter
-- Reports exact before token count, after token count, and % reduction
-- Flags specific patterns that caused bloat (hedges, restated context, filler transitions)
-- Works on any output: agent responses, PRD drafts, model-generated summaries
-
-**Test input:**
-```
-/concise-rewriter
-
-[paste verbose model output here]
-```
-
-**Expected output:** Rewritten text + token delta table + bloat pattern breakdown.
-
----
-
-## How to test each skill
-
-Each skill has a `test/` folder with:
-- `input.md` — a real example input
-- `expected-output.md` — what a good output looks like
-- `eval-notes.md` — what to check for and what counts as a failure
-
-Run a skill → compare your output against `expected-output.md` → if it diverges, check `eval-notes.md` to understand why.
-
----
-
-## Why these four
-
-These skills exist at the intersection of three disciplines every serious AI PM has to own:
-
-- **Evals** — defining and measuring what "good" looks like before you ship
-- **Context engineering** — what the model sees is the product; it has to be clean
-- **Inference economics** — cost and latency are product decisions, not engineering afterthoughts
-
-Nothing in Anthropic's official skill library covers this PM-specific surface. These do.
-
----
-
-## Known constraints
-
-- `pm-tactical` plugin skills fire natively once `.claude/settings.json` (marketplace + `enabledPlugins`) is committed to the repo and the session trusts project settings (verified 2026-07-04). Sessions started before that commit, or where the plugin was installed mid-session instead of picked up from committed settings, won't have it in their invocable set yet — for those, the CLAUDE.md "Skill routing (fallback for not-yet-enabled sessions)" section tells Claude to read and follow the matching SKILL.md manually.
-
----
+See [`context-port/README.md`](context-port/README.md) for its safety boundaries, supported synthetic workflow, and installation procedure.
 
 ## Contributing
 
-PRs welcome. Every PR is reviewed by the repo's PR agent before merge.
-
-Open an issue if a skill produces output that fails its own eval criteria — that's the highest-quality signal for improvement.
-
----
+Review [`AGENTS.md`](AGENTS.md) before contributing. In particular, ContextPort changes must not modify existing AI-PM skills without explicit human approval. Pull requests require review before merge.
 
 ## License
 
-MIT. Use freely, fork freely, ship freely.
-
----
-
-*Built by [Abhillash Jadhav](https://github.com/Abhillashjadhav) — GenAI PM. Evals, context engineering, agentic reliability.*
+MIT. See the repository license terms when they are added or updated.
