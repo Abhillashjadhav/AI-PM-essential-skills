@@ -4,9 +4,9 @@ ContextPort is a public, standalone, local-first toolkit for representing, revie
 
 ## Current status
 
-The synthetic migration MVP is `VERIFIED`. ContextPort can validate ContextPack `0.1`, segregate projects, generate a privacy-safe human review package, create an approved reconstruction dry run, reconcile it independently, plan incremental changes, build/install locally, and run a revision-bound synthetic demonstration.
+The synthetic migration MVP is `VERIFIED`. ContextPort can validate ContextPack `0.1`, segregate projects, generate a privacy-safe human review package, create an approved reconstruction dry run, reconcile it independently, plan incremental changes, build/install locally, run a revision-bound synthetic demonstration, and deterministically convert the committed synthetic Claude-export shape.
 
-Real Claude export compatibility is `UNKNOWN` until a human approves local inspection of a real ZIP. Consumer ChatGPT reconstruction writes are `UNSUPPORTED` because a public write interface has not been verified. ContextPort performs no browser automation or assistant write.
+One approved local real-export conversion is `RECORDED` in merged [PR #24](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/24): 43 source projects plus one generated unmapped project, 1,434 conversations, 36,264 messages, and 7,538 attachment records were preserved with zero reported losses. The private input and generated package are not committed, so the observation is not independently reproducible and general real-export compatibility remains `UNKNOWN`. Consumer ChatGPT reconstruction writes are `UNSUPPORTED` because a public write interface has not been verified. ContextPort performs no browser automation or assistant write.
 
 See the [capability matrix](docs/CAPABILITIES.md) for the precise boundary.
 

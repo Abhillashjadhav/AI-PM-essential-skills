@@ -6,7 +6,9 @@ This matrix describes ContextPort `0.1.0`. Command availability is not permissio
 |---|---|---|
 | ContextPack `0.1` validation | `VERIFIED` | Public schema, valid/invalid fixtures, deterministic validator tests |
 | Metadata-only JSON structure inspection | `VERIFIED` for synthetic input | Values are not emitted; real artifacts require fresh approval |
-| Real Claude export schema compatibility | `UNKNOWN` | No real ZIP has been accessed or interpreted |
+| Claude export converter invariants | `VERIFIED` for committed synthetic input | Exact source snapshot, input/output counts, zero-loss decision, and byte-identical repeated writes are tested |
+| One approved real Claude export conversion | `RECORDED` | [PR #24](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/24) records 43 source projects plus one generated project, 1,434 conversations, 36,264 messages, and 7,538 attachment records preserved; private artifacts are not committed |
+| Real Claude export schema compatibility | `UNKNOWN` | One recorded observation does not establish compatibility with every export shape; future access remains approval-gated |
 | Project segregation | `VERIFIED` for validated ContextPack | Stable IDs, duplicate-title preservation, explicit ambiguous-mapping stop |
 | Human review package and offline HTML | `VERIFIED` | Metadata-only package, escaped HTML, digest-bound decision artifact |
 | Assistant-neutral reconstruction planning | `VERIFIED` | Approved dry run with dependencies, exact content, and idempotency keys |

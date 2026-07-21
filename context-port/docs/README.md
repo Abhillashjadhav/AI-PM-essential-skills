@@ -39,6 +39,7 @@
 Reliability labels have fixed meanings throughout these documents:
 
 - `VERIFIED` — observable completed evidence supports the claim.
+- `RECORDED` — a public record describes an observation whose approved private inputs or outputs are intentionally not committed.
 - `INFERRED` — identified evidence supports a reasoned conclusion.
 - `UNKNOWN` — available evidence does not establish the claim.
 - `UNSUPPORTED` — the current version intentionally refuses or cannot perform it.
