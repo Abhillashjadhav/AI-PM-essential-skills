@@ -1,6 +1,12 @@
 # Validation evidence
 
-This document records what this repository's checks establish and what they do not establish. It applies the evidence labels used by ContextPort: `VERIFIED` means observable repository evidence exists, `UNKNOWN` means the available evidence does not establish the claim, and `UNSUPPORTED` means the product intentionally does not perform the behavior.
+This document records what this repository's checks establish and what they do not establish. Portfolio claims use five levels:
+
+- `STRUCTURAL`: deterministic inspection establishes that declared files, manifests, paths, links, or fields exist.
+- `VERIFIED`: a committed, repeatable check establishes the stated behavior on its declared inputs.
+- `RECORDED`: a public record describes an observation, but an intentionally private input or output prevents independent reproduction from the checkout.
+- `UNKNOWN`: available evidence does not establish the claim.
+- `UNSUPPORTED`: the product intentionally does not perform the behavior.
 
 ## Automatically checked
 
@@ -8,7 +14,8 @@ This document records what this repository's checks establish and what they do n
 
 - the four public skill directories exist: `token-cost-estimator`, `eval-rubric-generator`, `context-auditor`, and `concise-rewriter`;
 - each of those directories contains `SKILL.md`;
-- each local Markdown link in every repository `README*.md` resolves to an existing file or directory, and local README anchors resolve to a heading;
+- the marketplace declares four plugin directories, each source stays inside the repository, and each contains a parseable, name-matching plugin manifest;
+- each local Markdown link in every repository Markdown document resolves to an existing file or directory, and local Markdown anchors resolve to a heading;
 - every fixture path mentioned in a README exists; and
 - the ContextPort quick-start entry points and synthetic validation fixture exist.
 
@@ -24,15 +31,29 @@ ContextPort's evaluation notes under [`context-port/evals/`](../context-port/eva
 
 No recorded external-model behavioural runs are present for the four standalone skills. The repository therefore makes no evidence-backed claim about their live invocation, output quality, token counting accuracy, pricing accuracy, or interoperability with other Claude Code runtimes.
 
-ContextPort's recorded evidence is local and synthetic. Its [release-readiness report](../context-port/reports/RELEASE_READINESS.md) distinguishes completed automated checks from `UNKNOWN` and `UNSUPPORTED` capabilities. It is not evidence of a real Claude export migration or a consumer ChatGPT reconstruction write.
+ContextPort's deterministic evidence is local and synthetic. Its [release-readiness report](../context-port/reports/RELEASE_READINESS.md) is revision-bound and predates the converter merged in PR #24. It distinguishes completed automated checks from `UNKNOWN` and `UNSUPPORTED` capabilities at its audited revision; it is not evidence of a consumer ChatGPT reconstruction write.
+
+## Recorded real-export observation
+
+Merged [PR #24](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/24) publicly records one approved local run of the generic Claude export converter. The PR reports:
+
+- 43 source projects preserved, plus one generated `Unmapped Conversations` project;
+- 1,434 conversations preserved;
+- 36,264 messages preserved;
+- 7,538 attachment records preserved;
+- one design chat and one memory container preserved;
+- zero reported losses; and
+- deterministic repeated conversion.
+
+These aggregates are public-safe because the merged PR already discloses them without names, content, paths, or hashes. The private export and generated migration package remain outside the repository. The observation is therefore `RECORDED`, not independently reproducible `VERIFIED` evidence. Committed synthetic tests verify the converter's count invariants, exact embedded source snapshot, zero-loss decision, and byte-identical repeated writes. They do not reproduce the private counts, prove compatibility with every Claude export shape, copy attachment payloads into a destination, or perform an assistant write.
 
 ## Unverified and unsupported behavior
 
-- `UNKNOWN`: compatibility with real Claude or ChatGPT exports, unless separately approved and inspected under the repository rules.
+- `UNKNOWN`: general compatibility with Claude or ChatGPT export shapes beyond the one recorded Claude observation.
 - `UNKNOWN`: current model names, availability, and prices. Any example must be treated as illustrative and checked against current official pricing.
 - `UNKNOWN`: whether external or official skill libraries cover equivalent functionality; this is not continuously monitored.
 - `UNKNOWN`: invocation, installation, hot-reload, and cross-runtime behavior of the four standalone Claude Code skills.
-- `UNSUPPORTED`: ContextPort consumer ChatGPT reconstruction writes, browser automation, and unapproved real-export handling, as documented in [`context-port/docs/CAPABILITIES.md`](../context-port/docs/CAPABILITIES.md).
+- `UNSUPPORTED`: ContextPort consumer ChatGPT reconstruction writes and browser automation, as documented in [`context-port/docs/CAPABILITIES.md`](../context-port/docs/CAPABILITIES.md). Future real-export access remains approval-gated rather than generally supported.
 - `UNKNOWN`: line coverage. No coverage instrumentation is configured; no percentage is claimed.
 
 ## Reviewer commands

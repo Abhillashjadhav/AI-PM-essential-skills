@@ -36,6 +36,7 @@ class DocumentationTests(unittest.TestCase):
 
     def test_capability_matrix_is_truthful_about_live_boundaries(self):
         matrix = (ROOT / "docs" / "CAPABILITIES.md").read_text(encoding="utf-8")
+        self.assertIn("One approved real Claude export conversion | `RECORDED`", matrix)
         self.assertIn("Real Claude export schema compatibility | `UNKNOWN`", matrix)
         self.assertIn("Consumer ChatGPT reconstruction writes | `UNSUPPORTED`", matrix)
         self.assertIn("Synthetic end-to-end migration demo | `VERIFIED`", matrix)

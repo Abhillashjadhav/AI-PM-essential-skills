@@ -1,7 +1,7 @@
 {
   "name": "pm-tactical",
   "version": "0.2.1",
-  "description": "Five tested skills that make a PM's daily Claude workflow cheaper, faster, and self-checking — now proactive by default: model-complexity-router (silently scores every task handoff, not just direct questions), builder-validator (frozen-spec self-QA, checklist frozen silently, never invents gate-critical facts), prompt-optimizer-loop (one-mutation-per-round prompt tuning), cli-over-mcp-auditor (silent first-prompt relevance check plus full deep-audit flow), pm-context-system (observes the session and proposes one-line log entries instead of interviewing up front).",
+  "description": "Five instruction-based skills for model routing, frozen-spec self-checks, prompt iteration, MCP context-cost review, and project-memory proposals. Committed fixtures describe expected behavior; they are not an automated model-run suite.",
   "author": {
     "name": "Abhillash Jadhav",
     "url": "https://github.com/Abhillashjadhav"

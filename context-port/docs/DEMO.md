@@ -13,7 +13,7 @@ The final stage is intentionally `UNSUPPORTED`: no public consumer ChatGPT recon
 The report binds itself directly to the checkout's exact Git `HEAD`; it accepts no revision override. It records completed stage exit states, source artifact and inventory digests, stable stage digests and counts, an explicit unobserved destination inventory, per-operation dispositions for everything not copied, environment limitations, and a digest over the complete report.
 
 - `VERIFIED`: demonstrated by completed checks over synthetic fixtures;
-- `UNKNOWN`: real Claude export compatibility, pending separately approved inspection;
+- `UNKNOWN`: general real Claude export compatibility; the synthetic demo does not reproduce the separate private-export observation recorded in [PR #24](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/24);
 - `UNSUPPORTED`: ChatGPT reconstruction writes.
 
-This is evidence for the synthetic migration MVP only. It is not evidence that a real Claude ZIP has been parsed or that content has been written to ChatGPT.
+This is evidence for the synthetic migration MVP only. It is not the evidence for the approved local real-export conversion recorded separately in PR #24, and it is not evidence that content has been written to ChatGPT.
