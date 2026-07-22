@@ -1,53 +1,33 @@
 # AI PM Essential Skills
 
-This repository contains four Claude Code skills for AI Product Manager workflows and the standalone ContextPort toolkit under [`context-port/`](context-port/). ContextPort is not one of the four skills.
+**Four focused Claude Code skills for recurring AI product decisions, plus the separate ContextPort local migration toolkit.**
 
-## Repository structure
-
-| Path | Contents | Evidence status |
-|---|---|---|
-| [`token-cost-estimator/`](token-cost-estimator/) | A skill instruction for comparing projected inference cost and latency. | Manual skill fixture not included in this repository. Model and pricing information must be verified against current official pricing before use. |
-| [`eval-rubric-generator/`](eval-rubric-generator/) | A skill instruction for turning a feature requirement into a binary evaluation rubric. | Manual skill fixture not included in this repository. |
-| [`context-auditor/`](context-auditor/) | A skill instruction for reviewing supplied context for poisoning, distraction, confusion, and clash. | Manual skill fixture not included in this repository. |
-| [`concise-rewriter/`](concise-rewriter/) | A skill instruction for rewriting supplied text more concisely and reporting a token delta. | Manual skill fixture not included in this repository. |
-| [`context-port/`](context-port/) | A standalone, local-first toolkit with its own CLI, synthetic fixtures, unit tests, and documentation. | See [ContextPort evidence](#contextport-evidence). |
-
-The plugin directories elsewhere in the repository are separate products and are not part of this four-skill set.
+This repository is intentionally small. The skills help compare model cost, design an evaluation rubric, audit supplied context, and rewrite text concisely. ContextPort is a standalone toolkit under `context-port/`; it is not one of the four skills.
 
 ## Install the four skills
 
 ```bash
 git clone https://github.com/Abhillashjadhav/AI-PM-essential-skills.git
 cd AI-PM-essential-skills
-
 mkdir -p ~/.claude/skills
-cp -r token-cost-estimator ~/.claude/skills/
-cp -r eval-rubric-generator ~/.claude/skills/
-cp -r context-auditor ~/.claude/skills/
-cp -r concise-rewriter ~/.claude/skills/
+cp -r token-cost-estimator eval-rubric-generator context-auditor concise-rewriter ~/.claude/skills/
+python3 scripts/check_repository_integrity.py
 ```
 
-Claude Code installation behavior, skill discovery, and hot reload behavior are not continuously verified by this repository. Review the installed [`SKILL.md`](token-cost-estimator/SKILL.md) files in your target Claude Code environment before relying on them.
+## What each skill does
 
-## Evidence and validation
+| Skill | Decision it supports | Evidence status |
+|---|---|---|
+| `token-cost-estimator` | Compare projected inference cost and latency | Instruction available; current prices must be verified from official sources |
+| `eval-rubric-generator` | Convert a feature requirement into binary evaluation criteria | Instruction available; no recorded behavioural run claimed |
+| `context-auditor` | Identify poisoning, distraction, confusion, and conflicting context | Instruction available; no recorded behavioural run claimed |
+| `concise-rewriter` | Reduce supplied text while reporting token change | Instruction available; no recorded behavioural run claimed |
 
-This repository does **not** make a blanket claim that every product is shipped or tested. The evidence is deliberately separated:
+Review each installed `SKILL.md` before relying on it in a live environment. Claude Code discovery and cross-runtime behaviour are not continuously certified here.
 
-- **Automated structural validation:** [`scripts/check_repository_integrity.py`](scripts/check_repository_integrity.py) checks the four declared skill directories, their `SKILL.md` files, README-local links, README-mentioned fixtures, and ContextPort quick-start paths.
-- **Automated tests:** ContextPort has Python unit tests in [`context-port/tests/`](context-port/tests/). They exercise the local toolkit using committed synthetic fixtures; they do not run Claude Code skills or external assistant services.
-- **Manual fixtures and expected outputs:** fixture documents under [`tests/`](tests/) and examples in product directories are review inputs and expected outputs. They are not automated behavioural tests unless a test command explicitly consumes them.
-- **Recorded behavioural model runs:** no recorded model-run evidence is claimed for the four standalone skills. ContextPort's committed evaluation notes document synthetic, deterministic checks rather than external-model runs.
-- **Unverified behaviour:** cross-runtime compatibility, external skill-library coverage, current model availability, current model pricing, and live Claude Code invocation behavior are unverified here. Any model or price used as an example is illustrative only and must be checked against current official pricing.
+## Try ContextPort locally
 
-See [`docs/VALIDATION.md`](docs/VALIDATION.md) for evidence boundaries and exact reviewer commands.
-
-## ContextPort evidence
-
-ContextPort's evidence is scoped to deterministic local behavior over committed synthetic fixtures. Its capability matrix labels real-export compatibility `UNKNOWN` and consumer ChatGPT reconstruction writes `UNSUPPORTED`; it does not establish live assistant migration behavior.
-
-## ContextPort quick start
-
-ContextPort is a separate toolkit. Its quick start uses only committed synthetic fixtures:
+ContextPort validates and demonstrates a synthetic, local-first context-package workflow.
 
 ```bash
 python3 context-port/contextport.py --version
@@ -57,12 +37,44 @@ python3 context-port/demo.py
 python3 -m unittest discover -s context-port/tests -q
 ```
 
-See [`context-port/README.md`](context-port/README.md) for its safety boundaries, supported synthetic workflow, and installation procedure.
+The demo uses committed synthetic fixtures. It does not prove compatibility with every real assistant export, and it does not write reconstructed conversations into consumer ChatGPT.
+
+See [`context-port/README.md`](context-port/README.md) for supported operations and safety boundaries.
+
+## Repository boundaries
+
+- The four top-level skill directories are the AI PM skill set.
+- `context-port/` is a separate executable toolkit.
+- Other plugin directories are separate products and are not part of the four-skill claim.
+- Manual fixtures and examples are review inputs unless a test command explicitly executes them.
+
+## Validation
+
+```bash
+python3 scripts/check_repository_integrity.py
+python3 -m unittest discover -s context-port/tests -q
+```
+
+Validated:
+
+- declared skill directories and `SKILL.md` files exist;
+- README-local paths and documented commands are checked;
+- ContextPort deterministic behaviour is covered by unit tests over synthetic fixtures.
+
+Not validated:
+
+- live behavioural quality of the four Claude Code skills;
+- current model pricing or availability;
+- cross-runtime compatibility;
+- broad compatibility with real exports;
+- consumer ChatGPT reconstruction writes.
+
+See [`docs/VALIDATION.md`](docs/VALIDATION.md).
 
 ## Contributing
 
-Review [`AGENTS.md`](AGENTS.md) before contributing. In particular, ContextPort changes must not modify existing AI-PM skills without explicit human approval. Pull requests require review before merge.
+Read [`AGENTS.md`](AGENTS.md) before changing the repository. Keep changes within one product boundary, add reproducible validation where possible, and do not broaden capability claims beyond committed evidence.
 
 ## License
 
-MIT. See the repository license terms when they are added or updated.
+MIT.
