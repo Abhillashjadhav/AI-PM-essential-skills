@@ -1,0 +1,36 @@
+name: Public smoke
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-quickstarts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Verify four-skill installation layout
+        run: |
+          for skill in token-cost-estimator eval-rubric-generator context-auditor concise-rewriter; do
+            test -f "$skill/SKILL.md"
+            mkdir -p "$RUNNER_TEMP/claude-skills/$skill"
+            cp "$skill/SKILL.md" "$RUNNER_TEMP/claude-skills/$skill/SKILL.md"
+          done
+      - name: Run repository integrity check
+        run: python3 scripts/check_repository_integrity.py
+      - name: Run ContextPort public quickstart
+        run: |
+          python3 context-port/contextport.py --version
+          python3 context-port/contextport.py capabilities
+          python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
+          python3 context-port/demo.py
+          python3 -m unittest discover -s context-port/tests -q
