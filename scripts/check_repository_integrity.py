@@ -18,6 +18,7 @@ EXPECTED_PLUGINS = (
     "mcp-migration-auditor",
     "loop-designer",
     "pm-human-writer",
+    "ai-feature-kill-criteria",
 )
 STANDALONE_SKILLS = (
     "token-cost-estimator",
