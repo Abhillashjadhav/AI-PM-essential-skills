@@ -1,0 +1,10 @@
+{
+  "name": "pm-human-writer",
+  "version": "0.1.0",
+  "description": "Voice-preserving editor for product writing. Removes recognisable AI-writing patterns, protects concrete facts and product judgment, and returns a clean draft plus named edits without turning the writer into generic polished prose.",
+  "author": {
+    "name": "Abhillash Jadhav",
+    "url": "https://github.com/Abhillashjadhav"
+  },
+  "keywords": ["product-management", "writing", "editing", "ai-slop", "voice"]
+}

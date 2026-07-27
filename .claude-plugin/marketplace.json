@@ -24,6 +24,11 @@
       "name": "loop-designer",
       "source": "./loop-designer",
       "description": "Guarded autonomous loop generator: turns any recurring task into a five-part loop spec (Discover/Plan/Execute/Verify/Stop) with five non-negotiable guardrails and ready-to-paste Routine + cron runners."
+    },
+    {
+      "name": "pm-human-writer",
+      "source": "./pm-human-writer",
+      "description": "Voice-preserving product-writing editor: removes recognisable AI-writing patterns, protects facts and product judgment, and returns a clean draft with named edits."
     }
   ]
 }
