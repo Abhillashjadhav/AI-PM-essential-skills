@@ -29,6 +29,11 @@
       "name": "pm-human-writer",
       "source": "./pm-human-writer",
       "description": "Voice-preserving product-writing editor: removes recognisable AI-writing patterns, protects facts and product judgment, and returns a clean draft with named edits."
+    },
+    {
+      "name": "ai-feature-kill-criteria",
+      "source": "./ai-feature-kill-criteria",
+      "description": "Pre-build AI product decision contract: defines falsifiable assumptions, explicit kill thresholds, the cheapest decisive evidence plan, and a decision date before development starts."
     }
   ]
 }
