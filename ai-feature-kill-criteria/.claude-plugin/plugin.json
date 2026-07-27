@@ -1,0 +1,10 @@
+{
+  "name": "ai-feature-kill-criteria",
+  "version": "0.1.0",
+  "description": "Pre-build decision skill for AI product teams: converts an AI feature idea into falsifiable assumptions, explicit kill thresholds, an evidence plan, and a decision date before development starts.",
+  "author": {
+    "name": "Abhillash Jadhav",
+    "url": "https://github.com/Abhillashjadhav"
+  },
+  "keywords": ["ai-product-management", "kill-criteria", "experiments", "decision-making", "evidence"]
+}
