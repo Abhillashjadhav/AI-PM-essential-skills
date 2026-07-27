@@ -17,6 +17,7 @@ EXPECTED_PLUGINS = (
     "pm-verifier",
     "mcp-migration-auditor",
     "loop-designer",
+    "pm-human-writer",
 )
 STANDALONE_SKILLS = (
     "token-cost-estimator",
