@@ -2,7 +2,7 @@
 
 **Install focused Claude Code plugins for the product decisions that make AI systems expensive, unreliable, or difficult to ship.**
 
-This repository is the distribution hub for four installable plugins. Each plugin solves a distinct job, ships examples and validation fixtures, and is designed to produce a useful artifact within one working session.
+This repository is the distribution hub for six installable plugins. Each plugin solves a distinct job, ships examples and validation fixtures, and is designed to produce a useful artifact within one working session.
 
 ## Install your first plugin
 
@@ -26,7 +26,7 @@ Create an eval for this feature.
 | **[pm-verifier](pm-verifier/)** | Turn a PRD or feature spec into a verification layer | `Create an eval for this feature` | Quality gates, judge rubric, judge prompt, and runnable harness |
 | **[pm-tactical](pm-tactical/)** | Make daily PM work cheaper, faster, and self-checking | `Check whether this task needs a stronger model` | Model routing, frozen-spec validation, prompt optimization, context audit, or project-memory update |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
-| **[mcp-migration-auditor](mcp-migration-auditor/)** | Check MCP configurations against the 2026 specification changes | `Audit my MCP setup` | Per-server `BREAKS`, `DEGRADED`, or `SAFE` verdicts with cited fixes |
+| **[mcp-migration-auditor](mcp-migration-auditor/)** | Check MCP configurations against the 2026 specification changes | `Audit my MCP setup` | Per-server `BREAKS`, `DEGRADED`, or `SAFE` verdicts with cited fixes |\n| **[pm-human-writer](pm-human-writer/)** | Preserve a PM's voice while removing recognisable AI-writing patterns | `Rewrite this without flattening my judgment` | Voice-protected rewrite with named edits and evidence constraints |\n| **[ai-feature-kill-criteria](ai-feature-kill-criteria/)** | Decide whether an AI feature deserves a prototype | `Define kill criteria for this AI feature` | Falsifiable claim, approved thresholds, cheapest decisive test, owner, and decision date |
 
 Install any plugin with the same two-step pattern:
 
@@ -106,12 +106,12 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 | [`pm-verifier/`](pm-verifier/) | Spec-to-evaluation plugin |
 | [`pm-tactical/`](pm-tactical/) | Daily AI PM workflow plugin |
 | [`loop-designer/`](loop-designer/) | Guarded-loop design plugin |
-| [`mcp-migration-auditor/`](mcp-migration-auditor/) | MCP compatibility and migration plugin |
+| [`mcp-migration-auditor/`](mcp-migration-auditor/) | MCP compatibility and migration plugin |\n| [`pm-human-writer/`](pm-human-writer/) | Voice-preserving product-writing plugin |\n| [`ai-feature-kill-criteria/`](ai-feature-kill-criteria/) | Pre-build AI feature decision-contract plugin |
 | [`tests/`](tests/) | Manifest, trigger, policy, and known-answer fixtures |
 
 ## Additional tools in this repository
 
-These remain available but are not the four marketplace products above:
+These remain available but are not the six marketplace products above:
 
 - [`token-cost-estimator/`](token-cost-estimator/) — compare projected model cost and latency; verify current prices from official sources.
 - [`eval-rubric-generator/`](eval-rubric-generator/) — an earlier rubric-focused skill; `pm-verifier` is the broader verification product.
