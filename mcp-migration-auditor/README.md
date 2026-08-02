@@ -1,14 +1,14 @@
 # mcp-migration-auditor
 
-**The MCP spec goes final on July 28, 2026. Will your servers break?**
+**The MCP 2026-07-28 release candidate is here. Is your server ready?**
 
-One skill that scans your MCP configs against the *verified* breaking changes in the MCP 2026-07-28 specification — stateless transport, removed sessions, deprecated capabilities, Tasks migration, OAuth hardening — and tells you per server: **BREAKS**, **DEGRADED**, or **SAFE**, with the rule, the official source, and the specific fix.
+One skill that scans your MCP configs against the *verified* changes in the MCP 2026-07-28 release candidate — stateless transport, removed sessions, deprecated capabilities, Tasks migration, OAuth hardening — and tells you per server: **BREAKS**, **DEGRADED**, or **SAFE**, with the rule, the official source, and the specific fix.
 
-Third plugin in the [ai-pm-skills](../) marketplace, alongside [pm-tactical](../pm-tactical/) and [pm-verifier](../pm-verifier/).
+Installable plugin in the [ai-pm-skills](../) marketplace.
 
 ## The problem
 
-The 2026-07-28 release candidate removes the `Mcp-Session-Id` header and the initialize handshake (SEP-2567, SEP-2575), deprecates Roots/Sampling/Logging (SEP-2577), moves Tasks to an extension with a new lifecycle (SEP-2663), and hardens OAuth (six SEPs). Teams running remote MCP servers built on sessions have until spec-final to migrate; teams on deprecated capabilities have a 12-month clock (SEP-2596). Most teams don't know which bucket they're in — and most "what's changing in MCP" content is speculation. This skill audits only against rules quoted from the official blog and spec changelog, with URLs, in `skills/mcp-migration-auditor/references/spec-changes.md`.
+The 2026-07-28 release candidate removes the `Mcp-Session-Id` header and the initialize handshake (SEP-2567, SEP-2575), deprecates Roots/Sampling/Logging (SEP-2577), moves Tasks to an extension with a new lifecycle (SEP-2663), and hardens OAuth (six SEPs). Teams running remote MCP servers built on sessions should assess migration now; teams on deprecated capabilities have a 12-month clock (SEP-2596). Most teams don't know which bucket they're in — and most "what's changing in MCP" content is speculation. This skill audits only against rules quoted from the official blog and spec changelog, with URLs, in `skills/mcp-migration-auditor/references/spec-changes.md`.
 
 ## Install (30 seconds)
 
@@ -26,7 +26,7 @@ audit my MCP setup
 Also fires on: "check MCP compatibility", "will my MCP servers break", "MCP spec migration", "MCP 2026 spec check", "scan mcp config". The skill finds your `.mcp.json` / `claude_desktop_config.json` / settings files (or takes a pasted config) and returns:
 
 ```
-MCP MIGRATION AUDIT — spec final 2026-07-28 (21 days away)
+MCP MIGRATION AUDIT — release candidate 2026-07-28
 
 | Server             | Transport   | Status   | Rule                     | Fix |
 |--------------------|-------------|----------|--------------------------|-----|
