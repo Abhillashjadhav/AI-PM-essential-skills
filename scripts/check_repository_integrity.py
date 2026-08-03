@@ -9,6 +9,8 @@ import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
 
+from check_pm_human_writer_contract import validate_contract as validate_pm_human_writer_contract
+
 
 ROOT = Path(__file__).resolve().parents[1]
 MARKETPLACE_PATH = ROOT / ".claude-plugin" / "marketplace.json"
@@ -164,6 +166,7 @@ def validate_marketplace() -> list[str]:
 
 def main() -> int:
     failures = validate_marketplace()
+    failures.extend(validate_pm_human_writer_contract())
 
     for skill in STANDALONE_SKILLS:
         directory = ROOT / skill
