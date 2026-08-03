@@ -87,26 +87,30 @@ def validate_contract(path: Path = CASES_PATH) -> list[str]:
         if not isinstance(draft, str) or not isinstance(output, str):
             continue
 
+        fragment_lists: dict[str, list[str]] = {}
         for field in ("must_preserve", "must_remove", "must_not_add"):
             fragments = case.get(field)
             if not isinstance(fragments, list) or not all(
                 isinstance(fragment, str) and fragment for fragment in fragments
             ):
                 failures.append(f"{label}: {field} must be a string list")
+                fragment_lists[field] = []
+            else:
+                fragment_lists[field] = fragments
 
-        for fragment in case.get("must_preserve", []):
+        for fragment in fragment_lists["must_preserve"]:
             if not contains(draft, fragment):
                 failures.append(f"{label}: preserved fragment absent from draft: {fragment!r}")
             if not contains(output, fragment):
                 failures.append(f"{label}: expected output lost required fact: {fragment!r}")
 
-        for fragment in case.get("must_remove", []):
+        for fragment in fragment_lists["must_remove"]:
             if not contains(draft, fragment):
                 failures.append(f"{label}: removable pattern absent from draft: {fragment!r}")
             if contains(output, fragment):
                 failures.append(f"{label}: banned pattern remains in output: {fragment!r}")
 
-        for fragment in case.get("must_not_add", []):
+        for fragment in fragment_lists["must_not_add"]:
             if contains(draft, fragment):
                 failures.append(f"{label}: anti-invention fragment already exists in draft: {fragment!r}")
             if contains(output, fragment):
