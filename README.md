@@ -147,4 +147,4 @@ Keep each contribution inside one product boundary. New marketplace plugins must
 
 ## License
 
-MIT.
+[MIT License](LICENSE).

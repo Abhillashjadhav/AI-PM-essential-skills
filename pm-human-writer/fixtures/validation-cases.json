@@ -1,0 +1,104 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "fire-linkedin-rewrite",
+      "should_trigger": true,
+      "request": "Rewrite this LinkedIn post so it sounds less AI-generated while keeping my product judgment and facts.",
+      "audience": "AI product managers and engineering leaders on LinkedIn",
+      "reader_outcome": "Understand why the measured result remained marginal.",
+      "draft": "What most people miss is that an LLM judge can look accurate and still be unsafe to trust.\n\nThe best part: I measured 76.5% agreement with human graders. This robust result changes everything.\n\nI could lower the threshold and call it a pass. I marked it MARGINAL instead.",
+      "expected_output": "My LLM judge agreed with human graders 76.5% of the time. I still marked it MARGINAL.\n\nI could lower the threshold and call it a pass. I chose not to.",
+      "must_preserve": [
+        "LLM judge",
+        "76.5%",
+        "human graders",
+        "lower the threshold",
+        "MARGINAL"
+      ],
+      "must_remove": [
+        "What most people miss",
+        "The best part:",
+        "robust",
+        "changes everything"
+      ],
+      "must_not_add": [
+        "tool calls",
+        "latency",
+        "cost"
+      ]
+    },
+    {
+      "id": "no-fire-factual-question",
+      "should_trigger": false,
+      "request": "What is retrieval-augmented generation?"
+    },
+    {
+      "id": "known-answer-product-system",
+      "should_trigger": true,
+      "request": "Sharpen this product note without changing its claims.",
+      "audience": "Product and engineering review",
+      "reader_outcome": "Evaluate the complete AI product workflow.",
+      "draft": "An AI feature is a product system, not just a model. A model demo can pass while the full product workflow still fails.\n\nOur evaluation must cover inputs, tool calls, failure handling, latency, cost, and whether the user reaches the intended outcome.",
+      "expected_output": "An AI feature can pass a model demo and still fail across the product workflow.\n\nEvaluate the inputs, tool calls, failure handling, latency, cost, and whether the user reaches the intended outcome.",
+      "must_preserve": [
+        "model demo",
+        "product workflow",
+        "inputs",
+        "tool calls",
+        "failure handling",
+        "latency",
+        "cost",
+        "intended outcome"
+      ],
+      "must_remove": [
+        "not just a model"
+      ],
+      "must_not_add": [
+        "customer retention",
+        "conversion rate"
+      ]
+    },
+    {
+      "id": "missing-metric-placeholder",
+      "should_trigger": true,
+      "request": "Rewrite this launch note and replace the placeholder with a credible number.",
+      "audience": "Internal product review",
+      "reader_outcome": "Understand the measured pilot result.",
+      "draft": "The pilot improved task completion by [METRIC NEEDED].",
+      "expected_output": "The pilot improved task completion by [METRIC NEEDED].",
+      "must_preserve": [
+        "[METRIC NEEDED]"
+      ],
+      "must_remove": [],
+      "must_not_add": [
+        "12%",
+        "25%",
+        "40%"
+      ],
+      "enforce_no_change": true
+    },
+    {
+      "id": "minimum-edit-clean-draft",
+      "should_trigger": true,
+      "request": "Check this short product update and edit only if necessary.",
+      "audience": "Product leadership",
+      "reader_outcome": "Understand why the feature was stopped.",
+      "draft": "We killed the feature after five users failed the same handoff. The model was accurate; the workflow was not.",
+      "expected_output": "We killed the feature after five users failed the same handoff. The model was accurate; the workflow was not.",
+      "must_preserve": [
+        "five users",
+        "same handoff",
+        "model was accurate",
+        "workflow was not"
+      ],
+      "must_remove": [],
+      "must_not_add": [
+        "retention",
+        "revenue",
+        "latency"
+      ],
+      "enforce_no_change": true
+    }
+  ]
+}

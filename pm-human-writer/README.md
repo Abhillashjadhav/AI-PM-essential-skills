@@ -33,28 +33,47 @@ It removes recurring machine-writing patterns such as faux-insight openings, bin
 2. A short `What changed` section.
 3. No invented metrics, customer stories, personal experience, or source claims.
 
+Numbers, mechanisms, quotations, results, and causal claims in the output must be traceable to the supplied draft. Missing proof stays visible as `[SOURCE NEEDED]` or `[METRIC NEEDED]`; the skill does not fill gaps with plausible details.
+
 ## Example
 
 Before:
 
 ```text
-What most people miss is that AI safety is not a model problem. It is a product architecture problem.
+An AI feature is a product system, not just a model. A model demo can pass while the full product workflow still fails.
+
+Our evaluation must cover inputs, tool calls, failure handling, latency, cost, and whether the user reaches the intended outcome.
 ```
 
 After:
 
 ```text
-AI safety fails when each product flow implements its own rules.
+An AI feature can pass a model demo and still fail across the product workflow.
 
-A shared safety layer keeps permissions, access limits, response policies, and escalation behaviour consistent across the product.
+Evaluate the inputs, tool calls, failure handling, latency, cost, and whether the user reaches the intended outcome.
 ```
 
-## Validation fixtures
+## Validation
 
-- [`fixtures/fire.md`](fixtures/fire.md) — should trigger the skill.
-- [`fixtures/no-fire.md`](fixtures/no-fire.md) — should not trigger the skill.
-- [`fixtures/known-answer.md`](fixtures/known-answer.md) — shows the expected editing behaviour.
+The repository includes five synthetic contract cases covering trigger, no-trigger, fact preservation, anti-invention, banned-pattern removal, and minimum-edit behaviour.
+
+Run the dependency-free check:
+
+```bash
+python3 scripts/check_pm_human_writer_contract.py
+```
+
+The repository integrity workflow runs the same check on every pull request. The cases validate the written contract and reference outputs; they do not certify identical behaviour across every live model or environment.
+
+- [`fixtures/fire.md`](fixtures/fire.md) — complete input that should trigger the skill.
+- [`fixtures/no-fire.md`](fixtures/no-fire.md) — factual request that should not trigger the skill.
+- [`fixtures/known-answer.md`](fixtures/known-answer.md) — evidence-bounded reference edit.
+- [`fixtures/validation-cases.json`](fixtures/validation-cases.json) — machine-checked contract cases.
 
 ## Limits
 
-The skill does not verify facts, predict engagement, replace evidence review, or turn a weak idea into a strong one. It edits supplied writing and preserves accountability with the writer.
+The skill does not verify external facts, predict engagement, replace evidence review, or turn a weak idea into a strong one. It edits supplied writing and preserves accountability with the writer.
+
+## Licence
+
+Released under the repository's [MIT License](../LICENSE).

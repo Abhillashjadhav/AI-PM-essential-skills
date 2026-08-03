@@ -28,6 +28,15 @@ Before editing, identify internally:
 
 Keep these intact unless they are unclear or inaccurate.
 
+## Evidence boundary
+
+Treat the supplied draft and evidence as the factual boundary for the rewrite.
+
+- Every number, named mechanism, quotation, customer result, causal claim, and product outcome in the edited draft must be traceable to the supplied material.
+- Reordering, compressing, and clarifying supplied claims is allowed. Adding new factual content is not.
+- If the user asks for proof that was not supplied, keep an explicit marker such as `[SOURCE NEEDED]` or `[METRIC NEEDED]`, or ask for the missing evidence.
+- Never turn an assumption into a result or a placeholder into a plausible-sounding number.
+
 ## Remove these patterns
 
 Reject or rewrite:
@@ -53,7 +62,7 @@ Reject or rewrite:
 5. Keep one central idea per short post or message.
 6. Use technical language only when it adds precision; explain it in ordinary language when a wider audience needs it.
 7. End on a concrete consequence, decision, or next action. Do not manufacture a profound closer.
-8. Make the minimum effective edit. A rough human sentence is often better than a polished generic one.
+8. Make the minimum effective edit. When the draft already passes the checks, return it unchanged. A rough human sentence is often better than a polished generic one.
 
 ## Hook check for short public posts
 
@@ -71,16 +80,19 @@ If the hook fails, rewrite the opening before editing the rest.
 
 1. Read the entire draft.
 2. Identify the point, proof, product judgment, and voice signals internally.
-3. Audit the draft for named patterns.
-4. Rewrite only what is needed.
-5. Run the final checks below.
-6. Return the complete edited draft followed by a short `What changed` section naming the 2 to 5 highest-impact edits.
+3. Establish the evidence boundary and mark any unsupported placeholders.
+4. Audit the draft for named patterns.
+5. Rewrite only what is needed.
+6. Run the final checks below.
+7. Return the complete edited draft followed by a short `What changed` section naming the 2 to 5 highest-impact edits. If no edit was required, say so plainly.
 
 ## Final checks
 
 The edited draft must pass every check:
 
+- Every factual detail is traceable to the supplied material.
 - No invented facts, numbers, examples, experience, or opinions.
+- Unsupported evidence requests remain visibly marked.
 - Core product judgment remains explicit.
 - Strong concrete details remain intact.
 - No banned pattern remains.
