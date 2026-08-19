@@ -38,6 +38,49 @@ claude plugin marketplace add Abhillashjadhav/AI-PM-essential-skills
 claude plugin install <plugin-name>@ai-pm-skills
 ```
 
+## Loop or graph? Start with these prompts
+
+Use a **loop** when one recurring outcome can be produced through the same bounded sequence each run.
+
+### Loop prompt
+
+```text
+Turn competitor monitoring into a guarded loop.
+
+Every weekday at 9:00 AM, scan the approved competitor release-note pages
+for updates published since the previous run. Deduplicate against a persistent
+seen log, select only product or pricing changes, and write a five-bullet brief
+with a source link for every claim.
+
+Independently verify that every item is new, relevant, and cited. Process at
+most 20 updates per run, stop after 15 minutes, never publish or delete
+anything, and report both successful and empty runs.
+```
+
+**Why this is a loop:** it has one recurring outcome, one repeated sequence, one working context, and no independent branches that must converge. `loop-designer` should produce the schedule, seen-log, verification, cost, and stop contracts.
+
+Use a **graph** when coordination is the problem: independent branches, different evidence or permissions, conditional routes, and an explicit join.
+
+### Graph prompt
+
+```text
+Design an agent graph for deciding whether an AI feature is ready to launch.
+
+Freeze one release candidate. Then run product-outcome, model-quality, and
+safety/privacy review loops in parallel. Give each branch typed inputs and
+outputs, separate tools and permissions, an independent verifier, a time and
+cost budget, and at most two attempts.
+
+Join only when all three verified artifacts refer to the same candidate.
+Missing, failed, stale, conflicting, or timed-out evidence must route to
+BLOCKED with the reason. If every required review passes, stop at an
+accountable approval gate; do not deploy, merge, or publish.
+```
+
+**Why this is a graph:** three independently owned reviews can run concurrently, produce different evidence, fail differently, and must meet at a deterministic `ALL_REQUIRED` join. Each review may itself be a guarded loop; the graph coordinates them.
+
+**Decision rule:** if the work can stay one repeated sequence, use a loop. Use a graph only when branches, handoffs, state, or joins are essential to correctness.
+
 ## See the outputs before installing
 
 ### Spec → verification system
