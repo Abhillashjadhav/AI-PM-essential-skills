@@ -2,7 +2,7 @@
 
 **Install focused Claude Code plugins for the product decisions that make AI systems expensive, unreliable, or difficult to ship.**
 
-This repository is the distribution hub for six installable plugins. Each plugin solves a distinct job, ships examples and validation fixtures, and is designed to produce a useful artifact within one working session.
+This repository is the distribution hub for seven installable plugins. Each plugin solves a distinct job, ships examples and validation fixtures, and is designed to produce a useful artifact within one working session.
 
 ## Install your first plugin
 
@@ -26,6 +26,7 @@ Create an eval for this feature.
 | **[pm-verifier](pm-verifier/)** | Turn a PRD or feature spec into a verification layer | `Create an eval for this feature` | Quality gates, judge rubric, judge prompt, and runnable harness |
 | **[pm-tactical](pm-tactical/)** | Make daily PM work cheaper, faster, and self-checking | `Check whether this task needs a stronger model` | Model routing, frozen-spec validation, prompt optimization, context audit, or project-memory update |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
+| **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
 | **[mcp-migration-auditor](mcp-migration-auditor/)** | Check MCP configurations against the 2026 specification changes | `Audit my MCP setup` | Per-server `BREAKS`, `DEGRADED`, or `SAFE` verdicts with cited fixes |
 | **[pm-human-writer](pm-human-writer/)** | Preserve a PM's voice while removing recognisable AI-writing patterns | `Rewrite this without flattening my judgment` | Voice-protected rewrite with named edits and evidence constraints |
 | **[ai-feature-kill-criteria](ai-feature-kill-criteria/)** | Decide whether an AI feature deserves a prototype | `Define kill criteria for this AI feature` | Falsifiable claim, approved thresholds, cheapest decisive test, owner, and decision date |
@@ -79,6 +80,24 @@ Required guardrails:
 
 See the worked example in [`loop-designer`](loop-designer/).
 
+### Multiple loops → governed agent graph
+
+`agent-graph-designer` rejects unnecessary graph complexity, then makes coordination explicit when a graph is justified:
+
+```text
+QUALIFY → GRAPH_REQUIRED
+
+Freeze candidate
+  ├─ Product-outcome review loop ─┐
+  ├─ Model-quality review loop ───┼─ ALL_REQUIRED join → Human decision
+  └─ Safety/privacy review loop ──┘
+
+Every node: typed input/output + tools + permissions + budget + verifier
+Every edge: condition + evidence + state mapping + failure destination
+```
+
+See the executable synthetic example in [`agent-graph-designer`](agent-graph-designer/).
+
 ### MCP config → migration decision
 
 `mcp-migration-auditor` converts configuration evidence into a prioritized action table:
@@ -108,6 +127,7 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 | [`pm-verifier/`](pm-verifier/) | Spec-to-evaluation plugin |
 | [`pm-tactical/`](pm-tactical/) | Daily AI PM workflow plugin |
 | [`loop-designer/`](loop-designer/) | Guarded-loop design plugin |
+| [`agent-graph-designer/`](agent-graph-designer/) | Multi-agent graph qualification and design plugin |
 | [`mcp-migration-auditor/`](mcp-migration-auditor/) | MCP compatibility and migration plugin |
 | [`pm-human-writer/`](pm-human-writer/) | Voice-preserving product-writing plugin |
 | [`ai-feature-kill-criteria/`](ai-feature-kill-criteria/) | Pre-build AI feature decision-contract plugin |
@@ -115,7 +135,7 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 
 ## Additional tools in this repository
 
-These remain available but are not the six marketplace products above:
+These remain available but are not the seven marketplace products above:
 
 - [`token-cost-estimator/`](token-cost-estimator/) — compare projected model cost and latency; verify current prices from official sources.
 - [`eval-rubric-generator/`](eval-rubric-generator/) — an earlier rubric-focused skill; `pm-verifier` is the broader verification product.
