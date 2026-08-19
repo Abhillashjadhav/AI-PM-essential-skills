@@ -184,6 +184,46 @@ def _validate_topology(
         if incoming[node_id] == 0:
             failures.append(f"graph contract: node {node_id} is orphaned")
 
+    reachable: set[str] = set()
+    frontier = [str(start)] if start in node_ids else []
+    while frontier:
+        node_id = frontier.pop()
+        if node_id in reachable:
+            continue
+        reachable.add(node_id)
+        frontier.extend(
+            str(edge["target"])
+            for edge in edges
+            if edge.get("source") == node_id and edge.get("target") in node_ids
+        )
+    unreachable = node_ids - reachable
+    if unreachable:
+        failures.append(f"graph contract: unreachable nodes {sorted(unreachable)}")
+
+    # Retry edges are the only allowed cycles in the sample. Removing them
+    # must leave a DAG, otherwise a hidden unbounded control cycle exists.
+    non_retry_successors: dict[str, set[str]] = {node_id: set() for node_id in node_ids}
+    for edge in edges:
+        if edge.get("type") != "RETRY" and edge.get("source") in node_ids:
+            non_retry_successors[str(edge["source"])].add(str(edge["target"]))
+    visiting: set[str] = set()
+    visited: set[str] = set()
+
+    def visit(node_id: str) -> None:
+        if node_id in visited:
+            return
+        if node_id in visiting:
+            failures.append(f"graph contract: unbounded non-retry cycle reaches {node_id}")
+            return
+        visiting.add(node_id)
+        for target in non_retry_successors[node_id]:
+            visit(target)
+        visiting.remove(node_id)
+        visited.add(node_id)
+
+    for node_id in sorted(node_ids):
+        visit(node_id)
+
     joins = contract.get("joins")
     if not isinstance(joins, list) or len(joins) != 1:
         failures.append("graph contract: sample requires exactly one join contract")
@@ -205,6 +245,60 @@ def _validate_topology(
     for required_type in ("FAN_OUT", "FAN_IN", "RETRY", "FAIL", "PASS", "APPROVE", "REJECT"):
         if required_type not in edge_types:
             failures.append(f"graph contract: sample missing {required_type} edge")
+
+
+def _validate_state_and_permissions(
+    contract: dict[str, Any], node_ids: set[str], failures: list[str]
+) -> None:
+    state = contract.get("state")
+    if not isinstance(state, dict):
+        failures.append("graph contract: state must be an object")
+        return
+    fields = state.get("fields")
+    if not isinstance(fields, list) or not fields:
+        failures.append("graph contract: state fields must be a non-empty list")
+        return
+    by_field: dict[str, dict[str, Any]] = {}
+    for raw in fields:
+        if not isinstance(raw, dict) or not isinstance(raw.get("name"), str):
+            failures.append("graph contract: every state field needs a name")
+            continue
+        name = str(raw["name"])
+        if name in by_field:
+            failures.append(f"graph contract: duplicate state field {name}")
+        by_field[name] = raw
+        for key in ("schema", "writers", "readers", "sensitivity", "freshness"):
+            if key not in raw:
+                failures.append(f"graph contract: state field {name} missing {key}")
+        if not set(raw.get("writers", [])) <= node_ids:
+            failures.append(f"graph contract: state field {name} has unknown writer")
+        if not set(raw.get("readers", [])) <= node_ids:
+            failures.append(f"graph contract: state field {name} has unknown reader")
+
+    human_actions = set(contract.get("human_approval_actions", []))
+    for node in contract.get("nodes", []):
+        if not isinstance(node, dict) or node.get("id") not in node_ids:
+            continue
+        node_id = str(node["id"])
+        for field in node.get("writes_state", []):
+            if field not in by_field:
+                failures.append(f"graph contract: node {node_id} writes undeclared state {field}")
+            elif node_id not in by_field[field].get("writers", []):
+                failures.append(f"graph contract: node {node_id} is not an allowed writer of {field}")
+        for field in node.get("reads_state", []):
+            if field not in by_field:
+                failures.append(f"graph contract: node {node_id} reads undeclared state {field}")
+            elif node_id not in by_field[field].get("readers", []):
+                failures.append(f"graph contract: node {node_id} is not an allowed reader of {field}")
+        actions = set(node.get("permissions", {}).get("actions", []))
+        prohibited = actions & human_actions
+        if prohibited:
+            failures.append(
+                f"graph contract: node {node_id} can perform human-only actions {sorted(prohibited)}"
+            )
+        verifier = node.get("verifier", {})
+        if verifier.get("role") == node.get("owner"):
+            failures.append(f"graph contract: node {node_id} verifier is not independent")
 
 
 def validate_contract() -> list[str]:
@@ -238,6 +332,7 @@ def validate_contract() -> list[str]:
     node_ids = _validate_nodes(contract, failures)
     edges = _validate_edges(contract, node_ids, failures)
     _validate_topology(contract, node_ids, edges, failures)
+    _validate_state_and_permissions(contract, node_ids, failures)
 
     sample_package = (EXAMPLES / "sample-graph-package.md").read_text(encoding="utf-8")
     for marker in (

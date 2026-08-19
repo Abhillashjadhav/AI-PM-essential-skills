@@ -212,7 +212,7 @@
     "conflict_policy": "Any digest mismatch or conflicting disqualifying gate blocks the graph.",
     "retention_or_redaction": "Synthetic example only; retain contract and verification metadata, never customer content.",
     "fields": [
-      {"name": "release_candidate_digest", "schema": "non-empty string", "writers": ["freeze-candidate"], "readers": ["product-outcome-review", "model-quality-review", "safety-privacy-review"], "sensitivity": "internal", "freshness": "fixed for run"},
+      {"name": "release_candidate_digest", "schema": "non-empty string", "writers": ["freeze-candidate"], "readers": ["product-outcome-review", "model-quality-review", "safety-privacy-review", "blocked"], "sensitivity": "internal", "freshness": "fixed for run"},
       {"name": "product_review", "schema": "review-v1", "writers": ["product-outcome-review"], "readers": ["review-join"], "sensitivity": "internal", "freshness": "current run"},
       {"name": "quality_review", "schema": "review-v1", "writers": ["model-quality-review"], "readers": ["review-join"], "sensitivity": "internal", "freshness": "current run"},
       {"name": "safety_review", "schema": "review-v1", "writers": ["safety-privacy-review"], "readers": ["review-join"], "sensitivity": "restricted", "freshness": "current run"},
