@@ -47,14 +47,19 @@ Use a **loop** when one recurring outcome can be produced through the same bound
 ```text
 Turn competitor monitoring into a guarded loop.
 
-Every weekday at 9:00 AM, scan the approved competitor release-note pages
-for updates published since the previous run. Deduplicate against a persistent
-seen log, select only product or pricing changes, and write a five-bullet brief
-with a source link for every claim.
+Success means every qualifying update is captured once, every claim is cited,
+and the run produces no duplicate or unsupported item.
+
+Every weekday at 9:00 AM Asia/Kolkata, scan the release-note pages listed in
+inputs/competitor-sources.txt for updates published since the previous run.
+Deduplicate against data/competitor-seen.json, select only product or pricing
+changes, and write a five-bullet brief to
+outputs/competitor-brief/YYYY-MM-DD.md with a source link for every claim.
 
 Independently verify that every item is new, relevant, and cited. Process at
 most 20 updates per run, stop after 15 minutes, never publish or delete
-anything, and report both successful and empty runs.
+anything, and report successful runs, honest empty runs, guardrail trips, and
+verification failures.
 ```
 
 **Why this is a loop:** it has one recurring outcome, one repeated sequence, one working context, and no independent branches that must converge. `loop-designer` should produce the schedule, seen-log, verification, cost, and stop contracts.
@@ -65,6 +70,17 @@ Use a **graph** when coordination is the problem: independent branches, differen
 
 ```text
 Design an agent graph for deciding whether an AI feature is ready to launch.
+
+Problem: product, model-quality, and safety evidence is reviewed separately,
+making launch decisions slow and inconsistent.
+Hypothesis: parallel guarded review loops with typed evidence and a deterministic
+join will shorten decision time without weakening release quality.
+Outcome North Star: percentage of evaluated candidates receiving a correct,
+evidence-backed launch decision within two working days.
+Leading metrics: valid artifact rate, total review time, block rate, repair rate.
+Guardrails: zero fabricated evidence, no self-verification, no autonomous launch.
+Trade-off: lower wall-clock time versus higher orchestration and token cost.
+Proposed next step: run one synthetic candidate and inspect every handoff.
 
 Freeze one release candidate. Then run product-outcome, model-quality, and
 safety/privacy review loops in parallel. Give each branch typed inputs and
