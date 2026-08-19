@@ -1,6 +1,7 @@
 ---
 name: agent-graph-designer
 description: Use this skill when the user asks to design an agent graph, graph a multi-agent workflow, connect agents or loops, parallelize specialist agents, define agent handoffs or joins, map conditional branches and approval gates, or decide whether a workflow needs a loop or graph. It qualifies LOOP_SUFFICIENT versus GRAPH_REQUIRED, then produces outcome, node, typed-edge, shared-state, join, recovery, permission, budget, verification, and human-approval contracts plus Mermaid, machine-readable, and runnable orchestration artifacts. Do NOT use for GraphRAG, knowledge graphs, database/entity graphs, generic diagrams, org charts, one-off delegation, or one recurring task that fits loop-designer.
+argument-hint: "<workflow or orchestration problem>"
 ---
 
 # Agent Graph Designer

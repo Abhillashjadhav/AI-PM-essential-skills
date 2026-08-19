@@ -21,6 +21,7 @@ flowchart TD
     A["Freeze candidate"] -->|FAN_OUT| B["Product outcome loop"]
     A -->|FAN_OUT| C["Model quality loop"]
     A -->|FAN_OUT| D["Safety and privacy loop"]
+    A -->|FAIL or timeout| H["BLOCKED"]
     B -->|FAN_IN| E["All-required join"]
     C -->|FAN_IN| E
     D -->|FAN_IN| E
@@ -59,7 +60,7 @@ PASS both terminal nodes are reachable
 PASS all three fan-out branches converge at one ALL_REQUIRED join
 PASS join validates presence, schema, candidate digest, and branch status
 PASS every retry cycle is bounded to two attempts
-PASS exhausted reviews and join failures terminate BLOCKED
+PASS candidate-freeze, exhausted-review, timeout, and join failures terminate BLOCKED with a reason
 PASS whole-graph and per-node budgets are bounded
 PASS tools and writes are allowlisted per node
 PASS reviewers cannot approve launch

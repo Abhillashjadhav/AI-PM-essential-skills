@@ -129,7 +129,10 @@ def _validate_nodes(contract: dict[str, Any], failures: list[str]) -> set[str]:
 
 
 def _validate_edges(
-    contract: dict[str, Any], node_ids: set[str], failures: list[str]
+    contract: dict[str, Any],
+    node_ids: set[str],
+    nodes_by_id: dict[str, dict[str, Any]],
+    failures: list[str],
 ) -> list[dict[str, Any]]:
     edges = contract.get("edges")
     if not isinstance(edges, list) or not edges:
@@ -153,6 +156,33 @@ def _validate_edges(
             failures.append(f"graph contract: edge {edge_id!r} has invalid type")
         if not raw.get("condition"):
             failures.append(f"graph contract: edge {edge_id!r} needs a condition")
+        evidence = raw.get("evidence_required")
+        mapping = raw.get("state_mapping")
+        if not isinstance(evidence, list) or not all(isinstance(item, str) for item in evidence):
+            failures.append(f"graph contract: edge {edge_id!r} evidence_required must be strings")
+            evidence = []
+        if not isinstance(mapping, dict) or not all(
+            isinstance(source, str) and isinstance(target, str)
+            for source, target in mapping.items()
+        ):
+            failures.append(f"graph contract: edge {edge_id!r} state_mapping must map strings")
+            mapping = {}
+        unmapped_sources = set(mapping) - set(evidence)
+        if unmapped_sources:
+            failures.append(
+                f"graph contract: edge {edge_id!r} maps undeclared evidence {sorted(unmapped_sources)}"
+            )
+        target = nodes_by_id.get(str(raw.get("target")), {})
+        target_fields = set(target.get("inputs", [])) | set(target.get("reads_state", []))
+        unknown_targets = set(mapping.values()) - target_fields
+        if unknown_targets:
+            failures.append(
+                f"graph contract: edge {edge_id!r} maps unknown target inputs {sorted(unknown_targets)}"
+            )
+        if target.get("type") == "TERMINAL" and target.get("inputs") and not mapping:
+            failures.append(
+                f"graph contract: edge {edge_id!r} reaches terminal without mapping its input"
+            )
         valid.append(raw)
     if len(edge_ids) != len(set(edge_ids)):
         failures.append("graph contract: edge ids must be unique")
@@ -160,7 +190,11 @@ def _validate_edges(
 
 
 def _validate_topology(
-    contract: dict[str, Any], node_ids: set[str], edges: list[dict[str, Any]], failures: list[str]
+    contract: dict[str, Any],
+    node_ids: set[str],
+    nodes_by_id: dict[str, dict[str, Any]],
+    edges: list[dict[str, Any]],
+    failures: list[str],
 ) -> None:
     start = contract.get("start_node")
     terminals = contract.get("terminal_nodes")
@@ -180,6 +214,16 @@ def _validate_topology(
     for node_id in node_ids - set(terminals):
         if outgoing[node_id] == 0:
             failures.append(f"graph contract: non-terminal node {node_id} has no exit")
+        exhaustion = nodes_by_id.get(node_id, {}).get("on_exhaustion")
+        if exhaustion == "BLOCKED" and not any(
+            edge.get("source") == node_id
+            and edge.get("target") in set(terminals)
+            and edge.get("type") in {"FAIL", "REJECT", "ESCALATE"}
+            for edge in edges
+        ):
+            failures.append(
+                f"graph contract: node {node_id} declares BLOCKED exhaustion without a terminal edge"
+            )
     for node_id in node_ids - {str(start)}:
         if incoming[node_id] == 0:
             failures.append(f"graph contract: node {node_id} is orphaned")
@@ -307,6 +351,10 @@ def validate_contract() -> list[str]:
     plugin = _load_json(PLUGIN_ROOT / ".claude-plugin" / "plugin.json", failures)
     if plugin.get("name") != "agent-graph-designer":
         failures.append("agent-graph-designer plugin manifest has wrong name")
+    skill_text = (SKILL_ROOT / "SKILL.md").read_text(encoding="utf-8")
+    frontmatter = skill_text.split("---", 2)[1] if skill_text.startswith("---") else ""
+    if "\nargument-hint:" not in f"\n{frontmatter}":
+        failures.append("agent-graph-designer skill frontmatter needs argument-hint")
 
     contract = _load_json(CONTRACT_PATH, failures)
     if not contract:
@@ -330,8 +378,13 @@ def validate_contract() -> list[str]:
         failures.append("graph contract: consequential actions must require human approval")
 
     node_ids = _validate_nodes(contract, failures)
-    edges = _validate_edges(contract, node_ids, failures)
-    _validate_topology(contract, node_ids, edges, failures)
+    nodes_by_id = {
+        str(node["id"]): node
+        for node in contract.get("nodes", [])
+        if isinstance(node, dict) and isinstance(node.get("id"), str)
+    }
+    edges = _validate_edges(contract, node_ids, nodes_by_id, failures)
+    _validate_topology(contract, node_ids, nodes_by_id, edges, failures)
     _validate_state_and_permissions(contract, node_ids, failures)
 
     sample_package = (EXAMPLES / "sample-graph-package.md").read_text(encoding="utf-8")
