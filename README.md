@@ -38,64 +38,55 @@ claude plugin marketplace add Abhillashjadhav/AI-PM-essential-skills
 claude plugin install <plugin-name>@ai-pm-skills
 ```
 
-## Loop or graph? Start with these prompts
+## Case study: one AI feature, first a loop, then a graph
 
-Use a **loop** when one recurring outcome can be produced through the same bounded sequence each run.
+A team is preparing an **AI support-ticket summarizer** for launch. The candidate sometimes omits escalation reasons or introduces unsupported customer facts. The team needs to improve one candidate and then decide whether it is safe and useful enough to release.
 
-### Loop prompt
+### Part 1 — Use a loop for nightly candidate improvement
 
-```text
-Turn competitor monitoring into a guarded loop.
-
-Success means every qualifying update is captured once, every claim is cited,
-and the run produces no duplicate or unsupported item.
-
-Every weekday at 9:00 AM Asia/Kolkata, scan the release-note pages listed in
-inputs/competitor-sources.txt for updates published since the previous run.
-Deduplicate against data/competitor-seen.json, select only product or pricing
-changes, and write a five-bullet brief to
-outputs/competitor-brief/YYYY-MM-DD.md with a source link for every claim.
-
-Independently verify that every item is new, relevant, and cited. Process at
-most 20 updates per run, stop after 15 minutes, never publish or delete
-anything, and report successful runs, honest empty runs, guardrail trips, and
-verification failures.
-```
-
-**Why this is a loop:** it has one recurring outcome, one repeated sequence, one working context, and no independent branches that must converge. `loop-designer` should produce the schedule, seen-log, verification, cost, and stop contracts.
-
-Use a **graph** when coordination is the problem: independent branches, different evidence or permissions, conditional routes, and an explicit join.
-
-### Graph prompt
+Every night, the loop owns one bounded job: evaluate the current candidate against newly labelled tickets and the frozen regression set, then produce either a verified improvement package or a visible blocked report.
 
 ```text
-Design an agent graph for deciding whether an AI feature is ready to launch.
-
-Problem: product, model-quality, and safety evidence is reviewed separately,
-making launch decisions slow and inconsistent.
-Hypothesis: parallel guarded review loops with typed evidence and a deterministic
-join will shorten decision time without weakening release quality.
-Outcome North Star: percentage of evaluated candidates receiving a correct,
-evidence-backed launch decision within two working days.
-Leading metrics: valid artifact rate, total review time, block rate, repair rate.
-Guardrails: zero fabricated evidence, no self-verification, no autonomous launch.
-Trade-off: lower wall-clock time versus higher orchestration and token cost.
-Proposed next step: run one synthetic candidate and inspect every handoff.
-
-Freeze one release candidate. Then run product-outcome, model-quality, and
-safety/privacy review loops in parallel. Give each branch typed inputs and
-outputs, separate tools and permissions, an independent verifier, a time and
-cost budget, and at most two attempts.
-
-Join only when all three verified artifacts refer to the same candidate.
-Missing, failed, stale, conflicting, or timed-out evidence must route to
-BLOCKED with the reason. If every required review passes, stop at an
-accountable approval gate; do not deploy, merge, or publish.
+DISCOVER  — collect new labelled tickets, deduplicate them against the seen log,
+            and run the frozen regression set
+PLAN      — group failures by factuality, completeness, and escalation reason
+EXECUTE   — create one bounded prompt, retrieval, or configuration change in
+            an isolated candidate package
+VERIFY    — an independent verifier reruns the same evaluation and regression gates
+STOP      — keep the current candidate if no verified improvement exists;
+            otherwise output the improved candidate for review. Retry once at
+            most, then return BLOCKED with the remaining failures
 ```
 
-**Why this is a graph:** three independently owned reviews can run concurrently, produce different evidence, fail differently, and must meet at a deterministic `ALL_REQUIRED` join. Each review may itself be a guarded loop; the graph coordinates them.
+Loop guardrails cap attempts, time, and cost; preserve the frozen evaluation set and cross-run seen log; prohibit deployment; and report successful, empty, failed, and guardrail-tripped runs.
 
-**Decision rule:** if the work can stay one repeated sequence, use a loop. Use a graph only when branches, handoffs, state, or joins are essential to correctness.
+**Why a loop:** the same objective and sequence repeat every night against one candidate. There is one working context and one stop condition; parallel branches or a join would add coordination cost without improving this task.
+
+### Part 2 — Use a graph to decide whether the candidate can launch
+
+Passing the model-quality loop is necessary but not sufficient for launch. Freeze the passing candidate, then coordinate three independently verifiable review loops:
+
+```mermaid
+flowchart TD
+    A["Freeze candidate"] --> B["Product outcome loop"]
+    A --> C["Model quality loop"]
+    A --> D["Safety and privacy loop"]
+    B --> E["ALL_REQUIRED join"]
+    C --> E
+    D --> E
+    E -->|all pass| F["Accountable launch decision"]
+    E -->|missing, failed, stale, or conflicting| G["BLOCKED with reason"]
+```
+
+- **Product outcome loop:** verifies that summaries help support agents make the correct next decision.
+- **Model quality loop:** verifies factuality, completeness, and required escalation reasons.
+- **Safety and privacy loop:** verifies restricted-data and unsafe-output gates.
+- **Join:** admits only schema-valid evidence for the same candidate; every required branch must pass.
+- **Decision gate:** presents the evidence to the accountable owner and performs no deployment itself.
+
+**Why a graph:** the launch decision depends on different evidence, owners, permissions, and failure paths that can run independently but must converge. Each node can be a guarded loop; the graph owns their coordination.
+
+**Decision boundary:** use a loop to improve one bounded unit of work. Use a graph when the outcome depends on coordinating multiple bounded units.
 
 ## See the outputs before installing
 
