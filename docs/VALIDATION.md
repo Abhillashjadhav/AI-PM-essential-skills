@@ -6,17 +6,28 @@ This document records what this repository's checks establish and what they do n
 
 `VERIFIED` by [`scripts/check_repository_integrity.py`](../scripts/check_repository_integrity.py):
 
+- the seven marketplace plugins have registered sources, plugin manifests, and skill directories;
 - the four public skill directories exist: `token-cost-estimator`, `eval-rubric-generator`, `context-auditor`, and `concise-rewriter`;
 - each of those directories contains `SKILL.md`;
 - each local Markdown link in every repository `README*.md` resolves to an existing file or directory, and local README anchors resolve to a heading;
 - every fixture path mentioned in a README exists; and
 - the ContextPort quick-start entry points and synthetic validation fixture exist.
 
+`VERIFIED` by [`scripts/check_agent_graph_designer_contract.py`](../scripts/check_agent_graph_designer_contract.py):
+
+- the committed synthetic graph contract contains complete node and typed-edge contracts;
+- edge endpoints, non-terminal exits, orphan checks, fan-out/fan-in, bounded retry, failure, approval, and rejection paths are structurally valid;
+- the sample uses an `ALL_REQUIRED` join with explicit missing, failed, stale, and conflict behavior;
+- per-node and whole-graph budgets, permission shapes, attempt caps, and human-approval actions are declared; and
+- the sample package and deterministic local runner are present.
+
 `VERIFIED` by ContextPort's Python unit-test suite: deterministic local behavior exercised by [`context-port/tests/`](../context-port/tests/) against committed synthetic fixtures in [`context-port/fixtures/`](../context-port/fixtures/). These tests do not call a hosted model, inspect real exports, access an account, or perform destination writes.
 
 ## Manually validated material
 
-The Markdown fixture documents under [`tests/`](../tests/) and product example directories provide reviewer prompts, known-answer cases, and expected outputs. They are **manual review material**, not automated behavioural tests: no repository command executes the four standalone Claude Code skills against those documents.
+The Markdown fixture documents under [`tests/`](../tests/) and product example directories provide reviewer prompts, known-answer cases, and expected outputs. They are **manual review material**, not automated behavioural tests: no repository command executes the Claude Code skills against those documents.
+
+The agent-graph-designer contract checker and sample runner validate committed synthetic artifacts only. They do not invoke a hosted model or prove that the skill will produce equivalent artifacts in every live runtime.
 
 ContextPort's evaluation notes under [`context-port/evals/`](../context-port/evals/) record expected deterministic gates and synthetic-fixture observations. Review them with the corresponding command output; do not treat the documents alone as a passing automated run.
 
@@ -32,6 +43,8 @@ ContextPort's recorded evidence is local and synthetic. Its [release-readiness r
 - `UNKNOWN`: current model names, availability, and prices. Any example must be treated as illustrative and checked against current official pricing.
 - `UNKNOWN`: whether external or official skill libraries cover equivalent functionality; this is not continuously monitored.
 - `UNKNOWN`: invocation, installation, hot-reload, and cross-runtime behavior of the four standalone Claude Code skills.
+- `UNKNOWN`: live-model trigger accuracy and output quality for `agent-graph-designer`.
+- `UNSUPPORTED`: autonomous deployment, merge, publish, send, purchase, delete, or overwrite by the agent-graph-designer synthetic runner.
 - `UNSUPPORTED`: ContextPort consumer ChatGPT reconstruction writes, browser automation, and unapproved real-export handling, as documented in [`context-port/docs/CAPABILITIES.md`](../context-port/docs/CAPABILITIES.md).
 - `UNKNOWN`: line coverage. No coverage instrumentation is configured; no percentage is claimed.
 
@@ -41,6 +54,9 @@ Run these commands from the repository root after cloning:
 
 ```bash
 python3 scripts/check_repository_integrity.py
+python3 scripts/check_agent_graph_designer_contract.py
+python3 tests/lint_skill.py agent-graph-designer/skills/agent-graph-designer/SKILL.md
+python3 agent-graph-designer/skills/agent-graph-designer/examples/sample-orchestrator.py
 python3 -m unittest discover -s context-port/tests -q
 python3 -m compileall -q scripts context-port
 git diff --check

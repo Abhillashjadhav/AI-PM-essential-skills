@@ -2,7 +2,7 @@
 
 **Install focused Claude Code plugins for the product decisions that make AI systems expensive, unreliable, or difficult to ship.**
 
-This repository is the distribution hub for six installable plugins. Each plugin solves a distinct job, ships examples and validation fixtures, and is designed to produce a useful artifact within one working session.
+This repository is the distribution hub for seven installable plugins. Each plugin solves a distinct job, ships examples and validation fixtures, and is designed to produce a useful artifact within one working session.
 
 ## Install your first plugin
 
@@ -26,6 +26,7 @@ Create an eval for this feature.
 | **[pm-verifier](pm-verifier/)** | Turn a PRD or feature spec into a verification layer | `Create an eval for this feature` | Quality gates, judge rubric, judge prompt, and runnable harness |
 | **[pm-tactical](pm-tactical/)** | Make daily PM work cheaper, faster, and self-checking | `Check whether this task needs a stronger model` | Model routing, frozen-spec validation, prompt optimization, context audit, or project-memory update |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
+| **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
 | **[mcp-migration-auditor](mcp-migration-auditor/)** | Check MCP configurations against the 2026 specification changes | `Audit my MCP setup` | Per-server `BREAKS`, `DEGRADED`, or `SAFE` verdicts with cited fixes |
 | **[pm-human-writer](pm-human-writer/)** | Preserve a PM's voice while removing recognisable AI-writing patterns | `Rewrite this without flattening my judgment` | Voice-protected rewrite with named edits and evidence constraints |
 | **[ai-feature-kill-criteria](ai-feature-kill-criteria/)** | Decide whether an AI feature deserves a prototype | `Define kill criteria for this AI feature` | Falsifiable claim, approved thresholds, cheapest decisive test, owner, and decision date |
@@ -36,6 +37,56 @@ Install any plugin with the same two-step pattern:
 claude plugin marketplace add Abhillashjadhav/AI-PM-essential-skills
 claude plugin install <plugin-name>@ai-pm-skills
 ```
+
+## Case study: one AI feature, first a loop, then a graph
+
+A team is preparing an **AI support-ticket summarizer** for launch. The candidate sometimes omits escalation reasons or introduces unsupported customer facts. The team needs to improve one candidate and then decide whether it is safe and useful enough to release.
+
+### Part 1 — Use a loop for nightly candidate improvement
+
+Every night, the loop owns one bounded job: evaluate the current candidate against newly labelled tickets and the frozen regression set, then produce either a verified improvement package or a visible blocked report.
+
+```text
+DISCOVER  — collect new labelled tickets, deduplicate them against the seen log,
+            and run the frozen regression set
+PLAN      — group failures by factuality, completeness, and escalation reason
+EXECUTE   — create one bounded prompt, retrieval, or configuration change in
+            an isolated candidate package
+VERIFY    — an independent verifier reruns the same evaluation and regression gates
+STOP      — keep the current candidate if no verified improvement exists;
+            otherwise output the improved candidate for review. Retry once at
+            most, then return BLOCKED with the remaining failures
+```
+
+Loop guardrails cap attempts, time, and cost; preserve the frozen evaluation set and cross-run seen log; prohibit deployment; and report successful, empty, failed, and guardrail-tripped runs.
+
+**Why a loop:** the same objective and sequence repeat every night against one candidate. There is one working context and one stop condition; parallel branches or a join would add coordination cost without improving this task.
+
+### Part 2 — Use a graph to decide whether the candidate can launch
+
+Passing the model-quality loop is necessary but not sufficient for launch. Freeze the passing candidate, then coordinate three independently verifiable review loops:
+
+```mermaid
+flowchart TD
+    A["Freeze candidate"] --> B["Product outcome loop"]
+    A --> C["Model quality loop"]
+    A --> D["Safety and privacy loop"]
+    B --> E["ALL_REQUIRED join"]
+    C --> E
+    D --> E
+    E -->|all pass| F["Accountable launch decision"]
+    E -->|missing, failed, stale, or conflicting| G["BLOCKED with reason"]
+```
+
+- **Product outcome loop:** verifies that summaries help support agents make the correct next decision.
+- **Model quality loop:** verifies factuality, completeness, and required escalation reasons.
+- **Safety and privacy loop:** verifies restricted-data and unsafe-output gates.
+- **Join:** admits only schema-valid evidence for the same candidate; every required branch must pass.
+- **Decision gate:** presents the evidence to the accountable owner and performs no deployment itself.
+
+**Why a graph:** the launch decision depends on different evidence, owners, permissions, and failure paths that can run independently but must converge. Each node can be a guarded loop; the graph owns their coordination.
+
+**Decision boundary:** use a loop to improve one bounded unit of work. Use a graph when the outcome depends on coordinating multiple bounded units.
 
 ## See the outputs before installing
 
@@ -79,6 +130,24 @@ Required guardrails:
 
 See the worked example in [`loop-designer`](loop-designer/).
 
+### Multiple loops → governed agent graph
+
+`agent-graph-designer` rejects unnecessary graph complexity, then makes coordination explicit when a graph is justified:
+
+```text
+QUALIFY → GRAPH_REQUIRED
+
+Freeze candidate
+  ├─ Product-outcome review loop ─┐
+  ├─ Model-quality review loop ───┼─ ALL_REQUIRED join → Human decision
+  └─ Safety/privacy review loop ──┘
+
+Every node: typed input/output + tools + permissions + budget + verifier
+Every edge: condition + evidence + state mapping + failure destination
+```
+
+See the executable synthetic example in [`agent-graph-designer`](agent-graph-designer/).
+
 ### MCP config → migration decision
 
 `mcp-migration-auditor` converts configuration evidence into a prioritized action table:
@@ -108,6 +177,7 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 | [`pm-verifier/`](pm-verifier/) | Spec-to-evaluation plugin |
 | [`pm-tactical/`](pm-tactical/) | Daily AI PM workflow plugin |
 | [`loop-designer/`](loop-designer/) | Guarded-loop design plugin |
+| [`agent-graph-designer/`](agent-graph-designer/) | Multi-agent graph qualification and design plugin |
 | [`mcp-migration-auditor/`](mcp-migration-auditor/) | MCP compatibility and migration plugin |
 | [`pm-human-writer/`](pm-human-writer/) | Voice-preserving product-writing plugin |
 | [`ai-feature-kill-criteria/`](ai-feature-kill-criteria/) | Pre-build AI feature decision-contract plugin |
@@ -115,7 +185,7 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 
 ## Additional tools in this repository
 
-These remain available but are not the six marketplace products above:
+These remain available but are not the seven marketplace products above:
 
 - [`token-cost-estimator/`](token-cost-estimator/) — compare projected model cost and latency; verify current prices from official sources.
 - [`eval-rubric-generator/`](eval-rubric-generator/) — an earlier rubric-focused skill; `pm-verifier` is the broader verification product.
