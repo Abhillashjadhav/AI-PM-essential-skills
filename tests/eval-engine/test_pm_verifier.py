@@ -24,6 +24,7 @@ from pm_verifier.bias import analyze_pairwise_bias  # noqa: E402
 from pm_verifier.calibration import calibrate  # noqa: E402
 from pm_verifier.engine import evaluate_project  # noqa: E402
 from pm_verifier.faults import apply_faults  # noqa: E402
+from pm_verifier.io import sha256_file  # noqa: E402
 from pm_verifier.reporting import render_markdown  # noqa: E402
 
 
@@ -60,6 +61,14 @@ class PMVerifierTest(unittest.TestCase):
         )
         rows = apply_faults(self.load_jsonl("trials.jsonl"), specs[name])
         return self.write_jsonl(f"fault-{name}.jsonl", rows)
+
+    def rewrite_suite(self, suite: dict) -> None:
+        suite_path = self.project / "suite.json"
+        suite_path.write_text(json.dumps(suite, indent=2), encoding="utf-8")
+        run_path = self.project / "run.json"
+        run = json.loads(run_path.read_text(encoding="utf-8"))
+        run["configuration"]["sha256"] = sha256_file(suite_path)
+        run_path.write_text(json.dumps(run, indent=2), encoding="utf-8")
 
     def test_known_good_repeated_trials_pass(self) -> None:
         result = self.evaluate()
@@ -129,6 +138,30 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(too_few["decision"], "BLOCKED")
         self.assertEqual(retries["decision"], "FAIL")
         self.assertIn("max_retries_per_trial", retries["failed_release_rules"])
+
+    def test_capability_and_regression_suites_apply_different_reliability_rules(self) -> None:
+        fault_path = self.fault("outcome")
+        regression = self.evaluate(trials_path=fault_path)
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["suite_type"] = "capability"
+        suite["release_rules"]["min_trial_pass_rate"] = 0.5
+        suite["release_rules"]["require_all_regression_trials"] = False
+        self.rewrite_suite(suite)
+        capability = self.evaluate(trials_path=fault_path)
+        self.assertEqual(regression["decision"], "FAIL")
+        self.assertEqual(capability["decision"], "PASS")
+        self.assertIn("G_OUTCOME_DECISION", capability["failed_gate_ids"])
+
+    def test_deterministic_only_suite_does_not_require_model_evidence(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["model_graders"] = []
+        suite["rubric"] = []
+        suite.pop("calibration")
+        self.rewrite_suite(suite)
+        (self.project / "judgments.jsonl").unlink()
+        (self.project / "calibration.json").unlink()
+        result = self.evaluate()
+        self.assertEqual(result["decision"], "PASS")
 
     def test_failure_slices_and_clusters_are_explainable(self) -> None:
         result = self.evaluate(trials_path=self.fault("mixed"))
