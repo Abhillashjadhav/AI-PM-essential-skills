@@ -1,0 +1,2 @@
+{"case_id":"A400","input":{"order_id":"A400","question":"Can I return my TV received 10 days ago?"},"expected":{"outcome":{"decision":"ALLOW","method":"in-store"},"trajectory":{"policy_category":"electronics"}},"metadata":{"category":"electronics","risk":"high"}}
+{"case_id":"A500","input":{"order_id":"A500","question":"Can I return my quilt received 20 days ago?"},"expected":{"outcome":{"decision":"ALLOW","method":"mail-back"},"trajectory":{"policy_category":"bedding"}},"metadata":{"category":"bedding","risk":"standard"}}

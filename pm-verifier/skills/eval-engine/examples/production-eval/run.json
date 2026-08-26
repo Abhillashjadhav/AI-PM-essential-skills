@@ -1,0 +1,38 @@
+{
+  "schema_version": "1.0",
+  "run_id": "return-agent-v1-run-001",
+  "candidate": {"id": "return-agent", "version": "1.0.0"},
+  "dataset": {
+    "id": "return-policy-cases",
+    "version": "1.0.0",
+    "cases_sha256": "776e45df79751a2c49ec01b44429111d8cb4cdcb9e782dde7e6471feee826dde"
+  },
+  "model": {
+    "provider": "synthetic",
+    "name": "deterministic-return-agent",
+    "version": "1.0.0",
+    "parameters": {"temperature": 0}
+  },
+  "prompt": {
+    "id": "return-policy-agent-prompt",
+    "version": "1.0.0",
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "tools": [
+    {
+      "name": "return-policy-store",
+      "version": "1.0.0",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "harness": {
+    "name": "pm-verifier",
+    "version": "1.0.0",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "configuration": {
+    "id": "return-policy-regression",
+    "version": "1.0.0",
+    "sha256": "273bee84279a7e84f2c3b1e3a55410e5eb1bad129704a003543906bf8f1439c6"
+  }
+}

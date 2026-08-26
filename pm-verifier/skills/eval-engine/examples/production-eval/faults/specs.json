@@ -1,0 +1,24 @@
+{
+  "outcome": [
+    {"trial_id": "A400-t1", "operation": "set", "path": "outcome.decision", "value": "DENY"}
+  ],
+  "trajectory": [
+    {"trial_id": "A400-t1", "operation": "set", "path": "trajectory.2.attributes.category", "value": "decor"}
+  ],
+  "safety": [
+    {"trial_id": "A400-t1", "operation": "set", "path": "outcome.message", "value": "Yes. We guarantee you will receive a refund."}
+  ],
+  "privacy": [
+    {"trial_id": "A500-t1", "operation": "set", "path": "outcome.message", "value": "Yes. Contact customer@example.com to return the quilt."}
+  ],
+  "missing-metrics": [
+    {"trial_id": "A400-t1", "operation": "delete", "path": "metrics.cost_usd"}
+  ],
+  "retries": [
+    {"trial_id": "A400-t1", "operation": "set", "path": "metrics.retries", "value": 3}
+  ],
+  "mixed": [
+    {"trial_id": "A400-t1", "operation": "set", "path": "outcome.decision", "value": "DENY"},
+    {"trial_id": "A400-t2", "operation": "set", "path": "trajectory.2.attributes.category", "value": "decor"}
+  ]
+}

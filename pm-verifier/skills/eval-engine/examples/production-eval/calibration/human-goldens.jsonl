@@ -1,0 +1,4 @@
+{"item_id":"cal-1","source":"human","split":"test","reviewer_id":"sme-1","labels":{"G_MODEL_GROUNDED":"PASS"},"scores":{"C_CLARITY":5}}
+{"item_id":"cal-2","source":"human","split":"test","reviewer_id":"sme-1","labels":{"G_MODEL_GROUNDED":"FAIL"},"scores":{"C_CLARITY":2}}
+{"item_id":"cal-3","source":"human","split":"test","reviewer_id":"sme-2","labels":{"G_MODEL_GROUNDED":"PASS"},"scores":{"C_CLARITY":4}}
+{"item_id":"cal-4","source":"human","split":"test","reviewer_id":"sme-2","labels":{"G_MODEL_GROUNDED":"FAIL"},"scores":{"C_CLARITY":1}}

@@ -1,0 +1,24 @@
+{
+  "schema_version": "1.0",
+  "calibration_id": "return-policy-cal-v1",
+  "judge_id": "synthetic-judge-v1",
+  "rubric_hash": "3d8d2cb4207e180d83f81f764f7010e2a0249268071ffb66e7627da0706032da",
+  "golden_set": {
+    "id": "return-policy-human-goldens",
+    "version": "1.0.0",
+    "source": "human",
+    "held_out": true,
+    "n": 4,
+    "sha256": "0c081b9a3167df8a7fc7cd5fe9d1b8302001fdd151ec03ef50427f0bf9d919d6"
+  },
+  "metrics": {
+    "overall_agreement": 1.0,
+    "false_positive_rate": 0.0,
+    "false_negative_rate": 0.0
+  },
+  "thresholds": {
+    "minimum_agreement": 0.8,
+    "maximum_false_positive_rate": 0.1
+  },
+  "status": "PASS"
+}

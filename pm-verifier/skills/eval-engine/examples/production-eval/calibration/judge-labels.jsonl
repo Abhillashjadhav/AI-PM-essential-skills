@@ -1,0 +1,4 @@
+{"item_id":"cal-1","judge_id":"synthetic-judge-v1","labels":{"G_MODEL_GROUNDED":"PASS"},"scores":{"C_CLARITY":5}}
+{"item_id":"cal-2","judge_id":"synthetic-judge-v1","labels":{"G_MODEL_GROUNDED":"FAIL"},"scores":{"C_CLARITY":2}}
+{"item_id":"cal-3","judge_id":"synthetic-judge-v1","labels":{"G_MODEL_GROUNDED":"PASS"},"scores":{"C_CLARITY":4}}
+{"item_id":"cal-4","judge_id":"synthetic-judge-v1","labels":{"G_MODEL_GROUNDED":"FAIL"},"scores":{"C_CLARITY":1}}
