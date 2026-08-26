@@ -24,6 +24,22 @@ Checked on 2026-08-26 against current primary guidance:
 | Model judges are probabilistic and bias-prone | Use held-out human calibration, per-dimension agreement, false-positive/negative counts, and swapped-order pairwise checks. |
 | CI is a pre-launch layer, not the whole truth | Produce a release decision for CI while stating that production monitoring and periodic human review remain necessary. |
 
+## Post-review corrections implemented
+
+An independent architecture review correctly identified that the first PR
+implemented only the evidence/grading/decision portion of an end-to-end eval
+harness. The following gaps are now closed by executable code and tests:
+
+| Gap | Resolution |
+|---|---|
+| No system-under-test execution | A bounded JSON-over-stdio adapter starts one fresh process per trial and withholds expected answers. |
+| Trial independence was assumed | Every trial requires a unique isolation ID and an environment fingerprint; shared isolation blocks the run. |
+| Raw agreement could approve a degenerate judge | Calibration now requires both human classes, a sample floor, Cohen's kappa, and a Wilson agreement lower bound. Binary and ordinal measures have separate denominators. |
+| Exact trajectory checks were implicitly mandatory gates | Every deterministic/model check now declares `gate: true|false`; risk-critical paths can gate while incidental sequences remain diagnostic. |
+| Capability results were only binary | Partial quality is reported for hill-climbing, but cannot override a failed binary release gate. |
+| Failures were computed but not inspectable | `inspect` joins graded failures to redacted raw outcomes, trajectories, environment fingerprints, and isolation IDs. |
+| The runtime was copied rather than shipped | `pm-verifier` is an installable, semantically versioned package with a console entry point and bundled schemas. |
+
 ## Existing-repository findings
 
 | Capability | `Evals-pass-1` | `pm-evals` | existing `pm-verifier` | Finding |
@@ -65,3 +81,7 @@ legacy Evals/Graders APIs. OpenAI's current documentation marks those legacy
 surfaces for retirement in 2026. `pm-verifier` therefore consumes explicit
 trial and judgment evidence and records provider/model provenance without
 binding the public product to a retiring API.
+
+The word “production” is intentionally bounded to an installable out-of-band
+CI/release harness. It does not claim hosted-service uptime, live-traffic
+monitoring, experimentation, or inline request enforcement.

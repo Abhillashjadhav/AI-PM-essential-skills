@@ -35,6 +35,8 @@ jobs:
           python-version: "3.11"
       - name: Install skill-lint dependency
         run: python3 -m pip install PyYAML==6.0.3
+      - name: Install the shipped pm-verifier package
+        run: python3 -m pip install --no-deps --no-build-isolation ./pm-verifier
       - name: Compile harness
         run: python3 -m compileall -q pm-verifier/skills/eval-engine/harness
       - name: Run known-good and known-bad eval tests
@@ -48,8 +50,17 @@ jobs:
         run: |
           eval_dir="$(mktemp -d)/eval"
           cp -R pm-verifier/skills/eval-engine/examples/production-eval "$eval_dir"
-          cp -R pm-verifier/skills/eval-engine/harness/pm_verifier "$eval_dir/pm_verifier"
-          cd "$eval_dir"
-          python3 -m pm_verifier run
-          python3 -m pm_verifier report
-          grep -q "Release decision: PASS" report.md
+          pm-verifier --version
+          pm-verifier execute --project "$eval_dir" \
+            --trials-out trials-a.jsonl --results-out results-a.json \
+            -- python3 "$eval_dir/reference_adapter.py"
+          pm-verifier execute --project "$eval_dir" \
+            --trials-out trials-b.jsonl --results-out results-b.json \
+            -- python3 "$eval_dir/reference_adapter.py"
+          cmp "$eval_dir/results-a.json" "$eval_dir/results-b.json"
+          pm-verifier report --results "$eval_dir/results-a.json" --out "$eval_dir/report.md"
+          pm-verifier inspect --results "$eval_dir/results-a.json" \
+            --trials "$eval_dir/trials-a.jsonl" --trial A400-t1 \
+            --out "$eval_dir/inspection.md"
+          grep -q "Release decision: PASS" "$eval_dir/report.md"
+          grep -q "Raw trajectory" "$eval_dir/inspection.md"

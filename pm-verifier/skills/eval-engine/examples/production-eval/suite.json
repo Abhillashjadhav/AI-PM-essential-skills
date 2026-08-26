@@ -87,7 +87,10 @@
   "calibration": {
     "judge_id": "synthetic-judge-v1",
     "calibration_id": "return-policy-cal-v1",
+    "minimum_golden_items": 20,
     "minimum_agreement": 0.8,
+    "minimum_kappa": 0.6,
+    "maximum_score_mae": 0.75,
     "maximum_false_positive_rate": 0.1
   },
   "release_rules": {

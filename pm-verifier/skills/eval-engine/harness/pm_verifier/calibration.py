@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import math
+from collections import Counter
 from pathlib import Path
 from typing import Any
 
@@ -10,8 +12,67 @@ def _blocked(errors: list[str]) -> dict[str, Any]:
     return {
         "schema_version": "1.0",
         "status": "BLOCKED",
-        "evidence_errors": errors,
+        "evidence_errors": sorted(set(errors)),
     }
+
+
+def _wilson_interval(successes: int, total: int) -> tuple[float, float]:
+    if total <= 0:
+        return 0.0, 0.0
+    z = 1.959963984540054
+    rate = successes / total
+    denominator = 1 + (z * z / total)
+    centre = rate + (z * z / (2 * total))
+    margin = z * math.sqrt((rate * (1 - rate) / total) + (z * z / (4 * total * total)))
+    return max(0.0, (centre - margin) / denominator), min(
+        1.0, (centre + margin) / denominator
+    )
+
+
+def _cohens_kappa(human: list[str], judge: list[str]) -> float:
+    if not human or len(human) != len(judge):
+        return 0.0
+    observed = sum(left == right for left, right in zip(human, judge)) / len(human)
+    human_counts = Counter(human)
+    judge_counts = Counter(judge)
+    expected = sum(
+        (human_counts[label] / len(human)) * (judge_counts[label] / len(judge))
+        for label in {"PASS", "FAIL"}
+    )
+    if math.isclose(expected, 1.0):
+        return 1.0 if math.isclose(observed, 1.0) else 0.0
+    return (observed - expected) / (1 - expected)
+
+
+def _thresholds(config: dict[str, Any]) -> tuple[dict[str, float | int], list[str]]:
+    errors: list[str] = []
+    values: dict[str, float | int] = {}
+    integer_fields = ("minimum_golden_items",)
+    ratio_fields = (
+        "minimum_agreement",
+        "minimum_kappa",
+        "maximum_false_positive_rate",
+    )
+    for field in integer_fields:
+        value = config.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 1:
+            errors.append(f"suite.calibration.{field} must be an integer >= 1")
+        else:
+            values[field] = value
+    for field in ratio_fields:
+        value = config.get(field)
+        if not isinstance(value, (int, float)) or isinstance(value, bool):
+            errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
+        elif not 0 <= float(value) <= 1:
+            errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
+        else:
+            values[field] = float(value)
+    score_mae = config.get("maximum_score_mae")
+    if not isinstance(score_mae, (int, float)) or isinstance(score_mae, bool) or score_mae < 0:
+        errors.append("suite.calibration.maximum_score_mae must be a non-negative number")
+    else:
+        values["maximum_score_mae"] = float(score_mae)
+    return values, errors
 
 
 def calibrate(
@@ -19,38 +80,33 @@ def calibrate(
     goldens_path: str | Path,
     judge_path: str | Path,
 ) -> dict[str, Any]:
-    """Compare one judge/rubric version with a held-out human golden set."""
+    """Calibrate one judge version against a held-out human golden set."""
     try:
         goldens = load_jsonl(goldens_path)
         judgments = load_jsonl(judge_path)
     except EvidenceError as exc:
         return _blocked([str(exc)])
 
-    errors: list[str] = []
     config = suite.get("calibration")
     if not isinstance(config, dict):
         return _blocked(["suite.calibration must be an object"])
+    thresholds, errors = _thresholds(config)
     expected_judge = config.get("judge_id")
     if not isinstance(expected_judge, str) or not expected_judge:
         errors.append("suite.calibration.judge_id must be a non-empty string")
-    try:
-        minimum = float(config["minimum_agreement"])
-        maximum_fp = float(config["maximum_false_positive_rate"])
-    except (KeyError, TypeError, ValueError):
-        return _blocked(
-            [
-                "suite calibration thresholds minimum_agreement and maximum_false_positive_rate must be numbers"
-            ]
+    if len(goldens) < int(thresholds.get("minimum_golden_items", 1)):
+        errors.append(
+            "human golden set is below the configured minimum: "
+            f"found {len(goldens)}, requires {thresholds.get('minimum_golden_items', '<invalid>')}"
         )
-    if not 0 <= minimum <= 1 or not 0 <= maximum_fp <= 1:
-        errors.append("suite calibration thresholds must be between 0 and 1")
-    if not goldens:
-        errors.append("human golden set is empty")
     if not judgments:
         errors.append("judge calibration labels are empty")
     if any(row.get("source") != "human" for row in goldens):
         errors.append("every golden label must declare source='human'")
-    if any(not isinstance(row.get("reviewer_id"), str) or not row["reviewer_id"] for row in goldens):
+    if any(
+        not isinstance(row.get("reviewer_id"), str) or not row["reviewer_id"]
+        for row in goldens
+    ):
         errors.append("every golden label requires reviewer_id provenance")
     held_out = bool(goldens) and all(row.get("split") == "test" for row in goldens)
     if not held_out:
@@ -102,68 +158,93 @@ def calibrate(
                 for value in scores.values()
             ):
                 errors.append(f"{source} item {item_id}: scores must be numbers from 1 to 5")
+
+    for dimension in sorted(label_ids):
+        observed = {
+            row.get("labels", {}).get(dimension) for row in goldens if isinstance(row, dict)
+        }
+        if observed != {"PASS", "FAIL"}:
+            errors.append(
+                f"human golden labels for {dimension} must contain both PASS and FAIL examples"
+            )
     if errors:
         return _blocked(errors)
 
-    total = 0
-    agree = 0
+    human_labels: list[str] = []
+    judge_labels: list[str] = []
     false_positive = 0
+    human_negative = 0
     false_negative = 0
-    gate_cells = 0
-    dimensions: dict[str, dict[str, int]] = {}
-    for item_id in sorted(by_human):
-        human = by_human[item_id]
-        judge = by_judge[item_id]
-        human_labels = human.get("labels", {})
-        judge_labels = judge.get("labels", {})
-        human_scores = human.get("scores", {})
-        judge_scores = judge.get("scores", {})
+    human_positive = 0
+    label_dimensions: dict[str, dict[str, Any]] = {}
+    score_differences: list[float] = []
+    score_dimensions: dict[str, dict[str, Any]] = {}
 
-        for dimension, human_value in human_labels.items():
-            judge_value = judge_labels.get(dimension, "UNKNOWN")
-            stats = dimensions.setdefault(
-                dimension, {"n": 0, "agree": 0, "false_positive": 0, "false_negative": 0}
-            )
-            stats["n"] += 1
-            total += 1
-            gate_cells += 1
-            if judge_value == human_value:
-                agree += 1
-                stats["agree"] += 1
-            elif judge_value == "PASS" and human_value == "FAIL":
-                false_positive += 1
-                stats["false_positive"] += 1
-            elif judge_value == "FAIL" and human_value == "PASS":
-                false_negative += 1
-                stats["false_negative"] += 1
-
-        for dimension, human_value in human_scores.items():
-            stats = dimensions.setdefault(
-                dimension, {"n": 0, "agree": 0, "false_positive": 0, "false_negative": 0}
-            )
-            stats["n"] += 1
-            total += 1
-            try:
-                judge_value = float(judge_scores[dimension])
-                human_score = float(human_value)
-            except (KeyError, TypeError, ValueError):
-                continue
-            if abs(judge_value - human_score) <= 1:
-                agree += 1
-                stats["agree"] += 1
-
-    overall = agree / total if total else 0.0
-    fp_rate = false_positive / gate_cells if gate_cells else 0.0
-    fn_rate = false_negative / gate_cells if gate_cells else 0.0
-    status = "PASS" if overall >= minimum and fp_rate <= maximum_fp else "FAIL"
-
-    per_dimension = {
-        key: {
-            **value,
-            "agreement": value["agree"] / value["n"] if value["n"] else 0.0,
+    for dimension in sorted(label_ids):
+        dimension_human: list[str] = []
+        dimension_judge: list[str] = []
+        for item_id in sorted(by_human):
+            human_value = by_human[item_id]["labels"][dimension]
+            judge_value = by_judge[item_id]["labels"][dimension]
+            dimension_human.append(human_value)
+            dimension_judge.append(judge_value)
+            human_labels.append(human_value)
+            judge_labels.append(judge_value)
+            if human_value == "FAIL":
+                human_negative += 1
+                false_positive += judge_value == "PASS"
+            else:
+                human_positive += 1
+                false_negative += judge_value == "FAIL"
+        agrees = sum(
+            left == right for left, right in zip(dimension_human, dimension_judge)
+        )
+        lower, upper = _wilson_interval(agrees, len(dimension_human))
+        label_dimensions[dimension] = {
+            "n": len(dimension_human),
+            "agreement": agrees / len(dimension_human),
+            "agreement_interval_95": {"lower": lower, "upper": upper},
+            "cohens_kappa": _cohens_kappa(dimension_human, dimension_judge),
         }
-        for key, value in sorted(dimensions.items())
-    }
+
+    for dimension in sorted(score_ids):
+        differences: list[float] = []
+        within_one = 0
+        exact = 0
+        for item_id in sorted(by_human):
+            human_score = float(by_human[item_id]["scores"][dimension])
+            judge_score = float(by_judge[item_id]["scores"][dimension])
+            difference = abs(judge_score - human_score)
+            differences.append(difference)
+            score_differences.append(difference)
+            within_one += difference <= 1
+            exact += math.isclose(difference, 0.0)
+        score_dimensions[dimension] = {
+            "n": len(differences),
+            "mean_absolute_error": sum(differences) / len(differences),
+            "within_one_rate": within_one / len(differences),
+            "exact_agreement": exact / len(differences),
+        }
+
+    label_agree = sum(left == right for left, right in zip(human_labels, judge_labels))
+    label_lower, label_upper = _wilson_interval(label_agree, len(human_labels))
+    label_agreement = label_agree / len(human_labels) if human_labels else 0.0
+    kappa = _cohens_kappa(human_labels, judge_labels)
+    false_positive_rate = false_positive / human_negative if human_negative else 0.0
+    false_negative_rate = false_negative / human_positive if human_positive else 0.0
+    score_mae = (
+        sum(score_differences) / len(score_differences) if score_differences else 0.0
+    )
+    status = (
+        "PASS"
+        if label_lower >= float(thresholds["minimum_agreement"])
+        and kappa >= float(thresholds["minimum_kappa"])
+        and false_positive_rate
+        <= float(thresholds["maximum_false_positive_rate"])
+        and score_mae <= float(thresholds["maximum_score_mae"])
+        else "FAIL"
+    )
+
     return {
         "schema_version": "1.0",
         "calibration_id": config.get("calibration_id"),
@@ -178,15 +259,20 @@ def calibrate(
             "sha256": sha256_file(goldens_path),
         },
         "metrics": {
-            "overall_agreement": overall,
-            "false_positive_rate": fp_rate,
-            "false_negative_rate": fn_rate,
-            "per_dimension": per_dimension,
+            "overall_agreement": label_agreement,
+            "label_agreement": label_agreement,
+            "label_agreement_interval_95": {
+                "lower": label_lower,
+                "upper": label_upper,
+            },
+            "cohens_kappa": kappa,
+            "false_positive_rate": false_positive_rate,
+            "false_negative_rate": false_negative_rate,
+            "score_mean_absolute_error": score_mae,
+            "label_dimensions": label_dimensions,
+            "score_dimensions": score_dimensions,
         },
-        "thresholds": {
-            "minimum_agreement": minimum,
-            "maximum_false_positive_rate": maximum_fp,
-        },
+        "thresholds": thresholds,
         "status": status,
         "evidence_errors": [],
     }

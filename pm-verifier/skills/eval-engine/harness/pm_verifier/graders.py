@@ -31,8 +31,8 @@ def validate_grader(grader: dict[str, Any]) -> list[str]:
         errors.append(f"grader {grader_id}: scope must be outcome or trajectory")
     if grader.get("category") not in {"quality", "safety", "privacy"}:
         errors.append(f"grader {grader_id}: invalid category")
-    if grader.get("gate") is not True:
-        errors.append(f"grader {grader_id}: deterministic release checks must be gates")
+    if not isinstance(grader.get("gate"), bool):
+        errors.append(f"grader {grader_id}: gate must be true or false")
     check = grader.get("check")
     params = grader.get("params", {})
     if not isinstance(params, dict):
@@ -137,6 +137,7 @@ def grade_deterministic(
         "scope": grader["scope"],
         "category": grader["category"],
         "kind": "deterministic",
+        "gate": grader["gate"],
         "passed": passed,
         "actual": actual,
         "expected": expected,

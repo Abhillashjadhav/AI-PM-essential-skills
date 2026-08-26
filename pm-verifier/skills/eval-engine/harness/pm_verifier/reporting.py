@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import json
 from typing import Any
+
+from .redaction import redact_text, redact_value
 
 
 def _percent(value: Any) -> str:
@@ -37,8 +40,8 @@ def render_markdown(result: dict[str, Any]) -> str:
                 "",
                 "## Outcome vs trajectory",
                 "",
-                "| Case / trial | Verdict | Outcome gates | Trajectory gates | Silent path failure | Mean rubric |",
-                "|---|---|---|---|---|---:|",
+                "| Case / trial | Verdict | Outcome gates | Trajectory gates | Diagnostics | Partial quality | Mean rubric |",
+                "|---|---|---|---|---|---:|---:|",
             ]
         )
         for trial in result["trials"]:
@@ -49,10 +52,16 @@ def render_markdown(result: dict[str, Any]) -> str:
                 if trial["mean_rubric_score"] is not None
                 else "—"
             )
+            partial = (
+                f"{trial['partial_quality_score']:.1%}"
+                if trial.get("partial_quality_score") is not None
+                else "—"
+            )
             lines.append(
                 f"| {trial['case_id']} / {trial['trial_id']} | "
                 f"{'PASS' if trial['passed'] else 'FAIL'} | {outcome} | {trajectory} | "
-                f"{'YES' if trial['silent_trajectory_failure'] else 'no'} | {mean} |"
+                f"{', '.join(trial.get('diagnostic_failure_ids', [])) or '—'} | "
+                f"{partial} | {mean} |"
             )
         metrics = result["metrics"]
         lines.extend(
@@ -102,6 +111,8 @@ def render_markdown(result: dict[str, Any]) -> str:
                 f"- Judge: `{calibration.get('judge_id')}`",
                 f"- Calibration: `{calibration.get('id')}` ({calibration.get('status')})",
                 f"- Agreement: {_percent((calibration.get('metrics') or {}).get('overall_agreement'))}",
+                f"- Agreement 95% lower bound: {_percent(((calibration.get('metrics') or {}).get('label_agreement_interval_95') or {}).get('lower'))}",
+                f"- Cohen's kappa: {(calibration.get('metrics') or {}).get('cohens_kappa', '—')}",
                 "",
                 "Rubric scores are calibrated judgments, not objective measurements.",
                 "",
@@ -121,4 +132,86 @@ def render_markdown(result: dict[str, Any]) -> str:
         )
     lines.extend(f"- {limitation}" for limitation in result.get("limitations", []))
     lines.append("")
-    return "\n".join(lines)
+    return redact_text("\n".join(lines))
+
+
+def render_inspection(
+    result: dict[str, Any],
+    raw_trials: list[dict[str, Any]],
+    *,
+    case_id: str | None = None,
+    trial_id: str | None = None,
+) -> str:
+    """Render selected failures with their raw outcome and trajectory evidence."""
+    selected = [
+        trial
+        for trial in result.get("trials", [])
+        if (case_id is None or trial.get("case_id") == case_id)
+        and (trial_id is None or trial.get("trial_id") == trial_id)
+        and (
+            trial_id is not None
+            or not trial.get("passed", False)
+            or bool(trial.get("diagnostic_failure_ids"))
+        )
+    ]
+    by_trial = {trial.get("trial_id"): trial for trial in raw_trials}
+    lines = [
+        "# pm-verifier failure inspection",
+        "",
+        f"Release decision: **{result.get('decision', 'BLOCKED')}**",
+        "",
+    ]
+    if not selected:
+        lines.append("No matching failing or diagnostic trials were found.")
+    for graded in selected:
+        identifier = graded.get("trial_id", "<unknown>")
+        lines.extend(
+            [
+                f"## {graded.get('case_id', '<unknown>')} / {identifier}",
+                "",
+                f"- Verdict: {'PASS' if graded.get('passed') else 'FAIL'}",
+                f"- Release gates: {', '.join(graded.get('failed_gate_ids', [])) or 'none'}",
+                f"- Diagnostics: {', '.join(graded.get('diagnostic_failure_ids', [])) or 'none'}",
+                f"- Partial quality: {_percent(graded.get('partial_quality_score'))}",
+                "",
+                "### Grader evidence",
+                "",
+            ]
+        )
+        for gate in graded.get("gate_results", []):
+            if not gate.get("passed"):
+                role = "release gate" if gate.get("gate") else "diagnostic"
+                lines.append(
+                    f"- `{gate.get('grader_id')}` ({role}): {gate.get('reason', 'no reason')}"
+                )
+        raw = by_trial.get(identifier)
+        if raw is None:
+            lines.extend(
+                [
+                    "",
+                    "Raw trial evidence is unavailable. Supply the source trials JSONL to inspect the trajectory.",
+                ]
+            )
+            continue
+        safe = redact_value(raw)
+        lines.extend(
+            [
+                "",
+                "### Raw outcome",
+                "",
+                "```json",
+                json.dumps(safe.get("outcome"), indent=2, sort_keys=True),
+                "```",
+                "",
+                "### Raw trajectory",
+                "",
+                "```json",
+                json.dumps(safe.get("trajectory"), indent=2, sort_keys=True),
+                "```",
+                "",
+                f"Environment fingerprint: `{safe.get('environment_fingerprint', 'missing')}`",
+                f"Isolation ID: `{safe.get('isolation_id', 'missing')}`",
+                "",
+            ]
+        )
+    return redact_text("\n".join(lines))

@@ -29,9 +29,16 @@ This document records what this repository's checks establish and what they do n
 - known-good repeated trials produce a `PASS` result and both report formats;
 - deterministic outcome, trajectory, safety, privacy, metric, retry, and model-gate faults fire;
 - missing, malformed, or mismatched evidence produces `BLOCKED`, never inferred success;
-- human calibration and swapped-order bias known-answer fixtures distinguish acceptable and biased judges;
-- capability and regression thresholds, failure slices, lexical clustering, and migrated-data hashes are executable; and
-- the production example runs from an isolated copied directory with the Python standard library.
+- human calibration enforces sample size, class coverage, confidence bounds,
+  chance-corrected agreement, ordinal error, and biased-judge rejection;
+- capability and regression thresholds, diagnostic-versus-gate behavior,
+  partial quality, failure slices, lexical clustering, and migrated-data hashes
+  are executable;
+- subprocess adapter failures and shared trial isolation produce `BLOCKED`;
+- identical evidence produces identical results and displayed evidence is
+  redacted for credential/PII patterns; and
+- the package installs without runtime dependencies and the production example
+  executes, grades, reports, and inspects from an isolated directory.
 
 ## Manually validated material
 
@@ -70,6 +77,8 @@ Run these commands from the repository root after cloning:
 
 ```bash
 python3 scripts/check_repository_integrity.py
+python3 -m pip install --no-deps --no-build-isolation ./pm-verifier
+pm-verifier --version
 python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -v
 python3 tests/lint_skill.py pm-verifier/skills/eval-engine/SKILL.md
 python3 scripts/check_agent_graph_designer_contract.py

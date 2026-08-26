@@ -70,8 +70,21 @@ def load_jsonl(path: str | Path) -> list[dict[str, Any]]:
 
 
 def write_json(path: str | Path, value: Any) -> None:
-    Path(path).write_text(
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
         json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        encoding="utf-8",
+    )
+
+
+def write_jsonl(path: str | Path, rows: list[dict[str, Any]]) -> None:
+    target = Path(path)
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(
+        "".join(
+            json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n" for row in rows
+        ),
         encoding="utf-8",
     )
 

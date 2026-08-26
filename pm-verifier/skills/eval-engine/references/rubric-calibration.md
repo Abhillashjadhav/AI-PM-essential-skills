@@ -46,10 +46,19 @@ The calibration loop:
 1. **Split first.** Keep prompt-tuning examples, validation cases, and a held-out test set separate. A few cases can improve anchors, but a release-critical trust claim needs a representative held-out set sized for the decision risk.
 2. **Hand-score blind.** Domain experts score without seeing judge output, record reviewer/source provenance, and reconcile material inter-rater disagreements.
 3. **Run the judge** on the same cases with model, prompt, and rubric versions frozen.
-4. **Diff per dimension.** Report agreement, false positives, and false negatives; for 1–5 scores, agreement within ±1 is an explicit convention, not objective truth.
+4. **Diff per dimension.** Keep binary labels and ordinal scores separate. For
+   labels, report raw agreement, a confidence interval, chance-corrected
+   agreement, and class-conditional false positives/negatives. For 1–5 scores,
+   report absolute error and within-1 agreement as an explicit convention, not
+   objective truth.
 5. **Fix the rubric on train/validation evidence.** A gap ≥2 usually means an anchor or example is under-specified. Change one distinction at a time.
 6. **Evaluate once on the held-out test set.** Do not tune on its misses and still call it held out.
 7. **Version the result.** Store judge ID, rubric hash, golden-set hash, thresholds, and status. Any judge/rubric change invalidates the old calibration.
+
+The release gate uses the 95% agreement lower bound, not only the point
+estimate. It also enforces `minimum_golden_items`, `minimum_kappa`,
+`maximum_false_positive_rate`, and `maximum_score_mae`. A golden label
+dimension containing only PASS or only FAIL is invalid calibration evidence.
 
 ## Score-distribution smells
 

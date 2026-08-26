@@ -40,11 +40,18 @@ Create the files in `references/evidence-contract.md`. Record:
 - repeated trial outcomes, full trajectories, cost, latency, tokens, and retries; and
 - explicit `missing_evidence` values rather than inferred defaults.
 
-Copy the bundled `harness/pm_verifier/` package plus `prepare.py`, `run.py`, and `report.py` into the eval folder. Do not add provider SDKs or hidden network calls.
+Install the bundled package from `pm-verifier/` for CI use. Keep the
+compatibility wrappers only for existing suites. Do not add provider SDKs or
+hidden network calls.
 
 ## 4. Run trials and grade
 
-Run at least the suite's `minimum_trials_per_case`. Capture the actual final environment state as `outcome`; do not substitute the agent's claim about what happened. Capture ordered tool/model/decision steps as `trajectory`.
+Run at least the suite's `minimum_trials_per_case`. Prefer `pm-verifier
+execute` with a JSON-over-stdio adapter so each trial starts in a fresh process.
+Never send expected answers to the adapter. Require a unique `isolation_id` and
+an `environment_fingerprint` for every trial. Capture the actual final
+environment state as `outcome`; do not substitute the agent's claim about what
+happened. Capture ordered tool/model/decision steps as `trajectory`.
 
 Run deterministic gates first. Skip model scoring for a trial that already failed a deterministic gate. For semantic gates or gradual rubrics:
 
@@ -57,7 +64,11 @@ Never replace a missing judge with a random, hash-based, or synthetic score.
 
 ## 5. Calibrate model graders
 
-Use held-out human goldens. Keep prompt-tuning examples separate from final calibration cases. Compute per-dimension agreement plus false-positive and false-negative rates. Use blind AB/BA swaps when pairwise position bias is relevant.
+Use held-out human goldens. Keep prompt-tuning examples separate from final
+calibration cases. Require the configured sample floor and both PASS/FAIL
+classes. Compute binary agreement, a Wilson confidence interval, Cohen's kappa,
+class-conditional false-positive/negative rates, and separate ordinal score
+error. Use blind AB/BA swaps when pairwise position bias is relevant.
 
 Read `references/rubric-calibration.md` before making a model grader release-critical. Small exploratory sets can improve a rubric; they do not justify a broad trust claim.
 
@@ -74,6 +85,8 @@ Show:
 - failure clusters with the clustering method disclosed.
 
 Keep the failing trace, grader reason, and provenance available for review.
+Use `pm-verifier inspect`; reports and inspection must redact credential and
+personal-data patterns before display.
 
 ## 7. Make the release decision
 
@@ -85,12 +98,14 @@ Emit exactly one state:
 
 Write canonical machine evidence to `results.json` and the PM/reviewer view to `report.md`.
 
-Run locally from the eval folder:
+Run from an installed clean checkout:
 
 ```bash
-python3 -m pm_verifier prepare
-python3 -m pm_verifier run
-python3 -m pm_verifier report
+python3 -m pip install --no-deps ./pm-verifier
+pm-verifier execute --project eval -- python3 eval/adapter.py
+pm-verifier run --project eval --trials eval/trials.executed.jsonl
+pm-verifier inspect --results eval/results.json --trials eval/trials.executed.jsonl
+pm-verifier report --results eval/results.json --out eval/report.md
 ```
 
 The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same commands. Exit codes are `0=PASS`, `1=FAIL`, and `2=BLOCKED`.
@@ -108,8 +123,8 @@ The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same 
 
 ## Limitations
 
-- This is a local pre-release evaluation harness, not production observability.
+- This is an out-of-band production CI/release harness, not hosted production observability, live experimentation, or an inline request gate.
 - Model judgments remain probabilistic after calibration and need periodic human review.
 - Empirical `pass@k` and `pass^k` describe recorded trials, not population guarantees.
 - Dependency-free lexical clustering is explainable and reproducible but less semantic than embedding-based clustering.
-- Marketplace installation supplies the skill and harness; the user's system-under-test must still produce real trial evidence.
+- Marketplace installation supplies the PM workflow; the packaged CLI executes a product-specific adapter that must expose real trial evidence.

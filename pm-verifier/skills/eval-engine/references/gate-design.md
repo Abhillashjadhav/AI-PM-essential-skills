@@ -34,6 +34,12 @@ Prefer deterministic checks — they are fast, reproducible, and easy to debug. 
 
 Every deterministic gate uses a supported check in `references/evidence-contract.md`. If the check cannot express the claim faithfully, use a calibrated model grader instead of a brittle proxy.
 
+Trajectory checks are not automatically gates. Exact step/order expectations
+should normally be diagnostic because multiple valid paths can reach the right
+outcome. They become gates only when the path itself is risk-critical—for
+example, consulting the wrong policy document, skipping identity verification,
+or calling a forbidden tool—even if the final answer happens to be correct.
+
 ## Count discipline
 
 Use the smallest complete set. A fixed minimum encourages invented gates; a fixed maximum can hide real safety or contract boundaries. Re-read the spec asking "what output would get this feature turned off?" and retain only checks that pass the three-part gate test.

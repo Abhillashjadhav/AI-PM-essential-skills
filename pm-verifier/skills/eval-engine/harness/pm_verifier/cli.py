@@ -5,11 +5,13 @@ import sys
 from pathlib import Path
 from typing import Sequence
 
+from . import __version__
+from .adapter import execute_trials
 from .bias import analyze_pairwise_bias
 from .calibration import calibrate
 from .engine import evaluate_project
-from .io import EvidenceError, load_json, write_json
-from .reporting import render_markdown
+from .io import EvidenceError, load_json, load_jsonl, write_json
+from .reporting import render_inspection, render_markdown
 
 
 def _decision_exit(decision: str) -> int:
@@ -21,8 +23,9 @@ def build_parser() -> argparse.ArgumentParser:
         prog="pm-verifier",
         description="Validate evidence, grade repeated trials, inspect failures, and gate release.",
     )
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)
-    for command in ("prepare", "run"):
+    for command in ("prepare", "validate", "run"):
         child = subparsers.add_parser(command)
         child.add_argument("--project", type=Path, default=Path("."))
         child.add_argument("--trials", type=Path)
@@ -30,11 +33,30 @@ def build_parser() -> argparse.ArgumentParser:
         child.add_argument(
             "--out",
             type=Path,
-            default=Path("prepared.json" if command == "prepare" else "results.json"),
+            default=Path(
+                "prepared.json"
+                if command == "prepare"
+                else "validation.json"
+                if command == "validate"
+                else "results.json"
+            ),
         )
+    execute = subparsers.add_parser("execute")
+    execute.add_argument("--project", type=Path, default=Path("."))
+    execute.add_argument("--trials-out", type=Path, default=Path("trials.executed.jsonl"))
+    execute.add_argument("--results-out", type=Path, default=Path("results.json"))
+    execute.add_argument("--judgments", type=Path)
+    execute.add_argument("--timeout-seconds", type=float, default=60)
+    execute.add_argument("adapter_command", nargs=argparse.REMAINDER)
     report = subparsers.add_parser("report")
     report.add_argument("--results", type=Path, default=Path("results.json"))
     report.add_argument("--out", type=Path, default=Path("report.md"))
+    inspect = subparsers.add_parser("inspect")
+    inspect.add_argument("--results", type=Path, default=Path("results.json"))
+    inspect.add_argument("--trials", type=Path, default=Path("trials.jsonl"))
+    inspect.add_argument("--case")
+    inspect.add_argument("--trial")
+    inspect.add_argument("--out", type=Path)
     calibration = subparsers.add_parser("calibrate")
     calibration.add_argument("--suite", type=Path, default=Path("suite.json"))
     calibration.add_argument("--goldens", type=Path, required=True)
@@ -46,9 +68,13 @@ def build_parser() -> argparse.ArgumentParser:
     return parser
 
 
+def _project_path(project: Path, selected: Path) -> Path:
+    return selected if selected.is_absolute() else project / selected
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
-    if args.command in {"prepare", "run"}:
+    if args.command in {"prepare", "validate", "run"}:
         result = evaluate_project(
             args.project,
             trials_path=args.trials,
@@ -59,6 +85,35 @@ def main(argv: Sequence[str] | None = None) -> int:
         for error in result["evidence_errors"]:
             print(f"ERROR: {error}", file=sys.stderr)
         return _decision_exit(result["decision"])
+    if args.command == "execute":
+        adapter_command = list(args.adapter_command)
+        if adapter_command and adapter_command[0] == "--":
+            adapter_command = adapter_command[1:]
+        if not adapter_command:
+            print("ERROR: execute requires an adapter command after --", file=sys.stderr)
+            return 2
+        trials_out = _project_path(args.project, args.trials_out)
+        results_out = _project_path(args.project, args.results_out)
+        try:
+            adapter_errors = execute_trials(
+                args.project,
+                adapter_command,
+                trials_out,
+                timeout_seconds=args.timeout_seconds,
+            )
+        except EvidenceError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        result = evaluate_project(
+            args.project,
+            trials_path=trials_out,
+            judgments_path=args.judgments,
+        )
+        write_json(results_out, result)
+        for error in adapter_errors:
+            print(f"ERROR: {error}", file=sys.stderr)
+        print(f"execute: {result['decision']} -> {results_out}")
+        return _decision_exit(result["decision"])
     if args.command == "report":
         try:
             result = load_json(args.results)
@@ -68,6 +123,32 @@ def main(argv: Sequence[str] | None = None) -> int:
         args.out.write_text(render_markdown(result), encoding="utf-8")
         print(f"report: {result.get('decision', 'BLOCKED')} -> {args.out}")
         return _decision_exit(result.get("decision", "BLOCKED"))
+    if args.command == "inspect":
+        try:
+            result = load_json(args.results)
+            trials = load_jsonl(args.trials) if args.trials.is_file() else []
+        except EvidenceError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        known = result.get("trials", [])
+        if args.case and not any(row.get("case_id") == args.case for row in known):
+            print(f"ERROR: unknown case {args.case!r}", file=sys.stderr)
+            return 2
+        if args.trial and not any(row.get("trial_id") == args.trial for row in known):
+            print(f"ERROR: unknown trial {args.trial!r}", file=sys.stderr)
+            return 2
+        rendered = render_inspection(
+            result,
+            trials,
+            case_id=args.case,
+            trial_id=args.trial,
+        )
+        if args.out:
+            args.out.write_text(rendered, encoding="utf-8")
+            print(f"inspect: {args.out}")
+        else:
+            print(rendered)
+        return 0
     if args.command == "calibrate":
         try:
             suite = load_json(args.suite)

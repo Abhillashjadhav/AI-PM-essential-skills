@@ -1,3 +1,3 @@
 """Provider-neutral, dependency-free evaluation runtime for pm-verifier."""
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

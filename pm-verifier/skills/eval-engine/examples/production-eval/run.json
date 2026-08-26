@@ -1,6 +1,7 @@
 {
   "schema_version": "1.0",
   "run_id": "return-agent-v1-run-001",
+  "created_at": "2026-08-26T00:00:00+00:00",
   "candidate": {"id": "return-agent", "version": "1.0.0"},
   "dataset": {
     "id": "return-policy-cases",
@@ -33,6 +34,6 @@
   "configuration": {
     "id": "return-policy-regression",
     "version": "1.0.0",
-    "sha256": "770fc17001346cfff313e3ddbe97d4b02e56d2a035b5e38f229472d8bf7d2213"
+    "sha256": "4a2cf583e65bb85044396119095b46601684c47f16e745765a7dfbc90f734439"
   }
 }

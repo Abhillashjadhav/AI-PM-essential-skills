@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from collections import Counter
-from datetime import datetime, timezone
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 
@@ -22,14 +22,9 @@ SCHEMA_VERSION = "1.0"
 METRIC_FIELDS = ("latency_ms", "input_tokens", "output_tokens", "cost_usd", "retries")
 
 
-def _now() -> str:
-    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
-
-
 def _blocked(errors: list[str], suite: dict[str, Any] | None = None) -> dict[str, Any]:
     return {
         "schema_version": SCHEMA_VERSION,
-        "generated_at": _now(),
         "suite": {
             "id": (suite or {}).get("suite_id"),
             "version": (suite or {}).get("suite_version"),
@@ -50,7 +45,7 @@ def _blocked(errors: list[str], suite: dict[str, Any] | None = None) -> dict[str
 def _limitations() -> list[str]:
     return [
         "Model scores are calibrated judgments, not objective measurements.",
-        "This pre-release harness does not replace production monitoring, user feedback, A/B tests, or periodic human trace review.",
+        "This out-of-band CI harness does not replace production monitoring, user feedback, A/B tests, or periodic human trace review.",
         "Lexical failure clustering is deterministic and dependency-free but is less semantic than an embedding-based method.",
     ]
 
@@ -61,6 +56,16 @@ def _is_number(value: Any) -> bool:
         and not isinstance(value, bool)
         and math.isfinite(float(value))
     )
+
+
+def _valid_timestamp(value: Any) -> bool:
+    if not isinstance(value, str) or not value:
+        return False
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return False
+    return parsed.tzinfo is not None
 
 
 def _required_mapping(
@@ -119,6 +124,8 @@ def _validate_provenance(
 
     if run.get("run_id") in (None, ""):
         errors.append("run.run_id is required")
+    if not _valid_timestamp(run.get("created_at")):
+        errors.append("run.created_at must be an RFC 3339 timestamp with timezone")
     candidate = _required_mapping(run, "candidate", "run", errors)
     for key in ("id", "version"):
         if candidate.get(key) in (None, ""):
@@ -184,8 +191,8 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
         if not isinstance(grader, dict):
             errors.append("every model grader must be an object")
             continue
-        if grader.get("gate") is not True:
-            errors.append(f"model grader {grader.get('id')}: release-critical checks must be gates")
+        if not isinstance(grader.get("gate"), bool):
+            errors.append(f"model grader {grader.get('id')}: gate must be true or false")
         if grader.get("scope") not in {"outcome", "trajectory"}:
             errors.append(f"model grader {grader.get('id')}: invalid scope")
         if grader.get("category") not in {"quality", "safety", "privacy"}:
@@ -222,10 +229,28 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
             for field in ("judge_id", "calibration_id"):
                 if not isinstance(calibration.get(field), str) or not calibration[field].strip():
                     errors.append(f"suite.calibration.{field} must be a non-empty string")
-            for field in ("minimum_agreement", "maximum_false_positive_rate"):
+            minimum_items = calibration.get("minimum_golden_items")
+            if (
+                not isinstance(minimum_items, int)
+                or isinstance(minimum_items, bool)
+                or minimum_items < 1
+            ):
+                errors.append(
+                    "suite.calibration.minimum_golden_items must be an integer >= 1"
+                )
+            for field in (
+                "minimum_agreement",
+                "minimum_kappa",
+                "maximum_false_positive_rate",
+            ):
                 value = calibration.get(field)
                 if not _is_number(value) or not 0 <= float(value) <= 1:
                     errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
+            score_mae = calibration.get("maximum_score_mae")
+            if not _is_number(score_mae) or float(score_mae) < 0:
+                errors.append(
+                    "suite.calibration.maximum_score_mae must be a non-negative number"
+                )
 
     rules = suite.get("release_rules")
     if not isinstance(rules, dict):
@@ -290,6 +315,11 @@ def _validate_trials(
         errors.append("every trial requires trial_id")
     if len(trial_ids) != len(set(trial_ids)):
         errors.append("trial_id values must be unique")
+    isolation_ids = [trial.get("isolation_id") for trial in trials]
+    if None in isolation_ids or "" in isolation_ids:
+        errors.append("every trial requires isolation_id")
+    if len(isolation_ids) != len(set(isolation_ids)):
+        errors.append("isolation_id values must be unique across trials")
     counts: Counter[str] = Counter()
     indexes: dict[str, set[int]] = {}
     for trial in trials:
@@ -307,6 +337,10 @@ def _validate_trials(
             indexes[case_id].add(index)
         if trial.get("status") != "completed":
             errors.append(f"trial {trial_id}: status must be completed")
+        if not valid_sha256(trial.get("environment_fingerprint")):
+            errors.append(
+                f"trial {trial_id}: environment_fingerprint must be a 64-character SHA-256"
+            )
         if not isinstance(trial.get("outcome"), dict):
             errors.append(f"trial {trial_id}: outcome must be an object")
         if not isinstance(trial.get("trajectory"), list):
@@ -370,7 +404,7 @@ def _eligible_model_trial_ids(
             grade_deterministic(grader, trial, case)
             for grader in suite.get("deterministic_graders", [])
         ]
-        if all(result["passed"] for result in gate_results):
+        if all(result["passed"] or not result["gate"] for result in gate_results):
             eligible.add(trial["trial_id"])
     return eligible
 
@@ -405,18 +439,37 @@ def _validate_model_evidence(
         errors.append("calibration must reference a held-out human golden set")
     if not valid_sha256(golden_set.get("sha256")):
         errors.append("calibration golden_set.sha256 is invalid")
+    golden_n = golden_set.get("n")
+    if (
+        not isinstance(golden_n, int)
+        or isinstance(golden_n, bool)
+        or golden_n < int(config["minimum_golden_items"])
+    ):
+        errors.append("calibration golden set is below the configured minimum")
     metrics = calibration.get("metrics")
     if not isinstance(metrics, dict):
         errors.append("calibration.metrics must be an object")
         metrics = {}
-    agreement = metrics.get("overall_agreement")
+    interval = metrics.get("label_agreement_interval_95")
+    if not isinstance(interval, dict):
+        errors.append("calibration label agreement interval is missing")
+        interval = {}
+    agreement_lower = interval.get("lower")
+    kappa = metrics.get("cohens_kappa")
     false_positive = metrics.get("false_positive_rate")
-    if not _is_number(agreement) or agreement < float(config["minimum_agreement"]):
-        errors.append("calibration agreement is below the suite threshold")
+    score_mae = metrics.get("score_mean_absolute_error")
+    if not _is_number(agreement_lower) or agreement_lower < float(
+        config["minimum_agreement"]
+    ):
+        errors.append("calibration agreement confidence lower bound is below threshold")
+    if not _is_number(kappa) or kappa < float(config["minimum_kappa"]):
+        errors.append("calibration Cohen's kappa is below the suite threshold")
     if not _is_number(false_positive) or false_positive > float(
         config["maximum_false_positive_rate"]
     ):
         errors.append("calibration false-positive rate exceeds the suite threshold")
+    if not _is_number(score_mae) or score_mae > float(config["maximum_score_mae"]):
+        errors.append("calibration score mean absolute error exceeds the suite threshold")
 
     trial_ids = {trial["trial_id"] for trial in trials}
     by_trial = {row.get("trial_id"): row for row in judgments}
@@ -482,7 +535,9 @@ def _grade_trials(
             grade_deterministic(grader, trial, case)
             for grader in suite.get("deterministic_graders", [])
         ]
-        deterministic_failed = any(not result["passed"] for result in gate_results)
+        deterministic_failed = any(
+            not result["passed"] and result["gate"] for result in gate_results
+        )
         scores: dict[str, float] = {}
         quality_failures: list[str] = []
         if not deterministic_failed and (suite.get("model_graders") or suite.get("rubric")):
@@ -496,6 +551,7 @@ def _grade_trials(
                         "scope": grader["scope"],
                         "category": grader["category"],
                         "kind": "model",
+                        "gate": grader["gate"],
                         "passed": passed,
                         "actual": judgment["gate_answers"][grader["id"]],
                         "expected": "PASS",
@@ -514,19 +570,36 @@ def _grade_trials(
                 if score < threshold
             ]
 
-        failed = [result for result in gate_results if not result["passed"]]
-        failed_ids = [result["grader_id"] for result in failed]
-        outcome_failures = [result["grader_id"] for result in failed if result["scope"] == "outcome"]
-        trajectory_failures = [
-            result["grader_id"] for result in failed if result["scope"] == "trajectory"
+        failed_checks = [result for result in gate_results if not result["passed"]]
+        failed_gates = [result for result in failed_checks if result["gate"]]
+        failed_ids = [result["grader_id"] for result in failed_gates]
+        diagnostic_failure_ids = [
+            result["grader_id"] for result in failed_checks if not result["gate"]
         ]
+        outcome_failures = [
+            result["grader_id"]
+            for result in failed_gates
+            if result["scope"] == "outcome"
+        ]
+        trajectory_failures = [
+            result["grader_id"]
+            for result in failed_gates
+            if result["scope"] == "trajectory"
+        ]
+        partial_components = [
+            1.0 if result["passed"] else 0.0 for result in gate_results
+        ] + [(score - 1.0) / 4.0 for score in scores.values()]
         results.append(
             {
                 "case_id": trial["case_id"],
                 "trial_id": trial["trial_id"],
                 "trial_index": trial["trial_index"],
-                "passed": not failed and not quality_failures,
+                "passed": not failed_gates and not quality_failures,
                 "failed_gate_ids": failed_ids,
+                "failed_check_ids": [
+                    result["grader_id"] for result in failed_checks
+                ],
+                "diagnostic_failure_ids": diagnostic_failure_ids,
                 "outcome_gate_failures": outcome_failures,
                 "trajectory_gate_failures": trajectory_failures,
                 "silent_trajectory_failure": bool(trajectory_failures and not outcome_failures),
@@ -534,6 +607,11 @@ def _grade_trials(
                 "rubric_scores": scores or None,
                 "mean_rubric_score": (
                     sum(scores.values()) / len(scores) if scores else None
+                ),
+                "partial_quality_score": (
+                    sum(partial_components) / len(partial_components)
+                    if partial_components
+                    else None
                 ),
                 "quality_failures": quality_failures,
                 "model_grading_skipped": deterministic_failed,
@@ -574,14 +652,19 @@ def _summarize(
         1
         for result in results
         for gate in result["gate_results"]
-        if not gate["passed"] and gate["category"] == "safety"
+        if not gate["passed"] and gate["gate"] and gate["category"] == "safety"
     )
     privacy = sum(
         1
         for result in results
         for gate in result["gate_results"]
-        if not gate["passed"] and gate["category"] == "privacy"
+        if not gate["passed"] and gate["gate"] and gate["category"] == "privacy"
     )
+    quality_scores = [
+        float(result["partial_quality_score"])
+        for result in results
+        if result["partial_quality_score"] is not None
+    ]
     summary = {
         "case_count": len(cases),
         "trial_count": len(results),
@@ -590,6 +673,9 @@ def _summarize(
         "case_pass_rate": sum(item["suite_pass"] for item in per_case) / len(per_case),
         "pass_at_k": sum(item["pass_at_k"] for item in per_case) / len(per_case),
         "pass_power_k": sum(item["pass_power_k"] for item in per_case) / len(per_case),
+        "mean_partial_quality_score": (
+            sum(quality_scores) / len(quality_scores) if quality_scores else None
+        ),
         "safety_failures": safety,
         "privacy_failures": privacy,
     }
@@ -722,7 +808,7 @@ def evaluate_project(
     decision = "FAIL" if failed_release_rules else "PASS"
     return {
         "schema_version": SCHEMA_VERSION,
-        "generated_at": _now(),
+        "generated_at": run["created_at"],
         "suite": {
             "id": suite["suite_id"],
             "version": suite["suite_version"],

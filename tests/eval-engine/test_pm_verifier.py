@@ -6,6 +6,7 @@ import lzma
 import shutil
 import sys
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -27,7 +28,8 @@ from pm_verifier.calibration import calibrate  # noqa: E402
 from pm_verifier.engine import evaluate_project  # noqa: E402
 from pm_verifier.faults import apply_faults  # noqa: E402
 from pm_verifier.io import sha256_file  # noqa: E402
-from pm_verifier.reporting import render_markdown  # noqa: E402
+from pm_verifier.adapter import execute_trials  # noqa: E402
+from pm_verifier.reporting import render_inspection, render_markdown  # noqa: E402
 
 
 class PMVerifierTest(unittest.TestCase):
@@ -240,6 +242,149 @@ class PMVerifierTest(unittest.TestCase):
         self.assertTrue(good["golden_set"]["held_out"])
         self.assertEqual(bad["status"], "FAIL")
         self.assertGreater(bad["metrics"]["false_positive_rate"], 0)
+
+    def test_calibration_blocks_small_sets_and_rejects_degenerate_judge(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        goldens = self.load_jsonl("calibration/human-goldens.jsonl")
+        judgments = self.load_jsonl("calibration/judge-labels.jsonl")
+
+        small_goldens = self.write_jsonl("small-goldens.jsonl", goldens[:5])
+        small_judgments = self.write_jsonl("small-judgments.jsonl", judgments[:5])
+        too_small = calibrate(suite, small_goldens, small_judgments)
+        self.assertEqual(too_small["status"], "BLOCKED")
+        self.assertTrue(any("minimum" in error for error in too_small["evidence_errors"]))
+
+        degenerate = []
+        for human in goldens:
+            degenerate.append(
+                {
+                    "item_id": human["item_id"],
+                    "judge_id": suite["calibration"]["judge_id"],
+                    "labels": {
+                        grader_id: "PASS" for grader_id in human["labels"]
+                    },
+                    "scores": human["scores"],
+                }
+            )
+        degenerate_path = self.write_jsonl("degenerate-judge.jsonl", degenerate)
+        result = calibrate(
+            suite,
+            self.project / "calibration" / "human-goldens.jsonl",
+            degenerate_path,
+        )
+        self.assertEqual(result["status"], "FAIL")
+        self.assertLess(result["metrics"]["cohens_kappa"], suite["calibration"]["minimum_kappa"])
+
+    def test_non_gating_trajectory_check_is_diagnostic(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        trajectory = next(
+            grader
+            for grader in suite["deterministic_graders"]
+            if grader["id"] == "G_TRAJECTORY_POLICY"
+        )
+        trajectory["gate"] = False
+        self.rewrite_suite(suite)
+        result = self.evaluate(trials_path=self.fault("trajectory"))
+        self.assertEqual(result["decision"], "PASS")
+        self.assertNotIn("G_TRAJECTORY_POLICY", result["failed_gate_ids"])
+        diagnostic = [
+            trial
+            for trial in result["trials"]
+            if "G_TRAJECTORY_POLICY" in trial["diagnostic_failure_ids"]
+        ]
+        self.assertEqual(len(diagnostic), 1)
+        self.assertLess(diagnostic[0]["partial_quality_score"], 1.0)
+
+    def test_duplicate_trial_isolation_blocks(self) -> None:
+        rows = self.load_jsonl("trials.jsonl")
+        rows[1]["isolation_id"] = rows[0]["isolation_id"]
+        path = self.write_jsonl("shared-isolation.jsonl", rows)
+        result = self.evaluate(trials_path=path)
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertTrue(any("isolation_id" in error for error in result["evidence_errors"]))
+
+    def test_stdio_adapter_runs_fresh_trials_without_expected_answers(self) -> None:
+        adapter = Path(self.tempdir.name) / "adapter.py"
+        adapter.write_text(
+            "import hashlib, json, sys\n"
+            "request = json.load(sys.stdin)\n"
+            "assert 'expected' not in request\n"
+            "case_id = request['case_id']\n"
+            "category = 'electronics' if case_id == 'A400' else 'bedding'\n"
+            "method = 'in-store' if case_id == 'A400' else 'mail-back'\n"
+            "print(json.dumps({\n"
+            "  'status': 'completed',\n"
+            "  'outcome': {'decision': 'ALLOW', 'method': method, 'message': 'Eligible.'},\n"
+            "  'trajectory': [{'index': 1, 'type': 'tool', 'name': 'get_policy_doc', 'attributes': {'category': category}}],\n"
+            "  'metrics': {'latency_ms': 1, 'input_tokens': 1, 'output_tokens': 1, 'cost_usd': 0, 'retries': 0},\n"
+            "  'missing_evidence': [],\n"
+            "  'environment_fingerprint': hashlib.sha256(b'reference-clean-state').hexdigest(),\n"
+            "  'isolation_id': request['trial_id']\n"
+            "}))\n",
+            encoding="utf-8",
+        )
+        out = self.project / "adapter-trials.jsonl"
+        errors = execute_trials(
+            self.project,
+            [sys.executable, str(adapter)],
+            out,
+            timeout_seconds=5,
+        )
+        self.assertEqual(errors, [])
+        rows = self.load_jsonl("adapter-trials.jsonl")
+        self.assertEqual(len(rows), 4)
+        self.assertEqual(len({row["isolation_id"] for row in rows}), 4)
+        result = self.evaluate(trials_path=out)
+        self.assertEqual(result["decision"], "PASS")
+
+    def test_stdio_adapter_failure_becomes_blocked_evidence(self) -> None:
+        adapter = Path(self.tempdir.name) / "broken-adapter.py"
+        adapter.write_text("print('not-json')\n", encoding="utf-8")
+        out = self.project / "broken-trials.jsonl"
+        errors = execute_trials(
+            self.project,
+            [sys.executable, str(adapter)],
+            out,
+            timeout_seconds=5,
+        )
+        self.assertTrue(errors)
+        result = self.evaluate(trials_path=out)
+        self.assertEqual(result["decision"], "BLOCKED")
+
+    def test_inspection_exposes_failure_trace(self) -> None:
+        result = self.evaluate(trials_path=self.fault("trajectory"))
+        raw_trials = self.load_jsonl("fault-trajectory.jsonl")
+        inspection = render_inspection(result, raw_trials, case_id="A400")
+        self.assertIn("G_TRAJECTORY_POLICY", inspection)
+        self.assertIn("get_policy_doc", inspection)
+        self.assertIn("Raw outcome", inspection)
+
+    def test_results_are_reproducible_and_reports_redact_secrets(self) -> None:
+        first = self.evaluate()
+        time.sleep(1.1)
+        second = self.evaluate()
+        self.assertEqual(first, second)
+
+        secret = "api_key=" + "synthetic-secret-value-1234567890"
+        first["failure_clusters"] = [
+            {
+                "label": "Synthetic",
+                "size": 1,
+                "method": "test",
+                "representative": secret,
+            }
+        ]
+        report = render_markdown(first)
+        self.assertNotIn(secret, report)
+        self.assertIn("[REDACTED]", report)
+
+    def test_future_schema_versions_block_explicitly(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["schema_version"] = "2.0"
+        self.rewrite_suite(suite)
+        result = self.evaluate()
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertTrue(any("schema_version" in error for error in result["evidence_errors"]))
 
     def test_swapped_order_bias_analysis(self) -> None:
         stable = analyze_pairwise_bias(

@@ -1,0 +1,27 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pm-verifier/schemas/result-1.0.json",
+  "title": "pm-verifier result 1.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "decision",
+    "evidence_errors",
+    "failed_gate_ids",
+    "failed_release_rules",
+    "summary",
+    "trials"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "decision": { "enum": ["PASS", "FAIL", "BLOCKED"] },
+    "evidence_errors": { "type": "array", "items": { "type": "string" } },
+    "failed_gate_ids": { "type": "array", "items": { "type": "string" } },
+    "failed_release_rules": { "type": "array", "items": { "type": "string" } },
+    "summary": { "type": "object" },
+    "trials": { "type": "array" },
+    "slices": { "type": "object" },
+    "failure_clusters": { "type": "array" }
+  },
+  "additionalProperties": true
+}

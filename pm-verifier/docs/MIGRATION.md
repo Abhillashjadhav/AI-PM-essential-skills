@@ -1,4 +1,4 @@
-# Source capability map and archive plan
+# Source capability map and consolidation plan
 
 ## Capability map
 
@@ -17,6 +17,10 @@
 | existing `pm-verifier`: spec/PRD trigger and define-good workflow | `skills/eval-engine/SKILL.md` | Trigger fixtures and skill lint |
 | existing `pm-verifier`: binary gates vs gradual rubric | `suite.json`, deterministic/model gate results, rubric scores | Per-trial gating and report tests |
 | existing `pm-verifier`: simple local prepare/run/report UX | Copyable pure-stdlib harness and compatibility wrappers | Clean-copy execution test |
+| external review: installable/versioned product | `pm-verifier/pyproject.toml`, console script, bundled schemas | Packaging contract and isolated package-install CI step |
+| external review: missing execution harness | `adapter.py`, CLI `execute`, production reference adapter | Fresh-process, no-expected-answer, failure-blocking, isolation tests |
+| external review: weak calibration | `calibration.py` | Sample-floor, degenerate-judge, kappa, Wilson-bound, FP/FN, and MAE tests |
+| external review: missing failure inspection | CLI `inspect`, `render_inspection` | Raw outcome/trajectory, failure reason, redaction, and selection tests |
 | existing `pm-verifier`: marketplace installation | `.claude-plugin/plugin.json` and root marketplace entry | Repository-integrity check |
 
 ## Production-layer coverage
@@ -27,7 +31,7 @@
 | 2. Trajectory evaluation | Ordered `trajectory` steps are graded independently from outcome. | Silent trajectory-failure test |
 | 3. Deterministic/code graders | Eight provider-neutral checks, including exact values, patterns, structure, and trace-step matching. | Outcome, trajectory, safety, privacy, and deterministic-only tests |
 | 4. Calibrated model graders | External judgments require exact judge, rubric, and calibration provenance. | Model-gate and provenance tests |
-| 5. Human golden calibration | Held-out human labels produce per-dimension agreement and error rates. | Good-versus-biased calibration test |
+| 5. Human golden calibration | Held-out human labels produce chance-corrected binary agreement, confidence bounds, error rates, and separate ordinal error. | Good, biased, degenerate, and insufficient-sample tests |
 | 6. Multiple trials | Minimum trials are enforced; per-case empirical `pass@k` and `pass^k` are reported. | Repeated-trial and minimum-trial tests |
 | 7. Capability and regression suites | Suite type selects explicit hill-climbing or strict consistency semantics. | Capability-versus-regression test |
 | 8. Dataset/version provenance | Dataset identity, version, source, cases hash, and suite hash are validated. | Provenance-mismatch and migrated-hash tests |
@@ -37,7 +41,7 @@
 | 12. Failure slicing/clustering | Case metadata slices and disclosed deterministic lexical clusters are emitted. | Slice/cluster test |
 | 13. CI release gates | Exit codes are `0=PASS`, `1=FAIL`, `2=BLOCKED`; GitHub Actions runs all checks. | Report/exit tests and `.github/workflows/pm-verifier.yml` |
 | 14. Known-bad gate fixtures | Deterministic fault specs mutate outcome, trace, safety, privacy, metrics, retries, and mixed evidence. | Known-bad unit tests |
-| 15. Machine and human reports | `results.json` is canonical; `report.md` renders decisions, failures, metrics, provenance, and limitations. | Report-content test and clean-copy run |
+| 15. Machine and human reports | `results.json` is canonical; `report.md` renders decisions; `inspect` exposes redacted raw failure evidence. | Report, inspection, redaction, and clean-install tests |
 | 16. Missing/invalid evidence | Schema, release-rule, hash, provenance, calibration, judgment, and metric errors produce `BLOCKED`. | Missing/invalid-evidence, invalid-contract, and provenance tests |
 
 ## Rejected source behavior
@@ -60,17 +64,16 @@
 - `eval-rubric-generator` is retired as a triggerable skill. Its directory
   retains a migration README pointing to `pm-verifier`.
 
-## Archive recommendation
+## Consolidation and removal plan
 
-After the destination PR is human-reviewed, CI is green, and the default branch
-contains the merged commit:
+The exhaustive public-surface disposition is in
+[`CAPABILITY_AUDIT.md`](CAPABILITY_AUDIT.md). After its removal gate passes:
 
-1. update each source repository README with an archived notice and a link to
-   `AI-PM-essential-skills/pm-verifier`;
-2. archive `Abhillashjadhav/pm-evals` and `Abhillashjadhav/Evals-pass-1` in
-   GitHub settings; and
-3. retain them read-only for commit-history and external-link continuity.
+1. update the GitHub profile so `AI-PM-essential-skills/pm-verifier` is the only
+   maintained AI PM evaluation product;
+2. preserve the old final commit IDs and capability disposition in this repo;
+3. remove `Abhillashjadhav/pm-evals` and `Abhillashjadhav/Evals-pass-1` as the
+   owner requested.
 
-Do not delete either repository. Before merge, the recommendation is **not yet
-safe to execute** because the destination branch and CI result are not the
-public default-branch state.
+Removal is **not yet safe**: the destination work is still on a draft PR and is
+not the public default-branch state.
