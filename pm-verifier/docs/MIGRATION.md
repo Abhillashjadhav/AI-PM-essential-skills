@@ -64,16 +64,20 @@
 - `eval-rubric-generator` is retired as a triggerable skill. Its directory
   retains a migration README pointing to `pm-verifier`.
 
-## Consolidation and removal plan
+## Completed consolidation and removal
 
 The exhaustive public-surface disposition is in
-[`CAPABILITY_AUDIT.md`](CAPABILITY_AUDIT.md). After its removal gate passes:
+[`CAPABILITY_AUDIT.md`](CAPABILITY_AUDIT.md). The removal gate was completed in
+this order:
 
-1. update the GitHub profile so `AI-PM-essential-skills/pm-verifier` is the only
-   maintained AI PM evaluation product;
-2. preserve the old final commit IDs and capability disposition in this repo;
-3. remove `Abhillashjadhav/pm-evals` and `Abhillashjadhav/Evals-pass-1` as the
-   owner requested.
+1. PR #39 passed exact-head CI, was squash-merged, and was rerun successfully
+   from a clean checkout of public `main`;
+2. the GitHub profile was updated to point to
+   `AI-PM-essential-skills/pm-verifier` as the only maintained AI PM evaluation
+   product;
+3. the old final commit IDs and capability disposition were preserved here;
+4. `Abhillashjadhav/pm-evals` and `Abhillashjadhav/Evals-pass-1` were removed as
+   the owner requested.
 
-Removal is **not yet safe**: the destination work is still on a draft PR and is
-not the public default-branch state.
+The public product is now branded **AI Evals for PMs** while retaining
+`pm-verifier` as its stable technical identifier.

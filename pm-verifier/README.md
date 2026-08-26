@@ -1,14 +1,28 @@
-# pm-verifier
+# AI Evals for PMs
 
-**One public product for AI PM evaluation work: spec in, evidence-backed release decision out.**
+**Spec to evidence-backed release decision.**
 
-`pm-verifier` turns a feature spec or existing eval into one workflow:
+AI Evals for PMs is an evidence-first, out-of-band evaluation and release-gating
+product for AI features and agents. It turns a feature specification or
+existing evaluation into a versioned suite, runs isolated repeated trials,
+grades real outcomes and trajectories, validates calibrated model judgments,
+exposes failures, and emits auditable `PASS`, `FAIL`, or `BLOCKED` evidence for
+CI and accountable human release review.
+
+The stable plugin, package, directory, and CLI identifier is `pm-verifier`.
+Existing installation and automation commands do not change.
+
+The product follows one workflow:
 
 `feature spec → define good → create eval suite → run trials → grade → inspect failures → release decision`
 
 The PM works through that sequence. The installable, pure-standard-library CLI
 executes one fresh adapter process per trial, captures evidence, grades it,
 exposes the complete failure trace, and produces a CI decision.
+
+This is not a single-score tool. Binary release gates remain separate from
+gradual quality scores, repeated-trial reliability, judge-calibration evidence,
+and operational metrics.
 
 ## Install
 

@@ -3,7 +3,8 @@
 This standalone skill is retired to prevent an evaluation trigger collision.
 It is not an independently maintained eval product.
 
-Install and use [`pm-verifier`](../pm-verifier/) for the complete workflow:
+Install and use [AI Evals for PMs](../pm-verifier/) through its stable
+`pm-verifier` identifier for the complete workflow:
 
 `feature spec → define good → create eval suite → run trials → grade → inspect failures → release decision`
 

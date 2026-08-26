@@ -21,7 +21,10 @@ def _decision_exit(decision: str) -> int:
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pm-verifier",
-        description="Validate evidence, grade repeated trials, inspect failures, and gate release.",
+        description=(
+            "AI Evals for PMs: validate evidence, grade repeated trials, "
+            "inspect failures, and gate release."
+        ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     subparsers = parser.add_subparsers(dest="command", required=True)

@@ -2,7 +2,8 @@
 
 ## PM-facing workflow
 
-`pm-verifier` exposes one product flow:
+AI Evals for PMs, delivered through the stable `pm-verifier` package and CLI,
+exposes one product flow:
 
 1. **Feature spec** — supply the PRD or task contract.
 2. **Define good** — separate disqualifying gates from gradual rubric criteria.

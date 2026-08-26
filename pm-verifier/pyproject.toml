@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "pm-verifier"
 version = "1.1.0"
-description = "Evidence-first AI product evaluation and release gating for product teams."
+description = "AI Evals for PMs: evidence-first evaluation and release gating for AI products and agents."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }
