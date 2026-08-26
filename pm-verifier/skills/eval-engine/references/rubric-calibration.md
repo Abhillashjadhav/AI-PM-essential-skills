@@ -43,12 +43,13 @@ When a human hand-score and the judge disagree, the rubric — not the judge, no
 
 The calibration loop:
 
-1. **Hand-score first.** The PM scores 3-5 real cases without seeing judge output (blind, to avoid anchoring on the judge).
-2. **Run the judge** on the same cases via the harness.
-3. **Diff per criterion.** Agreement within ±1 point → criterion is calibrated, leave it alone.
-4. **Gap ≥2 on any criterion → rewrite that anchor**, usually by moving whatever distinction the human was using into the anchor text or the worked example. Do not "prompt-engineer the judge harder" — fix the rubric so any judge lands closer.
-5. **Re-run only the disagreeing criterion.** One anchor change per iteration, like any good optimization loop — batch changes hide which fix worked.
-6. **Stop when all criteria agree within ±1** on the calibration set. Record the calibration set IDs in the eval folder so future rubric edits re-run against the same baseline.
+1. **Split first.** Keep prompt-tuning examples, validation cases, and a held-out test set separate. A few cases can improve anchors, but a release-critical trust claim needs a representative held-out set sized for the decision risk.
+2. **Hand-score blind.** Domain experts score without seeing judge output, record reviewer/source provenance, and reconcile material inter-rater disagreements.
+3. **Run the judge** on the same cases with model, prompt, and rubric versions frozen.
+4. **Diff per dimension.** Report agreement, false positives, and false negatives; for 1–5 scores, agreement within ±1 is an explicit convention, not objective truth.
+5. **Fix the rubric on train/validation evidence.** A gap ≥2 usually means an anchor or example is under-specified. Change one distinction at a time.
+6. **Evaluate once on the held-out test set.** Do not tune on its misses and still call it held out.
+7. **Version the result.** Store judge ID, rubric hash, golden-set hash, thresholds, and status. Any judge/rubric change invalidates the old calibration.
 
 ## Score-distribution smells
 

@@ -7,7 +7,8 @@ This document records what this repository's checks establish and what they do n
 `VERIFIED` by [`scripts/check_repository_integrity.py`](../scripts/check_repository_integrity.py):
 
 - the seven marketplace plugins have registered sources, plugin manifests, and skill directories;
-- the four public skill directories exist: `token-cost-estimator`, `eval-rubric-generator`, `context-auditor`, and `concise-rewriter`;
+- the three public standalone skill directories exist: `token-cost-estimator`, `context-auditor`, and `concise-rewriter`;
+- the retired `eval-rubric-generator` directory has no triggerable `SKILL.md`;
 - each of those directories contains `SKILL.md`;
 - each local Markdown link in every repository `README*.md` resolves to an existing file or directory, and local README anchors resolve to a heading;
 - every fixture path mentioned in a README exists; and
@@ -23,6 +24,15 @@ This document records what this repository's checks establish and what they do n
 
 `VERIFIED` by ContextPort's Python unit-test suite: deterministic local behavior exercised by [`context-port/tests/`](../context-port/tests/) against committed synthetic fixtures in [`context-port/fixtures/`](../context-port/fixtures/). These tests do not call a hosted model, inspect real exports, access an account, or perform destination writes.
 
+`VERIFIED` by the pm-verifier unit-test suite in [`tests/eval-engine/`](../tests/eval-engine/):
+
+- known-good repeated trials produce a `PASS` result and both report formats;
+- deterministic outcome, trajectory, safety, privacy, metric, retry, and model-gate faults fire;
+- missing, malformed, or mismatched evidence produces `BLOCKED`, never inferred success;
+- human calibration and swapped-order bias known-answer fixtures distinguish acceptable and biased judges;
+- capability and regression thresholds, failure slices, lexical clustering, and migrated-data hashes are executable; and
+- the production example runs from an isolated copied directory with the Python standard library.
+
 ## Manually validated material
 
 The Markdown fixture documents under [`tests/`](../tests/) and product example directories provide reviewer prompts, known-answer cases, and expected outputs. They are **manual review material**, not automated behavioural tests: no repository command executes the Claude Code skills against those documents.
@@ -33,7 +43,11 @@ ContextPort's evaluation notes under [`context-port/evals/`](../context-port/eva
 
 ## Recorded behavioural model evidence
 
-No recorded external-model behavioural runs are present for the four standalone skills. The repository therefore makes no evidence-backed claim about their live invocation, output quality, token counting accuracy, pricing accuracy, or interoperability with other Claude Code runtimes.
+No recorded external-model behavioural runs are present for the three standalone skills. The repository therefore makes no evidence-backed claim about their live invocation, output quality, token counting accuracy, pricing accuracy, or interoperability with other Claude Code runtimes.
+
+pm-verifier's committed evidence is synthetic and local. It verifies the
+harness behavior and known-bad gates, not the quality of an untested external
+model or system under test.
 
 ContextPort's recorded evidence is local and synthetic. Its [release-readiness report](../context-port/reports/RELEASE_READINESS.md) distinguishes completed automated checks from `UNKNOWN` and `UNSUPPORTED` capabilities. It is not evidence of a real Claude export migration or a consumer ChatGPT reconstruction write.
 
@@ -42,7 +56,9 @@ ContextPort's recorded evidence is local and synthetic. Its [release-readiness r
 - `UNKNOWN`: compatibility with real Claude or ChatGPT exports, unless separately approved and inspected under the repository rules.
 - `UNKNOWN`: current model names, availability, and prices. Any example must be treated as illustrative and checked against current official pricing.
 - `UNKNOWN`: whether external or official skill libraries cover equivalent functionality; this is not continuously monitored.
-- `UNKNOWN`: invocation, installation, hot-reload, and cross-runtime behavior of the four standalone Claude Code skills.
+- `UNKNOWN`: invocation, installation, hot-reload, and cross-runtime behavior of the three standalone Claude Code skills.
+- `UNKNOWN`: live-model trigger accuracy and model-judge quality for `pm-verifier`; release-critical model judgments require product-specific human calibration.
+- `UNSUPPORTED`: live production monitoring, online experimentation, or autonomous deployment by `pm-verifier`.
 - `UNKNOWN`: live-model trigger accuracy and output quality for `agent-graph-designer`.
 - `UNSUPPORTED`: autonomous deployment, merge, publish, send, purchase, delete, or overwrite by the agent-graph-designer synthetic runner.
 - `UNSUPPORTED`: ContextPort consumer ChatGPT reconstruction writes, browser automation, and unapproved real-export handling, as documented in [`context-port/docs/CAPABILITIES.md`](../context-port/docs/CAPABILITIES.md).
@@ -54,6 +70,8 @@ Run these commands from the repository root after cloning:
 
 ```bash
 python3 scripts/check_repository_integrity.py
+python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -v
+python3 tests/lint_skill.py pm-verifier/skills/eval-engine/SKILL.md
 python3 scripts/check_agent_graph_designer_contract.py
 python3 tests/lint_skill.py agent-graph-designer/skills/agent-graph-designer/SKILL.md
 python3 agent-graph-designer/skills/agent-graph-designer/examples/sample-orchestrator.py

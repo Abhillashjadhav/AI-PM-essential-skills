@@ -5,6 +5,8 @@ Checked on 2026-08-26 against current primary guidance:
 - [Anthropic — Demystifying evals for AI agents](https://www.anthropic.com/engineering/demystifying-evals-for-ai-agents)
 - [OpenAI — Evaluate agent workflows](https://developers.openai.com/api/docs/guides/agent-evals)
 - [OpenAI — Evaluation best practices](https://developers.openai.com/api/docs/guides/evaluation-best-practices)
+- [OpenAI — Graders](https://developers.openai.com/api/docs/guides/graders)
+- [OpenAI — Building resilient prompts using an evaluation flywheel](https://developers.openai.com/cookbook/examples/evaluation/building_resilient_prompts_using_an_evaluation_flywheel)
 - [OpenAI — A shared playbook for trustworthy third party evaluations](https://openai.com/index/trustworthy-third-party-evaluations-foundations/)
 
 ## What the sources require
@@ -16,6 +18,7 @@ Checked on 2026-08-26 against current primary guidance:
 | Agent behavior varies between attempts | Record multiple trials and report per-trial success, empirical `pass@k`, and consistency-oriented `pass^k`. |
 | Capability and regression suites answer different questions | Store suite type and apply a stricter default release rule to regression suites. |
 | Traces, datasets, and repeatable runs create an improvement loop | Version data, capture traces, retain failing evidence, and emit repeatable JSON. |
+| Graders should be narrow, explicit, and validated | Use code graders for objective claims; constrain model graders to binary gates or anchored dimensions with a fixed schema. |
 | Harness choices affect measured performance | Record model, prompt, tool, harness, configuration, retries, token budget, time, and cost. |
 | Evaluation claims need validity checks | Fail closed on missing evidence and surface broken cases, invalid judgments, and possible bias. |
 | Model judges are probabilistic and bias-prone | Use held-out human calibration, per-dimension agreement, false-positive/negative counts, and swapped-order pairwise checks. |
@@ -50,7 +53,7 @@ Checked on 2026-08-26 against current primary guidance:
    judge gate fails, while its runner discards those scores. This wastes budget
    and makes the evidence contract ambiguous.
 4. Existing `pm-verifier` has descriptive fixture text but no executable tests
-   for its claimed three-gate behavior.
+   for its claimed gate behavior.
 5. A universal fixed count of 3–6 gates is a UX heuristic, not an evaluation
    validity rule. The unified skill should prefer the smallest complete set and
    explain missing evidence rather than invent gates to reach a quota.

@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 import sys
 from pathlib import Path
 from urllib.parse import unquote, urlsplit
@@ -26,9 +27,11 @@ EXPECTED_PLUGINS = (
 )
 STANDALONE_SKILLS = (
     "token-cost-estimator",
-    "eval-rubric-generator",
     "context-auditor",
     "concise-rewriter",
+)
+RETIRED_SKILL_PATHS = (
+    "eval-rubric-generator/SKILL.md",
 )
 CONTEXT_PORT_QUICK_START_PATHS = (
     "context-port/contextport.py",
@@ -50,6 +53,20 @@ def anchor_slug(heading: str) -> str:
 
 def readme_paths() -> list[Path]:
     return sorted(path for path in ROOT.rglob("README*.md") if ".git" not in path.parts)
+
+
+def repository_contains(path: str) -> bool:
+    """Check the Git snapshot when available, otherwise the unpacked tree."""
+    if (ROOT / ".git").exists():
+        check = subprocess.run(
+            ["git", "ls-files", "--error-unmatch", "--", path],
+            cwd=ROOT,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+            check=False,
+        )
+        return check.returncode == 0
+    return (ROOT / path).exists()
 
 
 def local_link_target(raw_target: str) -> tuple[str, str] | None:
@@ -177,6 +194,10 @@ def main() -> int:
             failures.append(f"missing standalone skill directory: {skill}")
         elif not (directory / "SKILL.md").is_file():
             failures.append(f"missing standalone skill definition: {skill}/SKILL.md")
+
+    for retired_path in RETIRED_SKILL_PATHS:
+        if repository_contains(retired_path):
+            failures.append(f"retired skill must not remain triggerable: {retired_path}")
 
     readmes = readme_paths()
     for readme in readmes:
