@@ -32,7 +32,24 @@ def _sensitive_key(value: Any) -> bool:
     if not isinstance(value, str):
         return False
     normalized = re.sub(r"[^a-z0-9]", "", value.lower())
-    return normalized in _SENSITIVE_KEYS
+    return (
+        normalized in _SENSITIVE_KEYS
+        or normalized.endswith(
+            (
+                "accesskey",
+                "apikey",
+                "authorization",
+                "credential",
+                "credentials",
+                "password",
+                "passwd",
+                "privatekey",
+                "secret",
+                "token",
+            )
+        )
+        or normalized.startswith(("secretkey", "password", "passwd"))
+    )
 
 
 def redact_text(value: str) -> str:

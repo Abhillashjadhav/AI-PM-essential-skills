@@ -155,6 +155,37 @@ class PMVerifierTest(unittest.TestCase):
             any("UTF-8" in error for error in invalid_jsonl["evidence_errors"])
         )
 
+    def test_nonstandard_numeric_constants_block_at_json_boundaries(self) -> None:
+        suite_path = self.project / "suite.json"
+        suite_path.write_text(
+            '{"schema_version":"1.0","nested":NaN}', encoding="utf-8"
+        )
+        invalid_json = self.evaluate()
+        self.assertEqual(invalid_json["decision"], "BLOCKED")
+        self.assertTrue(
+            any(
+                "non-standard numeric constant" in error
+                for error in invalid_json["evidence_errors"]
+            )
+        )
+
+        shutil.copyfile(EXAMPLE / "suite.json", suite_path)
+        rows = self.load_jsonl("trials.jsonl")
+        rows[0]["outcome"]["nested"] = float("inf")
+        invalid_jsonl_path = self.project / "nonstandard-number.jsonl"
+        invalid_jsonl_path.write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+        invalid_jsonl = self.evaluate(trials_path=invalid_jsonl_path)
+        self.assertEqual(invalid_jsonl["decision"], "BLOCKED")
+        self.assertTrue(
+            any(
+                "non-standard numeric constant" in error
+                for error in invalid_jsonl["evidence_errors"]
+            )
+        )
+
     def test_fractional_token_counts_and_limits_are_rejected(self) -> None:
         rows = self.load_jsonl("trials.jsonl")
         rows[0]["metrics"]["input_tokens"] = 0.9
@@ -190,7 +221,10 @@ class PMVerifierTest(unittest.TestCase):
                 result = self.evaluate(trials_path=path)
                 self.assertEqual(result["decision"], "BLOCKED")
                 self.assertTrue(
-                    any("latency_ms" in error for error in result["evidence_errors"])
+                    any(
+                        "non-standard numeric constant" in error
+                        for error in result["evidence_errors"]
+                    )
                 )
 
     def test_malformed_identifiers_block_without_crashing(self) -> None:
@@ -727,6 +761,9 @@ class PMVerifierTest(unittest.TestCase):
         structured_secret = "synthetic-structured-secret-1234567890"
         raw_trials[0]["outcome"]["api_key"] = structured_secret
         raw_trials[0]["trajectory"][0]["attributes"]["password"] = structured_secret
+        raw_trials[0]["outcome"]["refresh_token"] = structured_secret
+        raw_trials[0]["outcome"]["auth_token"] = structured_secret
+        raw_trials[0]["outcome"]["secret_key"] = structured_secret
         inspection = render_inspection(
             first,
             raw_trials,
@@ -735,6 +772,9 @@ class PMVerifierTest(unittest.TestCase):
         self.assertNotIn(structured_secret, inspection)
         self.assertIn('\"api_key\": \"[REDACTED]\"', inspection)
         self.assertIn('\"password\": \"[REDACTED]\"', inspection)
+        self.assertIn('\"refresh_token\": \"[REDACTED]\"', inspection)
+        self.assertIn('\"auth_token\": \"[REDACTED]\"', inspection)
+        self.assertIn('\"secret_key\": \"[REDACTED]\"', inspection)
 
     def test_future_schema_versions_block_explicitly(self) -> None:
         suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))

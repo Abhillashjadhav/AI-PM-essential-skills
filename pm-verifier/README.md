@@ -125,7 +125,8 @@ expected answer. The adapter must return one JSON object on stdout containing:
 
 Non-zero exits, finite-deadline timeouts (including inherited child streams),
 malformed output, stdout above 1 MB, stderr above 64 KB, non-finite metrics,
-shared isolation IDs, unordered trace indexes, or missing fields produce
+non-standard JSON constants (`NaN`/`Infinity`), shared isolation IDs, unordered
+trace indexes, or missing fields produce
 `BLOCKED`, never `PASS`.
 
 Stored trials and model judgments must carry the exact `run_id` and SHA-256 of

@@ -10,7 +10,14 @@ import time
 from pathlib import Path
 from typing import Any, BinaryIO, Sequence
 
-from .io import EvidenceError, load_json, load_jsonl, sha256_file, write_jsonl
+from .io import (
+    EvidenceError,
+    load_json,
+    load_jsonl,
+    parse_json,
+    sha256_file,
+    write_jsonl,
+)
 from .redaction import redact_text
 
 
@@ -201,8 +208,8 @@ def _invoke_adapter(
     except UnicodeDecodeError as exc:
         raise EvidenceError("adapter stdout must be valid UTF-8") from exc
     try:
-        value = json.loads(decoded)
-    except json.JSONDecodeError as exc:
+        value = parse_json(decoded)
+    except (json.JSONDecodeError, ValueError) as exc:
         raise EvidenceError(f"adapter stdout must be one JSON object: {exc}") from exc
     if not isinstance(value, dict):
         raise EvidenceError("adapter stdout must contain a JSON object")

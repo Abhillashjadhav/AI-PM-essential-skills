@@ -2,6 +2,9 @@
 
 Read this when creating or validating a runnable suite.
 
+All evidence uses standards-compliant JSON. Non-standard numeric constants such
+as `NaN`, `Infinity`, and `-Infinity` are invalid at every JSON/JSONL boundary.
+
 ## Required files
 
 | File | Required content |

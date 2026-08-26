@@ -10,6 +10,15 @@ class EvidenceError(ValueError):
     """Raised when supplied evaluation evidence cannot support a claim."""
 
 
+def _reject_nonstandard_constant(value: str) -> None:
+    raise ValueError(f"non-standard numeric constant {value}")
+
+
+def parse_json(value: str) -> Any:
+    """Parse standards-compliant JSON; reject Python's NaN/Infinity extension."""
+    return json.loads(value, parse_constant=_reject_nonstandard_constant)
+
+
 def _read_utf8(source: Path) -> str:
     try:
         return source.read_text(encoding="utf-8")
@@ -29,7 +38,11 @@ def sha256_file(path: str | Path) -> str:
 
 def canonical_hash(value: Any) -> str:
     encoded = json.dumps(
-        value, sort_keys=True, separators=(",", ":"), ensure_ascii=False
+        value,
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+        allow_nan=False,
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
 
@@ -48,8 +61,8 @@ def load_json(path: str | Path) -> dict[str, Any]:
     if not source.is_file():
         raise EvidenceError(f"missing JSON evidence: {source}")
     try:
-        value = json.loads(_read_utf8(source))
-    except json.JSONDecodeError as exc:
+        value = parse_json(_read_utf8(source))
+    except (json.JSONDecodeError, ValueError) as exc:
         raise EvidenceError(f"invalid JSON in {source}: {exc}") from exc
     if not isinstance(value, dict):
         raise EvidenceError(f"{source} must contain a JSON object")
@@ -65,8 +78,8 @@ def load_jsonl(path: str | Path) -> list[dict[str, Any]]:
         if not raw.strip():
             continue
         try:
-            value = json.loads(raw)
-        except json.JSONDecodeError as exc:
+            value = parse_json(raw)
+        except (json.JSONDecodeError, ValueError) as exc:
             raise EvidenceError(
                 f"invalid JSONL in {source} line {line_number}: {exc}"
             ) from exc
@@ -82,7 +95,14 @@ def write_json(path: str | Path, value: Any) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
-        json.dumps(value, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+        json.dumps(
+            value,
+            indent=2,
+            sort_keys=True,
+            ensure_ascii=False,
+            allow_nan=False,
+        )
+        + "\n",
         encoding="utf-8",
     )
 
@@ -92,7 +112,8 @@ def write_jsonl(path: str | Path, rows: list[dict[str, Any]]) -> None:
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(
         "".join(
-            json.dumps(row, sort_keys=True, ensure_ascii=False) + "\n" for row in rows
+            json.dumps(row, sort_keys=True, ensure_ascii=False, allow_nan=False) + "\n"
+            for row in rows
         ),
         encoding="utf-8",
     )
