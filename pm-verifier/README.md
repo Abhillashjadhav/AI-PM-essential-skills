@@ -71,6 +71,9 @@ missing, a schema/hash does not match, a metric is absent, a judgment is
 invalid, or the judge is uncalibrated. Missing evidence is never converted into
 success.
 
+Release evidence is commit-bound: required CI must pass on the exact candidate
+head after every code, configuration, dataset, prompt, tool, or harness change.
+
 ## Run the production example
 
 The reference adapter is synthetic, deterministic, and makes no model call. It
