@@ -16,8 +16,9 @@ Read this when creating or validating a runnable suite.
 
 ## Trial metrics
 
-Record non-negative `latency_ms`, `input_tokens`, `output_tokens`, `cost_usd`,
-and `retries`. When the provider does not expose one, set a named
+Record non-negative `latency_ms` and `cost_usd`, plus non-negative integer
+`input_tokens`, `output_tokens`, and `retries`. Token release ceilings are also
+integers. When the provider does not expose one, set a named
 `missing_evidence` entry and accept a `BLOCKED` result until the suite owner
 explicitly changes the evidence contract. Do not silently write zero.
 

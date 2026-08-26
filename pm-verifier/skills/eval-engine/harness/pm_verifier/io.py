@@ -10,6 +10,15 @@ class EvidenceError(ValueError):
     """Raised when supplied evaluation evidence cannot support a claim."""
 
 
+def _read_utf8(source: Path) -> str:
+    try:
+        return source.read_text(encoding="utf-8")
+    except UnicodeDecodeError as exc:
+        raise EvidenceError(f"invalid UTF-8 evidence in {source}: {exc}") from exc
+    except OSError as exc:
+        raise EvidenceError(f"unable to read evidence {source}: {exc}") from exc
+
+
 def sha256_file(path: str | Path) -> str:
     digest = hashlib.sha256()
     with Path(path).open("rb") as handle:
@@ -39,7 +48,7 @@ def load_json(path: str | Path) -> dict[str, Any]:
     if not source.is_file():
         raise EvidenceError(f"missing JSON evidence: {source}")
     try:
-        value = json.loads(source.read_text(encoding="utf-8"))
+        value = json.loads(_read_utf8(source))
     except json.JSONDecodeError as exc:
         raise EvidenceError(f"invalid JSON in {source}: {exc}") from exc
     if not isinstance(value, dict):
@@ -52,7 +61,7 @@ def load_jsonl(path: str | Path) -> list[dict[str, Any]]:
     if not source.is_file():
         raise EvidenceError(f"missing JSONL evidence: {source}")
     rows: list[dict[str, Any]] = []
-    for line_number, raw in enumerate(source.read_text(encoding="utf-8").splitlines(), 1):
+    for line_number, raw in enumerate(_read_utf8(source).splitlines(), 1):
         if not raw.strip():
             continue
         try:

@@ -63,12 +63,17 @@ def _thresholds(config: dict[str, Any]) -> tuple[dict[str, float | int], list[st
         value = config.get(field)
         if not isinstance(value, (int, float)) or isinstance(value, bool):
             errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
-        elif not 0 <= float(value) <= 1:
+        elif not math.isfinite(float(value)) or not 0 <= float(value) <= 1:
             errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
         else:
             values[field] = float(value)
     score_mae = config.get("maximum_score_mae")
-    if not isinstance(score_mae, (int, float)) or isinstance(score_mae, bool) or score_mae < 0:
+    if (
+        not isinstance(score_mae, (int, float))
+        or isinstance(score_mae, bool)
+        or not math.isfinite(float(score_mae))
+        or score_mae < 0
+    ):
         errors.append("suite.calibration.maximum_score_mae must be a non-negative number")
     else:
         values["maximum_score_mae"] = float(score_mae)
@@ -138,22 +143,49 @@ def calibrate(
         errors.append("judge item_id values must be non-empty strings and unique")
     if set(by_human) != set(by_judge):
         errors.append("human and judge calibration item_id sets must match exactly")
-    judge_ids = {row.get("judge_id") for row in judgments}
-    if judge_ids != {expected_judge}:
+    raw_judge_ids = [row.get("judge_id") for row in judgments]
+    valid_judge_ids = [
+        judge_id
+        for judge_id in raw_judge_ids
+        if isinstance(judge_id, str) and judge_id
+    ]
+    if len(valid_judge_ids) != len(raw_judge_ids):
+        errors.append("every judge calibration row requires a non-empty string judge_id")
+    judge_ids = set(valid_judge_ids)
+    expected_judge_ids = (
+        {expected_judge}
+        if isinstance(expected_judge, str) and expected_judge
+        else set()
+    )
+    if judge_ids != expected_judge_ids:
         errors.append(
             f"judge calibration provenance mismatch: {sorted(str(x) for x in judge_ids)}"
         )
 
-    label_ids = {
-        grader.get("id")
-        for grader in suite.get("model_graders", [])
-        if isinstance(grader, dict) and grader.get("id")
-    }
-    score_ids = {
-        criterion.get("id")
-        for criterion in suite.get("rubric", [])
-        if isinstance(criterion, dict) and criterion.get("id")
-    }
+    model_graders = suite.get("model_graders", [])
+    rubric = suite.get("rubric", [])
+    if not isinstance(model_graders, list) or any(
+        not isinstance(grader, dict)
+        or not isinstance(grader.get("id"), str)
+        or not grader["id"]
+        for grader in model_graders if isinstance(model_graders, list)
+    ):
+        errors.append("suite model grader ids must be non-empty strings")
+        model_graders = []
+    if not isinstance(rubric, list) or any(
+        not isinstance(criterion, dict)
+        or not isinstance(criterion.get("id"), str)
+        or not criterion["id"]
+        for criterion in rubric if isinstance(rubric, list)
+    ):
+        errors.append("suite rubric ids must be non-empty strings")
+        rubric = []
+    label_ids = {grader["id"] for grader in model_graders}
+    score_ids = {criterion["id"] for criterion in rubric}
+    if len(label_ids) != len(model_graders):
+        errors.append("suite model grader ids must be unique")
+    if len(score_ids) != len(rubric):
+        errors.append("suite rubric ids must be unique")
     for source, rows in (("human", goldens), ("judge", judgments)):
         for row in rows:
             item_id = row.get("item_id", "<missing>")
@@ -176,6 +208,9 @@ def calibrate(
                 for value in scores.values()
             ):
                 errors.append(f"{source} item {item_id}: scores must be numbers from 1 to 5")
+
+    if errors:
+        return _blocked(errors)
 
     for dimension in sorted(label_ids):
         observed = {

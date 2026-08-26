@@ -129,6 +129,51 @@ class PMVerifierTest(unittest.TestCase):
         self.assertTrue(missing["evidence_errors"])
         self.assertTrue(invalid_metrics["evidence_errors"])
 
+    def test_invalid_utf8_json_and_jsonl_block_instead_of_crashing(self) -> None:
+        suite_path = self.project / "suite.json"
+        original_suite = suite_path.read_bytes()
+        suite_path.write_bytes(b"\xff")
+        invalid_json = self.evaluate()
+        self.assertEqual(invalid_json["decision"], "BLOCKED")
+        self.assertTrue(
+            any("UTF-8" in error for error in invalid_json["evidence_errors"])
+        )
+
+        suite_path.write_bytes(original_suite)
+        cases_path = self.project / "cases.jsonl"
+        cases_path.write_bytes(b"\xff")
+        invalid_jsonl = self.evaluate()
+        self.assertEqual(invalid_jsonl["decision"], "BLOCKED")
+        self.assertTrue(
+            any("UTF-8" in error for error in invalid_jsonl["evidence_errors"])
+        )
+
+    def test_fractional_token_counts_and_limits_are_rejected(self) -> None:
+        rows = self.load_jsonl("trials.jsonl")
+        rows[0]["metrics"]["input_tokens"] = 0.9
+        fractional_evidence = self.evaluate(
+            trials_path=self.write_jsonl("fractional-tokens.jsonl", rows)
+        )
+        self.assertEqual(fractional_evidence["decision"], "BLOCKED")
+        self.assertTrue(
+            any(
+                "metrics.input_tokens must be an integer" in error
+                for error in fractional_evidence["evidence_errors"]
+            )
+        )
+
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["release_rules"]["max_total_tokens_per_trial"] = 0.9
+        self.rewrite_suite(suite)
+        fractional_limit = self.evaluate()
+        self.assertEqual(fractional_limit["decision"], "BLOCKED")
+        self.assertTrue(
+            any(
+                "max_total_tokens_per_trial must be an integer" in error
+                for error in fractional_limit["evidence_errors"]
+            )
+        )
+
     def test_non_finite_operational_metrics_block(self) -> None:
         for index, value in enumerate((float("nan"), float("inf"))):
             with self.subTest(value=value):
@@ -257,6 +302,13 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(result["decision"], "BLOCKED")
         self.assertTrue(any("params" in error for error in result["evidence_errors"]))
 
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["deterministic_graders"][0]["id"] = []
+        self.rewrite_suite(suite)
+        result = self.evaluate()
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertTrue(any("string id" in error for error in result["evidence_errors"]))
+
     def test_failure_slices_and_clusters_are_explainable(self) -> None:
         result = self.evaluate(trials_path=self.fault("mixed"))
         self.assertEqual(result["decision"], "FAIL")
@@ -313,6 +365,30 @@ class PMVerifierTest(unittest.TestCase):
         )
         self.assertEqual(result["status"], "FAIL")
         self.assertLess(result["metrics"]["cohens_kappa"], suite["calibration"]["minimum_kappa"])
+
+    def test_calibration_rejects_non_string_judge_id_without_crashing(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        judgments = self.load_jsonl("calibration/judge-labels.jsonl")
+        judgments[0]["judge_id"] = []
+        judgment_path = self.write_jsonl("invalid-judge-id.jsonl", judgments)
+
+        result = calibrate(
+            suite,
+            self.project / "calibration" / "human-goldens.jsonl",
+            judgment_path,
+        )
+
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(any("judge_id" in error for error in result["evidence_errors"]))
+
+        suite["calibration"]["judge_id"] = []
+        result = calibrate(
+            suite,
+            self.project / "calibration" / "human-goldens.jsonl",
+            self.project / "calibration" / "judge-labels.jsonl",
+        )
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(any("judge_id" in error for error in result["evidence_errors"]))
 
     def test_calibration_cannot_hide_a_bad_dimension_in_pooled_metrics(self) -> None:
         suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
@@ -602,6 +678,14 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(stable["position_consistency"], 1.0)
         self.assertEqual(biased["status"], "FAIL")
         self.assertLess(biased["position_consistency"], 1.0)
+
+    def test_pairwise_bias_rejects_duplicate_pair_ids(self) -> None:
+        rows = self.load_jsonl("calibration/pairwise-stable.jsonl")
+        rows.append(dict(rows[0]))
+        result = analyze_pairwise_bias(self.write_jsonl("duplicate-pairs.jsonl", rows))
+
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(any("unique" in error for error in result["evidence_errors"]))
 
     def test_machine_and_human_reports_state_limitations(self) -> None:
         result = self.evaluate()

@@ -211,14 +211,18 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
                 errors.append(
                     f"rubric criterion {criterion.get('id', '<missing>')}: {field} must be a non-empty string"
                 )
-    identifiers = [
+    raw_identifiers = [
         item.get("id")
         for item in [*deterministic, *model_graders, *rubric]
         if isinstance(item, dict)
     ]
-    missing_ids = sum(identifier in (None, "") for identifier in identifiers)
-    if missing_ids:
-        errors.append("every grader and rubric criterion needs an id")
+    identifiers = [
+        identifier
+        for identifier in raw_identifiers
+        if isinstance(identifier, str) and identifier.strip()
+    ]
+    if len(identifiers) != len(raw_identifiers):
+        errors.append("every grader and rubric criterion needs a non-empty string id")
     if len(identifiers) != len(set(identifiers)):
         errors.append("grader and rubric ids must be globally unique")
     calibration = suite.get("calibration")
@@ -274,9 +278,19 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
         score = rules.get("min_model_score")
         if not _is_number(score) or not 1 <= float(score) <= 5:
             errors.append("suite.release_rules.min_model_score must be a number from 1 to 5")
-    for field in ("max_cost_usd_per_trial", "max_latency_ms_per_trial", "max_total_tokens_per_trial"):
+    for field in ("max_cost_usd_per_trial", "max_latency_ms_per_trial"):
         if field in rules and (not _is_number(rules[field]) or float(rules[field]) < 0):
             errors.append(f"suite.release_rules.{field} must be a non-negative number")
+    if "max_total_tokens_per_trial" in rules:
+        token_limit = rules["max_total_tokens_per_trial"]
+        if (
+            not isinstance(token_limit, int)
+            or isinstance(token_limit, bool)
+            or token_limit < 0
+        ):
+            errors.append(
+                "suite.release_rules.max_total_tokens_per_trial must be an integer >= 0"
+            )
     if "max_retries_per_trial" in rules:
         retries = rules["max_retries_per_trial"]
         if not isinstance(retries, int) or isinstance(retries, bool) or retries < 0:
@@ -405,7 +419,16 @@ def _validate_trials(
         else:
             for field in METRIC_FIELDS:
                 value = metrics.get(field)
-                if not _is_number(value) or float(value) < 0:
+                if field in {"input_tokens", "output_tokens", "retries"}:
+                    if (
+                        not isinstance(value, int)
+                        or isinstance(value, bool)
+                        or value < 0
+                    ):
+                        errors.append(
+                            f"trial {trial_id}: metrics.{field} must be an integer >= 0"
+                        )
+                elif not _is_number(value) or float(value) < 0:
                     errors.append(f"trial {trial_id}: metrics.{field} must be a non-negative number")
         missing = trial.get("missing_evidence")
         if not isinstance(missing, list):

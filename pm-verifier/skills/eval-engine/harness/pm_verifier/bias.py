@@ -24,6 +24,14 @@ def analyze_pairwise_bias(
     verbose_picks = 0
     verbose_truth = 0
     errors: list[str] = []
+    pair_ids = [row.get("pair_id") for row in rows]
+    valid_pair_ids = [
+        pair_id for pair_id in pair_ids if isinstance(pair_id, str) and pair_id
+    ]
+    if len(valid_pair_ids) != len(pair_ids):
+        errors.append("pair_id values must be non-empty strings")
+    if len(valid_pair_ids) != len(set(valid_pair_ids)):
+        errors.append("pair_id values must be unique")
     for index, row in enumerate(rows, 1):
         required = {
             "pair_id",
