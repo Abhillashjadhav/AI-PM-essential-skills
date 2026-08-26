@@ -1,0 +1,53 @@
+name: pm-verifier
+
+on:
+  push:
+    paths:
+      - "pm-verifier/**"
+      - "tests/eval-engine/**"
+      - "scripts/check_repository_integrity.py"
+      - "eval-rubric-generator/**"
+      - ".claude-plugin/marketplace.json"
+      - "README.md"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/pm-verifier.yml"
+  pull_request:
+    paths:
+      - "pm-verifier/**"
+      - "tests/eval-engine/**"
+      - "scripts/check_repository_integrity.py"
+      - "eval-rubric-generator/**"
+      - ".claude-plugin/marketplace.json"
+      - "README.md"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/pm-verifier.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile harness
+        run: python3 -m compileall -q pm-verifier/skills/eval-engine/harness
+      - name: Run known-good and known-bad eval tests
+        run: python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -v
+      - name: Lint eval skill
+        run: python3 tests/lint_skill.py pm-verifier/skills/eval-engine/SKILL.md
+      - name: Check repository contracts
+        run: python3 scripts/check_repository_integrity.py
+      - name: Run production example from an isolated copy
+        shell: bash
+        run: |
+          eval_dir="$(mktemp -d)/eval"
+          cp -R pm-verifier/skills/eval-engine/examples/production-eval "$eval_dir"
+          cp -R pm-verifier/skills/eval-engine/harness/pm_verifier "$eval_dir/pm_verifier"
+          cd "$eval_dir"
+          python3 -m pm_verifier run
+          python3 -m pm_verifier report
+          grep -q "Release decision: PASS" report.md
