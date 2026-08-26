@@ -1,0 +1,11 @@
+{
+  "judge": "claude-code in-session, no answer key present",
+  "verdicts": [
+    {"id": "Q1", "pick": "B", "reason": "Kitchenware (chef's knife) is FINAL SALE, so no returns; B is correct, A wrongly applies a 30-day window."},
+    {"id": "Q2", "pick": "A", "reason": "Electronics is 15 days IN-STORE only; at day 10 it's returnable but only in-store, so A is correct and B's mail-in is wrong."},
+    {"id": "Q3", "pick": "B", "reason": "Bedding has a 60-day window and day 20 is inside it, return by mail; B is correct, A wrongly cites 30 days."},
+    {"id": "Q4", "pick": "B", "reason": "Lighting is 30 days and day 40 is past the window, so no return; B is correct, A is wrong."},
+    {"id": "Q5", "pick": "B", "reason": "Decor is 30 days and day 5 is inside it, return by mail; B is correct, A wrongly calls rugs final sale."},
+    {"id": "Q6", "pick": "A", "reason": "Bedding is 60 days and day 70 is past the cutoff, so no return; A is correct, B is wrong."}
+  ]
+}

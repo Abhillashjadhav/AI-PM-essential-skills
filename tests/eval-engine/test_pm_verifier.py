@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import lzma
 import shutil
 import sys
 import tempfile
@@ -208,6 +210,30 @@ class PMVerifierTest(unittest.TestCase):
         self.assertIn("calibrated judgments, not objective measurements", report)
         self.assertIn("production monitoring", report.lower())
         json.dumps(result)
+
+    def test_migrated_source_data_hashes_are_preserved(self) -> None:
+        migrated = EXAMPLE.parent / "migrated"
+        expected = {
+            "pm-evals/examples/coding-assistant/traces.jsonl.xz": "4d410728942947e1d75bec11e69b419b31f01903e6d6283450ef5a8f6ef92182",
+            "pm-evals/examples/customer-support/traces.jsonl.xz": "852faec7628b5866000515515ed990dd669c8bc2f02d4dfe9553db8259386784",
+            "pm-evals/examples/summarization/traces.jsonl.xz": "b6dc285179f89266b0ad94c0eb96f838ddc681971d45b95eeb83030de3ba53d5",
+            "pm-evals/examples/summarization/sources.jsonl.xz": "1c69abd25163de3d87f2b948be4681f8c0ef48db7bd26fa51a0ce500b2e0ae90",
+            "pm-evals/golden/golden_scores.json": "fe1c6576e8f379797d56bf85f99cdf79795375e1caeb53ca8ef7776839739ab6",
+            "Evals-pass-1/eval_set.json": "ca5ff2f491cb8959d6ef1478dc9bef2c12c47330ea5d66ed5a49bb17f6ee9476",
+            "Evals-pass-1/part2/verdicts.json": "6f79b427af22c4dfd709e5fa83d2a7bf381b399a90f68590ce572a513b27a519",
+            "Evals-pass-1/part2/verdicts_swapped.json": "250b37150f117eb4bce657e0033dc6af391c179f731fbaca353efe929c14b355",
+        }
+        for relative, digest in expected.items():
+            with self.subTest(relative=relative):
+                path = migrated / relative
+                if path.suffix == ".xz":
+                    actual = hashlib.sha256()
+                    with lzma.open(path, "rb") as handle:
+                        for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                            actual.update(chunk)
+                    self.assertEqual(actual.hexdigest(), digest)
+                else:
+                    self.assertEqual(sha256_file(path), digest)
 
 
 if __name__ == "__main__":

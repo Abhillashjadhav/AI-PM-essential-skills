@@ -1,65 +1,161 @@
 # pm-verifier
 
-**Spec in, verification layer out.** One skill — `eval-engine` — that turns any feature spec, PRD, or task description into the three artifacts every AI feature needs before it ships: binary quality gates, a calibrated LLM-judge rubric, and a runnable eval harness.
+**One public product for AI PM evaluation work: spec in, evidence-backed release decision out.**
 
-Built for the AI PM who owns "define good" — companion plugin to [pm-tactical](../pm-tactical/), same marketplace.
+`pm-verifier` turns a feature spec or existing eval into one workflow:
 
----
+`feature spec → define good → create eval suite → run trials → grade → inspect failures → release decision`
 
-## Install (30 seconds)
+The PM works through that sequence. The bundled pure-stdlib runtime handles
+trace schemas, repeated trials, provenance, calibration, metrics, failure
+analysis, and CI exit codes underneath it.
+
+## Install
 
 ```bash
 claude plugin marketplace add Abhillashjadhav/AI-PM-essential-skills
 claude plugin install pm-verifier@ai-pm-skills
 ```
 
-Or commit it to your repo's `.claude/settings.json` so every contributor gets it on trust — see this repo's own settings file for the pattern.
+Then paste a PRD/spec or point to an existing suite and ask:
 
-## Use (60 seconds)
-
-Paste a spec and ask:
-
-```
-Here's the spec for our AI ticket summarizer: [paste spec]
-Create an eval for this.
+```text
+Create an eval for this feature.
+Run this eval suite and explain the failures.
+Calibrate this judge against our human golden set.
+Can this candidate pass the release gate?
 ```
 
-Also fires on: "write an eval", "build an eval rubric", "define good for this feature", "how do I test this AI feature", "generate a verification layer", "set up an LLM judge", "how do I grade outputs", "add quality gates", "how do I measure whether this works".
+The same `eval-engine` skill handles creation, execution, calibration, failure
+inspection, and migration. There is no second eval product.
 
-You get back, in one pass:
+## What it evaluates
 
-1. **Binary gates (3-6)** — the disqualifying checks: fabricated claims, missing required fields, safety violations. Each states WHY it's a gate ("partial credit is meaningless here") and whether it's mechanically checkable or needs a judge. Any gate failure = automatic fail, no matter how good the rest is.
-2. **Calibrated LLM-judge rubric (4-7 criteria, 1-5 scale)** — each criterion with a concrete "what a 1 looks like", "what a 5 looks like", and a worked example, plus a paste-ready judge prompt that returns structured JSON.
-3. **Runnable harness** — `prepare.py` / `run.py` / `report.py`, pure Python stdlib, no API keys. Gates run first in code; judge scoring routes through your own Claude session via generated prompt files. `report.py` renders a pass/fail table and per-criterion score distribution to markdown.
-
-A complete worked example (spec → all three artifacts → harness run on real cases) ships in `skills/eval-engine/examples/`.
-
-**Precedence note:** this repo's standalone [eval-rubric-generator](../eval-rubric-generator/) skill claims several of the same trigger phrasings ("write an eval", "how do I test this AI feature", "define good"). eval-engine supersedes it — its binary checklist is roughly Artifact 1 of this skill's three. If you have both installed, requests matching those phrasings should route here; consider removing eval-rubric-generator from `~/.claude/skills/` to avoid the collision.
-
-## Before / after
-
-| Without | With |
+| Surface | Behavior |
 |---|---|
-| "The demo looked good" is the eval | 3-6 explicit unshippable-output checks, run in code |
-| Quality debates re-litigated every review | A frozen rubric with anchors both humans and judges score against |
-| Judge scores trusted blind, or distrusted blind | A calibration loop: human-vs-judge gaps ≥2 points rewrite the anchor, not the verdict |
-| Eval tooling blocked on eng time and API keys | A harness a PM runs locally in three commands, LLM judgment via their own session |
+| Outcome | Checks the real final state, not only what the agent claims happened. |
+| Trajectory | Checks ordered tool/model/decision steps and exposes silent path failures. |
+| Deterministic graders | Exact expected values, fields, regex, length, required values, and trace-step evidence. |
+| Model graders | Ingests external semantic judgments only with matching judge/rubric provenance and passing human calibration. |
+| Repeated trials | Reports per-trial success, empirical `pass@k`, and consistency-oriented `pass^k`. |
+| Suite types | Capability suites can use explicit hill-climbing thresholds; regression suites default to all-trials consistency. |
+| Safety/privacy | Binary categories with zero tolerated failures by default. |
+| Operations | Enforces cost, latency, token, and retry ceilings. |
+| Failure analysis | Separates outcome/trajectory failures, slices metadata, and produces explainable lexical clusters. |
 
-## The design stance
+## Evidence and decision states
 
-**Gates are binary, disqualifying, and invisible when passing. Rubric criteria are gradual and tradeable.** Mixing the two — averaging gates into scores, or treating "well-written" as a gate — is the root failure of most eval setups, and the one thing this skill refuses to do. Human-vs-judge disagreement is treated as calibration signal, not failure. Full reasoning in `skills/eval-engine/references/gate-design.md` and `references/rubric-calibration.md`.
+Every run produces:
 
-## Testing
+- `results.json` — canonical machine-readable evidence;
+- `report.md` — human-readable release review; and
+- exit code `0=PASS`, `1=FAIL`, or `2=BLOCKED`.
 
-Three-gate harness, same convention as pm-tactical (`tests/eval-engine/fixtures.md`):
-- **Gate 1** — plugin + marketplace manifests lint clean; SKILL.md frontmatter passes `tests/lint_skill.py`.
-- **Gate 2** — trigger accuracy against the fixture phrasings (fire + no-fire).
-- **Gate 3** — end-to-end: the included sample spec produces all three artifacts, and the harness runs the 2 included sample cases through prepare → run → report without error, including the pending-judgment round-trip.
+`BLOCKED` means the available evidence cannot support a quality claim: a file is
+missing, a schema/hash does not match, a metric is absent, a judgment is
+invalid, or the judge is uncalibrated. Missing evidence is never converted into
+success.
 
-## License
+## Run locally
 
-MIT, same as the repo.
+Copy `skills/eval-engine/harness/pm_verifier/` and the three wrapper scripts into
+the eval folder generated by the skill. Then:
 
----
+```bash
+python3 -m pm_verifier prepare
+python3 -m pm_verifier run
+python3 -m pm_verifier report
+```
 
-*Built by [Abhillash Jadhav](https://github.com/Abhillashjadhav) — GenAI PM. Evals, context engineering, agentic reliability.*
+Calibrate and inspect swapped-order bias:
+
+```bash
+python3 -m pm_verifier calibrate \
+  --suite suite.json \
+  --goldens calibration/human-goldens.jsonl \
+  --judgments calibration/judge-labels.jsonl
+
+python3 -m pm_verifier bias \
+  --pairs calibration/pairwise-stable.jsonl
+```
+
+The compatibility commands `python3 prepare.py`, `python3 run.py`, and
+`python3 report.py` call the same runtime.
+
+## File contract
+
+```text
+eval/
+├── suite.json
+├── dataset.json
+├── cases.jsonl
+├── run.json
+├── trials.jsonl
+├── judgments.jsonl       # when model graders are used
+├── calibration.json      # when model graders are release-critical
+├── results.json
+└── report.md
+```
+
+See [`references/evidence-contract.md`](skills/eval-engine/references/evidence-contract.md)
+for fields and supported deterministic checks. The runnable
+[`production-eval`](skills/eval-engine/examples/production-eval/) includes two
+cases × two trials, outcome and trajectory gates, a calibrated model gate,
+operational metrics, and deterministic known-bad fault specifications.
+
+## Verification
+
+From the repository root:
+
+```bash
+python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -v
+python3 tests/lint_skill.py pm-verifier/skills/eval-engine/SKILL.md
+python3 scripts/check_repository_integrity.py
+```
+
+The executable tests cover:
+
+- known-good repeated trials;
+- outcome and silent trajectory faults;
+- safety and privacy faults;
+- release-critical model-gate failure;
+- missing judgment/metric evidence;
+- invalid release-rule and calibration contracts;
+- provenance mismatch;
+- minimum trial counts and retry ceilings;
+- capability vs regression semantics;
+- deterministic-only suites;
+- deterministic failures that correctly skip unneeded model grading;
+- human calibration and biased-judge rejection;
+- swapped-order position bias;
+- failure slicing/clustering;
+- migrated source-data hashes; and
+- JSON/Markdown reports and stated limitations.
+
+## Migration
+
+Useful data and capabilities from `pm-evals` and `Evals-pass-1` are mapped in
+[`docs/MIGRATION.md`](docs/MIGRATION.md). Versioned source snapshots live under
+`skills/eval-engine/examples/migrated/` with source commits and hashes. Large
+JSONL snapshots use lossless `.xz`; tests verify the decompressed original hash.
+
+Existing `gates.json` and `rubric.json` users should combine those files into
+`suite.json`; existing cases become `cases.jsonl`, and actual repeated outputs
+and traces become `trials.jsonl`. The old `pm-evals` hash stub is intentionally
+not supported.
+
+## Design evidence
+
+- [`docs/AUTHORITY_GAP_ANALYSIS.md`](docs/AUTHORITY_GAP_ANALYSIS.md) — Anthropic/OpenAI triangulation and inherited conflicts
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — layers, states, files, and trust boundaries
+- [`docs/MIGRATION.md`](docs/MIGRATION.md) — source-to-destination capability map and archive plan
+
+## Limitations
+
+- This is a local pre-release harness, not production monitoring or A/B testing.
+- Model judgments remain probabilistic and require periodic human review.
+- Empirical repeated-trial metrics do not guarantee population reliability.
+- Lexical clustering is reproducible and explainable but less semantic than an embedding system.
+- The system under test must produce real outcome, trajectory, and metric evidence.
+
+MIT licensed.

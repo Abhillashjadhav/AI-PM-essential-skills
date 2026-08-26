@@ -1,0 +1,45 @@
+{
+  "rubric": {
+    "decision_ok": "answer.decision == expected_decision  (the yes/no -- what answer-only evals check)",
+    "method_ok": "answer.method == expected_method      (the advice given to the customer)",
+    "doc_ok": "trajectory.doc_category_pulled == expected_doc_category  (right document on the path)",
+    "silent": "decision_ok is True but doc_ok is False (right yes/no, wrong path)"
+  },
+  "tasks": [
+    {
+      "id": "A100",
+      "question": "Can I return order A100?",
+      "expected_doc_category": "decor",
+      "expected_decision": "ALLOW",
+      "expected_method": "mail-back"
+    },
+    {
+      "id": "A200",
+      "question": "Can I return order A200?",
+      "expected_doc_category": "lighting",
+      "expected_decision": "DENY",
+      "expected_method": "none"
+    },
+    {
+      "id": "A300",
+      "question": "Can I return order A300?",
+      "expected_doc_category": "kitchenware",
+      "expected_decision": "DENY",
+      "expected_method": "none"
+    },
+    {
+      "id": "A400",
+      "question": "Can I return order A400?",
+      "expected_doc_category": "electronics",
+      "expected_decision": "ALLOW",
+      "expected_method": "in-store"
+    },
+    {
+      "id": "A500",
+      "question": "Can I return order A500?",
+      "expected_doc_category": "bedding",
+      "expected_decision": "ALLOW",
+      "expected_method": "mail-back"
+    }
+  ]
+}
