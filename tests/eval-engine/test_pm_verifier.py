@@ -28,6 +28,7 @@ from pm_verifier.bias import analyze_pairwise_bias  # noqa: E402
 from pm_verifier.calibration import calibrate  # noqa: E402
 from pm_verifier.engine import evaluate_project  # noqa: E402
 from pm_verifier.faults import apply_faults  # noqa: E402
+from pm_verifier.graders import grade_deterministic  # noqa: E402
 from pm_verifier.io import EvidenceError, sha256_file  # noqa: E402
 from pm_verifier.adapter import (  # noqa: E402
     MAX_ADAPTER_ERROR_BYTES,
@@ -410,6 +411,47 @@ class PMVerifierTest(unittest.TestCase):
         result = self.evaluate()
         self.assertEqual(result["decision"], "BLOCKED")
         self.assertTrue(any("string id" in error for error in result["evidence_errors"]))
+
+    def test_unhashable_enum_fields_block_without_crashing(self) -> None:
+        baseline = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        mutations = (
+            lambda suite: suite.update({"suite_type": []}),
+            lambda suite: suite["deterministic_graders"][0].update({"check": []}),
+            lambda suite: suite["deterministic_graders"][0].update({"scope": {}}),
+            lambda suite: suite["deterministic_graders"][0].update({"category": []}),
+            lambda suite: suite["model_graders"][0].update({"scope": []}),
+            lambda suite: suite["model_graders"][0].update({"category": {}}),
+        )
+        for mutate in mutations:
+            with self.subTest(mutation=mutate.__code__.co_firstlineno):
+                suite = json.loads(json.dumps(baseline))
+                mutate(suite)
+                self.rewrite_suite(suite)
+                self.assertEqual(self.evaluate()["decision"], "BLOCKED")
+
+    def test_exact_value_graders_distinguish_booleans_from_numbers(self) -> None:
+        base = {
+            "id": "G_EXACT_TYPE",
+            "name": "exact JSON type",
+            "scope": "outcome",
+            "category": "quality",
+            "gate": True,
+            "actual_path": "outcome.value",
+        }
+        trial = {"outcome": {"value": True}}
+        case = {"expected": {"value": 1}}
+
+        configured = grade_deterministic(
+            {**base, "check": "equals", "params": {"value": 1}}, trial, case
+        )
+        expected = grade_deterministic(
+            {**base, "check": "equals_expected", "expected_path": "expected.value"},
+            trial,
+            case,
+        )
+
+        self.assertFalse(configured["passed"])
+        self.assertFalse(expected["passed"])
 
     def test_failure_slices_and_clusters_are_explainable(self) -> None:
         result = self.evaluate(trials_path=self.fault("mixed"))
@@ -829,6 +871,14 @@ class PMVerifierTest(unittest.TestCase):
 
         self.assertEqual(result["status"], "BLOCKED")
         self.assertTrue(any("unique" in error for error in result["evidence_errors"]))
+
+    def test_pairwise_bias_rejects_unhashable_choices_without_crashing(self) -> None:
+        rows = self.load_jsonl("calibration/pairwise-stable.jsonl")
+        rows[0]["pick_original"] = []
+        result = analyze_pairwise_bias(self.write_jsonl("invalid-pairs.jsonl", rows))
+
+        self.assertEqual(result["status"], "BLOCKED")
+        self.assertTrue(any("pick_original" in error for error in result["evidence_errors"]))
 
     def test_machine_and_human_reports_state_limitations(self) -> None:
         result = self.evaluate()

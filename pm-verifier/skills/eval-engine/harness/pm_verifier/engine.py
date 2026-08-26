@@ -170,7 +170,8 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
     for key in ("suite_id", "suite_version", "name"):
         if suite.get(key) in (None, ""):
             errors.append(f"suite.{key} is required")
-    if suite.get("suite_type") not in {"capability", "regression"}:
+    suite_type = suite.get("suite_type")
+    if not isinstance(suite_type, str) or suite_type not in {"capability", "regression"}:
         errors.append("suite.suite_type must be capability or regression")
     minimum_trials = suite.get("minimum_trials_per_case")
     if not isinstance(minimum_trials, int) or isinstance(minimum_trials, bool) or minimum_trials < 1:
@@ -197,9 +198,11 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
             continue
         if not isinstance(grader.get("gate"), bool):
             errors.append(f"model grader {grader.get('id')}: gate must be true or false")
-        if grader.get("scope") not in {"outcome", "trajectory"}:
+        scope = grader.get("scope")
+        if not isinstance(scope, str) or scope not in {"outcome", "trajectory"}:
             errors.append(f"model grader {grader.get('id')}: invalid scope")
-        if grader.get("category") not in {"quality", "safety", "privacy"}:
+        category = grader.get("category")
+        if not isinstance(category, str) or category not in {"quality", "safety", "privacy"}:
             errors.append(f"model grader {grader.get('id')}: invalid category")
         for field in ("id", "name", "prompt_version"):
             if not isinstance(grader.get(field), str) or not grader[field].strip():

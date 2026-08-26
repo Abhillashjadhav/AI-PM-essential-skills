@@ -47,7 +47,7 @@ def analyze_pairwise_bias(
             errors.append(f"pairwise row {index} missing {missing}")
             continue
         for field in required - {"pair_id"}:
-            if row[field] not in {"A", "B"}:
+            if not isinstance(row[field], str) or row[field] not in {"A", "B"}:
                 errors.append(f"pairwise row {index} has invalid {field}")
         correct += int(row["pick_original"] == row["truth_original"])
         correct += int(row["pick_swapped"] == row["truth_swapped"])
