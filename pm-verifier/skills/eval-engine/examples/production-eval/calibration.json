@@ -27,6 +27,8 @@
           "upper": 1.0
         },
         "cohens_kappa": 1.0,
+        "false_negative_rate": 0.0,
+        "false_positive_rate": 0.0,
         "n": 20
       }
     },

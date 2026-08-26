@@ -28,7 +28,12 @@ from pm_verifier.calibration import calibrate  # noqa: E402
 from pm_verifier.engine import evaluate_project  # noqa: E402
 from pm_verifier.faults import apply_faults  # noqa: E402
 from pm_verifier.io import sha256_file  # noqa: E402
-from pm_verifier.adapter import execute_trials  # noqa: E402
+from pm_verifier.adapter import (  # noqa: E402
+    MAX_ADAPTER_ERROR_BYTES,
+    MAX_ADAPTER_INPUT_BYTES,
+    MAX_ADAPTER_OUTPUT_BYTES,
+    execute_trials,
+)
 from pm_verifier.reporting import render_inspection, render_markdown  # noqa: E402
 
 
@@ -275,6 +280,40 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(result["status"], "FAIL")
         self.assertLess(result["metrics"]["cohens_kappa"], suite["calibration"]["minimum_kappa"])
 
+    def test_calibration_cannot_hide_a_bad_dimension_in_pooled_metrics(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        second = dict(suite["model_graders"][0])
+        second["id"] = "G_MODEL_SECOND"
+        second["name"] = "second independently calibrated dimension"
+        suite["model_graders"].append(second)
+        goldens = self.load_jsonl("calibration/human-goldens.jsonl")
+        judgments = self.load_jsonl("calibration/judge-labels.jsonl")
+        for human, judge in zip(goldens, judgments):
+            human["labels"][second["id"]] = human["labels"]["G_MODEL_GROUNDED"]
+            judge["labels"][second["id"]] = judge["labels"]["G_MODEL_GROUNDED"]
+        mismatched = next(
+            row
+            for row in judgments
+            if row["labels"][second["id"]] == "PASS"
+        )
+        mismatched["labels"][second["id"]] = "FAIL"
+        golden_path = self.write_jsonl("two-dimension-goldens.jsonl", goldens)
+        judgment_path = self.write_jsonl("two-dimension-judgments.jsonl", judgments)
+
+        result = calibrate(suite, golden_path, judgment_path)
+
+        self.assertEqual(result["status"], "FAIL")
+        self.assertGreaterEqual(
+            result["metrics"]["label_agreement_interval_95"]["lower"],
+            suite["calibration"]["minimum_agreement"],
+        )
+        self.assertLess(
+            result["metrics"]["label_dimensions"][second["id"]][
+                "agreement_interval_95"
+            ]["lower"],
+            suite["calibration"]["minimum_agreement"],
+        )
+
     def test_non_gating_trajectory_check_is_diagnostic(self) -> None:
         suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
         trajectory = next(
@@ -350,6 +389,84 @@ class PMVerifierTest(unittest.TestCase):
         self.assertTrue(errors)
         result = self.evaluate(trials_path=out)
         self.assertEqual(result["decision"], "BLOCKED")
+
+    def test_stdio_adapter_output_is_bounded_while_the_process_runs(self) -> None:
+        adapter = Path(self.tempdir.name) / "oversized-adapter.py"
+        adapter.write_text(
+            "import sys\n"
+            f"sys.stdout.write('x' * {MAX_ADAPTER_OUTPUT_BYTES + 1})\n",
+            encoding="utf-8",
+        )
+        out = self.project / "oversized-trials.jsonl"
+        errors = execute_trials(
+            self.project,
+            [sys.executable, str(adapter)],
+            out,
+            timeout_seconds=5,
+        )
+        self.assertEqual(len(errors), 4)
+        self.assertTrue(all("stdout exceeds" in error for error in errors))
+        self.assertEqual(self.evaluate(trials_path=out)["decision"], "BLOCKED")
+
+    def test_stdio_adapter_input_and_stderr_are_bounded(self) -> None:
+        cases = self.load_jsonl("cases.jsonl")
+        cases[0]["input"] = "x" * (MAX_ADAPTER_INPUT_BYTES + 1)
+        self.write_jsonl("cases.jsonl", cases)
+        unused_adapter = Path(self.tempdir.name) / "unused-adapter.py"
+        unused_adapter.write_text("raise SystemExit(99)\n", encoding="utf-8")
+        input_errors = execute_trials(
+            self.project,
+            [sys.executable, str(unused_adapter)],
+            self.project / "oversized-input-trials.jsonl",
+            timeout_seconds=5,
+        )
+        input_limit_errors = [
+            error for error in input_errors if "input exceeds" in error
+        ]
+        self.assertEqual(len(input_limit_errors), 2)
+
+        shutil.copyfile(EXAMPLE / "cases.jsonl", self.project / "cases.jsonl")
+        stderr_adapter = Path(self.tempdir.name) / "oversized-stderr-adapter.py"
+        stderr_adapter.write_text(
+            "import sys\n"
+            f"sys.stderr.write('x' * {MAX_ADAPTER_ERROR_BYTES + 1})\n",
+            encoding="utf-8",
+        )
+        stderr_errors = execute_trials(
+            self.project,
+            [sys.executable, str(stderr_adapter)],
+            self.project / "oversized-stderr-trials.jsonl",
+            timeout_seconds=5,
+        )
+        self.assertEqual(len(stderr_errors), 4)
+        self.assertTrue(all("stderr exceeds" in error for error in stderr_errors))
+
+    def test_stdio_adapter_timeout_becomes_blocked_evidence(self) -> None:
+        adapter = Path(self.tempdir.name) / "slow-adapter.py"
+        adapter.write_text("import time\ntime.sleep(1)\n", encoding="utf-8")
+        out = self.project / "timed-out-trials.jsonl"
+        errors = execute_trials(
+            self.project,
+            [sys.executable, str(adapter)],
+            out,
+            timeout_seconds=0.05,
+        )
+        self.assertEqual(len(errors), 4)
+        self.assertTrue(all("timed out" in error for error in errors))
+        self.assertEqual(self.evaluate(trials_path=out)["decision"], "BLOCKED")
+
+    def test_trajectory_indexes_must_be_ordered_and_contiguous(self) -> None:
+        rows = self.load_jsonl("trials.jsonl")
+        rows[0]["trajectory"][0]["index"], rows[0]["trajectory"][1]["index"] = (
+            rows[0]["trajectory"][1]["index"],
+            rows[0]["trajectory"][0]["index"],
+        )
+        path = self.write_jsonl("unordered-trajectory.jsonl", rows)
+        result = self.evaluate(trials_path=path)
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertTrue(
+            any("contiguous and ordered" in error for error in result["evidence_errors"])
+        )
 
     def test_inspection_exposes_failure_trace(self) -> None:
         result = self.evaluate(trials_path=self.fault("trajectory"))

@@ -1,14 +1,19 @@
 from __future__ import annotations
 
 import json
+import os
+import signal
 import subprocess
+import threading
 from pathlib import Path
-from typing import Any, Sequence
+from typing import Any, BinaryIO, Sequence
 
 from .io import EvidenceError, load_json, load_jsonl, write_jsonl
 
 
 MAX_ADAPTER_OUTPUT_BYTES = 1_000_000
+MAX_ADAPTER_ERROR_BYTES = 64_000
+MAX_ADAPTER_INPUT_BYTES = 1_000_000
 
 
 def _error_trial(
@@ -35,34 +40,147 @@ def _error_trial(
     }
 
 
+def _kill_process(process: subprocess.Popen[bytes]) -> None:
+    if process.poll() is not None:
+        return
+    try:
+        if os.name == "posix":
+            os.killpg(process.pid, signal.SIGKILL)
+        else:
+            process.kill()
+    except (OSError, ProcessLookupError):
+        pass
+
+
+def _read_bounded(
+    stream: BinaryIO,
+    limit: int,
+    label: str,
+    sink: bytearray,
+    overflow: list[str],
+    process: subprocess.Popen[bytes],
+) -> None:
+    while True:
+        chunk = stream.read(65_536)
+        if not chunk:
+            return
+        remaining = limit - len(sink)
+        if remaining > 0:
+            sink.extend(chunk[:remaining])
+        if len(chunk) > remaining:
+            overflow.append(label)
+            _kill_process(process)
+            return
+
+
+def _write_request(stream: BinaryIO, payload: bytes) -> None:
+    try:
+        stream.write(payload)
+        stream.flush()
+    except (BrokenPipeError, OSError):
+        pass
+    finally:
+        stream.close()
+
+
 def _invoke_adapter(
     command: Sequence[str], request: dict[str, Any], timeout_seconds: float
 ) -> dict[str, Any]:
     if not command:
         raise EvidenceError("adapter command is empty")
+    payload = json.dumps(request, sort_keys=True).encode("utf-8")
+    if len(payload) > MAX_ADAPTER_INPUT_BYTES:
+        raise EvidenceError(
+            f"adapter input exceeds {MAX_ADAPTER_INPUT_BYTES} bytes"
+        )
     try:
-        completed = subprocess.run(
+        process = subprocess.Popen(
             list(command),
-            input=json.dumps(request, sort_keys=True),
-            text=True,
-            capture_output=True,
-            timeout=timeout_seconds,
-            check=False,
+            stdin=subprocess.PIPE,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            start_new_session=os.name == "posix",
         )
-    except (OSError, subprocess.TimeoutExpired) as exc:
+    except OSError as exc:
         raise EvidenceError(f"adapter execution failed: {exc}") from exc
-    if completed.returncode != 0:
-        detail = completed.stderr.strip()[:500] or "no stderr"
+
+    assert process.stdin is not None
+    assert process.stdout is not None
+    assert process.stderr is not None
+    stdout = bytearray()
+    stderr = bytearray()
+    overflow: list[str] = []
+    threads = [
+        threading.Thread(
+            target=_read_bounded,
+            args=(
+                process.stdout,
+                MAX_ADAPTER_OUTPUT_BYTES,
+                "stdout",
+                stdout,
+                overflow,
+                process,
+            ),
+            daemon=True,
+        ),
+        threading.Thread(
+            target=_read_bounded,
+            args=(
+                process.stderr,
+                MAX_ADAPTER_ERROR_BYTES,
+                "stderr",
+                stderr,
+                overflow,
+                process,
+            ),
+            daemon=True,
+        ),
+        threading.Thread(
+            target=_write_request,
+            args=(process.stdin, payload),
+            daemon=True,
+        ),
+    ]
+    for thread in threads:
+        thread.start()
+    timed_out = False
+    try:
+        returncode = process.wait(timeout=timeout_seconds)
+    except subprocess.TimeoutExpired:
+        timed_out = True
+        _kill_process(process)
+        returncode = process.wait()
+    for thread in threads:
+        thread.join(timeout=1)
+    streams_alive = any(thread.is_alive() for thread in threads)
+    process.stdout.close()
+    process.stderr.close()
+    if timed_out:
         raise EvidenceError(
-            f"adapter exited with code {completed.returncode}: {detail}"
+            f"adapter execution timed out after {timeout_seconds:g} seconds"
         )
-    encoded = completed.stdout.encode("utf-8")
-    if len(encoded) > MAX_ADAPTER_OUTPUT_BYTES:
+    if overflow:
+        label = sorted(set(overflow))[0]
+        limit = (
+            MAX_ADAPTER_OUTPUT_BYTES
+            if label == "stdout"
+            else MAX_ADAPTER_ERROR_BYTES
+        )
+        raise EvidenceError(f"adapter {label} exceeds {limit} bytes")
+    if streams_alive:
+        _kill_process(process)
+        raise EvidenceError("adapter streams could not be drained safely")
+    if returncode != 0:
+        detail = stderr.decode("utf-8", errors="replace").strip()[:500] or "no stderr"
         raise EvidenceError(
-            f"adapter output exceeds {MAX_ADAPTER_OUTPUT_BYTES} bytes"
+            f"adapter exited with code {returncode}: {detail}"
         )
     try:
-        value = json.loads(completed.stdout)
+        decoded = stdout.decode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise EvidenceError("adapter stdout must be valid UTF-8") from exc
+    try:
+        value = json.loads(decoded)
     except json.JSONDecodeError as exc:
         raise EvidenceError(f"adapter stdout must be one JSON object: {exc}") from exc
     if not isinstance(value, dict):

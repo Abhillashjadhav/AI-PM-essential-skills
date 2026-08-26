@@ -347,6 +347,7 @@ def _validate_trials(
             errors.append(f"trial {trial_id}: trajectory must be a list")
         else:
             seen_step_indexes: set[int] = set()
+            ordered_step_indexes: list[int] = []
             for step_number, step in enumerate(trial["trajectory"], 1):
                 if not isinstance(step, dict):
                     errors.append(f"trial {trial_id}: trajectory step {step_number} must be an object")
@@ -365,10 +366,18 @@ def _validate_trials(
                     errors.append(f"trial {trial_id}: duplicate trajectory index {step_index}")
                 else:
                     seen_step_indexes.add(step_index)
+                    ordered_step_indexes.append(step_index)
                 if not isinstance(step.get("attributes"), dict):
                     errors.append(
                         f"trial {trial_id}: trajectory step {step_number} attributes must be an object"
                     )
+            if len(ordered_step_indexes) == len(trial["trajectory"]) and (
+                ordered_step_indexes
+                != list(range(1, len(ordered_step_indexes) + 1))
+            ):
+                errors.append(
+                    f"trial {trial_id}: trajectory indexes must be contiguous and ordered from 1"
+                )
         metrics = trial.get("metrics")
         if not isinstance(metrics, dict):
             errors.append(f"trial {trial_id}: metrics must be an object")
@@ -450,26 +459,82 @@ def _validate_model_evidence(
     if not isinstance(metrics, dict):
         errors.append("calibration.metrics must be an object")
         metrics = {}
-    interval = metrics.get("label_agreement_interval_95")
-    if not isinstance(interval, dict):
-        errors.append("calibration label agreement interval is missing")
-        interval = {}
-    agreement_lower = interval.get("lower")
-    kappa = metrics.get("cohens_kappa")
-    false_positive = metrics.get("false_positive_rate")
-    score_mae = metrics.get("score_mean_absolute_error")
-    if not _is_number(agreement_lower) or agreement_lower < float(
-        config["minimum_agreement"]
-    ):
-        errors.append("calibration agreement confidence lower bound is below threshold")
-    if not _is_number(kappa) or kappa < float(config["minimum_kappa"]):
-        errors.append("calibration Cohen's kappa is below the suite threshold")
-    if not _is_number(false_positive) or false_positive > float(
-        config["maximum_false_positive_rate"]
-    ):
-        errors.append("calibration false-positive rate exceeds the suite threshold")
-    if not _is_number(score_mae) or score_mae > float(config["maximum_score_mae"]):
-        errors.append("calibration score mean absolute error exceeds the suite threshold")
+    if model_graders:
+        interval = metrics.get("label_agreement_interval_95")
+        if not isinstance(interval, dict):
+            errors.append("calibration label agreement interval is missing")
+            interval = {}
+        agreement_lower = interval.get("lower")
+        kappa = metrics.get("cohens_kappa")
+        false_positive = metrics.get("false_positive_rate")
+        if not _is_number(agreement_lower) or agreement_lower < float(
+            config["minimum_agreement"]
+        ):
+            errors.append("calibration agreement confidence lower bound is below threshold")
+        if not _is_number(kappa) or kappa < float(config["minimum_kappa"]):
+            errors.append("calibration Cohen's kappa is below the suite threshold")
+        if not _is_number(false_positive) or false_positive > float(
+            config["maximum_false_positive_rate"]
+        ):
+            errors.append("calibration false-positive rate exceeds the suite threshold")
+        label_dimensions = metrics.get("label_dimensions")
+        if not isinstance(label_dimensions, dict):
+            errors.append("calibration label_dimensions must be an object")
+            label_dimensions = {}
+        for grader in model_graders:
+            grader_id = grader["id"]
+            dimension = label_dimensions.get(grader_id)
+            if not isinstance(dimension, dict):
+                errors.append(f"calibration label dimension {grader_id} is missing")
+                continue
+            dimension_interval = dimension.get("agreement_interval_95")
+            lower = (
+                dimension_interval.get("lower")
+                if isinstance(dimension_interval, dict)
+                else None
+            )
+            dimension_kappa = dimension.get("cohens_kappa")
+            dimension_false_positive = dimension.get("false_positive_rate")
+            if not _is_number(lower) or lower < float(config["minimum_agreement"]):
+                errors.append(
+                    f"calibration label dimension {grader_id} agreement is below threshold"
+                )
+            if not _is_number(dimension_kappa) or dimension_kappa < float(
+                config["minimum_kappa"]
+            ):
+                errors.append(
+                    f"calibration label dimension {grader_id} kappa is below threshold"
+                )
+            if not _is_number(
+                dimension_false_positive
+            ) or dimension_false_positive > float(
+                config["maximum_false_positive_rate"]
+            ):
+                errors.append(
+                    f"calibration label dimension {grader_id} false-positive rate exceeds threshold"
+                )
+    if rubric:
+        score_mae = metrics.get("score_mean_absolute_error")
+        if not _is_number(score_mae) or score_mae > float(
+            config["maximum_score_mae"]
+        ):
+            errors.append("calibration score mean absolute error exceeds the suite threshold")
+        score_dimensions = metrics.get("score_dimensions")
+        if not isinstance(score_dimensions, dict):
+            errors.append("calibration score_dimensions must be an object")
+            score_dimensions = {}
+        for criterion in rubric:
+            criterion_id = criterion["id"]
+            dimension = score_dimensions.get(criterion_id)
+            mae = (
+                dimension.get("mean_absolute_error")
+                if isinstance(dimension, dict)
+                else None
+            )
+            if not _is_number(mae) or mae > float(config["maximum_score_mae"]):
+                errors.append(
+                    f"calibration score dimension {criterion_id} MAE exceeds threshold"
+                )
 
     trial_ids = {trial["trial_id"] for trial in trials}
     by_trial = {row.get("trial_id"): row for row in judgments}

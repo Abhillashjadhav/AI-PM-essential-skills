@@ -183,6 +183,10 @@ def calibrate(
     for dimension in sorted(label_ids):
         dimension_human: list[str] = []
         dimension_judge: list[str] = []
+        dimension_false_positive = 0
+        dimension_human_negative = 0
+        dimension_false_negative = 0
+        dimension_human_positive = 0
         for item_id in sorted(by_human):
             human_value = by_human[item_id]["labels"][dimension]
             judge_value = by_judge[item_id]["labels"][dimension]
@@ -192,10 +196,14 @@ def calibrate(
             judge_labels.append(judge_value)
             if human_value == "FAIL":
                 human_negative += 1
+                dimension_human_negative += 1
                 false_positive += judge_value == "PASS"
+                dimension_false_positive += judge_value == "PASS"
             else:
                 human_positive += 1
+                dimension_human_positive += 1
                 false_negative += judge_value == "FAIL"
+                dimension_false_negative += judge_value == "FAIL"
         agrees = sum(
             left == right for left, right in zip(dimension_human, dimension_judge)
         )
@@ -205,6 +213,12 @@ def calibrate(
             "agreement": agrees / len(dimension_human),
             "agreement_interval_95": {"lower": lower, "upper": upper},
             "cohens_kappa": _cohens_kappa(dimension_human, dimension_judge),
+            "false_positive_rate": (
+                dimension_false_positive / dimension_human_negative
+            ),
+            "false_negative_rate": (
+                dimension_false_negative / dimension_human_positive
+            ),
         }
 
     for dimension in sorted(score_ids):
@@ -235,15 +249,29 @@ def calibrate(
     score_mae = (
         sum(score_differences) / len(score_differences) if score_differences else 0.0
     )
-    status = (
-        "PASS"
-        if label_lower >= float(thresholds["minimum_agreement"])
+    label_passes = not label_ids or (
+        label_lower >= float(thresholds["minimum_agreement"])
         and kappa >= float(thresholds["minimum_kappa"])
         and false_positive_rate
         <= float(thresholds["maximum_false_positive_rate"])
-        and score_mae <= float(thresholds["maximum_score_mae"])
-        else "FAIL"
+        and all(
+            dimension["agreement_interval_95"]["lower"]
+            >= float(thresholds["minimum_agreement"])
+            and dimension["cohens_kappa"] >= float(thresholds["minimum_kappa"])
+            and dimension["false_positive_rate"]
+            <= float(thresholds["maximum_false_positive_rate"])
+            for dimension in label_dimensions.values()
+        )
     )
+    score_passes = not score_ids or (
+        score_mae <= float(thresholds["maximum_score_mae"])
+        and all(
+            dimension["mean_absolute_error"]
+            <= float(thresholds["maximum_score_mae"])
+            for dimension in score_dimensions.values()
+        )
+    )
+    status = "PASS" if label_passes and score_passes else "FAIL"
 
     return {
         "schema_version": "1.0",

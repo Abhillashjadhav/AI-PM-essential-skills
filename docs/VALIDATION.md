@@ -29,12 +29,14 @@ This document records what this repository's checks establish and what they do n
 - known-good repeated trials produce a `PASS` result and both report formats;
 - deterministic outcome, trajectory, safety, privacy, metric, retry, and model-gate faults fire;
 - missing, malformed, or mismatched evidence produces `BLOCKED`, never inferred success;
-- human calibration enforces sample size, class coverage, confidence bounds,
-  chance-corrected agreement, ordinal error, and biased-judge rejection;
+- human calibration enforces sample size, class coverage, per-dimension
+  confidence bounds, chance-corrected agreement, false-positive rates, ordinal
+  error, and biased-judge rejection without pooled-metric masking;
 - capability and regression thresholds, diagnostic-versus-gate behavior,
   partial quality, failure slices, lexical clustering, and migrated-data hashes
   are executable;
-- subprocess adapter failures and shared trial isolation produce `BLOCKED`;
+- subprocess adapter failures, oversized streams, unordered trajectories, and
+  shared trial isolation produce `BLOCKED`;
 - identical evidence produces identical results and displayed evidence is
   redacted for credential/PII patterns; and
 - the package installs without runtime dependencies and the production example

@@ -119,8 +119,9 @@ expected answer. The adapter must return one JSON object on stdout containing:
 - a SHA-256 `environment_fingerprint`; and
 - a unique `isolation_id`.
 
-Non-zero exits, timeouts, malformed/oversized output, shared isolation IDs, or
-missing fields produce `BLOCKED`, never `PASS`.
+Non-zero exits, timeouts, malformed output, stdout above 1 MB, stderr above 64
+KB, shared isolation IDs, unordered trace indexes, or missing fields produce
+`BLOCKED`, never `PASS`.
 
 ## File contract
 
@@ -168,7 +169,8 @@ The executable tests cover:
 - deterministic-only suites;
 - deterministic failures that correctly skip unneeded model grading;
 - human calibration and biased-judge rejection;
-- minimum calibration size, Cohen's kappa, and Wilson agreement bounds;
+- minimum calibration size plus per-dimension Cohen's kappa, Wilson agreement
+  bounds, false-positive rates, and ordinal error;
 - explicit release gates versus diagnostic trajectory checks;
 - partial capability-quality scores that cannot bypass binary gates;
 - fresh-process stdio execution and adapter failure blocking;

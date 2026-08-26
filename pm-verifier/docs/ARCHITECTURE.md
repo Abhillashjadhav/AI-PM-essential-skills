@@ -71,12 +71,16 @@ eval/
   make an LLM call when no transport exists.
 - Human goldens must be labelled as human, cover both PASS and FAIL classes,
   meet the configured sample floor, use stable IDs, and be held out from prompt
-  tuning when used as final calibration evidence.
+  tuning when used as final calibration evidence. Every label and score
+  dimension must pass its threshold independently; pooled agreement cannot hide
+  a weak grader dimension.
 - Each trial must use a unique isolation ID. The environment fingerprint binds
   it to a declared clean starting environment; repeated trials with shared
   isolation are invalid evidence.
 - `run.created_at` is input provenance, not wall-clock output. Consequently,
   identical evidence produces byte-identical canonical results.
+- Adapter input, stdout, and stderr are bounded. Trajectory indexes must be
+  contiguous and ordered; oversized evidence and timeouts block the run.
 - Reports and inspection redact credential assignments, bearer tokens, email
   addresses, and private-key blocks before display. Raw trial files remain
   sensitive evidence and require repository/environment access controls.

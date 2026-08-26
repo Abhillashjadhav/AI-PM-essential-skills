@@ -54,5 +54,6 @@ missing metrics, retries, and mixed failures.
 `pm-verifier execute` sends `schema_version`, case/trial IDs, trial index,
 `input`, and `metadata` to one fresh subprocess per trial. It never sends the
 case's `expected` object. Adapter stdout must be exactly one JSON object and is
-bounded to 1 MB. Non-zero exit, timeout, malformed output, missing evidence,
-invalid fingerprint, or reused isolation ID blocks the evaluation.
+bounded to 1 MB; stderr is bounded to 64 KB. Non-zero exit, timeout, malformed
+output, unordered trace indexes, missing evidence, invalid fingerprint, or
+reused isolation ID blocks the evaluation.
