@@ -6,14 +6,18 @@ at commit `a9adae024bfc9ace166152ffe19f7110fa1619d0`.
 These are immutable synthetic trace, source, rubric, pairwise, human-golden,
 and judge-result snapshots retained for migration and regression work. The
 four large JSONL files are losslessly stored as `.xz`; the hashes below are for
-the decompressed original bytes. Python's standard-library `lzma` module or
-`xz -dc` restores each exact source file. They are not automatically trusted as
-current production distributions. New product decisions should version a new
-dataset and record its provenance in `dataset.json`.
+the decompressed migrated bytes. Python's standard-library `lzma` module or
+`xz -dc` restores each snapshot. One credential-shaped synthetic placeholder
+(`ghp_…`) was replaced with `<REDACTED_GITHUB_TOKEN>` in the coding generator
+and trace snapshot so the public migration cannot be mistaken for leaked
+credential material. No labels, metadata, or security-failure semantics were
+changed. These files are not automatically trusted as current production
+distributions. New product decisions should version a new dataset and record
+its provenance in `dataset.json`.
 
 | Path | SHA-256 |
 |---|---|
-| `examples/coding-assistant/traces.jsonl.xz` | `4d410728942947e1d75bec11e69b419b31f01903e6d6283450ef5a8f6ef92182` |
+| `examples/coding-assistant/traces.jsonl.xz` | `765d9d93190e5118e9938562910f934f7dffc5e08e47b81ad19d2a4973a2a4b4` |
 | `examples/customer-support/traces.jsonl.xz` | `852faec7628b5866000515515ed990dd669c8bc2f02d4dfe9553db8259386784` |
 | `examples/summarization/sources.jsonl.xz` | `1c69abd25163de3d87f2b948be4681f8c0ef48db7bd26fa51a0ce500b2e0ae90` |
 | `examples/summarization/traces.jsonl.xz` | `b6dc285179f89266b0ad94c0eb96f838ddc681971d45b95eeb83030de3ba53d5` |

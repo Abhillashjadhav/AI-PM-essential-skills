@@ -159,7 +159,7 @@ def security_issue(lang: str, good: str) -> str:
     snippets = {
         "python": "import os\nAPI_KEY = 'sk-live-1234567890abcdef'  # hardcoded secret\n\ndef run(cmd):\n    return os.system(cmd)  # command injection",
         "javascript": "function calc(expr) {\n  return eval(expr); // eval on user input\n}",
-        "typescript": "const token = 'ghp_hardcodedSecretToken123'; // hardcoded secret\nexport const auth = () => token;",
+        "typescript": "const token = '<REDACTED_GITHUB_TOKEN>'; // hardcoded secret\nexport const auth = () => token;",
         "go": "func log(user string) {\n\tfmt.Printf(user) // format-string / log injection\n}",
         "rust": "fn run(cmd: &str) {\n    std::process::Command::new(\"sh\").arg(\"-c\").arg(cmd).spawn().unwrap(); // shell injection\n}",
         "sql": "SELECT * FROM users WHERE name = '\" + userInput + \"'; -- SQL injection",

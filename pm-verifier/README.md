@@ -137,7 +137,8 @@ The executable tests cover:
 Useful data and capabilities from `pm-evals` and `Evals-pass-1` are mapped in
 [`docs/MIGRATION.md`](docs/MIGRATION.md). Versioned source snapshots live under
 `skills/eval-engine/examples/migrated/` with source commits and hashes. Large
-JSONL snapshots use lossless `.xz`; tests verify the decompressed original hash.
+JSONL snapshots use lossless `.xz`; tests verify the decompressed migration
+hash, and provenance records one credential-shaped synthetic-token redaction.
 
 Existing `gates.json` and `rubric.json` users should combine those files into
 `suite.json`; existing cases become `cases.jsonl`, and actual repeated outputs

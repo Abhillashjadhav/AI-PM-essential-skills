@@ -8,7 +8,7 @@
 | `Evals-pass-1`: deterministic wrong-document fault | `harness/pm_verifier/faults.py`, `production-eval/faults/specs.json` | Known-bad outcome, trajectory, safety, privacy, metrics, retry, and mixed-failure tests |
 | `Evals-pass-1`: answer key and return-policy dataset | `examples/migrated/Evals-pass-1/` plus generalized `production-eval/` | Source commit and SHA-256 provenance |
 | `Evals-pass-1`: verbosity and position-bias experiment | `harness/pm_verifier/bias.py`, calibration pair fixtures | Stable and biased AB/BA known-answer tests |
-| `pm-evals`: JSONL traces and multi-domain datasets | `examples/migrated/pm-evals/examples/` | Lossless `.xz` source snapshots with decompressed SHA-256 and commit provenance |
+| `pm-evals`: JSONL traces and multi-domain datasets | `examples/migrated/pm-evals/examples/` | Lossless `.xz` snapshots with decompressed SHA-256, source commit, and one documented token-placeholder redaction |
 | `pm-evals`: rubrics and prompt-preparation concepts | Migrated rubrics; `suite.json` grader/rubric contract; provider-neutral `judgments.jsonl` | Strict schema and model-evidence tests |
 | `pm-evals`: human golden set and judge results | `examples/migrated/pm-evals/golden/`; `calibration.py` | Human/held-out validation and biased-judge rejection tests |
 | `pm-evals`: failure clustering | `analysis.py` | Explainable `lexical-v1` clusters and failure-slice test |

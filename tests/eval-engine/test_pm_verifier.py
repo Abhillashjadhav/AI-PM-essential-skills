@@ -265,7 +265,7 @@ class PMVerifierTest(unittest.TestCase):
     def test_migrated_source_data_hashes_are_preserved(self) -> None:
         migrated = EXAMPLE.parent / "migrated"
         expected = {
-            "pm-evals/examples/coding-assistant/traces.jsonl.xz": "4d410728942947e1d75bec11e69b419b31f01903e6d6283450ef5a8f6ef92182",
+            "pm-evals/examples/coding-assistant/traces.jsonl.xz": "765d9d93190e5118e9938562910f934f7dffc5e08e47b81ad19d2a4973a2a4b4",
             "pm-evals/examples/customer-support/traces.jsonl.xz": "852faec7628b5866000515515ed990dd669c8bc2f02d4dfe9553db8259386784",
             "pm-evals/examples/summarization/traces.jsonl.xz": "b6dc285179f89266b0ad94c0eb96f838ddc681971d45b95eeb83030de3ba53d5",
             "pm-evals/examples/summarization/sources.jsonl.xz": "1c69abd25163de3d87f2b948be4681f8c0ef48db7bd26fa51a0ce500b2e0ae90",
