@@ -22,6 +22,9 @@ SUPPORTED_CHECKS = {
 def validate_grader(grader: dict[str, Any]) -> list[str]:
     errors: list[str] = []
     grader_id = grader.get("id", "<missing>")
+    for field in ("id", "name"):
+        if not isinstance(grader.get(field), str) or not grader[field].strip():
+            errors.append(f"grader {grader_id}: {field} must be a non-empty string")
     if grader.get("check") not in SUPPORTED_CHECKS:
         errors.append(f"grader {grader_id}: unsupported check {grader.get('check')!r}")
     if grader.get("scope") not in {"outcome", "trajectory"}:
@@ -30,8 +33,32 @@ def validate_grader(grader: dict[str, Any]) -> list[str]:
         errors.append(f"grader {grader_id}: invalid category")
     if grader.get("gate") is not True:
         errors.append(f"grader {grader_id}: deterministic release checks must be gates")
+    check = grader.get("check")
+    params = grader.get("params", {})
+    if not isinstance(params, dict):
+        errors.append(f"grader {grader_id}: params must be an object")
+        params = {}
+    if check == "trace_step_equals":
+        for field in ("step_name", "field"):
+            if not isinstance(params.get(field), str) or not params[field].strip():
+                errors.append(f"grader {grader_id}: params.{field} is required")
+        if not isinstance(grader.get("expected_path"), str) or not grader["expected_path"]:
+            errors.append(f"grader {grader_id}: expected_path is required")
+    else:
+        if not isinstance(grader.get("actual_path"), str) or not grader["actual_path"]:
+            errors.append(f"grader {grader_id}: actual_path is required")
+    if check == "equals_expected" and (
+        not isinstance(grader.get("expected_path"), str) or not grader["expected_path"]
+    ):
+        errors.append(f"grader {grader_id}: expected_path is required")
+    if check == "max_length":
+        chars = params.get("chars")
+        if not isinstance(chars, int) or isinstance(chars, bool) or chars < 0:
+            errors.append(f"grader {grader_id}: params.chars must be an integer >= 0")
+    if check == "contains_all" and not isinstance(params.get("values"), list):
+        errors.append(f"grader {grader_id}: params.values must be a list")
     if grader.get("check") in {"regex", "not_regex"}:
-        patterns = grader.get("params", {}).get("patterns")
+        patterns = params.get("patterns")
         if not isinstance(patterns, list) or not patterns:
             errors.append(f"grader {grader_id}: regex patterns must be a non-empty list")
         else:

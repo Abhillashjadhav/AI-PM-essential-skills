@@ -27,12 +27,31 @@ def calibrate(
         return _blocked([str(exc)])
 
     errors: list[str] = []
+    config = suite.get("calibration")
+    if not isinstance(config, dict):
+        return _blocked(["suite.calibration must be an object"])
+    expected_judge = config.get("judge_id")
+    if not isinstance(expected_judge, str) or not expected_judge:
+        errors.append("suite.calibration.judge_id must be a non-empty string")
+    try:
+        minimum = float(config["minimum_agreement"])
+        maximum_fp = float(config["maximum_false_positive_rate"])
+    except (KeyError, TypeError, ValueError):
+        return _blocked(
+            [
+                "suite calibration thresholds minimum_agreement and maximum_false_positive_rate must be numbers"
+            ]
+        )
+    if not 0 <= minimum <= 1 or not 0 <= maximum_fp <= 1:
+        errors.append("suite calibration thresholds must be between 0 and 1")
     if not goldens:
         errors.append("human golden set is empty")
     if not judgments:
         errors.append("judge calibration labels are empty")
     if any(row.get("source") != "human" for row in goldens):
         errors.append("every golden label must declare source='human'")
+    if any(not isinstance(row.get("reviewer_id"), str) or not row["reviewer_id"] for row in goldens):
+        errors.append("every golden label requires reviewer_id provenance")
     held_out = bool(goldens) and all(row.get("split") == "test" for row in goldens)
     if not held_out:
         errors.append("golden calibration evidence must use held-out split='test'")
@@ -45,15 +64,46 @@ def calibrate(
         errors.append("judge item_id values must be present and unique")
     if set(by_human) != set(by_judge):
         errors.append("human and judge calibration item_id sets must match exactly")
-    if errors:
-        return _blocked(errors)
-
-    expected_judge = suite.get("calibration", {}).get("judge_id")
     judge_ids = {row.get("judge_id") for row in judgments}
     if judge_ids != {expected_judge}:
-        return _blocked(
-            [f"judge calibration provenance mismatch: {sorted(str(x) for x in judge_ids)}"]
+        errors.append(
+            f"judge calibration provenance mismatch: {sorted(str(x) for x in judge_ids)}"
         )
+
+    label_ids = {
+        grader.get("id")
+        for grader in suite.get("model_graders", [])
+        if isinstance(grader, dict) and grader.get("id")
+    }
+    score_ids = {
+        criterion.get("id")
+        for criterion in suite.get("rubric", [])
+        if isinstance(criterion, dict) and criterion.get("id")
+    }
+    for source, rows in (("human", goldens), ("judge", judgments)):
+        for row in rows:
+            item_id = row.get("item_id", "<missing>")
+            labels = row.get("labels")
+            scores = row.get("scores")
+            if not isinstance(labels, dict) or set(labels) != label_ids:
+                errors.append(
+                    f"{source} item {item_id}: labels must match model grader ids {sorted(label_ids)}"
+                )
+            elif any(value not in {"PASS", "FAIL"} for value in labels.values()):
+                errors.append(f"{source} item {item_id}: labels must be PASS or FAIL")
+            if not isinstance(scores, dict) or set(scores) != score_ids:
+                errors.append(
+                    f"{source} item {item_id}: scores must match rubric ids {sorted(score_ids)}"
+                )
+            elif any(
+                not isinstance(value, (int, float))
+                or isinstance(value, bool)
+                or not 1 <= float(value) <= 5
+                for value in scores.values()
+            ):
+                errors.append(f"{source} item {item_id}: scores must be numbers from 1 to 5")
+    if errors:
+        return _blocked(errors)
 
     total = 0
     agree = 0
@@ -105,9 +155,6 @@ def calibrate(
     overall = agree / total if total else 0.0
     fp_rate = false_positive / gate_cells if gate_cells else 0.0
     fn_rate = false_negative / gate_cells if gate_cells else 0.0
-    config = suite.get("calibration", {})
-    minimum = float(config.get("minimum_agreement", 0.8))
-    maximum_fp = float(config.get("maximum_false_positive_rate", 0.1))
     status = "PASS" if overall >= minimum and fp_rate <= maximum_fp else "FAIL"
 
     per_dimension = {

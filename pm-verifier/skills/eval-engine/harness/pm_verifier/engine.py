@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -54,6 +55,14 @@ def _limitations() -> list[str]:
     ]
 
 
+def _is_number(value: Any) -> bool:
+    return (
+        isinstance(value, (int, float))
+        and not isinstance(value, bool)
+        and math.isfinite(float(value))
+    )
+
+
 def _required_mapping(
     container: dict[str, Any], key: str, label: str, errors: list[str]
 ) -> dict[str, Any]:
@@ -79,16 +88,19 @@ def _validate_provenance(
     actual_cases_hash = sha256_file(cases_path)
     if dataset.get("source") in (None, ""):
         errors.append("dataset.source is required")
+    for field in ("dataset_id", "dataset_version"):
+        if dataset.get(field) in (None, ""):
+            errors.append(f"dataset.{field} is required")
     if dataset.get("cases_path") != cases_path.name:
         errors.append(f"dataset.cases_path must be {cases_path.name!r}")
+    run_dataset = _required_mapping(run, "dataset", "run", errors)
     for label, value in (
         ("dataset.cases_sha256", dataset.get("cases_sha256")),
-        ("run.dataset.cases_sha256", run.get("dataset", {}).get("cases_sha256")),
+        ("run.dataset.cases_sha256", run_dataset.get("cases_sha256")),
     ):
         if value != actual_cases_hash:
             errors.append(f"{label} mismatch: expected actual cases_sha256 {actual_cases_hash}")
 
-    run_dataset = _required_mapping(run, "dataset", "run", errors)
     if run_dataset.get("id") != dataset.get("dataset_id"):
         errors.append("run.dataset.id does not match dataset.dataset_id")
     if run_dataset.get("version") != dataset.get("dataset_version"):
@@ -113,9 +125,11 @@ def _validate_provenance(
             errors.append(f"run.candidate.{key} is required")
 
     model = _required_mapping(run, "model", "run", errors)
-    for key in ("provider", "name", "version", "parameters"):
+    for key in ("provider", "name", "version"):
         if key not in model or model[key] in (None, ""):
             errors.append(f"run.model.{key} is required")
+    if not isinstance(model.get("parameters"), dict):
+        errors.append("run.model.parameters must be an object")
     prompt = _required_mapping(run, "prompt", "run", errors)
     harness = _required_mapping(run, "harness", "run", errors)
     for label, value in (("prompt", prompt), ("harness", harness)):
@@ -176,6 +190,20 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
             errors.append(f"model grader {grader.get('id')}: invalid scope")
         if grader.get("category") not in {"quality", "safety", "privacy"}:
             errors.append(f"model grader {grader.get('id')}: invalid category")
+        for field in ("id", "name", "prompt_version"):
+            if not isinstance(grader.get(field), str) or not grader[field].strip():
+                errors.append(
+                    f"model grader {grader.get('id', '<missing>')}: {field} must be a non-empty string"
+                )
+    for criterion in rubric:
+        if not isinstance(criterion, dict):
+            errors.append("every rubric criterion must be an object")
+            continue
+        for field in ("id", "name", "definition", "anchor_1", "anchor_5", "worked_example"):
+            if not isinstance(criterion.get(field), str) or not criterion[field].strip():
+                errors.append(
+                    f"rubric criterion {criterion.get('id', '<missing>')}: {field} must be a non-empty string"
+                )
     identifiers = [
         item.get("id")
         for item in [*deterministic, *model_graders, *rubric]
@@ -186,10 +214,48 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
         errors.append("every grader and rubric criterion needs an id")
     if len(identifiers) != len(set(identifiers)):
         errors.append("grader and rubric ids must be globally unique")
-    if (model_graders or rubric) and not isinstance(suite.get("calibration"), dict):
-        errors.append("suite.calibration is required when model judgments are used")
-    if not isinstance(suite.get("release_rules"), dict):
+    calibration = suite.get("calibration")
+    if model_graders or rubric:
+        if not isinstance(calibration, dict):
+            errors.append("suite.calibration is required when model judgments are used")
+        else:
+            for field in ("judge_id", "calibration_id"):
+                if not isinstance(calibration.get(field), str) or not calibration[field].strip():
+                    errors.append(f"suite.calibration.{field} must be a non-empty string")
+            for field in ("minimum_agreement", "maximum_false_positive_rate"):
+                value = calibration.get(field)
+                if not _is_number(value) or not 0 <= float(value) <= 1:
+                    errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
+
+    rules = suite.get("release_rules")
+    if not isinstance(rules, dict):
         errors.append("suite.release_rules must be an object")
+        return errors
+    for field in ("min_case_pass_rate", "min_trial_pass_rate"):
+        value = rules.get(field)
+        if not _is_number(value) or not 0 <= float(value) <= 1:
+            errors.append(f"suite.release_rules.{field} must be a number from 0 to 1")
+    for field in ("max_safety_failures", "max_privacy_failures"):
+        value = rules.get(field)
+        if not isinstance(value, int) or isinstance(value, bool) or value < 0:
+            errors.append(f"suite.release_rules.{field} must be an integer >= 0")
+    if suite.get("suite_type") == "regression" and not isinstance(
+        rules.get("require_all_regression_trials"), bool
+    ):
+        errors.append(
+            "suite.release_rules.require_all_regression_trials must be boolean for regression suites"
+        )
+    if rubric:
+        score = rules.get("min_model_score")
+        if not _is_number(score) or not 1 <= float(score) <= 5:
+            errors.append("suite.release_rules.min_model_score must be a number from 1 to 5")
+    for field in ("max_cost_usd_per_trial", "max_latency_ms_per_trial", "max_total_tokens_per_trial"):
+        if field in rules and (not _is_number(rules[field]) or float(rules[field]) < 0):
+            errors.append(f"suite.release_rules.{field} must be a non-negative number")
+    if "max_retries_per_trial" in rules:
+        retries = rules["max_retries_per_trial"]
+        if not isinstance(retries, int) or isinstance(retries, bool) or retries < 0:
+            errors.append("suite.release_rules.max_retries_per_trial must be an integer >= 0")
     return errors
 
 
@@ -290,11 +356,31 @@ def _validate_trials(
     return errors
 
 
+def _eligible_model_trial_ids(
+    suite: dict[str, Any],
+    cases: list[dict[str, Any]],
+    trials: list[dict[str, Any]],
+) -> set[str]:
+    """Return trials that cleared deterministic gates and need model grading."""
+    by_case = {case["case_id"]: case for case in cases}
+    eligible: set[str] = set()
+    for trial in trials:
+        case = by_case[trial["case_id"]]
+        gate_results = [
+            grade_deterministic(grader, trial, case)
+            for grader in suite.get("deterministic_graders", [])
+        ]
+        if all(result["passed"] for result in gate_results):
+            eligible.add(trial["trial_id"])
+    return eligible
+
+
 def _validate_model_evidence(
     suite: dict[str, Any],
     trials: list[dict[str, Any]],
     judgments: list[dict[str, Any]],
     calibration: dict[str, Any],
+    eligible_trial_ids: set[str],
 ) -> list[str]:
     model_graders = suite.get("model_graders", [])
     rubric = suite.get("rubric", [])
@@ -311,17 +397,23 @@ def _validate_model_evidence(
         errors.append("calibration judge_id does not match suite calibration contract")
     if calibration.get("rubric_hash") != expected_rubric_hash:
         errors.append("calibration rubric_hash does not match current model graders/rubric")
-    golden_set = calibration.get("golden_set", {})
+    golden_set = calibration.get("golden_set")
+    if not isinstance(golden_set, dict):
+        errors.append("calibration.golden_set must be an object")
+        golden_set = {}
     if golden_set.get("source") != "human" or golden_set.get("held_out") is not True:
         errors.append("calibration must reference a held-out human golden set")
     if not valid_sha256(golden_set.get("sha256")):
         errors.append("calibration golden_set.sha256 is invalid")
-    metrics = calibration.get("metrics", {})
+    metrics = calibration.get("metrics")
+    if not isinstance(metrics, dict):
+        errors.append("calibration.metrics must be an object")
+        metrics = {}
     agreement = metrics.get("overall_agreement")
     false_positive = metrics.get("false_positive_rate")
-    if not isinstance(agreement, (int, float)) or agreement < float(config["minimum_agreement"]):
+    if not _is_number(agreement) or agreement < float(config["minimum_agreement"]):
         errors.append("calibration agreement is below the suite threshold")
-    if not isinstance(false_positive, (int, float)) or false_positive > float(
+    if not _is_number(false_positive) or false_positive > float(
         config["maximum_false_positive_rate"]
     ):
         errors.append("calibration false-positive rate exceeds the suite threshold")
@@ -330,7 +422,7 @@ def _validate_model_evidence(
     by_trial = {row.get("trial_id"): row for row in judgments}
     if None in by_trial or len(by_trial) != len(judgments):
         errors.append("judgment trial_id values must be present and unique")
-    missing = sorted(trial_ids - set(by_trial))
+    missing = sorted(eligible_trial_ids - set(by_trial))
     extra = sorted(set(by_trial) - trial_ids, key=str)
     if missing:
         errors.append(f"missing model judgments for trials: {missing}")
@@ -338,7 +430,7 @@ def _validate_model_evidence(
         errors.append(f"model judgments reference unselected trials: {extra}")
     model_ids = {grader["id"] for grader in model_graders}
     rubric_ids = {criterion["id"] for criterion in rubric}
-    for trial_id in sorted(trial_ids & set(by_trial)):
+    for trial_id in sorted(eligible_trial_ids & set(by_trial)):
         judgment = by_trial[trial_id]
         if judgment.get("judge_id") != config.get("judge_id"):
             errors.append(f"judgment {trial_id}: judge_id mismatch")
@@ -567,9 +659,6 @@ def evaluate_project(
         run = load_json(project / "run.json")
         cases = load_jsonl(cases_path)
         trials = load_jsonl(selected_trials)
-        uses_model_evidence = bool(suite.get("model_graders") or suite.get("rubric"))
-        judgments = load_jsonl(selected_judgments) if uses_model_evidence else []
-        calibration = load_json(project / "calibration.json") if uses_model_evidence else {}
     except EvidenceError as exc:
         return _blocked([str(exc)], suite)
 
@@ -580,9 +669,39 @@ def evaluate_project(
     if isinstance(minimum, int) and not isinstance(minimum, bool) and minimum >= 1:
         errors.extend(_validate_trials(trials, cases, minimum))
     errors.extend(_validate_provenance(suite_path, suite, dataset, run, cases_path))
-    if not errors:
+    if errors:
+        blocked = _blocked(errors, suite)
+        blocked["summary"] = {
+            "case_count": len(cases),
+            "trial_count": len(trials),
+        }
+        return blocked
+
+    uses_model_evidence = bool(suite.get("model_graders") or suite.get("rubric"))
+    eligible_trial_ids = (
+        _eligible_model_trial_ids(suite, cases, trials) if uses_model_evidence else set()
+    )
+    judgments: list[dict[str, Any]] = []
+    calibration: dict[str, Any] = {}
+    if eligible_trial_ids:
+        try:
+            judgments = load_jsonl(selected_judgments)
+            calibration = load_json(project / "calibration.json")
+        except EvidenceError as exc:
+            blocked = _blocked([str(exc)], suite)
+            blocked["summary"] = {
+                "case_count": len(cases),
+                "trial_count": len(trials),
+            }
+            return blocked
         errors.extend(
-            _validate_model_evidence(suite, trials, judgments, calibration)
+            _validate_model_evidence(
+                suite,
+                trials,
+                judgments,
+                calibration,
+                eligible_trial_ids,
+            )
         )
     if errors:
         blocked = _blocked(errors, suite)

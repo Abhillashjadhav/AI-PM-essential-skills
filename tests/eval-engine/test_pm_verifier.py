@@ -130,6 +130,15 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(result["decision"], "BLOCKED")
         self.assertTrue(any("cases_sha256" in error for error in result["evidence_errors"]))
 
+    def test_malformed_nested_provenance_blocks_without_crashing(self) -> None:
+        run_path = self.project / "run.json"
+        run = json.loads(run_path.read_text(encoding="utf-8"))
+        run["dataset"] = []
+        run_path.write_text(json.dumps(run, indent=2), encoding="utf-8")
+        result = self.evaluate()
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertTrue(any("run.dataset" in error for error in result["evidence_errors"]))
+
     def test_minimum_trials_and_operational_guardrails(self) -> None:
         one_each = [
             row for row in self.load_jsonl("trials.jsonl") if row["trial_index"] == 1
@@ -164,6 +173,48 @@ class PMVerifierTest(unittest.TestCase):
         (self.project / "calibration.json").unlink()
         result = self.evaluate()
         self.assertEqual(result["decision"], "PASS")
+
+    def test_deterministic_failures_skip_unneeded_model_evidence(self) -> None:
+        rows = self.load_jsonl("trials.jsonl")
+        for row in rows:
+            row["outcome"]["decision"] = "known-bad"
+        path = self.write_jsonl("all-deterministic-fail.jsonl", rows)
+        (self.project / "judgments.jsonl").unlink()
+        (self.project / "calibration.json").unlink()
+        result = self.evaluate(trials_path=path)
+        self.assertEqual(result["decision"], "FAIL")
+        self.assertEqual(result["summary"]["passed_trials"], 0)
+        self.assertTrue(all(trial["model_grading_skipped"] for trial in result["trials"]))
+
+    def test_invalid_release_and_calibration_contracts_block(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        del suite["release_rules"]["min_case_pass_rate"]
+        self.rewrite_suite(suite)
+        invalid_rules = self.evaluate()
+        self.assertEqual(invalid_rules["decision"], "BLOCKED")
+        self.assertTrue(
+            any("min_case_pass_rate" in error for error in invalid_rules["evidence_errors"])
+        )
+
+        suite["release_rules"]["min_case_pass_rate"] = 1.0
+        self.rewrite_suite(suite)
+        calibration_path = self.project / "calibration.json"
+        calibration = json.loads(calibration_path.read_text(encoding="utf-8"))
+        calibration["metrics"] = []
+        calibration_path.write_text(json.dumps(calibration, indent=2), encoding="utf-8")
+        invalid_calibration = self.evaluate()
+        self.assertEqual(invalid_calibration["decision"], "BLOCKED")
+        self.assertTrue(
+            any("calibration.metrics" in error for error in invalid_calibration["evidence_errors"])
+        )
+
+    def test_malformed_deterministic_grader_blocks_without_crashing(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["deterministic_graders"][3]["params"] = []
+        self.rewrite_suite(suite)
+        result = self.evaluate()
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertTrue(any("params" in error for error in result["evidence_errors"]))
 
     def test_failure_slices_and_clusters_are_explainable(self) -> None:
         result = self.evaluate(trials_path=self.fault("mixed"))

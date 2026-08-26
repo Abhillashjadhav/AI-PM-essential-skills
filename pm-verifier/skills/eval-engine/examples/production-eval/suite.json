@@ -80,7 +80,8 @@
       "name": "clarity",
       "definition": "the customer can understand the decision and method in one read",
       "anchor_1": "the answer omits the decision or gives conflicting methods",
-      "anchor_5": "the answer states the decision and exact method in one direct sentence"
+      "anchor_5": "the answer states the decision and exact method in one direct sentence",
+      "worked_example": "Eligible. Return it to the original payment method. earns 5 because it states both the decision and method directly."
     }
   ],
   "calibration": {

@@ -2,7 +2,7 @@
   "schema_version": "1.0",
   "calibration_id": "return-policy-cal-v1",
   "judge_id": "synthetic-judge-v1",
-  "rubric_hash": "3d8d2cb4207e180d83f81f764f7010e2a0249268071ffb66e7627da0706032da",
+  "rubric_hash": "aa05973a57e62e0725028fa2993f78ffac8195f5484fed02cef026ab4117627b",
   "golden_set": {
     "id": "return-policy-human-goldens",
     "version": "1.0.0",
