@@ -31,11 +31,13 @@ This document records what this repository's checks establish and what they do n
 - missing, malformed, or mismatched evidence produces `BLOCKED`, never inferred success;
 - human calibration enforces sample size, class coverage, per-dimension
   confidence bounds, chance-corrected agreement, false-positive rates, ordinal
-  error, and biased-judge rejection without pooled-metric masking;
+  error, consistent per-dimension sample counts, and biased-judge rejection
+  without pooled-metric masking;
 - capability and regression thresholds, diagnostic-versus-gate behavior,
   partial quality, failure slices, lexical clustering, and migrated-data hashes
   are executable;
-- subprocess adapter failures, oversized streams, unordered trajectories, and
+- subprocess adapter failures, oversized or inherited streams, finite timeout
+  enforcement, unordered trajectories, non-finite metrics, malformed IDs, and
   shared trial isolation produce `BLOCKED`;
 - identical evidence produces identical results and displayed evidence is
   redacted for credential/PII patterns; and

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import json
+import math
 import os
 import signal
 import subprocess
 import threading
+import time
 from pathlib import Path
 from typing import Any, BinaryIO, Sequence
 
@@ -41,12 +43,11 @@ def _error_trial(
 
 
 def _kill_process(process: subprocess.Popen[bytes]) -> None:
-    if process.poll() is not None:
-        return
     try:
         if os.name == "posix":
+            # The group may still contain descendants after its leader exits.
             os.killpg(process.pid, signal.SIGKILL)
-        else:
+        elif process.poll() is None:
             process.kill()
     except (OSError, ProcessLookupError):
         pass
@@ -110,7 +111,7 @@ def _invoke_adapter(
     stdout = bytearray()
     stderr = bytearray()
     overflow: list[str] = []
-    threads = [
+    reader_threads = [
         threading.Thread(
             target=_read_bounded,
             args=(
@@ -135,14 +136,16 @@ def _invoke_adapter(
             ),
             daemon=True,
         ),
-        threading.Thread(
-            target=_write_request,
-            args=(process.stdin, payload),
-            daemon=True,
-        ),
     ]
+    writer_thread = threading.Thread(
+        target=_write_request,
+        args=(process.stdin, payload),
+        daemon=True,
+    )
+    threads = [*reader_threads, writer_thread]
     for thread in threads:
         thread.start()
+    deadline = time.monotonic() + timeout_seconds
     timed_out = False
     try:
         returncode = process.wait(timeout=timeout_seconds)
@@ -151,10 +154,16 @@ def _invoke_adapter(
         _kill_process(process)
         returncode = process.wait()
     for thread in threads:
-        thread.join(timeout=1)
-    streams_alive = any(thread.is_alive() for thread in threads)
-    process.stdout.close()
-    process.stderr.close()
+        thread.join(timeout=max(0.0, deadline - time.monotonic()))
+    if any(thread.is_alive() for thread in threads):
+        timed_out = True
+        _kill_process(process)
+        for thread in threads:
+            thread.join(timeout=1)
+    streams_alive = any(thread.is_alive() for thread in reader_threads)
+    if not streams_alive:
+        process.stdout.close()
+        process.stderr.close()
     if timed_out:
         raise EvidenceError(
             f"adapter execution timed out after {timeout_seconds:g} seconds"
@@ -207,8 +216,13 @@ def execute_trials(
     minimum = suite.get("minimum_trials_per_case")
     if not isinstance(minimum, int) or isinstance(minimum, bool) or minimum < 1:
         raise EvidenceError("suite.minimum_trials_per_case must be an integer >= 1")
-    if timeout_seconds <= 0:
-        raise EvidenceError("adapter timeout must be greater than zero")
+    if (
+        not isinstance(timeout_seconds, (int, float))
+        or isinstance(timeout_seconds, bool)
+        or not math.isfinite(float(timeout_seconds))
+        or timeout_seconds <= 0
+    ):
+        raise EvidenceError("adapter timeout must be a finite number greater than zero")
 
     rows: list[dict[str, Any]] = []
     errors: list[str] = []

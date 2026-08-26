@@ -119,8 +119,9 @@ expected answer. The adapter must return one JSON object on stdout containing:
 - a SHA-256 `environment_fingerprint`; and
 - a unique `isolation_id`.
 
-Non-zero exits, timeouts, malformed output, stdout above 1 MB, stderr above 64
-KB, shared isolation IDs, unordered trace indexes, or missing fields produce
+Non-zero exits, finite-deadline timeouts (including inherited child streams),
+malformed output, stdout above 1 MB, stderr above 64 KB, non-finite metrics,
+shared isolation IDs, unordered trace indexes, or missing fields produce
 `BLOCKED`, never `PASS`.
 
 ## File contract

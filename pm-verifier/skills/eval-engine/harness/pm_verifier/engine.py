@@ -289,9 +289,14 @@ def _validate_cases(cases: list[dict[str, Any]]) -> list[str]:
     if not cases:
         return ["cases.jsonl is empty"]
     identifiers = [case.get("case_id") for case in cases]
-    if None in identifiers or "" in identifiers:
-        errors.append("every case requires case_id")
-    if len(identifiers) != len(set(identifiers)):
+    valid_identifiers = [
+        identifier
+        for identifier in identifiers
+        if isinstance(identifier, str) and identifier
+    ]
+    if len(valid_identifiers) != len(identifiers):
+        errors.append("every case requires a non-empty string case_id")
+    if len(valid_identifiers) != len(set(valid_identifiers)):
         errors.append("case_id values must be unique")
     for case in cases:
         if not isinstance(case.get("input"), (str, dict, list)):
@@ -309,31 +314,47 @@ def _validate_trials(
     errors: list[str] = []
     if not trials:
         return ["trials.jsonl is empty"]
-    case_ids = {case.get("case_id") for case in cases}
+    case_ids = {
+        case_id
+        for case in cases
+        if isinstance((case_id := case.get("case_id")), str) and case_id
+    }
     trial_ids = [trial.get("trial_id") for trial in trials]
-    if None in trial_ids or "" in trial_ids:
-        errors.append("every trial requires trial_id")
-    if len(trial_ids) != len(set(trial_ids)):
+    valid_trial_ids = [
+        trial_id
+        for trial_id in trial_ids
+        if isinstance(trial_id, str) and trial_id
+    ]
+    if len(valid_trial_ids) != len(trial_ids):
+        errors.append("every trial requires a non-empty string trial_id")
+    if len(valid_trial_ids) != len(set(valid_trial_ids)):
         errors.append("trial_id values must be unique")
     isolation_ids = [trial.get("isolation_id") for trial in trials]
-    if None in isolation_ids or "" in isolation_ids:
-        errors.append("every trial requires isolation_id")
-    if len(isolation_ids) != len(set(isolation_ids)):
+    valid_isolation_ids = [
+        isolation_id
+        for isolation_id in isolation_ids
+        if isinstance(isolation_id, str) and isolation_id
+    ]
+    if len(valid_isolation_ids) != len(isolation_ids):
+        errors.append("every trial requires a non-empty string isolation_id")
+    if len(valid_isolation_ids) != len(set(valid_isolation_ids)):
         errors.append("isolation_id values must be unique across trials")
     counts: Counter[str] = Counter()
     indexes: dict[str, set[int]] = {}
     for trial in trials:
         trial_id = trial.get("trial_id")
         case_id = trial.get("case_id")
-        if case_id not in case_ids:
+        valid_case_id = isinstance(case_id, str) and bool(case_id)
+        if not valid_case_id or case_id not in case_ids:
             errors.append(f"trial {trial_id}: unknown case_id {case_id!r}")
-        counts[case_id] += 1
+        if valid_case_id:
+            counts[case_id] += 1
         index = trial.get("trial_index")
         if not isinstance(index, int) or isinstance(index, bool) or index < 1:
             errors.append(f"trial {trial_id}: trial_index must be an integer >= 1")
-        elif index in indexes.setdefault(case_id, set()):
+        elif valid_case_id and index in indexes.setdefault(case_id, set()):
             errors.append(f"trial {trial_id}: duplicate trial_index {index} for case {case_id}")
-        else:
+        elif valid_case_id:
             indexes[case_id].add(index)
         if trial.get("status") != "completed":
             errors.append(f"trial {trial_id}: status must be completed")
@@ -384,7 +405,7 @@ def _validate_trials(
         else:
             for field in METRIC_FIELDS:
                 value = metrics.get(field)
-                if not isinstance(value, (int, float)) or isinstance(value, bool) or value < 0:
+                if not _is_number(value) or float(value) < 0:
                     errors.append(f"trial {trial_id}: metrics.{field} must be a non-negative number")
         missing = trial.get("missing_evidence")
         if not isinstance(missing, list):
@@ -495,6 +516,15 @@ def _validate_model_evidence(
             )
             dimension_kappa = dimension.get("cohens_kappa")
             dimension_false_positive = dimension.get("false_positive_rate")
+            dimension_n = dimension.get("n")
+            if (
+                not isinstance(dimension_n, int)
+                or isinstance(dimension_n, bool)
+                or dimension_n != golden_n
+            ):
+                errors.append(
+                    f"calibration label dimension {grader_id} sample count must equal golden_set.n"
+                )
             if not _is_number(lower) or lower < float(config["minimum_agreement"]):
                 errors.append(
                     f"calibration label dimension {grader_id} agreement is below threshold"
@@ -531,15 +561,34 @@ def _validate_model_evidence(
                 if isinstance(dimension, dict)
                 else None
             )
+            dimension_n = dimension.get("n") if isinstance(dimension, dict) else None
+            if (
+                not isinstance(dimension_n, int)
+                or isinstance(dimension_n, bool)
+                or dimension_n != golden_n
+            ):
+                errors.append(
+                    f"calibration score dimension {criterion_id} sample count must equal golden_set.n"
+                )
             if not _is_number(mae) or mae > float(config["maximum_score_mae"]):
                 errors.append(
                     f"calibration score dimension {criterion_id} MAE exceeds threshold"
                 )
 
     trial_ids = {trial["trial_id"] for trial in trials}
-    by_trial = {row.get("trial_id"): row for row in judgments}
-    if None in by_trial or len(by_trial) != len(judgments):
-        errors.append("judgment trial_id values must be present and unique")
+    judgment_ids = [row.get("trial_id") for row in judgments]
+    valid_judgment_ids = [
+        trial_id
+        for trial_id in judgment_ids
+        if isinstance(trial_id, str) and trial_id
+    ]
+    by_trial = {
+        row["trial_id"]: row
+        for row in judgments
+        if isinstance(row.get("trial_id"), str) and row["trial_id"]
+    }
+    if len(valid_judgment_ids) != len(judgments) or len(by_trial) != len(judgments):
+        errors.append("judgment trial_id values must be non-empty strings and unique")
     missing = sorted(eligible_trial_ids - set(by_trial))
     extra = sorted(set(by_trial) - trial_ids, key=str)
     if missing:

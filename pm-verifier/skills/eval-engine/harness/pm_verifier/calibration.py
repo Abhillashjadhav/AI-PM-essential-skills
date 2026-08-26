@@ -112,12 +112,30 @@ def calibrate(
     if not held_out:
         errors.append("golden calibration evidence must use held-out split='test'")
 
-    by_human = {row.get("item_id"): row for row in goldens}
-    by_judge = {row.get("item_id"): row for row in judgments}
-    if None in by_human or len(by_human) != len(goldens):
-        errors.append("golden item_id values must be present and unique")
-    if None in by_judge or len(by_judge) != len(judgments):
-        errors.append("judge item_id values must be present and unique")
+    human_ids = [row.get("item_id") for row in goldens]
+    judge_item_ids = [row.get("item_id") for row in judgments]
+    valid_human_ids = [
+        item_id for item_id in human_ids if isinstance(item_id, str) and item_id
+    ]
+    valid_judge_ids = [
+        item_id
+        for item_id in judge_item_ids
+        if isinstance(item_id, str) and item_id
+    ]
+    by_human = {
+        row["item_id"]: row
+        for row in goldens
+        if isinstance(row.get("item_id"), str) and row["item_id"]
+    }
+    by_judge = {
+        row["item_id"]: row
+        for row in judgments
+        if isinstance(row.get("item_id"), str) and row["item_id"]
+    }
+    if len(valid_human_ids) != len(goldens) or len(by_human) != len(goldens):
+        errors.append("golden item_id values must be non-empty strings and unique")
+    if len(valid_judge_ids) != len(judgments) or len(by_judge) != len(judgments):
+        errors.append("judge item_id values must be non-empty strings and unique")
     if set(by_human) != set(by_judge):
         errors.append("human and judge calibration item_id sets must match exactly")
     judge_ids = {row.get("judge_id") for row in judgments}

@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import lzma
+import os
 import shutil
 import sys
 import tempfile
@@ -27,7 +28,7 @@ from pm_verifier.bias import analyze_pairwise_bias  # noqa: E402
 from pm_verifier.calibration import calibrate  # noqa: E402
 from pm_verifier.engine import evaluate_project  # noqa: E402
 from pm_verifier.faults import apply_faults  # noqa: E402
-from pm_verifier.io import sha256_file  # noqa: E402
+from pm_verifier.io import EvidenceError, sha256_file  # noqa: E402
 from pm_verifier.adapter import (  # noqa: E402
     MAX_ADAPTER_ERROR_BYTES,
     MAX_ADAPTER_INPUT_BYTES,
@@ -127,6 +128,39 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(invalid_metrics["decision"], "BLOCKED")
         self.assertTrue(missing["evidence_errors"])
         self.assertTrue(invalid_metrics["evidence_errors"])
+
+    def test_non_finite_operational_metrics_block(self) -> None:
+        for index, value in enumerate((float("nan"), float("inf"))):
+            with self.subTest(value=value):
+                rows = self.load_jsonl("trials.jsonl")
+                rows[0]["metrics"]["latency_ms"] = value
+                path = self.write_jsonl(f"non-finite-{index}.jsonl", rows)
+                result = self.evaluate(trials_path=path)
+                self.assertEqual(result["decision"], "BLOCKED")
+                self.assertTrue(
+                    any("latency_ms" in error for error in result["evidence_errors"])
+                )
+
+    def test_malformed_identifiers_block_without_crashing(self) -> None:
+        cases = self.load_jsonl("cases.jsonl")
+        cases[0]["case_id"] = {"not": "hashable"}
+        self.write_jsonl("cases.jsonl", cases)
+        malformed_case = self.evaluate()
+        self.assertEqual(malformed_case["decision"], "BLOCKED")
+        self.assertTrue(
+            any("case_id" in error for error in malformed_case["evidence_errors"])
+        )
+
+        shutil.copyfile(EXAMPLE / "cases.jsonl", self.project / "cases.jsonl")
+        rows = self.load_jsonl("trials.jsonl")
+        rows[0]["trial_id"] = ["not", "hashable"]
+        rows[0]["isolation_id"] = {"not": "hashable"}
+        malformed_trial_path = self.write_jsonl("malformed-identifiers.jsonl", rows)
+        malformed_trial = self.evaluate(trials_path=malformed_trial_path)
+        self.assertEqual(malformed_trial["decision"], "BLOCKED")
+        self.assertTrue(
+            any("trial_id" in error for error in malformed_trial["evidence_errors"])
+        )
 
     def test_provenance_mismatch_blocks(self) -> None:
         run_path = self.project / "run.json"
@@ -314,6 +348,27 @@ class PMVerifierTest(unittest.TestCase):
             suite["calibration"]["minimum_agreement"],
         )
 
+    def test_imported_calibration_requires_complete_dimension_counts(self) -> None:
+        calibration_path = self.project / "calibration.json"
+        original = json.loads(calibration_path.read_text(encoding="utf-8"))
+        mutations = (
+            ("label_dimensions", "G_MODEL_GROUNDED"),
+            ("score_dimensions", "C_CLARITY"),
+        )
+        for group, dimension in mutations:
+            with self.subTest(group=group, dimension=dimension):
+                calibration = json.loads(json.dumps(original))
+                calibration["metrics"][group][dimension]["n"] = 1
+                calibration_path.write_text(
+                    json.dumps(calibration, indent=2), encoding="utf-8"
+                )
+                result = self.evaluate()
+                self.assertEqual(result["decision"], "BLOCKED")
+                self.assertTrue(
+                    any("sample count" in error for error in result["evidence_errors"])
+                )
+        calibration_path.write_text(json.dumps(original, indent=2), encoding="utf-8")
+
     def test_non_gating_trajectory_check_is_diagnostic(self) -> None:
         suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
         trajectory = next(
@@ -454,6 +509,39 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(len(errors), 4)
         self.assertTrue(all("timed out" in error for error in errors))
         self.assertEqual(self.evaluate(trials_path=out)["decision"], "BLOCKED")
+
+    @unittest.skipUnless(os.name == "posix", "process-group isolation is POSIX-only")
+    def test_inherited_adapter_streams_cannot_defeat_timeout(self) -> None:
+        adapter = Path(self.tempdir.name) / "inherited-streams-adapter.py"
+        adapter.write_text(
+            "import subprocess, sys\n"
+            "subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(10)'])\n",
+            encoding="utf-8",
+        )
+        out = self.project / "inherited-streams-trials.jsonl"
+        started = time.monotonic()
+        errors = execute_trials(
+            self.project,
+            [sys.executable, str(adapter)],
+            out,
+            timeout_seconds=0.1,
+        )
+        elapsed = time.monotonic() - started
+        self.assertEqual(len(errors), 4)
+        self.assertTrue(all("timed out" in error for error in errors))
+        self.assertLess(elapsed, 3)
+        self.assertEqual(self.evaluate(trials_path=out)["decision"], "BLOCKED")
+
+    def test_non_finite_adapter_timeout_is_rejected(self) -> None:
+        for timeout in (float("nan"), float("inf")):
+            with self.subTest(timeout=timeout):
+                with self.assertRaises(EvidenceError):
+                    execute_trials(
+                        self.project,
+                        [sys.executable, "-c", "pass"],
+                        self.project / "invalid-timeout.jsonl",
+                        timeout_seconds=timeout,
+                    )
 
     def test_trajectory_indexes_must_be_ordered_and_contiguous(self) -> None:
         rows = self.load_jsonl("trials.jsonl")
