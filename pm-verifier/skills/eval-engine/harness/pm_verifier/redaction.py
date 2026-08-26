@@ -45,6 +45,7 @@ def _sensitive_key(value: Any) -> bool:
                 "passwd",
                 "privatekey",
                 "secret",
+                "secretkey",
                 "token",
             )
         )

@@ -44,6 +44,16 @@ def _cohens_kappa(human: list[str], judge: list[str]) -> float:
     return (observed - expected) / (1 - expected)
 
 
+def _finite_float(value: Any) -> float | None:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        return None
+    try:
+        converted = float(value)
+    except (OverflowError, ValueError):
+        return None
+    return converted if math.isfinite(converted) else None
+
+
 def _thresholds(config: dict[str, Any]) -> tuple[dict[str, float | int], list[str]]:
     errors: list[str] = []
     values: dict[str, float | int] = {}
@@ -61,22 +71,17 @@ def _thresholds(config: dict[str, Any]) -> tuple[dict[str, float | int], list[st
             values[field] = value
     for field in ratio_fields:
         value = config.get(field)
-        if not isinstance(value, (int, float)) or isinstance(value, bool):
-            errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
-        elif not math.isfinite(float(value)) or not 0 <= float(value) <= 1:
+        converted = _finite_float(value)
+        if converted is None or not 0 <= converted <= 1:
             errors.append(f"suite.calibration.{field} must be a number from 0 to 1")
         else:
-            values[field] = float(value)
+            values[field] = converted
     score_mae = config.get("maximum_score_mae")
-    if (
-        not isinstance(score_mae, (int, float))
-        or isinstance(score_mae, bool)
-        or not math.isfinite(float(score_mae))
-        or score_mae < 0
-    ):
+    converted_score_mae = _finite_float(score_mae)
+    if converted_score_mae is None or converted_score_mae < 0:
         errors.append("suite.calibration.maximum_score_mae must be a non-negative number")
     else:
-        values["maximum_score_mae"] = float(score_mae)
+        values["maximum_score_mae"] = converted_score_mae
     return values, errors
 
 
@@ -202,9 +207,8 @@ def calibrate(
                     f"{source} item {item_id}: scores must match rubric ids {sorted(score_ids)}"
                 )
             elif any(
-                not isinstance(value, (int, float))
-                or isinstance(value, bool)
-                or not 1 <= float(value) <= 5
+                (converted := _finite_float(value)) is None
+                or not 1 <= converted <= 5
                 for value in scores.values()
             ):
                 errors.append(f"{source} item {item_id}: scores must be numbers from 1 to 5")

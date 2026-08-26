@@ -227,6 +227,30 @@ class PMVerifierTest(unittest.TestCase):
                     )
                 )
 
+    def test_oversized_numeric_evidence_blocks_without_crashing(self) -> None:
+        oversized = 10**400
+        rows = self.load_jsonl("trials.jsonl")
+        rows[0]["metrics"]["cost_usd"] = oversized
+        oversized_metrics = self.evaluate(
+            trials_path=self.write_jsonl("oversized-number.jsonl", rows)
+        )
+        self.assertEqual(oversized_metrics["decision"], "BLOCKED")
+        self.assertTrue(
+            any("cost_usd" in error for error in oversized_metrics["evidence_errors"])
+        )
+
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["calibration"]["minimum_agreement"] = oversized
+        calibration = calibrate(
+            suite,
+            self.project / "calibration" / "human-goldens.jsonl",
+            self.project / "calibration" / "judge-labels.jsonl",
+        )
+        self.assertEqual(calibration["status"], "BLOCKED")
+        self.assertTrue(
+            any("minimum_agreement" in error for error in calibration["evidence_errors"])
+        )
+
     def test_malformed_identifiers_block_without_crashing(self) -> None:
         cases = self.load_jsonl("cases.jsonl")
         cases[0]["case_id"] = {"not": "hashable"}
@@ -764,6 +788,7 @@ class PMVerifierTest(unittest.TestCase):
         raw_trials[0]["outcome"]["refresh_token"] = structured_secret
         raw_trials[0]["outcome"]["auth_token"] = structured_secret
         raw_trials[0]["outcome"]["secret_key"] = structured_secret
+        raw_trials[0]["outcome"]["client_secret_key"] = structured_secret
         inspection = render_inspection(
             first,
             raw_trials,
@@ -775,6 +800,7 @@ class PMVerifierTest(unittest.TestCase):
         self.assertIn('\"refresh_token\": \"[REDACTED]\"', inspection)
         self.assertIn('\"auth_token\": \"[REDACTED]\"', inspection)
         self.assertIn('\"secret_key\": \"[REDACTED]\"', inspection)
+        self.assertIn('\"client_secret_key\": \"[REDACTED]\"', inspection)
 
     def test_future_schema_versions_block_explicitly(self) -> None:
         suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
