@@ -79,6 +79,13 @@ class PMVerifierTest(unittest.TestCase):
         run = json.loads(run_path.read_text(encoding="utf-8"))
         run["configuration"]["sha256"] = sha256_file(suite_path)
         run_path.write_text(json.dumps(run, indent=2), encoding="utf-8")
+        run_sha256 = sha256_file(run_path)
+        for relative in ("trials.jsonl", "judgments.jsonl"):
+            rows = self.load_jsonl(relative)
+            for row in rows:
+                row["run_id"] = run["run_id"]
+                row["run_sha256"] = run_sha256
+            self.write_jsonl(relative, rows)
 
     def test_known_good_repeated_trials_pass(self) -> None:
         result = self.evaluate()
@@ -216,6 +223,43 @@ class PMVerifierTest(unittest.TestCase):
         self.assertEqual(result["decision"], "BLOCKED")
         self.assertTrue(any("cases_sha256" in error for error in result["evidence_errors"]))
 
+    def test_stored_trials_and_judgments_are_bound_to_candidate_run(self) -> None:
+        run_path = self.project / "run.json"
+        run = json.loads(run_path.read_text(encoding="utf-8"))
+        run["candidate"]["version"] = "2.0.0"
+        run_path.write_text(json.dumps(run, indent=2), encoding="utf-8")
+
+        stale_trials = self.evaluate()
+        self.assertEqual(stale_trials["decision"], "BLOCKED")
+        self.assertTrue(
+            any("run_sha256" in error for error in stale_trials["evidence_errors"])
+        )
+
+        new_run_sha256 = sha256_file(run_path)
+        trials = self.load_jsonl("trials.jsonl")
+        for row in trials:
+            row["run_sha256"] = new_run_sha256
+        self.write_jsonl("trials.jsonl", trials)
+        stale_judgments = self.evaluate()
+        self.assertEqual(stale_judgments["decision"], "BLOCKED")
+        self.assertTrue(
+            any(
+                "judgment" in error and "run_sha256" in error
+                for error in stale_judgments["evidence_errors"]
+            )
+        )
+
+        run["candidate"].pop("sha256")
+        run_path.write_text(json.dumps(run, indent=2), encoding="utf-8")
+        missing_candidate_digest = self.evaluate()
+        self.assertEqual(missing_candidate_digest["decision"], "BLOCKED")
+        self.assertTrue(
+            any(
+                "candidate.sha256" in error
+                for error in missing_candidate_digest["evidence_errors"]
+            )
+        )
+
     def test_malformed_nested_provenance_blocks_without_crashing(self) -> None:
         run_path = self.project / "run.json"
         run = json.loads(run_path.read_text(encoding="utf-8"))
@@ -244,7 +288,7 @@ class PMVerifierTest(unittest.TestCase):
         suite["release_rules"]["min_trial_pass_rate"] = 0.5
         suite["release_rules"]["require_all_regression_trials"] = False
         self.rewrite_suite(suite)
-        capability = self.evaluate(trials_path=fault_path)
+        capability = self.evaluate(trials_path=self.fault("outcome"))
         self.assertEqual(regression["decision"], "FAIL")
         self.assertEqual(capability["decision"], "PASS")
         self.assertIn("G_OUTCOME_DECISION", capability["failed_gate_ids"])
@@ -504,6 +548,8 @@ class PMVerifierTest(unittest.TestCase):
         rows = self.load_jsonl("adapter-trials.jsonl")
         self.assertEqual(len(rows), 4)
         self.assertEqual(len({row["isolation_id"] for row in rows}), 4)
+        run_sha256 = sha256_file(self.project / "run.json")
+        self.assertTrue(all(row["run_sha256"] == run_sha256 for row in rows))
         result = self.evaluate(trials_path=out)
         self.assertEqual(result["decision"], "PASS")
 
@@ -571,6 +617,24 @@ class PMVerifierTest(unittest.TestCase):
         )
         self.assertEqual(len(stderr_errors), 4)
         self.assertTrue(all("stderr exceeds" in error for error in stderr_errors))
+
+        diagnostic_adapter = Path(self.tempdir.name) / "diagnostic-stderr-adapter.py"
+        diagnostic_adapter.write_text(
+            "import sys\n"
+            "sys.stderr.write('TRACEBACK-START-' + ('x' * 5000) + '-TRACEBACK-END')\n"
+            "raise SystemExit(9)\n",
+            encoding="utf-8",
+        )
+        diagnostic_errors = execute_trials(
+            self.project,
+            [sys.executable, str(diagnostic_adapter)],
+            self.project / "diagnostic-stderr-trials.jsonl",
+            timeout_seconds=5,
+        )
+        self.assertEqual(len(diagnostic_errors), 4)
+        self.assertTrue(all("stderr truncated" in error for error in diagnostic_errors))
+        self.assertTrue(all("TRACEBACK-START" in error for error in diagnostic_errors))
+        self.assertTrue(all("TRACEBACK-END" in error for error in diagnostic_errors))
 
     def test_stdio_adapter_timeout_becomes_blocked_evidence(self) -> None:
         adapter = Path(self.tempdir.name) / "slow-adapter.py"
@@ -658,6 +722,19 @@ class PMVerifierTest(unittest.TestCase):
         report = render_markdown(first)
         self.assertNotIn(secret, report)
         self.assertIn("[REDACTED]", report)
+
+        raw_trials = self.load_jsonl("trials.jsonl")
+        structured_secret = "synthetic-structured-secret-1234567890"
+        raw_trials[0]["outcome"]["api_key"] = structured_secret
+        raw_trials[0]["trajectory"][0]["attributes"]["password"] = structured_secret
+        inspection = render_inspection(
+            first,
+            raw_trials,
+            trial_id=raw_trials[0]["trial_id"],
+        )
+        self.assertNotIn(structured_secret, inspection)
+        self.assertIn('\"api_key\": \"[REDACTED]\"', inspection)
+        self.assertIn('\"password\": \"[REDACTED]\"', inspection)
 
     def test_future_schema_versions_block_explicitly(self) -> None:
         suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))

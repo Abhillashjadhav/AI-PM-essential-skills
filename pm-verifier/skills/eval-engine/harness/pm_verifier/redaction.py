@@ -13,6 +13,27 @@ _PATTERNS = (
     re.compile(r"-----BEGIN [A-Z ]*PRIVATE KEY-----[\s\S]*?-----END [A-Z ]*PRIVATE KEY-----"),
 )
 
+_SENSITIVE_KEYS = {
+    "accesstoken",
+    "apikey",
+    "authorization",
+    "bearertoken",
+    "clientsecret",
+    "credential",
+    "credentials",
+    "password",
+    "passwd",
+    "secret",
+    "token",
+}
+
+
+def _sensitive_key(value: Any) -> bool:
+    if not isinstance(value, str):
+        return False
+    normalized = re.sub(r"[^a-z0-9]", "", value.lower())
+    return normalized in _SENSITIVE_KEYS
+
 
 def redact_text(value: str) -> str:
     output = value
@@ -27,5 +48,8 @@ def redact_value(value: Any) -> Any:
     if isinstance(value, list):
         return [redact_value(item) for item in value]
     if isinstance(value, dict):
-        return {key: redact_value(item) for key, item in value.items()}
+        return {
+            key: "[REDACTED]" if _sensitive_key(key) else redact_value(item)
+            for key, item in value.items()
+        }
     return value

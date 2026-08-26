@@ -22,6 +22,14 @@ integers. When the provider does not expose one, set a named
 `missing_evidence` entry and accept a `BLOCKED` result until the suite owner
 explicitly changes the evidence contract. Do not silently write zero.
 
+## Candidate and run binding
+
+`run.json` requires an immutable `candidate.sha256`. Every trial and model
+judgment requires the same `run_id` plus `run_sha256`, where `run_sha256` is the
+SHA-256 of the exact `run.json` bytes. The execution harness supplies and
+overwrites these fields; the adapter cannot choose them. Any candidate or run
+provenance change therefore invalidates stored trials and judgments.
+
 ## Supported deterministic checks
 
 - `equals_expected`: compare a trial path with a case's expected path.

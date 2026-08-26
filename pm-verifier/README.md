@@ -116,6 +116,7 @@ object to stdin. The request contains the case input and metadata but never the
 expected answer. The adapter must return one JSON object on stdout containing:
 
 - `status="completed"`;
+- the harness-owned `run_id` and `run_sha256` binding;
 - `outcome` and ordered `trajectory`;
 - cost, latency, input/output token, and retry `metrics`;
 - `missing_evidence`;
@@ -126,6 +127,10 @@ Non-zero exits, finite-deadline timeouts (including inherited child streams),
 malformed output, stdout above 1 MB, stderr above 64 KB, non-finite metrics,
 shared isolation IDs, unordered trace indexes, or missing fields produce
 `BLOCKED`, never `PASS`.
+
+Stored trials and model judgments must carry the exact `run_id` and SHA-256 of
+`run.json`; `run.json` must carry an immutable candidate SHA-256. Changing the
+candidate or any declared run provenance invalidates earlier evidence.
 
 ## File contract
 
@@ -213,5 +218,7 @@ not supported.
 - Empirical repeated-trial metrics do not guarantee population reliability.
 - Lexical clustering is reproducible and explainable but less semantic than an embedding system.
 - A product-specific adapter must expose real outcomes, trajectories, metrics, environment fingerprints, and isolation IDs.
+- Run hashes detect stale/mismatched evidence; they do not replace trusted CI
+  storage or signing when evidence producers are adversarial.
 
 MIT licensed.

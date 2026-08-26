@@ -47,6 +47,7 @@ def _limitations() -> list[str]:
         "Model scores are calibrated judgments, not objective measurements.",
         "This out-of-band CI harness does not replace production monitoring, user feedback, A/B tests, or periodic human trace review.",
         "Lexical failure clustering is deterministic and dependency-free but is less semantic than an embedding-based method.",
+        "Run hashes detect stale or mismatched evidence but do not authenticate a maliciously rewritten evidence bundle; adversarial pipelines need trusted CI storage or signing.",
     ]
 
 
@@ -122,14 +123,16 @@ def _validate_provenance(
             f"run.configuration.sha256 mismatch: expected actual suite hash {actual_suite_hash}"
         )
 
-    if run.get("run_id") in (None, ""):
-        errors.append("run.run_id is required")
+    if not isinstance(run.get("run_id"), str) or not run["run_id"]:
+        errors.append("run.run_id must be a non-empty string")
     if not _valid_timestamp(run.get("created_at")):
         errors.append("run.created_at must be an RFC 3339 timestamp with timezone")
     candidate = _required_mapping(run, "candidate", "run", errors)
     for key in ("id", "version"):
-        if candidate.get(key) in (None, ""):
-            errors.append(f"run.candidate.{key} is required")
+        if not isinstance(candidate.get(key), str) or not candidate[key]:
+            errors.append(f"run.candidate.{key} must be a non-empty string")
+    if not valid_sha256(candidate.get("sha256")):
+        errors.append("run.candidate.sha256 must be a 64-character SHA-256")
 
     model = _required_mapping(run, "model", "run", errors)
     for key in ("provider", "name", "version"):
@@ -323,7 +326,11 @@ def _validate_cases(cases: list[dict[str, Any]]) -> list[str]:
 
 
 def _validate_trials(
-    trials: list[dict[str, Any]], cases: list[dict[str, Any]], minimum: int
+    trials: list[dict[str, Any]],
+    cases: list[dict[str, Any]],
+    minimum: int,
+    run_id: Any,
+    run_sha256: str,
 ) -> list[str]:
     errors: list[str] = []
     if not trials:
@@ -358,6 +365,10 @@ def _validate_trials(
     for trial in trials:
         trial_id = trial.get("trial_id")
         case_id = trial.get("case_id")
+        if trial.get("run_id") != run_id:
+            errors.append(f"trial {trial_id}: run_id does not match run.json")
+        if trial.get("run_sha256") != run_sha256:
+            errors.append(f"trial {trial_id}: run_sha256 does not match run.json")
         valid_case_id = isinstance(case_id, str) and bool(case_id)
         if not valid_case_id or case_id not in case_ids:
             errors.append(f"trial {trial_id}: unknown case_id {case_id!r}")
@@ -468,6 +479,8 @@ def _validate_model_evidence(
     judgments: list[dict[str, Any]],
     calibration: dict[str, Any],
     eligible_trial_ids: set[str],
+    run_id: str,
+    run_sha256: str,
 ) -> list[str]:
     model_graders = suite.get("model_graders", [])
     rubric = suite.get("rubric", [])
@@ -622,6 +635,10 @@ def _validate_model_evidence(
     rubric_ids = {criterion["id"] for criterion in rubric}
     for trial_id in sorted(eligible_trial_ids & set(by_trial)):
         judgment = by_trial[trial_id]
+        if judgment.get("run_id") != run_id:
+            errors.append(f"judgment {trial_id}: run_id does not match run.json")
+        if judgment.get("run_sha256") != run_sha256:
+            errors.append(f"judgment {trial_id}: run_sha256 does not match run.json")
         if judgment.get("judge_id") != config.get("judge_id"):
             errors.append(f"judgment {trial_id}: judge_id mismatch")
         if judgment.get("calibration_id") != config.get("calibration_id"):
@@ -870,6 +887,7 @@ def evaluate_project(
     """Validate evidence, grade trials, analyze failures, and decide release."""
     project = Path(root)
     suite_path = project / "suite.json"
+    run_path = project / "run.json"
     cases_path = project / "cases.jsonl"
     selected_trials = Path(trials_path) if trials_path else project / "trials.jsonl"
     selected_judgments = (
@@ -879,7 +897,7 @@ def evaluate_project(
     try:
         suite = load_json(suite_path)
         dataset = load_json(project / "dataset.json")
-        run = load_json(project / "run.json")
+        run = load_json(run_path)
         cases = load_jsonl(cases_path)
         trials = load_jsonl(selected_trials)
     except EvidenceError as exc:
@@ -890,7 +908,15 @@ def evaluate_project(
     errors.extend(_validate_cases(cases))
     minimum = suite.get("minimum_trials_per_case", 1)
     if isinstance(minimum, int) and not isinstance(minimum, bool) and minimum >= 1:
-        errors.extend(_validate_trials(trials, cases, minimum))
+        errors.extend(
+            _validate_trials(
+                trials,
+                cases,
+                minimum,
+                run.get("run_id"),
+                sha256_file(run_path),
+            )
+        )
     errors.extend(_validate_provenance(suite_path, suite, dataset, run, cases_path))
     if errors:
         blocked = _blocked(errors, suite)
@@ -924,6 +950,8 @@ def evaluate_project(
                 judgments,
                 calibration,
                 eligible_trial_ids,
+                run["run_id"],
+                sha256_file(run_path),
             )
         )
     if errors:

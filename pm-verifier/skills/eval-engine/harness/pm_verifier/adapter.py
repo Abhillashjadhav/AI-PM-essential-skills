@@ -10,7 +10,8 @@ import time
 from pathlib import Path
 from typing import Any, BinaryIO, Sequence
 
-from .io import EvidenceError, load_json, load_jsonl, write_jsonl
+from .io import EvidenceError, load_json, load_jsonl, sha256_file, write_jsonl
+from .redaction import redact_text
 
 
 MAX_ADAPTER_OUTPUT_BYTES = 1_000_000
@@ -22,9 +23,13 @@ def _error_trial(
     case_id: str,
     trial_id: str,
     trial_index: int,
+    run_id: str,
+    run_sha256: str,
     message: str,
 ) -> dict[str, Any]:
     return {
+        "run_id": run_id,
+        "run_sha256": run_sha256,
         "case_id": case_id,
         "trial_id": trial_id,
         "trial_index": trial_index,
@@ -180,7 +185,14 @@ def _invoke_adapter(
         _kill_process(process)
         raise EvidenceError("adapter streams could not be drained safely")
     if returncode != 0:
-        detail = stderr.decode("utf-8", errors="replace").strip()[:500] or "no stderr"
+        detail = stderr.decode("utf-8", errors="replace").strip() or "no stderr"
+        if len(detail) > 4_000:
+            detail = (
+                detail[:2_000]
+                + f"\n...[stderr truncated: showing first and last 2000 of {len(detail)} characters]...\n"
+                + detail[-2_000:]
+            )
+        detail = redact_text(detail)
         raise EvidenceError(
             f"adapter exited with code {returncode}: {detail}"
         )
@@ -212,6 +224,12 @@ def execute_trials(
     """
     root = Path(project)
     suite = load_json(root / "suite.json")
+    run_path = root / "run.json"
+    run = load_json(run_path)
+    run_id = run.get("run_id")
+    if not isinstance(run_id, str) or not run_id:
+        raise EvidenceError("run.run_id must be a non-empty string")
+    run_sha256 = sha256_file(run_path)
     cases = load_jsonl(root / "cases.jsonl")
     minimum = suite.get("minimum_trials_per_case")
     if not isinstance(minimum, int) or isinstance(minimum, bool) or minimum < 1:
@@ -237,6 +255,8 @@ def execute_trials(
                 "case_id": case_id,
                 "trial_id": trial_id,
                 "trial_index": trial_index,
+                "run_id": run_id,
+                "run_sha256": run_sha256,
                 "input": case.get("input"),
                 "metadata": case.get("metadata", {}),
             }
@@ -247,11 +267,20 @@ def execute_trials(
                     "case_id": case_id,
                     "trial_id": trial_id,
                     "trial_index": trial_index,
+                    "run_id": run_id,
+                    "run_sha256": run_sha256,
                 }
             except EvidenceError as exc:
                 message = f"trial {trial_id}: {exc}"
                 errors.append(message)
-                row = _error_trial(case_id, trial_id, trial_index, message)
+                row = _error_trial(
+                    case_id,
+                    trial_id,
+                    trial_index,
+                    run_id,
+                    run_sha256,
+                    message,
+                )
             rows.append(row)
     write_jsonl(output_path, rows)
     return errors

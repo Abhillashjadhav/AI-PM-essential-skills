@@ -19,7 +19,7 @@
 | Package boundary | `pyproject.toml`, semantic version, console entry point, and bundled versioned JSON schemas provide one supported installation surface. |
 | Execution | `execute` starts a fresh JSON-over-stdio subprocess for every trial, with no shell interpolation and a configured timeout/output limit. Expected answers never cross this boundary. |
 | Evidence boundary | Strict JSON/JSONL loading, stable IDs, hashes, schema versions, provenance, and explicit validation errors. |
-| Trial model | One case can have multiple trials; every trial contains an outcome, trajectory, metrics, environment fingerprint, and unique isolation ID. |
+| Trial model | One case can have multiple trials; every trial contains a run binding, outcome, trajectory, metrics, environment fingerprint, and unique isolation ID. |
 | Grading | Deterministic outcome/trajectory/safety/privacy checks run first; each check is explicitly a release gate or diagnostic. Calibrated model judgments handle semantic checks and rubrics. |
 | Calibration | Held-out human goldens separately produce binary label agreement, Cohen's kappa, a Wilson interval, class-conditional false-positive/negative rates, and ordinal-score error. |
 | Analysis | Binary release results, gradual partial-quality scores, reliability metrics, capability/regression summaries, metadata slices, and deterministic lexical failure clusters. |
@@ -77,13 +77,19 @@ eval/
 - Each trial must use a unique isolation ID. The environment fingerprint binds
   it to a declared clean starting environment; repeated trials with shared
   isolation are invalid evidence.
+- `candidate.sha256` identifies immutable candidate content. Every trial and
+  model judgment must match the exact `run_id` and SHA-256 of `run.json`, so a
+  provenance or candidate change invalidates stored evidence.
 - `run.created_at` is input provenance, not wall-clock output. Consequently,
   identical evidence produces byte-identical canonical results.
-- Adapter input, stdout, and stderr are bounded. Trajectory indexes must be
-  contiguous and ordered; oversized evidence and timeouts block the run.
-- Reports and inspection redact credential assignments, bearer tokens, email
-  addresses, and private-key blocks before display. Raw trial files remain
-  sensitive evidence and require repository/environment access controls.
+- Adapter input, stdout, and stderr are bounded. Nonzero exits preserve bounded
+  stderr or explicitly show its beginning, end, and truncation size.
+  Trajectory indexes must be contiguous and ordered; oversized evidence and
+  timeouts block the run.
+- Reports and inspection redact credential-named structured values,
+  credential assignments, bearer tokens, email addresses, and private-key
+  blocks before display. Raw trial files remain sensitive evidence and require
+  repository/environment access controls.
 - Production monitoring, user feedback, A/B tests, and periodic transcript
   review remain outside this out-of-band CI harness.
 
@@ -98,6 +104,8 @@ writes this request to stdin:
   "case_id": "case-1",
   "trial_id": "case-1-t1",
   "trial_index": 1,
+  "run_id": "candidate-run-001",
+  "run_sha256": "<sha256-of-run.json>",
   "input": {},
   "metadata": {}
 }
@@ -106,4 +114,5 @@ writes this request to stdin:
 The expected answer is deliberately absent. The adapter returns one JSON
 object with the outcome, trajectory, metrics, missing-evidence list,
 environment fingerprint, isolation ID, and completion status. The harness owns
-and overwrites case/trial identifiers to prevent adapter-side selection drift.
+and overwrites case/trial and run-binding identifiers to prevent adapter-side
+selection or provenance drift.

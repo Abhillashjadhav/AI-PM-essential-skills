@@ -52,7 +52,8 @@ a clean checkout on the public default branch.
 
 Both old repositories may be removed only when all statements below are true:
 
-1. the destination PR has independent review, green required CI, and is merged;
+1. the destination PR has independent review, green required CI on the exact
+   merge candidate, and is merged;
 2. `pip install --no-deps ./pm-verifier` succeeds from a clean default-branch checkout;
 3. the reference adapter produces repeated isolated trials and a PASS decision;
 4. every known-bad outcome, trajectory, safety, privacy, calibration, adapter,

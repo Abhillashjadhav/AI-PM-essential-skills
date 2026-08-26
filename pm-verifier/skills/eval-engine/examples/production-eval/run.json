@@ -2,7 +2,11 @@
   "schema_version": "1.0",
   "run_id": "return-agent-v1-run-001",
   "created_at": "2026-08-26T00:00:00+00:00",
-  "candidate": {"id": "return-agent", "version": "1.0.0"},
+  "candidate": {
+    "id": "return-agent",
+    "version": "1.0.0",
+    "sha256": "cef8da6675d12f3b9dfb690b2c15a9e9e269ddbf4f02cff4d9320fa5972be7f6"
+  },
   "dataset": {
     "id": "return-policy-cases",
     "version": "1.0.0",
