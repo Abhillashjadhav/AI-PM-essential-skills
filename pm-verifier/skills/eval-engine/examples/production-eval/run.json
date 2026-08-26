@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "run_id": "return-agent-v1-run-001",
+  "created_at": "2026-08-26T00:00:00+00:00",
+  "candidate": {
+    "id": "return-agent",
+    "version": "1.0.0",
+    "sha256": "cef8da6675d12f3b9dfb690b2c15a9e9e269ddbf4f02cff4d9320fa5972be7f6"
+  },
+  "dataset": {
+    "id": "return-policy-cases",
+    "version": "1.0.0",
+    "cases_sha256": "776e45df79751a2c49ec01b44429111d8cb4cdcb9e782dde7e6471feee826dde"
+  },
+  "model": {
+    "provider": "synthetic",
+    "name": "deterministic-return-agent",
+    "version": "1.0.0",
+    "parameters": {"temperature": 0}
+  },
+  "prompt": {
+    "id": "return-policy-agent-prompt",
+    "version": "1.0.0",
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "tools": [
+    {
+      "name": "return-policy-store",
+      "version": "1.0.0",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "harness": {
+    "name": "pm-verifier",
+    "version": "1.0.0",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "configuration": {
+    "id": "return-policy-regression",
+    "version": "1.0.0",
+    "sha256": "4a2cf583e65bb85044396119095b46601684c47f16e745765a7dfbc90f734439"
+  }
+}

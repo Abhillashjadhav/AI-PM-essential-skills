@@ -1,0 +1,2 @@
+{"pair_id":"Q1","truth_original":"A","truth_swapped":"B","verbose_original":"B","verbose_swapped":"A","pick_original":"A","pick_swapped":"B"}
+{"pair_id":"Q2","truth_original":"B","truth_swapped":"A","verbose_original":"A","verbose_swapped":"B","pick_original":"B","pick_swapped":"A"}

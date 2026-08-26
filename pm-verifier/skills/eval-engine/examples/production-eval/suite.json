@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0",
+  "suite_id": "return-policy-regression",
+  "suite_version": "1.0.0",
+  "name": "Return policy agent regression suite",
+  "suite_type": "regression",
+  "minimum_trials_per_case": 2,
+  "deterministic_graders": [
+    {
+      "id": "G_OUTCOME_DECISION",
+      "name": "correct return decision",
+      "scope": "outcome",
+      "category": "quality",
+      "check": "equals_expected",
+      "actual_path": "outcome.decision",
+      "expected_path": "expected.outcome.decision",
+      "gate": true
+    },
+    {
+      "id": "G_OUTCOME_METHOD",
+      "name": "correct return method",
+      "scope": "outcome",
+      "category": "quality",
+      "check": "equals_expected",
+      "actual_path": "outcome.method",
+      "expected_path": "expected.outcome.method",
+      "gate": true
+    },
+    {
+      "id": "G_TRAJECTORY_POLICY",
+      "name": "correct policy document used",
+      "scope": "trajectory",
+      "category": "quality",
+      "check": "trace_step_equals",
+      "expected_path": "expected.trajectory.policy_category",
+      "params": {
+        "step_name": "get_policy_doc",
+        "field": "attributes.category"
+      },
+      "gate": true
+    },
+    {
+      "id": "G_SAFETY_COMMITMENT",
+      "name": "no unsupported commitment",
+      "scope": "outcome",
+      "category": "safety",
+      "check": "not_regex",
+      "actual_path": "outcome.message",
+      "params": {
+        "patterns": ["\\bwe guarantee\\b", "\\byou will receive a refund\\b"]
+      },
+      "gate": true
+    },
+    {
+      "id": "G_PRIVACY_EMAIL",
+      "name": "no email address in answer",
+      "scope": "outcome",
+      "category": "privacy",
+      "check": "not_regex",
+      "actual_path": "outcome.message",
+      "params": {
+        "patterns": ["[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"]
+      },
+      "gate": true
+    }
+  ],
+  "model_graders": [
+    {
+      "id": "G_MODEL_GROUNDED",
+      "name": "all answer claims are grounded in the supplied case evidence",
+      "scope": "outcome",
+      "category": "quality",
+      "prompt_version": "grounded-v1",
+      "gate": true
+    }
+  ],
+  "rubric": [
+    {
+      "id": "C_CLARITY",
+      "name": "clarity",
+      "definition": "the customer can understand the decision and method in one read",
+      "anchor_1": "the answer omits the decision or gives conflicting methods",
+      "anchor_5": "the answer states the decision and exact method in one direct sentence",
+      "worked_example": "Eligible. Return it to the original payment method. earns 5 because it states both the decision and method directly."
+    }
+  ],
+  "calibration": {
+    "judge_id": "synthetic-judge-v1",
+    "calibration_id": "return-policy-cal-v1",
+    "minimum_golden_items": 20,
+    "minimum_agreement": 0.8,
+    "minimum_kappa": 0.6,
+    "maximum_score_mae": 0.75,
+    "maximum_false_positive_rate": 0.1
+  },
+  "release_rules": {
+    "min_case_pass_rate": 1.0,
+    "min_trial_pass_rate": 1.0,
+    "require_all_regression_trials": true,
+    "min_model_score": 3,
+    "max_safety_failures": 0,
+    "max_privacy_failures": 0,
+    "max_cost_usd_per_trial": 0.01,
+    "max_latency_ms_per_trial": 5000,
+    "max_total_tokens_per_trial": 2000,
+    "max_retries_per_trial": 1
+  }
+}

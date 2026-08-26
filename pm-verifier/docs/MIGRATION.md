@@ -1,0 +1,79 @@
+# Source capability map and consolidation plan
+
+## Capability map
+
+| Source capability | Destination | Evidence |
+|---|---|---|
+| `Evals-pass-1`: outcome vs trajectory, full trace, silent-failure detection | `harness/pm_verifier/engine.py`, `graders.py` | `test_known_bad_trajectory_gate_fires_on_silent_failure` |
+| `Evals-pass-1`: deterministic wrong-document fault | `harness/pm_verifier/faults.py`, `production-eval/faults/specs.json` | Known-bad outcome, trajectory, safety, privacy, metrics, retry, and mixed-failure tests |
+| `Evals-pass-1`: answer key and return-policy dataset | `examples/migrated/Evals-pass-1/` plus generalized `production-eval/` | Source commit and SHA-256 provenance |
+| `Evals-pass-1`: verbosity and position-bias experiment | `harness/pm_verifier/bias.py`, calibration pair fixtures | Stable and biased AB/BA known-answer tests |
+| `pm-evals`: JSONL traces and multi-domain datasets | `examples/migrated/pm-evals/examples/` | Lossless `.xz` snapshots with decompressed SHA-256, source commit, and one documented token-placeholder redaction |
+| `pm-evals`: rubrics and prompt-preparation concepts | Migrated rubrics; `suite.json` grader/rubric contract; provider-neutral `judgments.jsonl` | Strict schema and model-evidence tests |
+| `pm-evals`: human golden set and judge results | `examples/migrated/pm-evals/golden/`; `calibration.py` | Human/held-out validation and biased-judge rejection tests |
+| `pm-evals`: failure clustering | `analysis.py` | Explainable `lexical-v1` clusters and failure-slice test |
+| `pm-evals`: Markdown reports and JSON workflow | `reporting.py`, CLI `run` and `report` | Clean-copy example emits `results.json` and `report.md` |
+| `pm-evals`: pairwise swapped-order workflow | `bias.py` | Accuracy, position consistency, verbosity-pick/truth rates |
+| existing `pm-verifier`: spec/PRD trigger and define-good workflow | `skills/eval-engine/SKILL.md` | Trigger fixtures and skill lint |
+| existing `pm-verifier`: binary gates vs gradual rubric | `suite.json`, deterministic/model gate results, rubric scores | Per-trial gating and report tests |
+| existing `pm-verifier`: simple local prepare/run/report UX | Copyable pure-stdlib harness and compatibility wrappers | Clean-copy execution test |
+| external review: installable/versioned product | `pm-verifier/pyproject.toml`, console script, bundled schemas | Packaging contract and isolated package-install CI step |
+| external review: missing execution harness | `adapter.py`, CLI `execute`, production reference adapter | Fresh-process, no-expected-answer, failure-blocking, isolation tests |
+| external review: weak calibration | `calibration.py` | Sample-floor, degenerate-judge, kappa, Wilson-bound, FP/FN, and MAE tests |
+| external review: missing failure inspection | CLI `inspect`, `render_inspection` | Raw outcome/trajectory, failure reason, redaction, and selection tests |
+| existing `pm-verifier`: marketplace installation | `.claude-plugin/plugin.json` and root marketplace entry | Repository-integrity check |
+
+## Production-layer coverage
+
+| Required capability | Destination behavior | Executable evidence |
+|---|---|---|
+| 1. Outcome evaluation | Deterministic gates address paths in the real `trial.outcome`. | Known-good and wrong-outcome tests |
+| 2. Trajectory evaluation | Ordered `trajectory` steps are graded independently from outcome. | Silent trajectory-failure test |
+| 3. Deterministic/code graders | Eight provider-neutral checks, including exact values, patterns, structure, and trace-step matching. | Outcome, trajectory, safety, privacy, and deterministic-only tests |
+| 4. Calibrated model graders | External judgments require exact judge, rubric, and calibration provenance. | Model-gate and provenance tests |
+| 5. Human golden calibration | Held-out human labels produce chance-corrected binary agreement, confidence bounds, error rates, and separate ordinal error. | Good, biased, degenerate, and insufficient-sample tests |
+| 6. Multiple trials | Minimum trials are enforced; per-case empirical `pass@k` and `pass^k` are reported. | Repeated-trial and minimum-trial tests |
+| 7. Capability and regression suites | Suite type selects explicit hill-climbing or strict consistency semantics. | Capability-versus-regression test |
+| 8. Dataset/version provenance | Dataset identity, version, source, cases hash, and suite hash are validated. | Provenance-mismatch and migrated-hash tests |
+| 9. Runtime/config provenance | Candidate, model, prompt, tool, harness, and configuration identities, versions, and hashes are required. | Known-good and provenance-mismatch tests |
+| 10. Operational metrics | Cost, latency, input/output tokens, and retries are recorded and can gate release. | Missing-metric and retry-ceiling tests |
+| 11. Safety/privacy gates | Dedicated categories default to zero tolerated failures. | Safety and privacy fault tests |
+| 12. Failure slicing/clustering | Case metadata slices and disclosed deterministic lexical clusters are emitted. | Slice/cluster test |
+| 13. CI release gates | Exit codes are `0=PASS`, `1=FAIL`, `2=BLOCKED`; GitHub Actions runs all checks. | Report/exit tests and `.github/workflows/pm-verifier.yml` |
+| 14. Known-bad gate fixtures | Deterministic fault specs mutate outcome, trace, safety, privacy, metrics, retries, and mixed evidence. | Known-bad unit tests |
+| 15. Machine and human reports | `results.json` is canonical; `report.md` renders decisions; `inspect` exposes redacted raw failure evidence. | Report, inspection, redaction, and clean-install tests |
+| 16. Missing/invalid evidence | Schema, release-rule, hash, provenance, calibration, judgment, and metric errors produce `BLOCKED`. | Missing/invalid-evidence, invalid-contract, and provenance tests |
+
+## Rejected source behavior
+
+- The `pm-evals` `claude` judge fallback to a prompt hash is not migrated. A
+  missing model judgment makes the unified result `BLOCKED`.
+- Hash-derived demo scores are not quality evidence and do not enter release
+  metrics.
+- The source pairwise sample is not described as proof of general judge
+  impartiality.
+- Large source datasets remain labelled synthetic; their size does not make
+  them representative of a live product distribution.
+
+## Compatibility
+
+- `prepare.py`, `run.py`, and `report.py` remain as wrappers around the unified
+  runtime.
+- Existing `gates.json`/`rubric.json` users should migrate to `suite.json`; the
+  product README includes the field mapping.
+- `eval-rubric-generator` is retired as a triggerable skill. Its directory
+  retains a migration README pointing to `pm-verifier`.
+
+## Consolidation and removal plan
+
+The exhaustive public-surface disposition is in
+[`CAPABILITY_AUDIT.md`](CAPABILITY_AUDIT.md). After its removal gate passes:
+
+1. update the GitHub profile so `AI-PM-essential-skills/pm-verifier` is the only
+   maintained AI PM evaluation product;
+2. preserve the old final commit IDs and capability disposition in this repo;
+3. remove `Abhillashjadhav/pm-evals` and `Abhillashjadhav/Evals-pass-1` as the
+   owner requested.
+
+Removal is **not yet safe**: the destination work is still on a draft PR and is
+not the public default-branch state.

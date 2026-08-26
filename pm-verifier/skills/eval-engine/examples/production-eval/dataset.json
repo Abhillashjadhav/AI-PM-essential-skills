@@ -1,0 +1,8 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "return-policy-cases",
+  "dataset_version": "1.0.0",
+  "source": "synthetic-known-answer",
+  "cases_path": "cases.jsonl",
+  "cases_sha256": "776e45df79751a2c49ec01b44429111d8cb4cdcb9e782dde7e6471feee826dde"
+}

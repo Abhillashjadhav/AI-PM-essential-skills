@@ -28,13 +28,27 @@ If a proposed gate fits none of these families, apply the gate test extra skepti
 - **The unfalsifiable gate.** If neither code nor a judge given the case contents can answer PASS/FAIL, it can't be a gate. Rewrite until binary or move to the rubric.
 - **The invented-fact gate.** A gate that hardcodes a policy value, field list, or threshold the spec never stated. Never fill these by guessing — ask the user. A gate checking the wrong policy window fails correct outputs and passes wrong ones.
 
-## Mechanical vs judge gates
+## Deterministic vs model gates
 
-Prefer mechanical (regex / field-presence / length) — they're free, deterministic, and run in `run.py` with no judge round-trip. Use a judge gate only when the check requires reading (fabrication, tone-boundary, semantic policy violations). Judge gates return a binary PASS/FAIL inside the judge prompt's `gate_answers` — never a score.
+Prefer deterministic checks — they are fast, reproducible, and easy to debug. Use a model gate only when the check requires semantic judgment (fabrication, tone boundaries, or context-dependent policy violations). Model gates return binary `PASS`/`FAIL`, never a score, and require held-out human calibration for the exact judge/rubric version.
 
-Every mechanical gate needs `type` + `params` that `run.py` supports: `field_present` (params.field), `contains_none` (params.patterns, regex list), `contains_all` (params.patterns), `max_length` (params.chars). Anything else is a judge gate.
+Every deterministic gate uses a supported check in `references/evidence-contract.md`. If the check cannot express the claim faithfully, use a calibrated model grader instead of a brittle proxy.
+
+Trajectory checks are not automatically gates. Exact step/order expectations
+should normally be diagnostic because multiple valid paths can reach the right
+outcome. They become gates only when the path itself is risk-critical—for
+example, consulting the wrong policy document, skipping identity verification,
+or calling a forbidden tool—even if the final answer happens to be correct.
 
 ## Count discipline
 
-- **Fewer than 3 gates**: you haven't found the unshippable failure modes. Re-read the spec asking "what output would get this feature turned off?"
-- **More than 6 gates**: scores are masquerading as gates. Apply the gate test to each; demote the ones where partial credit means something.
+Use the smallest complete set. A fixed minimum encourages invented gates; a fixed maximum can hide real safety or contract boundaries. Re-read the spec asking "what output would get this feature turned off?" and retain only checks that pass the three-part gate test.
+
+## Suite-level interpretation
+
+A failed gate fails one trial. The suite's approved release rules decide whether
+the observed trial failure blocks the candidate. Regression suites normally
+require all previously reliable trials to pass. Capability suites may use a
+measured threshold while the team is hill-climbing. Safety/privacy defaults
+remain zero tolerated failures unless an accountable owner explicitly changes
+the contract.

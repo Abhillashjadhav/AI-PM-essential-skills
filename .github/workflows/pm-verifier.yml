@@ -1,0 +1,66 @@
+name: pm-verifier
+
+on:
+  push:
+    paths:
+      - "pm-verifier/**"
+      - "tests/eval-engine/**"
+      - "scripts/check_repository_integrity.py"
+      - "eval-rubric-generator/**"
+      - ".claude-plugin/marketplace.json"
+      - "README.md"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/pm-verifier.yml"
+  pull_request:
+    paths:
+      - "pm-verifier/**"
+      - "tests/eval-engine/**"
+      - "scripts/check_repository_integrity.py"
+      - "eval-rubric-generator/**"
+      - ".claude-plugin/marketplace.json"
+      - "README.md"
+      - "docs/VALIDATION.md"
+      - ".github/workflows/pm-verifier.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install skill-lint dependency
+        run: python3 -m pip install PyYAML==6.0.3
+      - name: Install the shipped pm-verifier package
+        run: python3 -m pip install --no-deps --no-build-isolation ./pm-verifier
+      - name: Compile harness
+        run: python3 -m compileall -q pm-verifier/skills/eval-engine/harness
+      - name: Run known-good and known-bad eval tests
+        run: python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -v
+      - name: Lint eval skill
+        run: python3 tests/lint_skill.py pm-verifier/skills/eval-engine/SKILL.md
+      - name: Check repository contracts
+        run: python3 scripts/check_repository_integrity.py
+      - name: Run production example from an isolated copy
+        shell: bash
+        run: |
+          eval_dir="$(mktemp -d)/eval"
+          cp -R pm-verifier/skills/eval-engine/examples/production-eval "$eval_dir"
+          pm-verifier --version
+          pm-verifier execute --project "$eval_dir" \
+            --trials-out trials-a.jsonl --results-out results-a.json \
+            -- python3 "$eval_dir/reference_adapter.py"
+          pm-verifier execute --project "$eval_dir" \
+            --trials-out trials-b.jsonl --results-out results-b.json \
+            -- python3 "$eval_dir/reference_adapter.py"
+          cmp "$eval_dir/results-a.json" "$eval_dir/results-b.json"
+          pm-verifier report --results "$eval_dir/results-a.json" --out "$eval_dir/report.md"
+          pm-verifier inspect --results "$eval_dir/results-a.json" \
+            --trials "$eval_dir/trials-a.jsonl" --trial A400-t1 \
+            --out "$eval_dir/inspection.md"
+          grep -q "Release decision: PASS" "$eval_dir/report.md"
+          grep -q "Raw trajectory" "$eval_dir/inspection.md"

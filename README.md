@@ -17,13 +17,14 @@ Then paste a feature spec and ask:
 Create an eval for this feature.
 ```
 
-`pm-verifier` returns binary release gates, a calibrated judge rubric, and a runnable local evaluation harness.
+`pm-verifier` returns a versioned evaluation suite, repeated-trial evidence,
+calibrated grading, failure analysis, and an auditable release decision.
 
 ## Choose the job you need done
 
 | Plugin | Use it when you need to… | Ask Claude Code | First useful result |
 |---|---|---|---|
-| **[pm-verifier](pm-verifier/)** | Turn a PRD or feature spec into a verification layer | `Create an eval for this feature` | Quality gates, judge rubric, judge prompt, and runnable harness |
+| **[pm-verifier](pm-verifier/)** | Turn a PRD, traces, or an existing suite into a release decision | `Create an eval for this feature` | Versioned suite, outcome and trajectory gates, calibrated grading, and runnable harness |
 | **[pm-tactical](pm-tactical/)** | Make daily PM work cheaper, faster, and self-checking | `Check whether this task needs a stronger model` | Model routing, frozen-spec validation, prompt optimization, context audit, or project-memory update |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
 | **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
@@ -109,6 +110,10 @@ JUDGE RUBRIC
 
 HARNESS
 prepare.py → run.py → report.py
+
+EVIDENCE
+repeated trials + provenance + cost/latency/tokens/retries
+→ PASS, FAIL, or BLOCKED
 ```
 
 See the complete workflow in [`pm-verifier`](pm-verifier/).
@@ -188,10 +193,13 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 These remain available but are not the seven marketplace products above:
 
 - [`token-cost-estimator/`](token-cost-estimator/) — compare projected model cost and latency; verify current prices from official sources.
-- [`eval-rubric-generator/`](eval-rubric-generator/) — an earlier rubric-focused skill; `pm-verifier` is the broader verification product.
 - [`context-auditor/`](context-auditor/) — identify poisoning, distraction, and conflicting supplied context.
 - [`concise-rewriter/`](concise-rewriter/) — reduce supplied text and report token change.
 - [`context-port/`](context-port/) — separate local-first context-package validation and migration toolkit.
+
+The retired [`eval-rubric-generator/`](eval-rubric-generator/) path contains
+migration guidance only. It is not a triggerable skill; rubric creation now
+belongs to `pm-verifier`.
 
 Keeping these boundaries explicit prevents older utilities from competing with the marketplace’s current products.
 

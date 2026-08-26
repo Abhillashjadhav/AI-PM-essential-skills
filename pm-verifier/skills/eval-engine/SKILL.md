@@ -1,93 +1,130 @@
 ---
 name: eval-engine
-description: Use this skill when the user pastes a feature spec, PRD, or task description and wants to create an eval, write an eval, build an eval rubric, define good, test this AI feature, generate a verification layer, set up an LLM judge, grade outputs, add quality gates, or asks "how do I measure" whether the feature works. Produces three artifacts from the spec — 3-6 binary disqualifying gates each marked with WHY it is a gate and not a score, a calibrated 4-7 criterion LLM-judge rubric on a 1-5 scale with anchors, worked examples, and a paste-ready judge prompt, and a runnable pure-Python-stdlib harness (prepare.py, run.py, report.py) that applies gates first so any gate failure is an automatic fail, then rubric scoring wired to the user's own Claude session with no API keys. Supersedes the standalone eval-rubric-generator skill when both are installed. Do NOT use for running or debugging an existing eval suite, for QA of non-AI features, or for one-off review of a single output with no spec attached.
+description: Use this skill when a user supplies an AI feature spec, PRD, task contract, existing eval suite, traces, outputs, or release question and wants to define good, create or run evals, grade outcomes or agent trajectories, add deterministic or model graders, calibrate an LLM judge against human goldens, compare repeated trials, inspect failure clusters, debug evaluation evidence, or make a CI release decision. Produce one provider-neutral pm-verifier suite with binary gates, gradual rubrics, provenance, operational metrics, JSON results, and a Markdown report. Also use for migrating pm-evals or Evals-pass-1 work. Do not use for ordinary non-AI unit testing, a one-off opinion on one output without a quality contract, or live production monitoring.
 ---
 
 # Eval Engine
 
-Turn a feature spec into a complete verification layer: binary gates, a calibrated LLM-judge rubric, and a runnable harness. Spec in, eval out.
+Keep the user-facing flow simple:
 
-## The one distinction that matters
+`feature spec → define good → create eval suite → run trials → grade → inspect failures → release decision`
 
-**Gates are binary, disqualifying, and invisible when passing.** A gate failure makes the output unshippable regardless of how good everything else is — fabricated claims, missing required fields, safety violations. Nobody celebrates a passed gate; a passed gate produces zero lines of output.
+Put framework complexity in the bundled harness, not in the PM's workflow.
 
-**Rubric criteria are gradual and tradeable.** A 3 on conciseness can be worth accepting for a 5 on accuracy. Rubric scores rank quality among outputs that already cleared every gate.
+## 1. Start from the claim
 
-If a check can be "mostly passed," it is a rubric criterion. If partial credit is meaningless, it is a gate. Never average gates into a score — see `references/gate-design.md` for the full test.
+Read the spec or existing suite. State the decision the evaluation must support:
 
-**Human-vs-judge disagreement is calibration signal, not failure.** When the LLM judge scores a case 4 and the PM says 2, that gap is data about a vague anchor — tighten the anchor, re-run. See `references/rubric-calibration.md`.
+- **Capability:** what can the candidate do, and how often does at least one attempt succeed?
+- **Regression:** can the candidate still perform previously reliable behavior consistently?
+- **Safeguard:** does a safety or privacy control block forbidden behavior?
 
-## Step 1 — Extract the testable surface
+Ask for missing product facts. Never invent policies, expected fields, thresholds, reference answers, or safety boundaries.
 
-Read the spec. List what the feature must never do (gate candidates) and what makes its output better or worse (rubric candidates). If the user gave no concrete spec, PRD, or task description, stop and ask for one — never generate an eval for a hypothetical feature. If the spec is silent on a domain fact a gate needs (a policy value, a required field list, a safety boundary), ask — never invent it.
+## 2. Define good
 
-## Step 2 — Binary gates (3-6)
+Separate:
 
-Output this exact format per gate:
+- **Gates:** binary, disqualifying checks on one trial. Prefer deterministic code checks for objective facts, outcome state, tool calls, required structure, safety, and privacy.
+- **Rubric criteria:** gradual 1–5 judgments for useful differences among gate-clearing outputs. Use feature-specific anchors and a worked example.
 
+Use the smallest complete set. Do not add weak gates to satisfy a fixed count. Read `references/gate-design.md` when a check could be either a gate or a score.
+
+## 3. Create the suite
+
+Create the files in `references/evidence-contract.md`. Record:
+
+- suite type, version, graders, rubric, and release thresholds;
+- versioned dataset and case metadata for slicing;
+- candidate, model, prompt, tool, harness, and configuration provenance;
+- repeated trial outcomes, full trajectories, cost, latency, tokens, and retries; and
+- explicit `missing_evidence` values rather than inferred defaults.
+
+Install the bundled package from `pm-verifier/` for CI use. Keep the
+compatibility wrappers only for existing suites. Do not add provider SDKs or
+hidden network calls.
+
+## 4. Run trials and grade
+
+Run at least the suite's `minimum_trials_per_case`. Prefer `pm-verifier
+execute` with a JSON-over-stdio adapter so each trial starts in a fresh process.
+Never send expected answers to the adapter. Require a unique `isolation_id` and
+an `environment_fingerprint` for every trial. Capture the actual final
+environment state as `outcome`; do not substitute the agent's claim about what
+happened. Capture ordered tool/model/decision steps as `trajectory`.
+
+Run deterministic gates first. Skip model scoring for a trial that already failed a deterministic gate. For semantic gates or gradual rubrics:
+
+1. prepare a self-contained judgment request;
+2. save the external response in `judgments.jsonl` with judge and rubric provenance;
+3. require a passing `calibration.json` for that exact judge/rubric hash; and
+4. return `BLOCKED` for missing, invalid, mismatched, or `UNKNOWN` evidence.
+
+Never replace a missing judge with a random, hash-based, or synthetic score.
+
+## 5. Calibrate model graders
+
+Use held-out human goldens. Keep prompt-tuning examples separate from final
+calibration cases. Require the configured sample floor and both PASS/FAIL
+classes. Compute binary agreement, a Wilson confidence interval, Cohen's kappa,
+class-conditional false-positive/negative rates, and separate ordinal score
+error. Use blind AB/BA swaps when pairwise position bias is relevant.
+
+Read `references/rubric-calibration.md` before making a model grader release-critical. Small exploratory sets can improve a rubric; they do not justify a broad trust claim.
+
+## 6. Inspect failures
+
+Show:
+
+- outcome failures separately from trajectory failures;
+- silent path failures where the final outcome passed but the trajectory did not;
+- per-case trial success, empirical `pass@k`, and empirical consistency `pass^k`;
+- safety/privacy failures;
+- operational guardrail failures;
+- metadata slices; and
+- failure clusters with the clustering method disclosed.
+
+Keep the failing trace, grader reason, and provenance available for review.
+Use `pm-verifier inspect`; reports and inspection must redact credential and
+personal-data patterns before display.
+
+## 7. Make the release decision
+
+Emit exactly one state:
+
+- `PASS`: evidence is valid and every release rule passed;
+- `FAIL`: evidence is valid and a quality, reliability, safety, privacy, regression, or operational rule failed;
+- `BLOCKED`: required evidence is missing, invalid, mismatched, or uncalibrated.
+
+Write canonical machine evidence to `results.json` and the PM/reviewer view to `report.md`.
+
+Run from an installed clean checkout:
+
+```bash
+python3 -m pip install --no-deps ./pm-verifier
+pm-verifier execute --project eval -- python3 eval/adapter.py
+pm-verifier run --project eval --trials eval/trials.executed.jsonl
+pm-verifier inspect --results eval/results.json --trials eval/trials.executed.jsonl
+pm-verifier report --results eval/results.json --out eval/report.md
 ```
-GATE G<n>: <name>
-CHECK: <the binary yes/no test, mechanically checkable where possible>
-WHY A GATE, NOT A SCORE: <one sentence — why partial credit is meaningless here>
-TYPE: mechanical (regex/field/length) | judge (binary LLM verdict)
-```
 
-Rules:
-- 3 to 6 gates. Fewer than 3 means the unshippable failure modes weren't found; more than 6 means scores are masquerading as gates.
-- Every gate must state WHY it is a gate. If the WHY reads like "because quality matters," it is a rubric criterion — move it.
-- Prefer mechanical gates (checkable in code) over judge gates wherever the spec allows.
-
-## Step 3 — Calibrated LLM-judge rubric (4-7 criteria)
-
-Per criterion:
-
-```
-C<n>: <criterion name> — <one-line definition>
-  1 = <what a 1 concretely looks like for THIS feature>
-  5 = <what a 5 concretely looks like for THIS feature>
-  WORKED EXAMPLE: <a short sample output fragment + the score it earns + why>
-```
-
-Then emit a **judge prompt block** — a fenced, self-contained prompt the user can paste into any LLM. It must include: the role framing, the gates that need judge verdicts (binary PASS/FAIL each), all rubric criteria with anchors, the required JSON output shape (`{"gate_answers": {...}, "scores": {...}, "notes": "..."}`), and an instruction to score conservatively when uncertain.
-
-Rules:
-- Anchors must be feature-specific. "1 = bad, 5 = good" is a lint failure, not an anchor.
-- Every criterion gets one worked example. No worked example, no criterion.
-- 4 to 7 criteria. Cut overlapping criteria before adding new ones.
-
-## Step 4 — Runnable harness
-
-Scaffold this structure for the user (templates ship in this skill's `harness/` directory — copy them, then generate the three JSON/MD config files from Steps 2-3):
-
-```
-eval/
-├── gates.json        ← generated from Step 2
-├── rubric.json       ← generated from Step 3
-├── judge_prompt.md   ← generated from Step 3
-├── cases/            ← user adds test cases as {id, input, output} JSON
-├── judgments/        ← judge verdicts land here (see flow below)
-├── prepare.py        ← validates cases/, writes prepared_cases.json
-├── run.py            ← gates first (any failure = automatic FAIL), then rubric
-└── report.py         ← pass/fail table + score distribution → report.md
-```
-
-The flow, stated to the user exactly once: `prepare.py` validates test cases; `run.py` applies mechanical gates in code, and for judge gates + rubric scoring it writes one prompt file per case into `judgments/` — the user pastes each into their own Claude session (or has this session fill them) and saves the JSON reply next to it; re-running `run.py` picks up the verdicts and finalizes; `report.py` renders the markdown report. Pure Python stdlib, no API keys, no network.
-
-## Step 5 — Calibrate before trusting
-
-Tell the user to hand-score 3-5 cases themselves before trusting judge scores, then compare against the judge using the loop in `references/rubric-calibration.md`. Disagreement ≥2 points on any criterion → rewrite that anchor, not the judge.
+The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same commands. Exit codes are `0=PASS`, `1=FAIL`, and `2=BLOCKED`.
 
 ## Hard rules
 
-- **Never invent domain facts** to fill a gate or anchor — no made-up policy windows, field names, thresholds, or safety rules. Ask the user; a gate built on a fabricated fact is worse than no gate.
-- **Never emit a gate without its WHY.** The WHY line is what stops gate/score drift over time.
-- **Never present the rubric as objective measurement.** Judge scores are calibrated judgments; the skill must state this once in its output, and the harness report labels scores as judge-assigned.
-- **Gates always run first.** The harness never rubric-scores a gate-failed case; a beautifully written fabrication is still a FAIL.
-- **All three artifacts or none.** Gates without a harness don't get run; a rubric without gates lets unshippable output win on style. If the user wants only one artifact, produce it but say what risk the missing pieces leave open.
+- Grade the real outcome and the recorded trajectory independently.
+- Treat safety and privacy defaults as zero tolerated failures unless the approved suite says otherwise.
+- Version and hash datasets, rubrics, prompts, tools, harnesses, and configurations.
+- Keep capability and regression thresholds separate; a capability failure is data, while a regression failure usually blocks release.
+- Require known-bad fixtures for every important deterministic or release gate.
+- Label synthetic data and deterministic demos; never present them as live-product quality evidence.
+- Do not claim general judge impartiality from one bias sample.
+- Do not describe a behavior as production-grade unless an executable test covers it.
 
 ## Limitations
 
-- Gate and rubric quality is bounded by spec quality: a vague spec yields judge-heavy gates and looser anchors — the skill flags which anchors are weakest rather than hiding it.
-- The harness performs no LLM calls itself; scoring latency depends on the user's own session filling `judgments/`, and results are only as consistent as the judge model used.
-- Rubric scores from a single judge run are noisy; the calibration loop reduces but never eliminates judge-human gaps.
-- Mechanical gates cover only what regex/field/length checks can express; semantic failures (subtle fabrication, tone violations) require judge gates, which are slower and probabilistic.
+- This is an out-of-band production CI/release harness, not hosted production observability, live experimentation, or an inline request gate.
+- Model judgments remain probabilistic after calibration and need periodic human review.
+- Empirical `pass@k` and `pass^k` describe recorded trials, not population guarantees.
+- Dependency-free lexical clustering is explainable and reproducible but less semantic than embedding-based clustering.
+- Marketplace installation supplies the PM workflow; the packaged CLI executes a product-specific adapter that must expose real trial evidence.

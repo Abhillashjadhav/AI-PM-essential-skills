@@ -13,7 +13,7 @@
     {
       "name": "pm-verifier",
       "source": "./pm-verifier",
-      "description": "Spec-to-eval-harness engine: turns any feature spec into binary quality gates, a calibrated LLM-judge rubric, and a runnable pure-Python eval harness."
+      "description": "Single AI PM evaluation product: spec-to-suite design, outcome and trajectory grading, calibrated judges, repeated trials, provenance, failure analysis, and CI release decisions."
     },
     {
       "name": "mcp-migration-auditor",

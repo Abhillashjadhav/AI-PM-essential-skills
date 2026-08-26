@@ -1,65 +1,225 @@
 # pm-verifier
 
-**Spec in, verification layer out.** One skill — `eval-engine` — that turns any feature spec, PRD, or task description into the three artifacts every AI feature needs before it ships: binary quality gates, a calibrated LLM-judge rubric, and a runnable eval harness.
+**One public product for AI PM evaluation work: spec in, evidence-backed release decision out.**
 
-Built for the AI PM who owns "define good" — companion plugin to [pm-tactical](../pm-tactical/), same marketplace.
+`pm-verifier` turns a feature spec or existing eval into one workflow:
 
----
+`feature spec → define good → create eval suite → run trials → grade → inspect failures → release decision`
 
-## Install (30 seconds)
+The PM works through that sequence. The installable, pure-standard-library CLI
+executes one fresh adapter process per trial, captures evidence, grades it,
+exposes the complete failure trace, and produces a CI decision.
+
+## Install
+
+Install the PM-facing plugin:
 
 ```bash
 claude plugin marketplace add Abhillashjadhav/AI-PM-essential-skills
 claude plugin install pm-verifier@ai-pm-skills
 ```
 
-Or commit it to your repo's `.claude/settings.json` so every contributor gets it on trust — see this repo's own settings file for the pattern.
+Install the versioned CI harness from a clean checkout:
 
-## Use (60 seconds)
-
-Paste a spec and ask:
-
-```
-Here's the spec for our AI ticket summarizer: [paste spec]
-Create an eval for this.
+```bash
+git clone https://github.com/Abhillashjadhav/AI-PM-essential-skills.git
+cd AI-PM-essential-skills
+python3 -m pip install --no-deps ./pm-verifier
+pm-verifier --version
 ```
 
-Also fires on: "write an eval", "build an eval rubric", "define good for this feature", "how do I test this AI feature", "generate a verification layer", "set up an LLM judge", "how do I grade outputs", "add quality gates", "how do I measure whether this works".
+No runtime dependencies or provider SDKs are installed.
 
-You get back, in one pass:
+Then paste a PRD/spec or point to an existing suite and ask:
 
-1. **Binary gates (3-6)** — the disqualifying checks: fabricated claims, missing required fields, safety violations. Each states WHY it's a gate ("partial credit is meaningless here") and whether it's mechanically checkable or needs a judge. Any gate failure = automatic fail, no matter how good the rest is.
-2. **Calibrated LLM-judge rubric (4-7 criteria, 1-5 scale)** — each criterion with a concrete "what a 1 looks like", "what a 5 looks like", and a worked example, plus a paste-ready judge prompt that returns structured JSON.
-3. **Runnable harness** — `prepare.py` / `run.py` / `report.py`, pure Python stdlib, no API keys. Gates run first in code; judge scoring routes through your own Claude session via generated prompt files. `report.py` renders a pass/fail table and per-criterion score distribution to markdown.
+```text
+Create an eval for this feature.
+Run this eval suite and explain the failures.
+Calibrate this judge against our human golden set.
+Can this candidate pass the release gate?
+```
 
-A complete worked example (spec → all three artifacts → harness run on real cases) ships in `skills/eval-engine/examples/`.
+The same `eval-engine` skill handles creation, execution, calibration, failure
+inspection, and migration. There is no second eval product.
 
-**Precedence note:** this repo's standalone [eval-rubric-generator](../eval-rubric-generator/) skill claims several of the same trigger phrasings ("write an eval", "how do I test this AI feature", "define good"). eval-engine supersedes it — its binary checklist is roughly Artifact 1 of this skill's three. If you have both installed, requests matching those phrasings should route here; consider removing eval-rubric-generator from `~/.claude/skills/` to avoid the collision.
+## What it evaluates
 
-## Before / after
-
-| Without | With |
+| Surface | Behavior |
 |---|---|
-| "The demo looked good" is the eval | 3-6 explicit unshippable-output checks, run in code |
-| Quality debates re-litigated every review | A frozen rubric with anchors both humans and judges score against |
-| Judge scores trusted blind, or distrusted blind | A calibration loop: human-vs-judge gaps ≥2 points rewrite the anchor, not the verdict |
-| Eval tooling blocked on eng time and API keys | A harness a PM runs locally in three commands, LLM judgment via their own session |
+| Outcome | Checks the real final state, not only what the agent claims happened. |
+| Trajectory | Checks ordered tool/model/decision steps and exposes silent path failures. |
+| Execution | Runs a JSON-over-stdio adapter in a fresh subprocess for every selected trial. |
+| Deterministic graders | Exact expected values, fields, regex, length, required values, and trace-step evidence. |
+| Model graders | Ingests external semantic judgments only with matching judge/rubric provenance and statistically passing human calibration. |
+| Repeated trials | Reports per-trial success, empirical `pass@k`, and consistency-oriented `pass^k`. |
+| Suite types | Capability suites can use explicit hill-climbing thresholds; regression suites default to all-trials consistency. |
+| Safety/privacy | Binary categories with zero tolerated failures by default. |
+| Operations | Enforces cost, latency, token, and retry ceilings. |
+| Failure analysis | Separates outcome/trajectory failures, slices metadata, and produces explainable lexical clusters. |
+| Inspection | Opens the failing outcome, trajectory, grader reasons, environment fingerprint, and isolation ID. |
 
-## The design stance
+## Evidence and decision states
 
-**Gates are binary, disqualifying, and invisible when passing. Rubric criteria are gradual and tradeable.** Mixing the two — averaging gates into scores, or treating "well-written" as a gate — is the root failure of most eval setups, and the one thing this skill refuses to do. Human-vs-judge disagreement is treated as calibration signal, not failure. Full reasoning in `skills/eval-engine/references/gate-design.md` and `references/rubric-calibration.md`.
+Every run produces:
 
-## Testing
+- `results.json` — canonical machine-readable evidence;
+- `report.md` — human-readable release review; and
+- exit code `0=PASS`, `1=FAIL`, or `2=BLOCKED`.
 
-Three-gate harness, same convention as pm-tactical (`tests/eval-engine/fixtures.md`):
-- **Gate 1** — plugin + marketplace manifests lint clean; SKILL.md frontmatter passes `tests/lint_skill.py`.
-- **Gate 2** — trigger accuracy against the fixture phrasings (fire + no-fire).
-- **Gate 3** — end-to-end: the included sample spec produces all three artifacts, and the harness runs the 2 included sample cases through prepare → run → report without error, including the pending-judgment round-trip.
+`BLOCKED` means the available evidence cannot support a quality claim: a file is
+missing, a schema/hash does not match, a metric is absent, a judgment is
+invalid, or the judge is uncalibrated. Missing evidence is never converted into
+success.
 
-## License
+Release evidence is commit-bound: required CI must pass on the exact candidate
+head after every code, configuration, dataset, prompt, tool, or harness change.
 
-MIT, same as the repo.
+## Run the production example
 
----
+The reference adapter is synthetic, deterministic, and makes no model call. It
+demonstrates the same subprocess contract a real application implements:
 
-*Built by [Abhillash Jadhav](https://github.com/Abhillashjadhav) — GenAI PM. Evals, context engineering, agentic reliability.*
+```bash
+cp -R pm-verifier/skills/eval-engine/examples/production-eval /tmp/my-eval
+
+pm-verifier validate --project /tmp/my-eval --out /tmp/my-eval/validation.json
+pm-verifier execute --project /tmp/my-eval \
+  -- python3 /tmp/my-eval/reference_adapter.py
+pm-verifier report \
+  --results /tmp/my-eval/results.json \
+  --out /tmp/my-eval/report.md
+pm-verifier inspect \
+  --results /tmp/my-eval/results.json \
+  --trials /tmp/my-eval/trials.executed.jsonl \
+  --trial A400-t1
+```
+
+Calibrate and inspect swapped-order bias:
+
+```bash
+pm-verifier calibrate \
+  --suite suite.json \
+  --goldens calibration/human-goldens.jsonl \
+  --judgments calibration/judge-labels.jsonl
+
+pm-verifier bias \
+  --pairs calibration/pairwise-stable.jsonl
+```
+
+The compatibility commands `python3 prepare.py`, `python3 run.py`, and
+`python3 report.py` remain available during migration.
+
+## Adapter contract
+
+`execute` starts the configured command once per trial and sends one JSON
+object to stdin. The request contains the case input and metadata but never the
+expected answer. The adapter must return one JSON object on stdout containing:
+
+- `status="completed"`;
+- the harness-owned `run_id` and `run_sha256` binding;
+- `outcome` and ordered `trajectory`;
+- cost, latency, input/output token, and retry `metrics`;
+- `missing_evidence`;
+- a SHA-256 `environment_fingerprint`; and
+- a unique `isolation_id`.
+
+Non-zero exits, finite-deadline timeouts (including inherited child streams),
+malformed output, stdout above 1 MB, stderr above 64 KB, non-finite metrics,
+non-standard JSON constants (`NaN`/`Infinity`), shared isolation IDs, unordered
+trace indexes, or missing fields produce
+`BLOCKED`, never `PASS`.
+
+Stored trials and model judgments must carry the exact `run_id` and SHA-256 of
+`run.json`; `run.json` must carry an immutable candidate SHA-256. Changing the
+candidate or any declared run provenance invalidates earlier evidence.
+
+## File contract
+
+```text
+eval/
+├── suite.json
+├── dataset.json
+├── cases.jsonl
+├── run.json
+├── trials.jsonl           # supplied evidence, or
+├── trials.executed.jsonl  # evidence captured by `execute`
+├── judgments.jsonl       # when model graders are used
+├── calibration.json      # when model graders are release-critical
+├── results.json
+└── report.md
+```
+
+See [`references/evidence-contract.md`](skills/eval-engine/references/evidence-contract.md)
+for fields and supported deterministic checks. The runnable
+[`production-eval`](skills/eval-engine/examples/production-eval/) includes two
+cases × two trials, outcome and trajectory gates, a calibrated model gate,
+operational metrics, and deterministic known-bad fault specifications.
+
+## Verification
+
+From the repository root:
+
+```bash
+python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -v
+python3 tests/lint_skill.py pm-verifier/skills/eval-engine/SKILL.md
+python3 scripts/check_repository_integrity.py
+```
+
+The executable tests cover:
+
+- known-good repeated trials;
+- outcome and silent trajectory faults;
+- safety and privacy faults;
+- release-critical model-gate failure;
+- missing judgment/metric evidence;
+- invalid release-rule and calibration contracts;
+- provenance mismatch;
+- minimum trial counts and retry ceilings;
+- capability vs regression semantics;
+- deterministic-only suites;
+- deterministic failures that correctly skip unneeded model grading;
+- human calibration and biased-judge rejection;
+- minimum calibration size plus per-dimension Cohen's kappa, Wilson agreement
+  bounds, false-positive rates, and ordinal error;
+- explicit release gates versus diagnostic trajectory checks;
+- partial capability-quality scores that cannot bypass binary gates;
+- fresh-process stdio execution and adapter failure blocking;
+- unique trial isolation and environment fingerprints;
+- deterministic results from identical evidence;
+- report/inspection secret redaction;
+- installable package, console entry point, and versioned schemas;
+- swapped-order position bias;
+- failure slicing/clustering;
+- migrated source-data hashes; and
+- JSON/Markdown reports and stated limitations.
+
+## Migration
+
+Useful data and capabilities from `pm-evals` and `Evals-pass-1` are mapped in
+[`docs/MIGRATION.md`](docs/MIGRATION.md). Versioned source snapshots live under
+`skills/eval-engine/examples/migrated/` with source commits and hashes. Large
+JSONL snapshots use lossless `.xz`; tests verify the decompressed migration
+hash, and provenance records one credential-shaped synthetic-token redaction.
+
+Existing `gates.json` and `rubric.json` users should combine those files into
+`suite.json`; existing cases become `cases.jsonl`, and actual repeated outputs
+and traces become `trials.jsonl`. The old `pm-evals` hash stub is intentionally
+not supported.
+
+## Design evidence
+
+- [`docs/AUTHORITY_GAP_ANALYSIS.md`](docs/AUTHORITY_GAP_ANALYSIS.md) — Anthropic/OpenAI triangulation and inherited conflicts
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — layers, states, files, and trust boundaries
+- [`docs/MIGRATION.md`](docs/MIGRATION.md) — source-to-destination capability map and consolidation plan
+
+## Production boundary and limitations
+
+- This is a production CI/release-evaluation harness, not a hosted monitoring service, live-traffic experiment system, or inline request gate.
+- Model judgments remain probabilistic and require periodic human review.
+- Empirical repeated-trial metrics do not guarantee population reliability.
+- Lexical clustering is reproducible and explainable but less semantic than an embedding system.
+- A product-specific adapter must expose real outcomes, trajectories, metrics, environment fingerprints, and isolation IDs.
+- Run hashes detect stale/mismatched evidence; they do not replace trusted CI
+  storage or signing when evidence producers are adversarial.
+
+MIT licensed.
