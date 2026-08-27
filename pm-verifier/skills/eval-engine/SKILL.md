@@ -1,9 +1,12 @@
 ---
 name: eval-engine
-description: Use this skill when a user supplies an AI feature spec, PRD, task contract, existing eval suite, traces, outputs, or release question and wants to define good, create or run evals, grade outcomes or agent trajectories, add deterministic or model graders, calibrate an LLM judge against human goldens, compare repeated trials, inspect failure clusters, debug evaluation evidence, or make a CI release decision. Produce one provider-neutral pm-verifier suite with binary gates, gradual rubrics, provenance, operational metrics, JSON results, and a Markdown report. Also use for migrating pm-evals or Evals-pass-1 work. Do not use for ordinary non-AI unit testing, a one-off opinion on one output without a quality contract, or live production monitoring.
+description: Use this skill when a user supplies an AI feature spec, PRD, task contract, existing eval suite, traces, outputs, or release question and wants to define good, create or run evals, grade outcomes or agent trajectories, add deterministic or model graders, calibrate an LLM judge against human goldens, compare repeated trials, inspect failure clusters, debug evaluation evidence, or make a CI release decision. Produce one provider-neutral AI Evals for PMs suite through the stable pm-verifier runtime, with binary gates, gradual rubrics, provenance, operational metrics, JSON results, and a Markdown report. Also use for migrating pm-evals or Evals-pass-1 work. Do not use for ordinary non-AI unit testing, a one-off opinion on one output without a quality contract, or live production monitoring.
 ---
 
 # Eval Engine
+
+This skill powers **AI Evals for PMs**. Its stable install and CLI identifier is
+`pm-verifier`.
 
 Keep the user-facing flow simple:
 

@@ -12,7 +12,7 @@ def _percent(value: Any) -> str:
 
 def render_markdown(result: dict[str, Any]) -> str:
     decision = result.get("decision", "BLOCKED")
-    lines = ["# pm-verifier evaluation report", "", f"## Release decision: {decision}", ""]
+    lines = ["# AI Evals for PMs report", "", f"## Release decision: {decision}", ""]
     if decision == "BLOCKED":
         lines.extend(
             [
@@ -156,7 +156,7 @@ def render_inspection(
     ]
     by_trial = {trial.get("trial_id"): trial for trial in raw_trials}
     lines = [
-        "# pm-verifier failure inspection",
+        "# AI Evals for PMs failure inspection",
         "",
         f"Release decision: **{result.get('decision', 'BLOCKED')}**",
         "",

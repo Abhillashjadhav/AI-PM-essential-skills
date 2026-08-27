@@ -17,14 +17,16 @@ Then paste a feature spec and ask:
 Create an eval for this feature.
 ```
 
-`pm-verifier` returns a versioned evaluation suite, repeated-trial evidence,
-calibrated grading, failure analysis, and an auditable release decision.
+**AI Evals for PMs**, installed as `pm-verifier`, turns the specification into
+a versioned evaluation suite, isolated repeated-trial evidence, outcome and
+trajectory grading, calibrated model judgments, failure analysis, and an
+auditable release decision.
 
 ## Choose the job you need done
 
 | Plugin | Use it when you need to… | Ask Claude Code | First useful result |
 |---|---|---|---|
-| **[pm-verifier](pm-verifier/)** | Turn a PRD, traces, or an existing suite into a release decision | `Create an eval for this feature` | Versioned suite, outcome and trajectory gates, calibrated grading, and runnable harness |
+| **[AI Evals for PMs](pm-verifier/)** (`pm-verifier`) | Turn a PRD, traces, or an existing suite into an evidence-backed release decision | `Create an eval for this feature` | Versioned suite, isolated repeated trials, outcome and trajectory gates, calibrated model judgments, failure inspection, and `PASS`, `FAIL`, or `BLOCKED` evidence |
 | **[pm-tactical](pm-tactical/)** | Make daily PM work cheaper, faster, and self-checking | `Check whether this task needs a stronger model` | Model routing, frozen-spec validation, prompt optimization, context audit, or project-memory update |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
 | **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
@@ -93,7 +95,7 @@ flowchart TD
 
 ### Spec → verification system
 
-`pm-verifier` separates binary, disqualifying failures from gradual quality criteria:
+AI Evals for PMs separates binary, disqualifying failures from gradual quality criteria:
 
 ```text
 FEATURE: AI support-ticket summarizer
@@ -116,7 +118,8 @@ repeated trials + provenance + cost/latency/tokens/retries
 → PASS, FAIL, or BLOCKED
 ```
 
-See the complete workflow in [`pm-verifier`](pm-verifier/).
+See the complete workflow in [AI Evals for PMs](pm-verifier/), installed and
+run through the stable `pm-verifier` identifier.
 
 ### Recurring task → guarded loop
 
@@ -179,7 +182,7 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 | Path | Purpose |
 |---|---|
 | [`.claude-plugin/marketplace.json`](.claude-plugin/marketplace.json) | Installable marketplace catalogue |
-| [`pm-verifier/`](pm-verifier/) | Spec-to-evaluation plugin |
+| [`pm-verifier/`](pm-verifier/) | AI Evals for PMs: spec-to-evidence-backed-release-decision plugin and CI harness |
 | [`pm-tactical/`](pm-tactical/) | Daily AI PM workflow plugin |
 | [`loop-designer/`](loop-designer/) | Guarded-loop design plugin |
 | [`agent-graph-designer/`](agent-graph-designer/) | Multi-agent graph qualification and design plugin |

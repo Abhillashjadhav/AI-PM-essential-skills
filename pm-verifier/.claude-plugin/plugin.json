@@ -1,7 +1,7 @@
 {
   "name": "pm-verifier",
-  "version": "1.0.0",
-  "description": "One AI PM evaluation product from spec to release decision: outcome and trajectory gates, deterministic and calibrated model graders, human goldens, repeated trials, provenance, operational metrics, failure analysis, JSON evidence, Markdown reports, and CI-safe PASS/FAIL/BLOCKED exits.",
+  "version": "1.1.0",
+  "description": "AI Evals for PMs turns an AI feature spec into an evidence-backed release decision through versioned suites, isolated repeated trials, outcome and trajectory gates, calibrated model judgments, failure inspection, and CI-safe PASS/FAIL/BLOCKED evidence.",
   "author": {
     "name": "Abhillash Jadhav",
     "url": "https://github.com/Abhillashjadhav"

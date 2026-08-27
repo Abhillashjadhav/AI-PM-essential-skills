@@ -14,6 +14,10 @@ sys.path.insert(0, str(HARNESS))
 
 from pm_verifier import __version__  # noqa: E402
 from pm_verifier.cli import build_parser  # noqa: E402
+from pm_verifier.reporting import render_inspection, render_markdown  # noqa: E402
+
+
+PUBLIC_BRAND = "AI Evals for PMs"
 
 
 class PackagingContractTest(unittest.TestCase):
@@ -23,6 +27,37 @@ class PackagingContractTest(unittest.TestCase):
         self.assertEqual(
             metadata["project"]["scripts"]["pm-verifier"],
             "pm_verifier.cli:main",
+        )
+
+    def test_public_brand_and_plugin_versions_match(self) -> None:
+        metadata = tomllib.loads((PACKAGE_ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+        plugin = json.loads(
+            (PACKAGE_ROOT / ".claude-plugin" / "plugin.json").read_text(encoding="utf-8")
+        )
+        marketplace = json.loads(
+            (ROOT / ".claude-plugin" / "marketplace.json").read_text(encoding="utf-8")
+        )
+        marketplace_entry = next(
+            entry for entry in marketplace["plugins"] if entry["name"] == "pm-verifier"
+        )
+
+        self.assertEqual(plugin["version"], metadata["project"]["version"])
+        self.assertIn(PUBLIC_BRAND, metadata["project"]["description"])
+        self.assertIn(PUBLIC_BRAND, plugin["description"])
+        self.assertIn(PUBLIC_BRAND, marketplace_entry["description"])
+        self.assertIn(PUBLIC_BRAND, build_parser().description)
+        self.assertIn(
+            PUBLIC_BRAND,
+            (PACKAGE_ROOT / "README.md").read_text(encoding="utf-8").splitlines()[0],
+        )
+        self.assertIn(
+            PUBLIC_BRAND,
+            (ROOT / "README.md").read_text(encoding="utf-8"),
+        )
+        self.assertIn(PUBLIC_BRAND, render_markdown({"decision": "BLOCKED"}))
+        self.assertIn(
+            PUBLIC_BRAND,
+            render_inspection({"decision": "BLOCKED", "trials": []}, []),
         )
 
     def test_public_cli_contains_the_complete_pm_loop(self) -> None:

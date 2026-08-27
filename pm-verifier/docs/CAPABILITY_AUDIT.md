@@ -12,9 +12,10 @@ Disposition vocabulary:
 - **DROPPED** — intentionally excluded because it is unsafe, misleading, or
   outside the single-product boundary.
 
-There are no unresolved `MISSING` entries in this audit. Repository removal is
-still blocked until the destination branch is reviewed, merged, and rerun from
-a clean checkout on the public default branch.
+There are no unresolved `MISSING` entries in this audit. The removal gate was
+completed after PR #39 was reviewed, passed exact-head CI, merged, and was
+rerun successfully from a clean checkout of the public default branch. The
+profile was then updated and the two superseded repositories were removed.
 
 ## `pm-evals` public surface
 
@@ -48,9 +49,9 @@ a clean checkout on the public default branch.
 | `test_gate_fires.py` | MIGRATED | `test_known_bad_trajectory_gate_fires_on_silent_failure` proves a right answer reached through the wrong policy document fails when configured as a risk-critical gate. |
 | `eval_set.json`, stores, answer keys, verdicts | MIGRATED | Versioned source snapshots and SHA-256 checks live under `examples/migrated/Evals-pass-1/`; the generalized production suite preserves the valid cases. |
 
-## Removal gate
+## Completed removal gate
 
-Both old repositories may be removed only when all statements below are true:
+Both old repositories were removed only after all statements below were true:
 
 1. the destination PR has independent review, green required CI on the exact
    merge candidate, and is merged;

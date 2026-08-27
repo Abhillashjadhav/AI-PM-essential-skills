@@ -13,7 +13,7 @@
     {
       "name": "pm-verifier",
       "source": "./pm-verifier",
-      "description": "Single AI PM evaluation product: spec-to-suite design, outcome and trajectory grading, calibrated judges, repeated trials, provenance, failure analysis, and CI release decisions."
+      "description": "AI Evals for PMs: turn an AI feature spec into a versioned suite, isolated repeated trials, outcome and trajectory grading, calibrated model judgments, failure analysis, and an auditable CI release decision."
     },
     {
       "name": "mcp-migration-auditor",
