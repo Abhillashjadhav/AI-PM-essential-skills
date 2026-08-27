@@ -1,0 +1,32 @@
+{
+  "checkpoints": [
+    "intake",
+    "identity",
+    "policy",
+    "decision",
+    "delivery"
+  ],
+  "contract_id": "synthetic-support-build",
+  "evidence_outputs": [
+    "outcome",
+    "trajectory",
+    "system",
+    "memory",
+    "metrics"
+  ],
+  "memory_contract": {
+    "conflict_policy": "latest_write_wins",
+    "isolation": [
+      "session",
+      "user",
+      "project"
+    ],
+    "operations": [
+      "write",
+      "retrieve",
+      "update",
+      "delete"
+    ]
+  },
+  "version": "1.0.0"
+}

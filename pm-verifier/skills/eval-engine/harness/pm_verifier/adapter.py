@@ -93,7 +93,10 @@ def _write_request(stream: BinaryIO, payload: bytes) -> None:
     except (BrokenPipeError, OSError):
         pass
     finally:
-        stream.close()
+        try:
+            stream.close()
+        except (BrokenPipeError, OSError):
+            pass
 
 
 def _invoke_adapter(
@@ -258,7 +261,7 @@ def execute_trials(
         for trial_index in range(1, minimum + 1):
             trial_id = f"{case_id}-t{trial_index}"
             request = {
-                "schema_version": "1.0",
+                "schema_version": run.get("schema_version", "1.0"),
                 "case_id": case_id,
                 "trial_id": trial_id,
                 "trial_index": trial_index,

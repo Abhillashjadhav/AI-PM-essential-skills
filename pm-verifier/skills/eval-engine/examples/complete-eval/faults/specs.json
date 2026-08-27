@@ -1,0 +1,133 @@
+{
+  "memory-conflict-fail": [
+    {
+      "operation": "set",
+      "path": "memory.conflicts.0.status",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "unresolved"
+    }
+  ],
+  "memory-forget-fail": [
+    {
+      "operation": "set",
+      "path": "memory.events.4.status",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "failed"
+    },
+    {
+      "operation": "set",
+      "path": "memory.final_state.language",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "fr"
+    }
+  ],
+  "memory-isolation-fail": [
+    {
+      "operation": "set",
+      "path": "memory.isolation_checks.1.passed",
+      "trial_id": "SUPPORT-100-t1",
+      "value": false
+    }
+  ],
+  "memory-missing-evidence": [
+    {
+      "operation": "delete",
+      "path": "memory",
+      "trial_id": "SUPPORT-100-t1"
+    }
+  ],
+  "memory-stale-fail": [
+    {
+      "operation": "set",
+      "path": "memory.events.3.age_seconds",
+      "trial_id": "SUPPORT-100-t1",
+      "value": 60
+    }
+  ],
+  "memory-temporal-fail": [
+    {
+      "operation": "set",
+      "path": "memory.events.3.occurred_at",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "2026-08-26T23:59:00+00:00"
+    }
+  ],
+  "system-content-crosswire": [
+    {
+      "operation": "set",
+      "path": "system.checkpoints.3.state.content_id",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "other-content"
+    }
+  ],
+  "system-discovery-fail": [
+    {
+      "operation": "set",
+      "path": "system.checkpoints.0.status",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "failed"
+    },
+    {
+      "operation": "set",
+      "path": "system.checkpoints.0.reason",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "intake rejected"
+    },
+    {
+      "operation": "set",
+      "path": "system.first_failure_stage",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "intake"
+    },
+    {
+      "operation": "set",
+      "path": "system.completed",
+      "trial_id": "SUPPORT-100-t1",
+      "value": false
+    },
+    {
+      "operation": "set",
+      "path": "system.consequences",
+      "trial_id": "SUPPORT-100-t1",
+      "value": [
+        "ticket was not durably accepted"
+      ]
+    }
+  ],
+  "system-identity-fail": [
+    {
+      "operation": "set",
+      "path": "system.checkpoints.4.entity_id",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "other-ticket"
+    }
+  ],
+  "system-missing-evidence": [
+    {
+      "operation": "delete",
+      "path": "system",
+      "trial_id": "SUPPORT-100-t1"
+    }
+  ],
+  "system-silent-drop": [
+    {
+      "operation": "delete",
+      "path": "system.checkpoints.2",
+      "trial_id": "SUPPORT-100-t1"
+    }
+  ],
+  "system-wrong-path": [
+    {
+      "operation": "set",
+      "path": "system.checkpoints.2.name",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "decision"
+    },
+    {
+      "operation": "set",
+      "path": "system.checkpoints.3.name",
+      "trial_id": "SUPPORT-100-t1",
+      "value": "policy"
+    }
+  ]
+}

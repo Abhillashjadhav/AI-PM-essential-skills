@@ -29,7 +29,7 @@
 |---|---|---|
 | 1. Outcome evaluation | Deterministic gates address paths in the real `trial.outcome`. | Known-good and wrong-outcome tests |
 | 2. Trajectory evaluation | Ordered `trajectory` steps are graded independently from outcome. | Silent trajectory-failure test |
-| 3. Deterministic/code graders | Eight provider-neutral checks, including exact values, patterns, structure, and trace-step matching. | Outcome, trajectory, safety, privacy, and deterministic-only tests |
+| 3. Deterministic/code graders | Provider-neutral generic, trace, system-checkpoint, and memory-state checks. | Four-surface known-good and known-bad tests |
 | 4. Calibrated model graders | External judgments require exact judge, rubric, and calibration provenance. | Model-gate and provenance tests |
 | 5. Human golden calibration | Held-out human labels produce chance-corrected binary agreement, confidence bounds, error rates, and separate ordinal error. | Good, biased, degenerate, and insufficient-sample tests |
 | 6. Multiple trials | Minimum trials are enforced; per-case empirical `pass@k` and `pass^k` are reported. | Repeated-trial and minimum-trial tests |
@@ -43,6 +43,9 @@
 | 14. Known-bad gate fixtures | Deterministic fault specs mutate outcome, trace, safety, privacy, metrics, retries, and mixed evidence. | Known-bad unit tests |
 | 15. Machine and human reports | `results.json` is canonical; `report.md` renders decisions; `inspect` exposes redacted raw failure evidence. | Report, inspection, redaction, and clean-install tests |
 | 16. Missing/invalid evidence | Schema, release-rule, hash, provenance, calibration, judgment, and metric errors produce `BLOCKED`. | Missing/invalid-evidence, invalid-contract, and provenance tests |
+| 17. System/end-to-end evaluation | Required/optional checkpoints, order, identity, continuity, first failure, consequences, and final completion are explicit. | Discovery, identity, cross-wire, wrong-path, and silent-drop fixtures |
+| 18. Optional memory/state evaluation | Promised write/retrieve/update/delete, isolation, freshness, conflict, and temporal behavior is explicit; unpromised memory is omitted. | Good, forget, isolation, stale, conflict, temporal, and missing-evidence fixtures |
+| 19. PMOS/engineering triangulation | Project-relative product and engineering contracts can be required and SHA-256 bound to the run. | Valid, tampered, and missing-role lineage tests |
 
 ## Rejected source behavior
 

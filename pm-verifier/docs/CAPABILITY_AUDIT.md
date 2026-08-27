@@ -21,7 +21,7 @@ profile was then updated and the two superseded repositories were removed.
 
 | Source module / public symbols | Disposition | Destination / reason |
 |---|---|---|
-| `cli`: `version_callback`, `main`, `init`, `score`, `report`, `cluster`, `demo`, `validate_judge` | MIGRATED / SUPERSEDED | Installable `pm-verifier` CLI exposes version, validate, execute, run, inspect, report, calibrate, and bias. The PM skill creates suites from specs instead of a second `init` product. |
+| `cli`: `version_callback`, `main`, `init`, `score`, `report`, `cluster`, `demo`, `validate_judge` | MIGRATED / SUPERSEDED | Installable `pm-verifier` CLI exposes version, validate, execute, run, inspect, report, calibrate, bias, and named fault materialization. The PM skill creates suites from contracts instead of a second `init` product. |
 | `loader`: `TraceLoadError`, `iter_traces`, `load_traces` | SUPERSEDED | `io.py` uses strict JSON/JSONL evidence loading and produces `BLOCKED` rather than partial iteration over malformed evidence. |
 | `models`: `Trace`, `Criterion`, `Score`, `EvalResult`, `ClusterResult`, `CriterionAggregate`, `Report` | SUPERSEDED | Versioned JSON schemas plus runtime validation replace a Pydantic-only Python API and keep the package dependency-free. |
 | `rubric_parser`: `parse_rubric_text`, `parse_rubric` | SUPERSEDED | The PM-facing skill converts PRD/spec text into anchored `suite.json`; the runtime refuses ambiguous unanchored rubric bullets. Migrated source rubrics remain as examples. |

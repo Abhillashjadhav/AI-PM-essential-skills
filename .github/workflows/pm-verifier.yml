@@ -64,3 +64,41 @@ jobs:
             --out "$eval_dir/inspection.md"
           grep -q "Release decision: PASS" "$eval_dir/report.md"
           grep -q "Raw trajectory" "$eval_dir/inspection.md"
+      - name: Run complete four-surface example and faults
+        shell: bash
+        run: |
+          eval_dir="$(mktemp -d)/complete-eval"
+          cp -R pm-verifier/skills/eval-engine/examples/complete-eval "$eval_dir"
+          pm-verifier execute --project "$eval_dir" \
+            --trials-out trials-a.jsonl --results-out results-a.json \
+            -- python3 "$eval_dir/reference_adapter.py"
+          pm-verifier execute --project "$eval_dir" \
+            --trials-out trials-b.jsonl --results-out results-b.json \
+            -- python3 "$eval_dir/reference_adapter.py"
+          cmp "$eval_dir/results-a.json" "$eval_dir/results-b.json"
+          pm-verifier report --results "$eval_dir/results-a.json" \
+            --out "$eval_dir/report.md"
+          grep -q "## System" "$eval_dir/report.md"
+          grep -q "## Memory" "$eval_dir/report.md"
+
+          pm-verifier fault --project "$eval_dir" --trials trials-a.jsonl \
+            --name system-discovery-fail --out trials-fail.jsonl
+          if pm-verifier run --project "$eval_dir" \
+            --trials "$eval_dir/trials-fail.jsonl" \
+            --out "$eval_dir/results-fail.json"; then
+            echo "expected injected discovery fault to fail"
+            exit 1
+          else
+            test "$?" -eq 1
+          fi
+
+          pm-verifier fault --project "$eval_dir" --trials trials-a.jsonl \
+            --name system-silent-drop --out trials-blocked.jsonl
+          if pm-verifier run --project "$eval_dir" \
+            --trials "$eval_dir/trials-blocked.jsonl" \
+            --out "$eval_dir/results-blocked.json"; then
+            echo "expected missing checkpoint evidence to block"
+            exit 1
+          else
+            test "$?" -eq 2
+          fi

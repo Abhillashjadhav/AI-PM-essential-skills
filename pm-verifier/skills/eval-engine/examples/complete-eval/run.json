@@ -1,0 +1,61 @@
+{
+  "candidate": {
+    "id": "synthetic-support-agent",
+    "sha256": "2188afdbfa701fd482b3a958a361e5a7f6bfe18ff6aff0f78ae1acf9316d3169",
+    "version": "1.0.0"
+  },
+  "configuration": {
+    "id": "support-workflow-complete-regression",
+    "sha256": "3660712f458dbf0d072a15c4151d53342a0e9207d6464449545c525c9275d676",
+    "version": "2.0.0"
+  },
+  "contract_lineage": [
+    {
+      "id": "synthetic-support-decision",
+      "path": "contracts/pmos-contract.json",
+      "role": "pmos",
+      "sha256": "dcc26c5bab76e120d5b79d3080da60c7eb84231084325e4f8bbc5d35ae0cba0b",
+      "version": "1.0.0"
+    },
+    {
+      "id": "synthetic-support-build",
+      "path": "contracts/engineering-contract.json",
+      "role": "engineering",
+      "sha256": "ab338d8fd259f95ac944db7c1d829f99cb61e0043d889b2e060b158f50f4c8e3",
+      "version": "1.0.0"
+    }
+  ],
+  "created_at": "2026-08-27T00:00:00+00:00",
+  "dataset": {
+    "cases_sha256": "78036027b9b4201182be25d14858f0ca99f625e014210dd32d9f5429e428be02",
+    "id": "synthetic-support-complete-cases",
+    "version": "1.0.0"
+  },
+  "harness": {
+    "name": "pm-verifier",
+    "sha256": "3638b9c9c52960984f2fc897b4daaf11269e7c928d07e1b8b48c392054004fb0",
+    "version": "1.2.0"
+  },
+  "model": {
+    "name": "deterministic-support-agent",
+    "parameters": {
+      "temperature": 0
+    },
+    "provider": "synthetic",
+    "version": "1.0.0"
+  },
+  "prompt": {
+    "id": "synthetic-support-decision",
+    "sha256": "dcc26c5bab76e120d5b79d3080da60c7eb84231084325e4f8bbc5d35ae0cba0b",
+    "version": "1.0.0"
+  },
+  "run_id": "synthetic-support-run-001",
+  "schema_version": "1.1",
+  "tools": [
+    {
+      "name": "synthetic-support-workflow",
+      "sha256": "ab338d8fd259f95ac944db7c1d829f99cb61e0043d889b2e060b158f50f4c8e3",
+      "version": "1.0.0"
+    }
+  ]
+}

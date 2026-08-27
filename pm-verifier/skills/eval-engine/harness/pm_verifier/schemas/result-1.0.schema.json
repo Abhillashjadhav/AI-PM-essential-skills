@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pm-verifier/schemas/result-1.1.json",
-  "title": "pm-verifier result 1.1",
+  "$id": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pm-verifier/schemas/result-1.0.json",
+  "title": "pm-verifier legacy result 1.0",
   "type": "object",
   "required": [
     "schema_version",
@@ -13,21 +13,13 @@
     "trials"
   ],
   "properties": {
-    "schema_version": { "const": "1.1" },
+    "schema_version": { "const": "1.0" },
     "decision": { "enum": ["PASS", "FAIL", "BLOCKED"] },
-    "surfaces": {
-      "type": "array",
-      "uniqueItems": true,
-      "items": { "enum": ["outcome", "trajectory", "system", "memory"] }
-    },
-    "contract_lineage": { "type": "array", "items": { "type": "object" } },
     "evidence_errors": { "type": "array", "items": { "type": "string" } },
     "failed_gate_ids": { "type": "array", "items": { "type": "string" } },
     "failed_release_rules": { "type": "array", "items": { "type": "string" } },
     "summary": { "type": "object" },
-    "trials": { "type": "array", "items": { "type": "object" } },
-    "slices": { "type": "object" },
-    "failure_clusters": { "type": "array" }
+    "trials": { "type": "array" }
   },
   "additionalProperties": true
 }

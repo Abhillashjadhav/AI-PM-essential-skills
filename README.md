@@ -18,15 +18,15 @@ Create an eval for this feature.
 ```
 
 **AI Evals for PMs**, installed as `pm-verifier`, turns the specification into
-a versioned evaluation suite, isolated repeated-trial evidence, outcome and
-trajectory grading, calibrated model judgments, failure analysis, and an
-auditable release decision.
+a versioned evaluation suite, isolated repeated-trial evidence, outcome,
+trajectory, end-to-end system, and optional memory/state grading, calibrated
+model judgments, failure analysis, and an auditable release decision.
 
 ## Choose the job you need done
 
 | Plugin | Use it when you need to… | Ask Claude Code | First useful result |
 |---|---|---|---|
-| **[AI Evals for PMs](pm-verifier/)** (`pm-verifier`) | Turn a PRD, traces, or an existing suite into an evidence-backed release decision | `Create an eval for this feature` | Versioned suite, isolated repeated trials, outcome and trajectory gates, calibrated model judgments, failure inspection, and `PASS`, `FAIL`, or `BLOCKED` evidence |
+| **[AI Evals for PMs](pm-verifier/)** (`pm-verifier`) | Turn a PRD, PMOS contract, traces, or an existing suite into an evidence-backed release decision | `Create a complete eval for this feature` | Versioned four-surface suite, isolated repeated trials, system/memory contracts, failure inspection, and `PASS`, `FAIL`, or `BLOCKED` evidence |
 | **[pm-tactical](pm-tactical/)** | Make daily PM work cheaper, faster, and self-checking | `Check whether this task needs a stronger model` | Model routing, frozen-spec validation, prompt optimization, context audit, or project-memory update |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
 | **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
@@ -98,7 +98,13 @@ flowchart TD
 AI Evals for PMs separates binary, disqualifying failures from gradual quality criteria:
 
 ```text
-FEATURE: AI support-ticket summarizer
+PRODUCT CONTRACT: AI support workflow
+
+SURFACES
+- outcome: correct resolution reaches the user
+- trajectory: correct policy and risk-critical path
+- system: intake → identity → policy → decision → delivery
+- memory: only if promised; write → retrieve → update → forget + isolation
 
 RELEASE GATES
 1. No fabricated customer facts — automatic failure
@@ -111,10 +117,10 @@ JUDGE RUBRIC
 - concise communication: anchored 1–5
 
 HARNESS
-prepare.py → run.py → report.py
+execute → grade → inspect → report
 
 EVIDENCE
-repeated trials + provenance + cost/latency/tokens/retries
+repeated four-surface trials + PMOS/engineering lineage + operations
 → PASS, FAIL, or BLOCKED
 ```
 

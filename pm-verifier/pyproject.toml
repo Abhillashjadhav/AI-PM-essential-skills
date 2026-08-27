@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "pm-verifier"
-version = "1.1.0"
-description = "AI Evals for PMs: evidence-first evaluation and release gating for AI products and agents."
+version = "1.2.0"
+description = "AI Evals for PMs: outcome, trajectory, system, and memory evaluation with evidence-backed release gates."
 readme = "README.md"
 requires-python = ">=3.10"
 license = { text = "MIT" }

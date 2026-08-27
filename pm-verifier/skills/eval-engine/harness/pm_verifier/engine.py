@@ -7,9 +7,10 @@ from pathlib import Path
 from typing import Any
 
 from .analysis import aggregate_metrics, build_slices, cluster_failures
-from .graders import grade_deterministic, validate_grader
+from .graders import CATEGORIES, SURFACES, grade_deterministic, validate_grader
 from .io import (
     EvidenceError,
+    get_path,
     load_json,
     load_jsonl,
     rubric_hash,
@@ -18,8 +19,14 @@ from .io import (
 )
 
 
-SCHEMA_VERSION = "1.0"
+SCHEMA_VERSION = "1.1"
+SUPPORTED_SCHEMA_VERSIONS = {"1.0", SCHEMA_VERSION}
 METRIC_FIELDS = ("latency_ms", "input_tokens", "output_tokens", "cost_usd", "retries")
+CHECKPOINT_STATUSES = {"passed", "failed", "blocked", "skipped"}
+MEMORY_OPERATIONS = {"write", "retrieve", "update", "delete"}
+MEMORY_STATUSES = {"passed", "failed", "blocked"}
+ISOLATION_DIMENSIONS = {"session", "user", "project", "tenant"}
+LINEAGE_ROLES = {"pmos", "engineering"}
 
 
 def _blocked(errors: list[str], suite: dict[str, Any] | None = None) -> dict[str, Any]:
@@ -70,6 +77,26 @@ def _valid_timestamp(value: Any) -> bool:
     return parsed.tzinfo is not None
 
 
+def _non_empty_string(value: Any) -> bool:
+    return isinstance(value, str) and bool(value.strip())
+
+
+def _unique_string_list(value: Any, *, minimum: int = 1) -> bool:
+    return (
+        isinstance(value, list)
+        and len(value) >= minimum
+        and all(_non_empty_string(item) for item in value)
+        and len(value) == len(set(value))
+    )
+
+
+def _enabled_surfaces(suite: dict[str, Any]) -> list[str]:
+    surfaces = suite.get("surfaces")
+    if isinstance(surfaces, list) and all(isinstance(item, str) for item in surfaces):
+        return [item for item in surfaces if item in SURFACES]
+    return ["outcome", "trajectory"]
+
+
 def _required_mapping(
     container: dict[str, Any], key: str, label: str, errors: list[str]
 ) -> dict[str, Any]:
@@ -78,6 +105,83 @@ def _required_mapping(
         errors.append(f"{label}.{key} must be an object")
         return {}
     return value
+
+
+def _validate_contract_lineage(
+    project: Path,
+    suite: dict[str, Any],
+    run: dict[str, Any],
+) -> list[str]:
+    errors: list[str] = []
+    lineage_contract = suite.get("lineage_contract", {})
+    required_roles = (
+        lineage_contract.get("required_roles", [])
+        if isinstance(lineage_contract, dict)
+        else []
+    )
+    lineage = run.get("contract_lineage")
+    if lineage is None and not required_roles:
+        return errors
+    if not isinstance(lineage, list):
+        return ["run.contract_lineage must be a list"]
+
+    seen_roles: set[str] = set()
+    root = project.resolve()
+    for index, artifact in enumerate(lineage):
+        label = f"run.contract_lineage[{index}]"
+        if not isinstance(artifact, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        role = artifact.get("role")
+        if not isinstance(role, str) or role not in LINEAGE_ROLES:
+            errors.append(f"{label}.role must be pmos or engineering")
+        elif role in seen_roles:
+            errors.append(f"{label}.role duplicates {role!r}")
+        else:
+            seen_roles.add(role)
+        for field in ("id", "version"):
+            if not _non_empty_string(artifact.get(field)):
+                errors.append(f"{label}.{field} must be a non-empty string")
+        declared_path = artifact.get("path")
+        if not _non_empty_string(declared_path):
+            errors.append(f"{label}.path must be a non-empty project-relative path")
+            continue
+        try:
+            relative = Path(declared_path)
+            if relative.is_absolute() or ".." in relative.parts:
+                errors.append(f"{label}.path must stay within the evaluation project")
+                continue
+            resolved = (root / relative).resolve()
+        except (OSError, RuntimeError, ValueError) as exc:
+            errors.append(f"{label}.path cannot be resolved safely: {exc}")
+            continue
+        if root not in resolved.parents:
+            errors.append(f"{label}.path must stay within the evaluation project")
+            continue
+        try:
+            is_file = resolved.is_file()
+        except OSError as exc:
+            errors.append(f"{label}.path cannot be inspected safely: {exc}")
+            continue
+        if not is_file:
+            errors.append(f"{label}.path is missing: {declared_path}")
+            continue
+        declared_hash = artifact.get("sha256")
+        if not valid_sha256(declared_hash):
+            errors.append(f"{label}.sha256 must be a 64-character SHA-256")
+        else:
+            try:
+                actual_hash = sha256_file(resolved)
+            except OSError as exc:
+                errors.append(f"{label}.path cannot be read safely: {exc}")
+                continue
+            if declared_hash != actual_hash:
+                errors.append(f"{label}.sha256 does not match {declared_path}")
+
+    for role in required_roles if isinstance(required_roles, list) else []:
+        if isinstance(role, str) and role not in seen_roles:
+            errors.append(f"required contract lineage role {role!r} is missing")
+    return errors
 
 
 def _validate_provenance(
@@ -89,8 +193,11 @@ def _validate_provenance(
 ) -> list[str]:
     errors: list[str] = []
     for label, document in (("suite", suite), ("dataset", dataset), ("run", run)):
-        if document.get("schema_version") != SCHEMA_VERSION:
-            errors.append(f"{label}.schema_version must be {SCHEMA_VERSION}")
+        version = document.get("schema_version")
+        if not isinstance(version, str) or version not in SUPPORTED_SCHEMA_VERSIONS:
+            errors.append(
+                f"{label}.schema_version must be one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}"
+            )
 
     actual_cases_hash = sha256_file(cases_path)
     if dataset.get("source") in (None, ""):
@@ -162,11 +269,298 @@ def _validate_provenance(
                     errors.append(f"run.tools[{index}].{key} is required")
             if not valid_sha256(tool.get("sha256")):
                 errors.append(f"run.tools[{index}].sha256 must be a 64-character SHA-256")
+    errors.extend(_validate_contract_lineage(suite_path.parent, suite, run))
+    return errors
+
+
+def _validate_surface_contracts(suite: dict[str, Any]) -> list[str]:
+    errors: list[str] = []
+    version = suite.get("schema_version")
+    new_fields = ("surfaces", "system_contract", "state_contract", "lineage_contract")
+    if version == "1.0":
+        if any(field in suite for field in new_fields):
+            errors.append("suite schema 1.1 is required for surface and lineage contracts")
+        return errors
+    if version != SCHEMA_VERSION:
+        return errors
+
+    surfaces = suite.get("surfaces")
+    if not _unique_string_list(surfaces):
+        errors.append("suite.surfaces must be a non-empty unique string list")
+        surfaces = []
+    else:
+        invalid = [surface for surface in surfaces if surface not in SURFACES]
+        if invalid:
+            errors.append(f"suite.surfaces contains unsupported values: {invalid}")
+
+    if "system" in surfaces:
+        contract = suite.get("system_contract")
+        if not isinstance(contract, dict):
+            errors.append("suite.system_contract is required when system is enabled")
+        else:
+            required = contract.get("required_checkpoints")
+            optional = contract.get("optional_checkpoints", [])
+            if not _unique_string_list(required):
+                errors.append(
+                    "suite.system_contract.required_checkpoints must be a non-empty unique string list"
+                )
+                required = []
+            if not isinstance(optional, list) or not all(
+                _non_empty_string(item) for item in optional
+            ) or len(optional) != len(set(optional)):
+                errors.append(
+                    "suite.system_contract.optional_checkpoints must be a unique string list"
+                )
+                optional = []
+            if set(required) & set(optional):
+                errors.append(
+                    "suite.system_contract required and optional checkpoints must be disjoint"
+                )
+            if not _non_empty_string(contract.get("identity_field")):
+                errors.append(
+                    "suite.system_contract.identity_field must be a non-empty string"
+                )
+            if not _unique_string_list(contract.get("continuity_fields")):
+                errors.append(
+                    "suite.system_contract.continuity_fields must be a non-empty unique string list"
+                )
+    elif "system_contract" in suite:
+        errors.append("suite.system_contract requires the system surface")
+
+    if "memory" in surfaces:
+        contract = suite.get("state_contract")
+        if not isinstance(contract, dict):
+            errors.append("suite.state_contract is required when memory is enabled")
+        else:
+            if contract.get("enabled") is not True:
+                errors.append("suite.state_contract.enabled must be true")
+            operations = contract.get("required_operations")
+            if not _unique_string_list(operations):
+                errors.append(
+                    "suite.state_contract.required_operations must be a non-empty unique string list"
+                )
+            elif any(operation not in MEMORY_OPERATIONS for operation in operations):
+                errors.append(
+                    f"suite.state_contract.required_operations must use {sorted(MEMORY_OPERATIONS)}"
+                )
+            dimensions = contract.get("isolation_dimensions")
+            if not _unique_string_list(dimensions):
+                errors.append(
+                    "suite.state_contract.isolation_dimensions must be a non-empty unique string list"
+                )
+            elif any(dimension not in ISOLATION_DIMENSIONS for dimension in dimensions):
+                errors.append(
+                    f"suite.state_contract.isolation_dimensions must use {sorted(ISOLATION_DIMENSIONS)}"
+                )
+            staleness = contract.get("maximum_staleness_seconds")
+            if not _is_number(staleness) or float(staleness) < 0:
+                errors.append(
+                    "suite.state_contract.maximum_staleness_seconds must be a finite number >= 0"
+                )
+            if not _non_empty_string(contract.get("conflict_policy")):
+                errors.append(
+                    "suite.state_contract.conflict_policy must be a non-empty string"
+                )
+            if not isinstance(contract.get("require_temporal_order"), bool):
+                errors.append(
+                    "suite.state_contract.require_temporal_order must be true or false"
+                )
+    elif isinstance(suite.get("state_contract"), dict) and suite["state_contract"].get(
+        "enabled"
+    ):
+        errors.append("enabled suite.state_contract requires the memory surface")
+
+    lineage = suite.get("lineage_contract")
+    if lineage is not None:
+        if not isinstance(lineage, dict):
+            errors.append("suite.lineage_contract must be an object")
+        else:
+            roles = lineage.get("required_roles")
+            if not _unique_string_list(roles):
+                errors.append(
+                    "suite.lineage_contract.required_roles must be a non-empty unique string list"
+                )
+            elif any(role not in LINEAGE_ROLES for role in roles):
+                errors.append(
+                    f"suite.lineage_contract.required_roles must use {sorted(LINEAGE_ROLES)}"
+                )
+    return errors
+
+
+def _validate_contract_gate_coverage(
+    suite: dict[str, Any], deterministic: list[dict[str, Any]]
+) -> list[str]:
+    """Require objective schema 1.1 promises to have explicit binary gates."""
+    if suite.get("schema_version") != SCHEMA_VERSION:
+        return []
+    errors: list[str] = []
+    gates = [
+        grader
+        for grader in deterministic
+        if isinstance(grader, dict)
+        and grader.get("gate") is True
+        and isinstance(grader.get("params", {}), dict)
+    ]
+    surfaces = set(_enabled_surfaces(suite))
+
+    if "system" in surfaces and isinstance(suite.get("system_contract"), dict):
+        contract = suite["system_contract"]
+        required = contract.get("required_checkpoints", [])
+        if isinstance(required, list) and all(isinstance(item, str) for item in required):
+            for checkpoint in required:
+                if not any(
+                    grader.get("scope") == "system"
+                    and grader.get("check") == "checkpoint_passed"
+                    and grader.get("params", {}).get("checkpoint") == checkpoint
+                    for grader in gates
+                ):
+                    errors.append(
+                        f"system contract checkpoint {checkpoint!r} requires a checkpoint_passed gate"
+                    )
+            if len(required) >= 2 and not any(
+                grader.get("scope") == "system"
+                and grader.get("check") == "checkpoint_order"
+                and grader.get("params", {}).get("checkpoints") == required
+                for grader in gates
+            ):
+                errors.append(
+                    "system contract requires a checkpoint_order gate for required_checkpoints"
+                )
+            if required and not any(
+                grader.get("scope") == "system"
+                and grader.get("check") == "final_checkpoint_reached"
+                and grader.get("params", {}).get("checkpoint") == required[-1]
+                for grader in gates
+            ):
+                errors.append(
+                    "system contract requires a final_checkpoint_reached gate for its final checkpoint"
+                )
+            required_set = set(required)
+            if not any(
+                grader.get("scope") == "system"
+                and grader.get("check") == "identity_preserved"
+                and set(grader.get("params", {}).get("checkpoints", [])) >= required_set
+                and grader.get("params", {}).get("field")
+                == contract.get("identity_field")
+                for grader in gates
+                if isinstance(grader.get("params", {}).get("checkpoints"), list)
+                and all(
+                    isinstance(item, str)
+                    for item in grader.get("params", {}).get("checkpoints", [])
+                )
+            ):
+                errors.append(
+                    "system contract requires an identity_preserved gate covering required checkpoints"
+                )
+            continuity = contract.get("continuity_fields", [])
+            continuity_set = (
+                set(continuity)
+                if isinstance(continuity, list)
+                and all(isinstance(item, str) for item in continuity)
+                else set()
+            )
+            if not any(
+                grader.get("scope") == "system"
+                and grader.get("check") == "state_continuity"
+                and set(grader.get("params", {}).get("checkpoints", [])) >= required_set
+                and set(grader.get("params", {}).get("fields", [])) >= continuity_set
+                for grader in gates
+                if isinstance(grader.get("params", {}).get("checkpoints"), list)
+                and isinstance(grader.get("params", {}).get("fields"), list)
+                and all(
+                    isinstance(item, str)
+                    for item in grader.get("params", {}).get("checkpoints", [])
+                    + grader.get("params", {}).get("fields", [])
+                )
+            ):
+                errors.append(
+                    "system contract requires a state_continuity gate covering its fields and checkpoints"
+                )
+
+    if "memory" in surfaces and isinstance(suite.get("state_contract"), dict):
+        contract = suite["state_contract"]
+        required_operations = contract.get("required_operations", [])
+        operation_checks = {
+            "write": {"state_written"},
+            "retrieve": {"state_retrieved", "state_equals_expected"},
+            "update": {"state_updated"},
+            "delete": {"state_deleted"},
+        }
+        for operation in (
+            required_operations if isinstance(required_operations, list) else []
+        ):
+            if isinstance(operation, str) and not any(
+                grader.get("scope") == "memory"
+                and grader.get("check") in operation_checks.get(operation, set())
+                for grader in gates
+            ):
+                errors.append(
+                    f"state contract operation {operation!r} requires a release gate"
+                )
+        if isinstance(required_operations, list) and "delete" in required_operations:
+            if not any(
+                grader.get("scope") == "memory"
+                and grader.get("check") == "state_not_present"
+                for grader in gates
+            ):
+                errors.append(
+                    "state contract delete operation requires a state_not_present gate"
+                )
+        dimensions = contract.get("isolation_dimensions", [])
+        dimension_set = (
+            set(dimensions)
+            if isinstance(dimensions, list)
+            and all(isinstance(item, str) for item in dimensions)
+            else set()
+        )
+        if not any(
+            grader.get("scope") == "memory"
+            and grader.get("check") == "state_isolated"
+            and set(grader.get("params", {}).get("dimensions", [])) >= dimension_set
+            for grader in gates
+            if isinstance(grader.get("params", {}).get("dimensions"), list)
+            and all(
+                isinstance(item, str)
+                for item in grader.get("params", {}).get("dimensions", [])
+            )
+        ):
+            errors.append(
+                "state contract requires a state_isolated gate covering its dimensions"
+            )
+        maximum_staleness = contract.get("maximum_staleness_seconds")
+        if _is_number(maximum_staleness) and not any(
+            grader.get("scope") == "memory"
+            and grader.get("check") == "state_not_stale"
+            and _is_number(grader.get("params", {}).get("maximum_age_seconds"))
+            and float(grader["params"]["maximum_age_seconds"])
+            <= float(maximum_staleness)
+            for grader in gates
+        ):
+            errors.append(
+                "state contract requires a state_not_stale gate at least as strict as its maximum"
+            )
+        policy = contract.get("conflict_policy")
+        if _non_empty_string(policy) and not any(
+            grader.get("scope") == "memory"
+            and grader.get("check") == "state_conflict_resolved"
+            and grader.get("params", {}).get("policy") == policy
+            for grader in gates
+        ):
+            errors.append(
+                "state contract requires a state_conflict_resolved gate for its policy"
+            )
+        if contract.get("require_temporal_order") is True and not any(
+            grader.get("scope") == "memory"
+            and grader.get("check") == "state_temporal_order"
+            for grader in gates
+        ):
+            errors.append("state contract requires a state_temporal_order gate")
     return errors
 
 
 def _validate_suite(suite: dict[str, Any]) -> list[str]:
     errors: list[str] = []
+    errors.extend(_validate_surface_contracts(suite))
     for key in ("suite_id", "suite_version", "name"):
         if suite.get(key) in (None, ""):
             errors.append(f"suite.{key} is required")
@@ -199,10 +593,10 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
         if not isinstance(grader.get("gate"), bool):
             errors.append(f"model grader {grader.get('id')}: gate must be true or false")
         scope = grader.get("scope")
-        if not isinstance(scope, str) or scope not in {"outcome", "trajectory"}:
+        if not isinstance(scope, str) or scope not in SURFACES:
             errors.append(f"model grader {grader.get('id')}: invalid scope")
         category = grader.get("category")
-        if not isinstance(category, str) or category not in {"quality", "safety", "privacy"}:
+        if not isinstance(category, str) or category not in CATEGORIES:
             errors.append(f"model grader {grader.get('id')}: invalid category")
         for field in ("id", "name", "prompt_version"):
             if not isinstance(grader.get(field), str) or not grader[field].strip():
@@ -232,6 +626,28 @@ def _validate_suite(suite: dict[str, Any]) -> list[str]:
         errors.append("every grader and rubric criterion needs a non-empty string id")
     if len(identifiers) != len(set(identifiers)):
         errors.append("grader and rubric ids must be globally unique")
+    if suite.get("schema_version") == SCHEMA_VERSION:
+        enabled = set(_enabled_surfaces(suite))
+        configured_graders = [
+            grader
+            for grader in [*deterministic, *model_graders]
+            if isinstance(grader, dict)
+        ]
+        for grader in configured_graders:
+            scope = grader.get("scope")
+            if isinstance(scope, str) and scope in SURFACES and scope not in enabled:
+                errors.append(
+                    f"grader {grader.get('id')}: scope {scope!r} is not enabled in suite.surfaces"
+                )
+        for surface in sorted(enabled):
+            if not any(
+                grader.get("scope") == surface and grader.get("gate") is True
+                for grader in configured_graders
+            ):
+                errors.append(
+                    f"suite surface {surface!r} requires at least one release-gating grader"
+                )
+        errors.extend(_validate_contract_gate_coverage(suite, deterministic))
     calibration = suite.get("calibration")
     if model_graders or rubric:
         if not isinstance(calibration, dict):
@@ -329,12 +745,252 @@ def _validate_cases(cases: list[dict[str, Any]]) -> list[str]:
     return errors
 
 
+def _validate_system_evidence(
+    trial: dict[str, Any],
+    contract: dict[str, Any],
+    errors: list[str],
+) -> None:
+    trial_id = trial.get("trial_id")
+    system = trial.get("system")
+    if not isinstance(system, dict):
+        errors.append(f"trial {trial_id}: system must be an object")
+        return
+    if not _non_empty_string(system.get("entity_id")):
+        errors.append(f"trial {trial_id}: system.entity_id must be a non-empty string")
+    if not isinstance(system.get("completed"), bool):
+        errors.append(f"trial {trial_id}: system.completed must be true or false")
+    consequences = system.get("consequences")
+    if not isinstance(consequences, list) or not all(
+        _non_empty_string(item) for item in consequences
+    ):
+        errors.append(f"trial {trial_id}: system.consequences must be a string list")
+
+    checkpoints = system.get("checkpoints")
+    if not isinstance(checkpoints, list) or not checkpoints:
+        errors.append(f"trial {trial_id}: system.checkpoints must be a non-empty list")
+        return
+    seen_names: set[str] = set()
+    indexes: list[int] = []
+    valid_checkpoints: list[dict[str, Any]] = []
+    identity_field = contract.get("identity_field")
+    continuity_fields = contract.get("continuity_fields", [])
+    for position, checkpoint in enumerate(checkpoints, 1):
+        label = f"trial {trial_id}: system checkpoint {position}"
+        if not isinstance(checkpoint, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        name = checkpoint.get("name")
+        if not _non_empty_string(name):
+            errors.append(f"{label}.name must be a non-empty string")
+        elif name in seen_names:
+            errors.append(f"trial {trial_id}: duplicate system checkpoint {name!r}")
+        else:
+            seen_names.add(name)
+        index = checkpoint.get("index")
+        if not isinstance(index, int) or isinstance(index, bool) or index < 1:
+            errors.append(f"{label}.index must be an integer >= 1")
+        else:
+            indexes.append(index)
+        status = checkpoint.get("status")
+        if not isinstance(status, str) or status not in CHECKPOINT_STATUSES:
+            errors.append(f"{label}.status must be one of {sorted(CHECKPOINT_STATUSES)}")
+        if not _non_empty_string(checkpoint.get("reason")):
+            errors.append(f"{label}.reason must be a non-empty string")
+        state = checkpoint.get("state")
+        if not isinstance(state, dict):
+            errors.append(f"{label}.state must be an object")
+        else:
+            for field in continuity_fields if isinstance(continuity_fields, list) else []:
+                if not isinstance(field, str):
+                    continue
+                try:
+                    get_path(state, field)
+                except (KeyError, TypeError):
+                    errors.append(f"{label}.state is missing continuity field {field!r}")
+        if _non_empty_string(identity_field):
+            try:
+                get_path(checkpoint, identity_field)
+            except (KeyError, TypeError):
+                errors.append(f"{label} is missing identity field {identity_field!r}")
+        valid_checkpoints.append(checkpoint)
+    if len(indexes) == len(checkpoints) and indexes != list(range(1, len(indexes) + 1)):
+        errors.append(
+            f"trial {trial_id}: system checkpoint indexes must be contiguous and ordered from 1"
+        )
+
+    required = contract.get("required_checkpoints", [])
+    for name in required if isinstance(required, list) else []:
+        if isinstance(name, str) and name not in seen_names:
+            errors.append(f"trial {trial_id}: required checkpoint {name!r} is missing")
+
+    ordered = sorted(
+        (
+            checkpoint
+            for checkpoint in valid_checkpoints
+            if isinstance(checkpoint.get("index"), int)
+            and not isinstance(checkpoint.get("index"), bool)
+            and checkpoint.get("name") in required
+        ),
+        key=lambda checkpoint: checkpoint["index"],
+    )
+    derived_first_failure = next(
+        (
+            checkpoint.get("name")
+            for checkpoint in ordered
+            if checkpoint.get("status") != "passed"
+        ),
+        None,
+    )
+    declared_first_failure = system.get("first_failure_stage")
+    if declared_first_failure is not None and not _non_empty_string(
+        declared_first_failure
+    ):
+        errors.append(
+            f"trial {trial_id}: system.first_failure_stage must be null or a non-empty string"
+        )
+    elif declared_first_failure != derived_first_failure:
+        errors.append(
+            f"trial {trial_id}: system.first_failure_stage {declared_first_failure!r} "
+            f"does not match observed first failure {derived_first_failure!r}"
+        )
+
+
+def _validate_memory_evidence(
+    trial: dict[str, Any],
+    contract: dict[str, Any],
+    errors: list[str],
+) -> None:
+    trial_id = trial.get("trial_id")
+    memory = trial.get("memory")
+    if not isinstance(memory, dict):
+        errors.append(f"trial {trial_id}: memory must be an object")
+        return
+    if not isinstance(memory.get("final_state"), dict):
+        errors.append(f"trial {trial_id}: memory.final_state must be an object")
+
+    events = memory.get("events")
+    if not isinstance(events, list) or not events:
+        errors.append(f"trial {trial_id}: memory.events must be a non-empty list")
+        return
+    indexes: list[int] = []
+    observed_operations: set[str] = set()
+    dimensions = contract.get("isolation_dimensions", [])
+    for position, event in enumerate(events, 1):
+        label = f"trial {trial_id}: memory event {position}"
+        if not isinstance(event, dict):
+            errors.append(f"{label} must be an object")
+            continue
+        index = event.get("index")
+        if not isinstance(index, int) or isinstance(index, bool) or index < 1:
+            errors.append(f"{label}.index must be an integer >= 1")
+        else:
+            indexes.append(index)
+        operation = event.get("operation")
+        if not isinstance(operation, str) or operation not in MEMORY_OPERATIONS:
+            errors.append(f"{label}.operation must be one of {sorted(MEMORY_OPERATIONS)}")
+        else:
+            observed_operations.add(operation)
+        if not _non_empty_string(event.get("key")):
+            errors.append(f"{label}.key must be a non-empty string")
+        status = event.get("status")
+        if not isinstance(status, str) or status not in MEMORY_STATUSES:
+            errors.append(f"{label}.status must be one of {sorted(MEMORY_STATUSES)}")
+        version = event.get("version")
+        if not isinstance(version, int) or isinstance(version, bool) or version < 1:
+            errors.append(f"{label}.version must be an integer >= 1")
+        if not _valid_timestamp(event.get("occurred_at")):
+            errors.append(f"{label}.occurred_at must be an RFC 3339 timestamp with timezone")
+        scope = event.get("scope")
+        if not isinstance(scope, dict):
+            errors.append(f"{label}.scope must be an object")
+        else:
+            for dimension in dimensions if isinstance(dimensions, list) else []:
+                if not isinstance(dimension, str):
+                    continue
+                if not _non_empty_string(scope.get(f"{dimension}_id")):
+                    errors.append(
+                        f"{label}.scope.{dimension}_id must be a non-empty string"
+                    )
+        if operation == "retrieve":
+            age = event.get("age_seconds")
+            if not _is_number(age) or float(age) < 0:
+                errors.append(f"{label}.age_seconds must be a finite number >= 0")
+    if len(indexes) == len(events) and indexes != list(range(1, len(indexes) + 1)):
+        errors.append(
+            f"trial {trial_id}: memory event indexes must be contiguous and ordered from 1"
+        )
+    required_operations = contract.get("required_operations", [])
+    for operation in required_operations if isinstance(required_operations, list) else []:
+        if isinstance(operation, str) and operation not in observed_operations:
+            errors.append(
+                f"trial {trial_id}: required memory operation {operation!r} is missing"
+            )
+
+    isolation_checks = memory.get("isolation_checks")
+    observed_dimensions: set[str] = set()
+    if not isinstance(isolation_checks, list):
+        errors.append(f"trial {trial_id}: memory.isolation_checks must be a list")
+    else:
+        for position, check in enumerate(isolation_checks, 1):
+            label = f"trial {trial_id}: memory isolation check {position}"
+            if not isinstance(check, dict):
+                errors.append(f"{label} must be an object")
+                continue
+            dimension = check.get("dimension")
+            if not isinstance(dimension, str) or dimension not in ISOLATION_DIMENSIONS:
+                errors.append(
+                    f"{label}.dimension must be one of {sorted(ISOLATION_DIMENSIONS)}"
+                )
+            elif dimension in observed_dimensions:
+                errors.append(f"trial {trial_id}: duplicate isolation dimension {dimension!r}")
+            else:
+                observed_dimensions.add(dimension)
+            if not isinstance(check.get("passed"), bool):
+                errors.append(f"{label}.passed must be true or false")
+            if not _non_empty_string(check.get("reason")):
+                errors.append(f"{label}.reason must be a non-empty string")
+    for dimension in dimensions if isinstance(dimensions, list) else []:
+        if isinstance(dimension, str) and dimension not in observed_dimensions:
+            errors.append(
+                f"trial {trial_id}: required isolation dimension {dimension!r} is missing"
+            )
+
+    conflicts = memory.get("conflicts")
+    policy = contract.get("conflict_policy")
+    if not isinstance(conflicts, list):
+        errors.append(f"trial {trial_id}: memory.conflicts must be a list")
+    else:
+        matching_policy = False
+        for position, conflict in enumerate(conflicts, 1):
+            label = f"trial {trial_id}: memory conflict {position}"
+            if not isinstance(conflict, dict):
+                errors.append(f"{label} must be an object")
+                continue
+            if not _non_empty_string(conflict.get("key")):
+                errors.append(f"{label}.key must be a non-empty string")
+            if not _non_empty_string(conflict.get("policy")):
+                errors.append(f"{label}.policy must be a non-empty string")
+            if conflict.get("policy") == policy:
+                matching_policy = True
+            conflict_status = conflict.get("status")
+            if not isinstance(conflict_status, str) or conflict_status not in {
+                "resolved",
+                "unresolved",
+            }:
+                errors.append(f"{label}.status must be resolved or unresolved")
+        if _non_empty_string(policy) and not matching_policy:
+            errors.append(
+                f"trial {trial_id}: conflict evidence for policy {policy!r} is missing"
+            )
+
+
 def _validate_trials(
     trials: list[dict[str, Any]],
     cases: list[dict[str, Any]],
     minimum: int,
     run_id: Any,
     run_sha256: str,
+    suite: dict[str, Any],
 ) -> list[str]:
     errors: list[str] = []
     if not trials:
@@ -450,6 +1106,11 @@ def _validate_trials(
             errors.append(f"trial {trial_id}: missing_evidence must be a list")
         elif missing:
             errors.append(f"trial {trial_id}: explicitly missing evidence: {missing}")
+        surfaces = set(_enabled_surfaces(suite))
+        if "system" in surfaces and isinstance(suite.get("system_contract"), dict):
+            _validate_system_evidence(trial, suite["system_contract"], errors)
+        if "memory" in surfaces and isinstance(suite.get("state_contract"), dict):
+            _validate_memory_evidence(trial, suite["state_contract"], errors)
     for case_id in sorted(str(value) for value in case_ids if value is not None):
         if counts[case_id] < minimum:
             errors.append(
@@ -744,6 +1405,34 @@ def _grade_trials(
             for result in failed_gates
             if result["scope"] == "trajectory"
         ]
+        system_failures = [
+            result["grader_id"]
+            for result in failed_gates
+            if result["scope"] == "system"
+        ]
+        memory_failures = [
+            result["grader_id"]
+            for result in failed_gates
+            if result["scope"] == "memory"
+        ]
+        enabled_surfaces = _enabled_surfaces(suite)
+        surface_failures = {
+            surface: [
+                result["grader_id"]
+                for result in failed_gates
+                if result["scope"] == surface
+            ]
+            for surface in enabled_surfaces
+        }
+        category_failures = {
+            category: [
+                result["grader_id"]
+                for result in failed_gates
+                if result["category"] == category
+            ]
+            for category in sorted(CATEGORIES)
+        }
+        system = trial.get("system") if isinstance(trial.get("system"), dict) else {}
         partial_components = [
             1.0 if result["passed"] else 0.0 for result in gate_results
         ] + [(score - 1.0) / 4.0 for score in scores.values()]
@@ -760,7 +1449,15 @@ def _grade_trials(
                 "diagnostic_failure_ids": diagnostic_failure_ids,
                 "outcome_gate_failures": outcome_failures,
                 "trajectory_gate_failures": trajectory_failures,
+                "system_gate_failures": system_failures,
+                "memory_gate_failures": memory_failures,
+                "surface_gate_failures": surface_failures,
+                "category_gate_failures": category_failures,
                 "silent_trajectory_failure": bool(trajectory_failures and not outcome_failures),
+                "silent_system_failure": bool(system_failures and not outcome_failures),
+                "silent_memory_failure": bool(memory_failures and not outcome_failures),
+                "first_system_failure_stage": system.get("first_failure_stage"),
+                "system_consequences": system.get("consequences", []),
                 "gate_results": gate_results,
                 "rubric_scores": scores or None,
                 "mean_rubric_score": (
@@ -806,18 +1503,34 @@ def _summarize(
             }
         )
     passed_trials = sum(1 for result in results if result["passed"])
-    safety = sum(
-        1
-        for result in results
-        for gate in result["gate_results"]
-        if not gate["passed"] and gate["gate"] and gate["category"] == "safety"
-    )
-    privacy = sum(
-        1
-        for result in results
-        for gate in result["gate_results"]
-        if not gate["passed"] and gate["gate"] and gate["category"] == "privacy"
-    )
+    category_failures = {
+        category: sum(
+            1
+            for result in results
+            for gate in result["gate_results"]
+            if not gate["passed"]
+            and gate["gate"]
+            and gate["category"] == category
+        )
+        for category in sorted(CATEGORIES)
+    }
+    surface_summary: dict[str, dict[str, Any]] = {}
+    for surface in _enabled_surfaces(suite):
+        passing = sum(
+            1
+            for result in results
+            if not result.get("surface_gate_failures", {}).get(surface, [])
+        )
+        failed_gates = sum(
+            len(result.get("surface_gate_failures", {}).get(surface, []))
+            for result in results
+        )
+        surface_summary[surface] = {
+            "passed_trials": passing,
+            "failed_trials": len(results) - passing,
+            "pass_rate": passing / len(results),
+            "failed_gate_count": failed_gates,
+        }
     quality_scores = [
         float(result["partial_quality_score"])
         for result in results
@@ -834,8 +1547,12 @@ def _summarize(
         "mean_partial_quality_score": (
             sum(quality_scores) / len(quality_scores) if quality_scores else None
         ),
-        "safety_failures": safety,
-        "privacy_failures": privacy,
+        "safety_failures": category_failures["safety"],
+        "privacy_failures": category_failures["privacy"],
+        "reliability_failures": category_failures["reliability"],
+        "operational_failures": category_failures["operational"],
+        "category_failures": category_failures,
+        "surfaces": surface_summary,
     }
     return summary, per_case
 
@@ -919,6 +1636,7 @@ def evaluate_project(
                 minimum,
                 run.get("run_id"),
                 sha256_file(run_path),
+                suite,
             )
         )
     errors.extend(_validate_provenance(suite_path, suite, dataset, run, cases_path))
@@ -990,6 +1708,8 @@ def evaluate_project(
             "cases_sha256": sha256_file(cases_path),
         },
         "run_provenance": run,
+        "contract_lineage": run.get("contract_lineage", []),
+        "surfaces": _enabled_surfaces(suite),
         "calibration": {
             "id": calibration.get("calibration_id"),
             "judge_id": calibration.get("judge_id"),

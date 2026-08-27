@@ -1,7 +1,7 @@
 {
   "name": "pm-verifier",
-  "version": "1.1.0",
-  "description": "AI Evals for PMs turns an AI feature spec into an evidence-backed release decision through versioned suites, isolated repeated trials, outcome and trajectory gates, calibrated model judgments, failure inspection, and CI-safe PASS/FAIL/BLOCKED evidence.",
+  "version": "1.2.0",
+  "description": "AI Evals for PMs turns a product contract into outcome, trajectory, system, and optional memory evidence with isolated trials, calibrated judgments, inspection, and CI-safe PASS/FAIL/BLOCKED release gates.",
   "author": {
     "name": "Abhillash Jadhav",
     "url": "https://github.com/Abhillashjadhav"

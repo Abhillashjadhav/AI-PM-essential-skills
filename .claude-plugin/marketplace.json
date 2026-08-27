@@ -13,7 +13,7 @@
     {
       "name": "pm-verifier",
       "source": "./pm-verifier",
-      "description": "AI Evals for PMs: turn an AI feature spec into a versioned suite, isolated repeated trials, outcome and trajectory grading, calibrated model judgments, failure analysis, and an auditable CI release decision."
+      "description": "AI Evals for PMs: turn a product contract into a versioned four-surface suite covering outcomes, trajectories, end-to-end systems, and promised memory/state, with auditable PASS/FAIL/BLOCKED release evidence."
     },
     {
       "name": "mcp-migration-auditor",

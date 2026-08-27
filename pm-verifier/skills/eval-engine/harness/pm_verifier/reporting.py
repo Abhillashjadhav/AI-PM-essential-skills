@@ -10,6 +10,38 @@ def _percent(value: Any) -> str:
     return f"{float(value):.1%}" if isinstance(value, (int, float)) else "—"
 
 
+def _surface_failures(trial: dict[str, Any], surface: str) -> list[str]:
+    configured = trial.get("surface_gate_failures")
+    if isinstance(configured, dict) and isinstance(configured.get(surface), list):
+        return configured[surface]
+    legacy = trial.get(f"{surface}_gate_failures", [])
+    return legacy if isinstance(legacy, list) else []
+
+
+def _append_surface_section(
+    lines: list[str], result: dict[str, Any], surface: str, title: str
+) -> None:
+    surface_summary = result.get("summary", {}).get("surfaces", {}).get(surface, {})
+    lines.extend(
+        [
+            f"## {title}",
+            "",
+            f"- Trial pass rate: {_percent(surface_summary.get('pass_rate'))}",
+            f"- Failed release gates: {surface_summary.get('failed_gate_count', 0)}",
+            "",
+            "| Case / trial | Surface verdict | Failed gates |",
+            "|---|---|---|",
+        ]
+    )
+    for trial in result.get("trials", []):
+        failures = _surface_failures(trial, surface)
+        lines.append(
+            f"| {trial.get('case_id')} / {trial.get('trial_id')} | "
+            f"{'FAIL' if failures else 'PASS'} | {', '.join(failures) or '—'} |"
+        )
+    lines.append("")
+
+
 def render_markdown(result: dict[str, Any]) -> str:
     decision = result.get("decision", "BLOCKED")
     lines = ["# AI Evals for PMs report", "", f"## Release decision: {decision}", ""]
@@ -45,8 +77,8 @@ def render_markdown(result: dict[str, Any]) -> str:
             ]
         )
         for trial in result["trials"]:
-            outcome = ", ".join(trial["outcome_gate_failures"]) or "—"
-            trajectory = ", ".join(trial["trajectory_gate_failures"]) or "—"
+            outcome = ", ".join(_surface_failures(trial, "outcome")) or "—"
+            trajectory = ", ".join(_surface_failures(trial, "trajectory")) or "—"
             mean = (
                 f"{trial['mean_rubric_score']:.2f}"
                 if trial["mean_rubric_score"] is not None
@@ -63,11 +95,53 @@ def render_markdown(result: dict[str, Any]) -> str:
                 f"{', '.join(trial.get('diagnostic_failure_ids', [])) or '—'} | "
                 f"{partial} | {mean} |"
             )
+        lines.append("")
+        _append_surface_section(lines, result, "outcome", "Outcome")
+        _append_surface_section(lines, result, "trajectory", "Trajectory")
+        surfaces = result.get("surfaces") or list(summary.get("surfaces", {}))
+        if "system" in surfaces:
+            _append_surface_section(lines, result, "system", "System")
+            system_failures = [
+                trial
+                for trial in result.get("trials", [])
+                if trial.get("first_system_failure_stage") is not None
+            ]
+            lines.extend(
+                [
+                    "### First system failure and consequence",
+                    "",
+                    *(
+                        [
+                            f"- `{trial['case_id']} / {trial['trial_id']}` — First system failure: "
+                            f"`{trial['first_system_failure_stage']}`; consequences: "
+                            f"{', '.join(trial.get('system_consequences', [])) or 'none recorded'}"
+                            for trial in system_failures
+                        ]
+                        or ["- No system checkpoint failed." ]
+                    ),
+                    "",
+                ]
+            )
+        if "memory" in surfaces:
+            _append_surface_section(lines, result, "memory", "Memory")
+        lines.extend(
+            [
+                "## Safety and privacy",
+                "",
+                f"- Safety gate failures: {summary['safety_failures']}",
+                f"- Privacy gate failures: {summary['privacy_failures']}",
+                "",
+                "## Reliability and operations",
+                "",
+                f"- Reliability gate failures: {summary.get('reliability_failures', 0)}",
+                f"- Operational gate failures: {summary.get('operational_failures', 0)}",
+                "",
+            ]
+        )
         metrics = result["metrics"]
         lines.extend(
             [
-                "",
-                "## Operational metrics",
+                "### Operational metrics",
                 "",
                 f"- Total cost: ${metrics['total_cost_usd']:.6f}",
                 f"- Mean / p95 latency: {metrics['mean_latency_ms']:.1f} / {metrics['p95_latency_ms']:.1f} ms",
@@ -130,6 +204,13 @@ def render_markdown(result: dict[str, Any]) -> str:
                 f"- Harness: `{provenance['harness']['name']}` `{provenance['harness']['version']}`",
             ]
         )
+    for artifact in result.get("contract_lineage", []):
+        if isinstance(artifact, dict):
+            lines.append(
+                f"- Contract lineage: `{artifact.get('role')}` "
+                f"`{artifact.get('id')}` `{artifact.get('version')}` "
+                f"(`{artifact.get('sha256')}`)"
+            )
     lines.extend(f"- {limitation}" for limitation in result.get("limitations", []))
     lines.append("")
     return redact_text("\n".join(lines))
@@ -142,7 +223,7 @@ def render_inspection(
     case_id: str | None = None,
     trial_id: str | None = None,
 ) -> str:
-    """Render selected failures with their raw outcome and trajectory evidence."""
+    """Render selected failures with redacted evidence for every supplied surface."""
     selected = [
         trial
         for trial in result.get("trials", [])
@@ -208,6 +289,22 @@ def render_inspection(
                 "```json",
                 json.dumps(safe.get("trajectory"), indent=2, sort_keys=True),
                 "```",
+            ]
+        )
+        for surface in ("system", "memory"):
+            if surface in safe:
+                lines.extend(
+                    [
+                        "",
+                        f"### Raw {surface}",
+                        "",
+                        "```json",
+                        json.dumps(safe.get(surface), indent=2, sort_keys=True),
+                        "```",
+                    ]
+                )
+        lines.extend(
+            [
                 "",
                 f"Environment fingerprint: `{safe.get('environment_fingerprint', 'missing')}`",
                 f"Isolation ID: `{safe.get('isolation_id', 'missing')}`",

@@ -10,7 +10,8 @@ from .adapter import execute_trials
 from .bias import analyze_pairwise_bias
 from .calibration import calibrate
 from .engine import evaluate_project
-from .io import EvidenceError, load_json, load_jsonl, write_json
+from .faults import apply_faults
+from .io import EvidenceError, load_json, load_jsonl, write_json, write_jsonl
 from .reporting import render_inspection, render_markdown
 
 
@@ -22,8 +23,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pm-verifier",
         description=(
-            "AI Evals for PMs: validate evidence, grade repeated trials, "
-            "inspect failures, and gate release."
+            "AI Evals for PMs: grade outcomes, trajectories, systems, and "
+            "promised memory across repeated trials, then gate release."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -60,6 +61,12 @@ def build_parser() -> argparse.ArgumentParser:
     inspect.add_argument("--case")
     inspect.add_argument("--trial")
     inspect.add_argument("--out", type=Path)
+    fault = subparsers.add_parser("fault")
+    fault.add_argument("--project", type=Path, default=Path("."))
+    fault.add_argument("--trials", type=Path, default=Path("trials.jsonl"))
+    fault.add_argument("--specs", type=Path, default=Path("faults/specs.json"))
+    fault.add_argument("--name", required=True)
+    fault.add_argument("--out", type=Path, default=Path("trials.faulted.jsonl"))
     calibration = subparsers.add_parser("calibrate")
     calibration.add_argument("--suite", type=Path, default=Path("suite.json"))
     calibration.add_argument("--goldens", type=Path, required=True)
@@ -151,6 +158,30 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"inspect: {args.out}")
         else:
             print(rendered)
+        return 0
+    if args.command == "fault":
+        trials_path = _project_path(args.project, args.trials)
+        specs_path = _project_path(args.project, args.specs)
+        output_path = _project_path(args.project, args.out)
+        try:
+            try:
+                resolved_output = output_path.resolve()
+                protected_inputs = {trials_path.resolve(), specs_path.resolve()}
+            except (OSError, RuntimeError, ValueError) as exc:
+                raise EvidenceError(f"fault paths cannot be resolved safely: {exc}") from exc
+            if resolved_output in protected_inputs:
+                raise EvidenceError("fault output must not overwrite trials or fault specifications")
+            trials = load_jsonl(trials_path)
+            named_specs = load_json(specs_path)
+            selected = named_specs.get(args.name)
+            if not isinstance(selected, list):
+                raise EvidenceError(f"unknown or invalid fault name: {args.name!r}")
+            mutated = apply_faults(trials, selected)
+            write_jsonl(output_path, mutated)
+        except EvidenceError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        print(f"fault: {args.name} -> {output_path}")
         return 0
     if args.command == "calibrate":
         try:
