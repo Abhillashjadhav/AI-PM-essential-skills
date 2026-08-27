@@ -46,7 +46,7 @@
   "template_id": "customer-support-agent",
   "tooling": {
     "path": "tools/repository_pilot.py",
-    "sha256": "cdd5c6710589719b5c0fdfb5d48fed60867c692e3b5ee6f6ee72afc4c78b5b89"
+    "sha256": "77b6c24a1f789a5d2b89ecca892e3aea2b4f478a249a850fb905cdf94b76e5a6"
   },
   "version": "1.0.0"
 }

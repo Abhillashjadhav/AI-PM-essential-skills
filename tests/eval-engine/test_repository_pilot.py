@@ -121,6 +121,36 @@ class RepositoryPilotTest(unittest.TestCase):
         self.assertGreater(first["grader_count"], 10)
         self.assertEqual(evaluate_project(self.project)["decision"], "PASS")
 
+    def test_bind_invalidates_stale_synthetic_evidence_without_relabeling(self) -> None:
+        pilot.bind_pilot(self.project)
+        trials_before = (self.project / "trials.jsonl").read_bytes()
+        candidate = self.project / "synthetic_candidate.py"
+        candidate.write_text(
+            "raise RuntimeError('changed candidate must require fresh evidence')\n",
+            encoding="utf-8",
+        )
+
+        summary = pilot.bind_pilot(self.project)
+
+        self.assertEqual(summary["status"], "BOUND")
+        self.assertEqual((self.project / "trials.jsonl").read_bytes(), trials_before)
+        self.assertEqual(
+            self._load("evidence-receipt.json")["evidence_status"], "PENDING"
+        )
+        with self.assertRaisesRegex(pilot.PilotError, "evidence is pending"):
+            pilot.verify_pilot(self.project)
+
+        errors = execute_trials(
+            self.project,
+            [sys.executable, str(self.project / "reference_adapter.py")],
+            self.project / "trials.jsonl",
+            timeout_seconds=5,
+        )
+        self.assertEqual(len(errors), 4)
+        self.assertEqual(pilot.bind_pilot(self.project)["status"], "VERIFIED")
+        self.assertEqual(pilot.verify_pilot(self.project)["status"], "VERIFIED")
+        self.assertEqual(evaluate_project(self.project)["decision"], "BLOCKED")
+
     def test_verify_rejects_tampering_at_every_bound_boundary(self) -> None:
         pilot.bind_pilot(self.project)
         bound_files = (
@@ -235,7 +265,7 @@ class RepositoryPilotTest(unittest.TestCase):
 
     def test_bind_rejects_managed_path_aliases_before_writing(self) -> None:
         config = self._load("pilot.json")
-        config["paths"]["dataset"] = config["paths"]["pmos_contract"]
+        config["paths"]["eval_contract"] = config["paths"]["pmos_contract"]
         self._write("pilot.json", config)
         before = self._snapshot()
 
@@ -256,10 +286,10 @@ class RepositoryPilotTest(unittest.TestCase):
         self.assertEqual(self._snapshot(), before)
 
     def test_bind_rejects_hardlinked_managed_paths_before_writing(self) -> None:
-        alias = self.project / "dataset-hardlink.json"
+        alias = self.project / "eval-hardlink.json"
         alias.hardlink_to(self.project / "contracts" / "pmos-contract.json")
         config = self._load("pilot.json")
-        config["paths"]["dataset"] = alias.name
+        config["paths"]["eval_contract"] = alias.name
         self._write("pilot.json", config)
         before = self._snapshot()
 
@@ -296,6 +326,27 @@ class RepositoryPilotTest(unittest.TestCase):
         self._write("pilot.json", config)
         with self.assertRaises(pilot.PilotError):
             pilot.bind_pilot(self.project)
+
+    def test_harness_owned_paths_cannot_be_reconfigured(self) -> None:
+        harness_paths = ("suite", "dataset", "cases", "run")
+        for key in harness_paths:
+            with self.subTest(key=key):
+                shutil.rmtree(self.project)
+                shutil.copytree(EXAMPLE, self.project)
+                config = self._load("pilot.json")
+                source = self.project / config["paths"][key]
+                alternate = self.project / f"alternate-{source.name}"
+                shutil.copy2(source, alternate)
+                config["paths"][key] = alternate.name
+                self._write("pilot.json", config)
+                before = self._snapshot()
+
+                with self.assertRaisesRegex(
+                    pilot.PilotError, "evaluation harness owns this filename"
+                ):
+                    pilot.bind_pilot(self.project)
+
+                self.assertEqual(self._snapshot(), before)
 
     def test_ci_example_runs_chain_verification_before_execution(self) -> None:
         workflow = (self.project / "ci" / "github-actions.yml").read_text(

@@ -12,7 +12,7 @@ import shutil
 import sys
 import tempfile
 from pathlib import Path
-from typing import Any, Iterable, Sequence
+from typing import Any, Sequence
 
 
 TEMPLATE_ID = "customer-support-agent"
@@ -32,6 +32,12 @@ REQUIRED_PATH_KEYS = {
     "suite",
     "tooling",
     "trials",
+}
+HARNESS_PATHS = {
+    "cases": "cases.jsonl",
+    "dataset": "dataset.json",
+    "run": "run.json",
+    "suite": "suite.json",
 }
 
 
@@ -111,13 +117,6 @@ def _atomic_write(path: Path, content: str) -> None:
 
 def _write_json(path: Path, payload: dict[str, Any]) -> None:
     _atomic_write(path, _canonical_json(payload))
-
-
-def _write_jsonl(path: Path, rows: Iterable[dict[str, Any]]) -> None:
-    _atomic_write(
-        path,
-        "".join(json.dumps(row, ensure_ascii=False, sort_keys=True) + "\n" for row in rows),
-    )
 
 
 def _sha256(path: Path) -> str:
@@ -229,6 +228,12 @@ def _config(project: Path) -> dict[str, Any]:
         )
     for key, value in paths.items():
         _relative(value, f"pilot.paths.{key}")
+    for key, expected in HARNESS_PATHS.items():
+        if paths[key] != expected:
+            raise PilotError(
+                f"pilot.paths.{key} must be {expected!r}; the evaluation harness "
+                "owns this filename"
+            )
     candidates = config.get("candidate_files")
     if (
         not isinstance(candidates, list)
@@ -717,10 +722,20 @@ def _load_canonical_json(path: Path, label: str) -> dict[str, Any]:
 
 
 def _trials_match_run(
-    trials: Sequence[dict[str, Any]], run_id: str, run_sha: str
+    trials: Sequence[dict[str, Any]],
+    run_id: str,
+    run_sha: str,
+    *,
+    environment_fingerprint: str | None,
 ) -> bool:
     return all(
-        row.get("run_id") == run_id and row.get("run_sha256") == run_sha
+        row.get("run_id") == run_id
+        and row.get("run_sha256") == run_sha
+        and (
+            environment_fingerprint is None
+            or row.get("status") != "completed"
+            or row.get("environment_fingerprint") == environment_fingerprint
+        )
         for row in trials
     )
 
@@ -763,8 +778,6 @@ def bind_pilot(
     trials: list[dict[str, Any]] | None = None
     if paths["trials"].exists():
         trials = _load_jsonl(paths["trials"], "trials")
-    elif config["synthetic_fixture"]:
-        raise PilotError("synthetic fixture requires its checked-in trials")
 
     cases_sha = _sha256(paths["cases"])
     dataset["cases_path"] = paths["cases"].name
@@ -856,16 +869,15 @@ def bind_pilot(
 
     run_sha = _sha256(paths["run"])
     sealed = False
-    if config["synthetic_fixture"]:
-        assert trials is not None
-        adapter_sha = _sha256(paths["adapter"])
-        for row in trials:
-            row["run_id"] = run["run_id"]
-            row["run_sha256"] = run_sha
-            row["environment_fingerprint"] = adapter_sha
-        _write_jsonl(paths["trials"], trials)
-        sealed = True
-    elif trials is not None and _trials_match_run(trials, run["run_id"], run_sha):
+    environment_fingerprint = (
+        _sha256(paths["adapter"]) if config["synthetic_fixture"] else None
+    )
+    if trials is not None and _trials_match_run(
+        trials,
+        run["run_id"],
+        run_sha,
+        environment_fingerprint=environment_fingerprint,
+    ):
         sealed = True
 
     receipt = _evidence_receipt(
@@ -1027,9 +1039,11 @@ def _verify_pilot(
         for index, row in enumerate(trials):
             if row.get("run_id") != expected_run_id or row.get("run_sha256") != run_sha:
                 raise PilotError(f"trial {index} is not bound to the exact run")
-            if config["synthetic_fixture"] and row.get(
-                "environment_fingerprint"
-            ) != _sha256(paths["adapter"]):
+            if (
+                config["synthetic_fixture"]
+                and row.get("status") == "completed"
+                and row.get("environment_fingerprint") != _sha256(paths["adapter"])
+            ):
                 raise PilotError(f"synthetic trial {index} is not bound to the adapter")
         expected_receipt = _evidence_receipt(
             config,

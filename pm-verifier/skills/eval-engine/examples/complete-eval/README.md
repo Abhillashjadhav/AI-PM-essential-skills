@@ -25,7 +25,8 @@ changing the stable public `pm-verifier` CLI:
 
 - `create` copies this one canonical template and refuses an existing target;
 - `bind` validates approved intent, rejects path aliases before writing, and
-  writes the digest chain plus a pending or sealed evidence receipt;
+  writes the digest chain plus a pending or sealed evidence receipt without
+  rewriting old trial provenance;
 - `verify` is read-only and rejects stale, ambiguous, escaped, relationally
   incorrect, or byte-tampered inputs.
 

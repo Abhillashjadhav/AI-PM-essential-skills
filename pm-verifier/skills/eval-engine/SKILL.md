@@ -154,6 +154,8 @@ The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same 
 - Bind declared PMOS and engineering contracts by project-relative path and SHA-256.
 - Require stable `FR-*` and `AC-*` IDs and preserve their PMOS relationships through cases and graders.
 - Reject aliases among managed paths or candidate files before writing a repository pilot.
+- Keep harness-owned suite, dataset, cases, and run filenames fixed.
+- Invalidate stale synthetic evidence; never rewrite its provenance to fit a new run.
 - Require a canonical receipt that seals the complete trial file before returning `VERIFIED`.
 - Never create or bind an engineering handoff from `HOLD`, `NO-GO`, or unresolved PMOS intent.
 - Treat safety and privacy defaults as zero tolerated failures unless the approved suite says otherwise.

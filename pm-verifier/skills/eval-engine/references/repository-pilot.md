@@ -45,6 +45,8 @@ Edit the copy in this order:
    and choose the final evidence and receipt filenames in `paths.trials` and
    `paths.evidence_receipt` before binding. Every `paths` value must resolve to
    a distinct file, and candidate files must be distinct from all of them.
+   Keep the harness-owned `suite.json`, `dataset.json`, `cases.jsonl`, and
+   `run.json` filenames unchanged.
 3. `cases.jsonl`, `dataset.json`, and `suite.json`: replace synthetic policies,
    expected outcomes, thresholds, and cases only with approved evidence.
 4. `contracts/eval-contract.json`: preserve each PMOS AC-to-FR relationship,
@@ -77,7 +79,9 @@ does not relabel copied synthetic trials as real evidence and writes a
 input change produces identical bytes.
 
 Any approved input change requires a new bind and invalidates prior evidence.
-Review the resulting `product-package.json` and `run.json` before execution.
+This includes a synthetic candidate or adapter change: the binder never edits
+old trial provenance to make it look current. Review the resulting
+`product-package.json` and `run.json` before execution.
 
 ## 4. Capture the first candidate evidence
 

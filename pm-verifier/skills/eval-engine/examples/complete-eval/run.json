@@ -54,7 +54,7 @@
   "tools": [
     {
       "name": "portable-product-package",
-      "sha256": "0ee1f10c74f01a2406b136f18087b388225734388a503d1a033c952b6cb83267",
+      "sha256": "9d5d57294dccdf63b29411e0c27f25446309e167fb744a34abd7b5a708d410dd",
       "version": "1.0.0"
     },
     {
