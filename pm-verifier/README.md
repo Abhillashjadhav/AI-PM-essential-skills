@@ -57,6 +57,12 @@ Can this candidate pass the release gate?
 The same `eval-engine` skill handles creation, execution, calibration, failure
 inspection, and migration. There is no second eval product.
 
+For an approved PMOS handoff, the skill also includes a customer-support
+repository pilot that binds one product identity across stable `FR/AC` intent,
+the eval suite, Engineering AgentOS checkpoints, candidate files, the evidence
+adapter, and the runtime decision. Its `create`, `bind`, and `verify` operations
+are onboarding tools; the public `pm-verifier` CLI remains unchanged.
+
 ## What it is
 
 This is a reusable evaluation contract and CI harness, not boilerplate that
@@ -136,10 +142,14 @@ pm-verifier bias \
 The compatibility commands `python3 prepare.py`, `python3 run.py`, and
 `python3 report.py` remain available during migration.
 
-Run the complete four-surface example:
+Create, verify, and run the complete four-surface repository pilot:
 
 ```bash
-cp -R pm-verifier/skills/eval-engine/examples/complete-eval /tmp/complete-eval
+python3 pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py \
+  create --destination /tmp/complete-eval
+
+python3 /tmp/complete-eval/tools/repository_pilot.py \
+  verify --project /tmp/complete-eval
 
 pm-verifier execute --project /tmp/complete-eval \
   --trials-out trials.executed.jsonl --results-out results.json \
@@ -153,6 +163,9 @@ pm-verifier fault --project /tmp/complete-eval \
 
 The known-good execution returns `PASS`; named fixtures demonstrate both
 observed-behavior `FAIL` and missing-evidence `BLOCKED` paths.
+See the [repository pilot workflow](skills/eval-engine/references/repository-pilot.md)
+for the PMOS input, real-repository adaptation, first binding, evidence capture,
+and CI handoff.
 
 ## Adapter contract
 
@@ -202,7 +215,8 @@ for fields and supported deterministic checks. The legacy-compatible
 [`production-eval`](skills/eval-engine/examples/production-eval/) proves schema
 1.0 outcome/trajectory behavior. The
 [`complete-eval`](skills/eval-engine/examples/complete-eval/) proves schema 1.1
-system, memory, and PMOS/engineering lineage behavior.
+system, memory, PMOS/eval/engineering digest binding, stable FR/AC traceability,
+candidate/adapter binding, and repository-pilot behavior.
 
 ## Verification
 
@@ -225,6 +239,7 @@ The executable tests cover:
 - missing judgment/metric evidence;
 - invalid release-rule and calibration contracts;
 - provenance mismatch;
+- PMOS/eval/engineering/candidate digest-chain tampering, unsafe repository paths, and incomplete FR/AC traceability;
 - minimum trial counts and retry ceilings;
 - capability vs regression semantics;
 - deterministic-only suites;

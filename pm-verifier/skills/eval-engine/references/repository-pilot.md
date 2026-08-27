@@ -1,0 +1,123 @@
+# Repository pilot workflow
+
+Use this workflow when an approved PMOS package must become a runnable,
+repository-bound evaluation without manually reinterpreting product intent.
+The current pilot intentionally starts from the synthetic customer-support
+template only.
+
+## Authority boundaries
+
+| Owner | Supplies | Must not silently change |
+|---|---|---|
+| PMOS | Product identity, `GO` decision, approver, problem, scope, metrics, guardrails, stable `FR-*` and `AC-*` intent | Policies, thresholds, expected answers, unresolved questions |
+| AI Evals for PMs | Eval contract, representative cases, outcome/trajectory/system/memory graders, release rules, FR/AC traceability | Product intent or engineering behavior |
+| Engineering AgentOS | Candidate implementation, checkpoints, evidence adapter, state semantics | Approved requirements or eval gates |
+| Runtime evidence | Actual outcomes, traces, checkpoints, memory events, metrics, fingerprints, isolation IDs | Expected answers or contract digests |
+
+The binder accepts only `decision="GO"`, an accountable approver, no unresolved
+questions, unique stable IDs, complete case/grader traceability, safe relative
+paths, and matching product identities. `HOLD`, `NO-GO`, ambiguity, or a digest
+mismatch stops the handoff.
+
+## 1. Create a working copy
+
+From a checkout of this repository:
+
+```bash
+python3 pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py \
+  create --destination /path/to/target-repository/eval/customer-support
+```
+
+`create` never overwrites an existing path. Keep the copied tool inside the
+pilot; `product-package.json` binds its exact bytes.
+
+## 2. Adapt product intent before engineering
+
+Edit the copy in this order:
+
+1. `contracts/pmos-contract.json`: enter approved facts, assign one product ID,
+   keep stable `FR-*` and `AC-*` IDs, record the approver, and leave
+   `unresolved_questions` empty only when genuinely resolved.
+2. `pilot.json`: use the same product ID/version, set `synthetic_fixture` to
+   `false`, list implementation files relative to the selected repository root,
+   and choose the final evidence filename in `paths.trials` before binding.
+3. `cases.jsonl`, `dataset.json`, and `suite.json`: replace synthetic policies,
+   expected outcomes, thresholds, and cases only with approved evidence.
+4. `contracts/eval-contract.json`: trace every FR and AC to at least one case and
+   trace every deterministic grader. Do not leave an untested requirement.
+5. `contracts/engineering-contract.json`: describe checkpoints and evidence
+   outputs the implementation will expose. The binder writes the exact PMOS and
+   eval digests plus the approved FR/AC lists.
+6. Replace `reference_adapter.py` with a JSON-over-stdio adapter that observes
+   the real candidate. It must not receive expected answers.
+
+If `paths.trials` names a new file, its parent directory must already exist;
+the file itself may be absent until the first execution.
+
+## 3. Bind the approved package
+
+From the target repository root:
+
+```bash
+PILOT=eval/customer-support
+python3 "$PILOT/tools/repository_pilot.py" bind \
+  --project "$PILOT" --repository-root .
+```
+
+For a real candidate, a successful first bind returns `status="BOUND"`. It
+does not relabel copied synthetic trials as real evidence. Binding is
+idempotent: rerunning it without an input change produces identical bytes.
+
+Any approved input change requires a new bind and invalidates prior evidence.
+Review the resulting `product-package.json` and `run.json` before execution.
+
+## 4. Capture the first candidate evidence
+
+Use the evidence filename already declared in `pilot.json`. Because
+`--trials-out` is project-relative, pass only its filename when the file is at
+the pilot root:
+
+```bash
+pm-verifier execute --project "$PILOT" \
+  --trials-out trials.candidate.jsonl \
+  --results-out results.json \
+  -- python3 "$PILOT/reference_adapter.py"
+
+python3 "$PILOT/tools/repository_pilot.py" verify \
+  --project "$PILOT" --repository-root .
+
+pm-verifier report --results "$PILOT/results.json" \
+  --out "$PILOT/report.md"
+```
+
+`verify` now requires evidence whose `run_id` and `run_sha256` match the bound
+candidate. `pm-verifier` independently validates and grades that evidence. The
+only release states are `PASS`, `FAIL`, and `BLOCKED`.
+
+## 5. Install CI after the first verified run
+
+Copy `ci/github-actions.yml` to the target repository's `.github/workflows/`
+directory and adapt `EVAL_PROJECT`, the adapter command, and the pinned harness
+commit. Keep chain verification before execution, execute twice from fresh
+processes, compare repeatable outputs, write the PM report, and upload the
+evidence artifact.
+
+The checked-in workflow uses current official major versions of GitHub's
+checkout, Python setup, and artifact-upload actions. Pin action commit SHAs too
+when the repository's supply-chain policy requires immutable third-party
+actions.
+
+## Review checkpoint
+
+Before release, the accountable reviewer should be able to answer yes to all
+of these:
+
+- The PMOS decision is still `GO`, and the approver and product identity are correct.
+- Every `FR-*` and `AC-*` is represented in cases and deterministic or calibrated grading.
+- The engineering contract implements the exact PMOS and eval digests.
+- Candidate files and the adapter match the reviewed repository head.
+- Fresh evidence verifies and the PM report explains every `FAIL` or `BLOCKED` state.
+
+This pilot proves portable contract and evidence binding for one workflow. It
+does not prove arbitrary-repository compatibility, live-product quality,
+adversarial evidence integrity, production monitoring, deployment, or release.
