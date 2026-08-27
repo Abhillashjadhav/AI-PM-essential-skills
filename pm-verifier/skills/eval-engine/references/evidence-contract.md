@@ -63,7 +63,8 @@ digest-mismatched artifacts block the evaluation.
 
 System checks:
 
-- `checkpoint_present`, `checkpoint_passed`, and `final_checkpoint_reached`;
+- `system_completed`, `checkpoint_present`, `checkpoint_passed`, and
+  `final_checkpoint_reached`;
 - `checkpoint_order` and `no_silent_loss`;
 - `identity_preserved` and `state_continuity`; and
 - `first_failure_equals`.

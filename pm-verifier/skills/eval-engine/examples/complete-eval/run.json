@@ -6,7 +6,7 @@
   },
   "configuration": {
     "id": "support-workflow-complete-regression",
-    "sha256": "3660712f458dbf0d072a15c4151d53342a0e9207d6464449545c525c9275d676",
+    "sha256": "48eba5ad3a417ab1eee1673f14f6acba1c6871a3e477371321ce9fd30f2889f6",
     "version": "2.0.0"
   },
   "contract_lineage": [
@@ -33,7 +33,7 @@
   },
   "harness": {
     "name": "pm-verifier",
-    "sha256": "3638b9c9c52960984f2fc897b4daaf11269e7c928d07e1b8b48c392054004fb0",
+    "sha256": "d744533965f9cfb8e99c0e0aac271eaf9e7b474bb20186f72f1948e5f09fd224",
     "version": "1.2.0"
   },
   "model": {

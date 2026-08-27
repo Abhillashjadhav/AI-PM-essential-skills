@@ -166,11 +166,31 @@ def main(argv: Sequence[str] | None = None) -> int:
         try:
             try:
                 resolved_output = output_path.resolve()
-                protected_inputs = {trials_path.resolve(), specs_path.resolve()}
+                protected_inputs = {
+                    trials_path.resolve(),
+                    specs_path.resolve(),
+                    *(
+                        (args.project / name).resolve()
+                        for name in (
+                            "suite.json",
+                            "run.json",
+                            "dataset.json",
+                            "cases.jsonl",
+                            "judgments.jsonl",
+                            "goldens.jsonl",
+                        )
+                    ),
+                }
             except (OSError, RuntimeError, ValueError) as exc:
                 raise EvidenceError(f"fault paths cannot be resolved safely: {exc}") from exc
             if resolved_output in protected_inputs:
-                raise EvidenceError("fault output must not overwrite trials or fault specifications")
+                raise EvidenceError("fault output must not overwrite evaluation inputs")
+            if output_path.suffix != ".jsonl" or not output_path.name.startswith(
+                "trials"
+            ):
+                raise EvidenceError(
+                    "fault output must use a trials*.jsonl filename"
+                )
             trials = load_jsonl(trials_path)
             named_specs = load_json(specs_path)
             selected = named_specs.get(args.name)

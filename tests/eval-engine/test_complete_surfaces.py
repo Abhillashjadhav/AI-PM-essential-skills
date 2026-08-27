@@ -22,8 +22,9 @@ LEGACY_EXAMPLE = (
 sys.path.insert(0, str(HARNESS))
 
 from pm_verifier.engine import evaluate_project  # noqa: E402
+from pm_verifier.adapter import execute_trials  # noqa: E402
 from pm_verifier.graders import grade_deterministic, validate_grader  # noqa: E402
-from pm_verifier.io import sha256_file  # noqa: E402
+from pm_verifier.io import EvidenceError, sha256_file  # noqa: E402
 from pm_verifier.reporting import render_inspection, render_markdown  # noqa: E402
 
 
@@ -152,6 +153,15 @@ class CompleteSurfaceTest(unittest.TestCase):
                         "checkpoints": CHECKPOINTS,
                         "fields": ["customer_id", "content_id"],
                     },
+                    "gate": True,
+                },
+                {
+                    "id": "G_SYSTEM_COMPLETED",
+                    "name": "workflow completed",
+                    "scope": "system",
+                    "category": "reliability",
+                    "check": "system_completed",
+                    "params": {},
                     "gate": True,
                 },
                 {
@@ -425,6 +435,14 @@ class CompleteSurfaceTest(unittest.TestCase):
         self.assertEqual(failed["first_system_failure_stage"], "intake")
         self.assertFalse(failed["passed"])
 
+    def test_explicitly_incomplete_system_fails_even_when_checkpoints_pass(self) -> None:
+        trials = self._load_rows("trials.jsonl")
+        trials[0]["system"]["completed"] = False
+        self._rewrite_trials(trials)
+        result = self.evaluate()
+        self.assertEqual(result["decision"], "FAIL")
+        self.assertIn("G_SYSTEM_COMPLETED", result["failed_gate_ids"])
+
     def test_system_identity_crosswire_and_wrong_path_fail(self) -> None:
         for name in ("identity", "crosswire", "wrong-path"):
             with self.subTest(name=name):
@@ -542,6 +560,18 @@ class CompleteSurfaceTest(unittest.TestCase):
                         "deterministic_graders": [
                             grader
                             for grader in suite["deterministic_graders"]
+                            if grader["id"] != "G_SYSTEM_COMPLETED"
+                        ]
+                    }
+                ),
+                "system contract requires a system_completed gate",
+            ),
+            (
+                lambda suite: suite.update(
+                    {
+                        "deterministic_graders": [
+                            grader
+                            for grader in suite["deterministic_graders"]
                             if grader["id"] != "G_SYSTEM_STAGE_POLICY"
                         ]
                     }
@@ -601,6 +631,36 @@ class CompleteSurfaceTest(unittest.TestCase):
         result = self.evaluate()
         self.assertEqual(result["decision"], "BLOCKED")
         self.assertTrue(any("finite number" in error for error in result["evidence_errors"]))
+
+    def test_schema_versions_must_match_before_evaluation_or_execution(self) -> None:
+        run = self._load("run.json")
+        run["schema_version"] = "1.0"
+        self._write("run.json", run)
+        self._rewrite_trials(self._load_rows("trials.jsonl"))
+        result = self.evaluate()
+        self.assertEqual(result["decision"], "BLOCKED")
+        self.assertTrue(
+            any("run.schema_version must match" in error for error in result["evidence_errors"])
+        )
+        with self.assertRaises(EvidenceError):
+            execute_trials(
+                self.project,
+                [sys.executable, str(self.project / "reference_adapter.py")],
+                self.project / "trials-executed.jsonl",
+                timeout_seconds=5,
+            )
+
+        self._configure_complete_suite()
+        suite = self._load("suite.json")
+        suite["schema_version"] = {"bad": True}
+        self._write("suite.json", suite)
+        with self.assertRaises(EvidenceError):
+            execute_trials(
+                self.project,
+                [sys.executable, str(self.project / "reference_adapter.py")],
+                self.project / "trials-executed.jsonl",
+                timeout_seconds=5,
+            )
 
     def test_reporting_and_inspection_show_surface_evidence(self) -> None:
         trials = self._load_rows("trials.jsonl")

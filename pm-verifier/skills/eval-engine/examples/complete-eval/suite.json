@@ -165,6 +165,15 @@
     },
     {
       "category": "reliability",
+      "check": "system_completed",
+      "gate": true,
+      "id": "G_SYSTEM_COMPLETED",
+      "name": "workflow completed",
+      "params": {},
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
       "check": "final_checkpoint_reached",
       "gate": true,
       "id": "G_SYSTEM_FINAL",

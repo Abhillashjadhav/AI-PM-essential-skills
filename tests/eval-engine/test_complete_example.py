@@ -78,6 +78,7 @@ class CompleteExampleTest(unittest.TestCase):
         source = self._rows("trials.jsonl")
         expected_fail = {
             "system-discovery-fail",
+            "system-incomplete-fail",
             "system-identity-fail",
             "system-content-crosswire",
             "system-wrong-path",
@@ -101,7 +102,7 @@ class CompleteExampleTest(unittest.TestCase):
                 self.assertEqual(result["decision"], expected)
 
     def test_fault_command_materializes_a_named_fixture(self) -> None:
-        output = self.project / "fault-cli.jsonl"
+        output = self.project / "trials-fault-cli.jsonl"
         exit_code = main(
             [
                 "fault",
@@ -117,23 +118,48 @@ class CompleteExampleTest(unittest.TestCase):
         self.assertEqual(
             evaluate_project(self.project, trials_path=output)["decision"], "FAIL"
         )
+        before = output.read_bytes()
+        self.assertEqual(
+            main(
+                [
+                    "fault",
+                    "--project",
+                    str(self.project),
+                    "--name",
+                    "system-identity-fail",
+                    "--out",
+                    output.name,
+                ]
+            ),
+            0,
+        )
+        self.assertEqual(output.read_bytes(), before)
 
     def test_fault_command_refuses_to_overwrite_source_evidence(self) -> None:
-        source = self.project / "trials.jsonl"
-        before = source.read_bytes()
-        exit_code = main(
-            [
-                "fault",
-                "--project",
-                str(self.project),
-                "--name",
-                "system-identity-fail",
-                "--out",
-                source.name,
-            ]
-        )
-        self.assertEqual(exit_code, 2)
-        self.assertEqual(source.read_bytes(), before)
+        for relative in (
+            "trials.jsonl",
+            "suite.json",
+            "run.json",
+            "dataset.json",
+            "cases.jsonl",
+            "reference_adapter.py",
+        ):
+            with self.subTest(relative=relative):
+                source = self.project / relative
+                before = source.read_bytes()
+                exit_code = main(
+                    [
+                        "fault",
+                        "--project",
+                        str(self.project),
+                        "--name",
+                        "system-identity-fail",
+                        "--out",
+                        relative,
+                    ]
+                )
+                self.assertEqual(exit_code, 2)
+                self.assertEqual(source.read_bytes(), before)
 
     def test_fault_mutations_reject_malformed_evidence_and_specs(self) -> None:
         source = self._rows("trials.jsonl")

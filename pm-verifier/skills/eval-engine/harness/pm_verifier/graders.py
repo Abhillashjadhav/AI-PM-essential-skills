@@ -12,6 +12,7 @@ from .io import EvidenceError, get_path
 SURFACES = {"outcome", "trajectory", "system", "memory"}
 CATEGORIES = {"quality", "safety", "privacy", "reliability", "operational"}
 SYSTEM_CHECKS = {
+    "system_completed",
     "checkpoint_present",
     "checkpoint_order",
     "checkpoint_passed",
@@ -271,7 +272,16 @@ def grade_deterministic(
                 )
         elif check in SYSTEM_CHECKS:
             checkpoints = _checkpoint_map(trial)
-            if check in {"checkpoint_present", "final_checkpoint_reached"}:
+            if check == "system_completed":
+                actual = get_path(trial, "system.completed")
+                expected = True
+                passed = actual is True
+                reason = (
+                    "system reports complete"
+                    if passed
+                    else "system reports an incomplete workflow"
+                )
+            elif check in {"checkpoint_present", "final_checkpoint_reached"}:
                 name = params["checkpoint"]
                 actual = name in checkpoints
                 expected = True

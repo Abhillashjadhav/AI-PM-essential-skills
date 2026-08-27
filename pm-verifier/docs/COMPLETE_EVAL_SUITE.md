@@ -68,7 +68,7 @@ Use schema 1.1 only when adopting the explicit surface contracts.
 
 [`examples/complete-eval`](../skills/eval-engine/examples/complete-eval/) is a
 synthetic support workflow with two cases, two isolated trials per case, PMOS
-and engineering lineage, all four surfaces, and 12 named fault fixtures. It
+and engineering lineage, all four surfaces, and 13 named fault fixtures. It
 contains no real user or customer data.
 
 ```bash

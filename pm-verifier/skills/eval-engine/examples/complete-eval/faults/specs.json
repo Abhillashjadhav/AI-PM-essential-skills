@@ -60,6 +60,14 @@
       "value": "other-content"
     }
   ],
+  "system-incomplete-fail": [
+    {
+      "operation": "set",
+      "path": "system.completed",
+      "trial_id": "SUPPORT-100-t1",
+      "value": false
+    }
+  ],
   "system-discovery-fail": [
     {
       "operation": "set",

@@ -198,6 +198,18 @@ def _validate_provenance(
             errors.append(
                 f"{label}.schema_version must be one of {sorted(SUPPORTED_SCHEMA_VERSIONS)}"
             )
+    suite_version = suite.get("schema_version")
+    if isinstance(suite_version, str) and suite_version in SUPPORTED_SCHEMA_VERSIONS:
+        for label, document in (("dataset", dataset), ("run", run)):
+            version = document.get("schema_version")
+            if (
+                isinstance(version, str)
+                and version in SUPPORTED_SCHEMA_VERSIONS
+                and version != suite_version
+            ):
+                errors.append(
+                    f"{label}.schema_version must match suite.schema_version {suite_version!r}"
+                )
 
     actual_cases_hash = sha256_file(cases_path)
     if dataset.get("source") in (None, ""):
@@ -405,6 +417,12 @@ def _validate_contract_gate_coverage(
 
     if "system" in surfaces and isinstance(suite.get("system_contract"), dict):
         contract = suite["system_contract"]
+        if not any(
+            grader.get("scope") == "system"
+            and grader.get("check") == "system_completed"
+            for grader in gates
+        ):
+            errors.append("system contract requires a system_completed gate")
         required = contract.get("required_checkpoints", [])
         if isinstance(required, list) and all(isinstance(item, str) for item in required):
             for checkpoint in required:

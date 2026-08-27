@@ -19,4 +19,4 @@ pm-verifier inspect --results results.json \
 
 The suite promises durable preference behavior through `state_contract`, so memory evidence is required. Remove the memory surface and state contract when a product makes no persistence promise.
 
-Named mutations in `faults/specs.json` cover system discovery, identity, content cross-wire, wrong path, silent disappearance, missing system evidence, forgetting, isolation, staleness, conflict resolution, temporal order, and missing memory evidence.
+Named mutations in `faults/specs.json` cover system discovery, incomplete workflow, identity, content cross-wire, wrong path, silent disappearance, missing system evidence, forgetting, isolation, staleness, conflict resolution, temporal order, and missing memory evidence.
