@@ -1,0 +1,27 @@
+{
+  "candidate_files": [
+    "synthetic_candidate.py"
+  ],
+  "paths": {
+    "adapter": "reference_adapter.py",
+    "cases": "cases.jsonl",
+    "ci": "ci/github-actions.yml",
+    "dataset": "dataset.json",
+    "evidence_receipt": "evidence-receipt.json",
+    "engineering_contract": "contracts/engineering-contract.json",
+    "eval_contract": "contracts/eval-contract.json",
+    "pmos_contract": "contracts/pmos-contract.json",
+    "portable_package": "product-package.json",
+    "run": "run.json",
+    "suite": "suite.json",
+    "tooling": "tools/repository_pilot.py",
+    "trials": "trials.jsonl"
+  },
+  "product": {
+    "id": "synthetic-support-agent",
+    "version": "1.0.0"
+  },
+  "schema_version": "1.0",
+  "synthetic_fixture": true,
+  "template_id": "customer-support-agent"
+}

@@ -1,0 +1,363 @@
+from __future__ import annotations
+
+import importlib.util
+import json
+import shutil
+import sys
+import tempfile
+import unittest
+from pathlib import Path
+
+
+ROOT = Path(__file__).resolve().parents[2]
+HARNESS = ROOT / "pm-verifier" / "skills" / "eval-engine" / "harness"
+EXAMPLE = (
+    ROOT
+    / "pm-verifier"
+    / "skills"
+    / "eval-engine"
+    / "examples"
+    / "complete-eval"
+)
+PILOT_TOOL = EXAMPLE / "tools" / "repository_pilot.py"
+sys.path.insert(0, str(HARNESS))
+
+from pm_verifier.adapter import execute_trials  # noqa: E402
+from pm_verifier.engine import evaluate_project  # noqa: E402
+
+
+def _load_pilot_tool():
+    spec = importlib.util.spec_from_file_location("repository_pilot", PILOT_TOOL)
+    if spec is None or spec.loader is None:
+        raise RuntimeError(f"cannot load repository pilot tool: {PILOT_TOOL}")
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+pilot = _load_pilot_tool()
+
+
+class RepositoryPilotTest(unittest.TestCase):
+    def setUp(self) -> None:
+        self.tempdir = tempfile.TemporaryDirectory()
+        self.root = Path(self.tempdir.name)
+        self.project = self.root / "customer-support-pilot"
+        shutil.copytree(EXAMPLE, self.project)
+
+    def tearDown(self) -> None:
+        self.tempdir.cleanup()
+
+    def _load(self, relative: str) -> dict:
+        return json.loads((self.project / relative).read_text(encoding="utf-8"))
+
+    def _write(self, relative: str, payload: dict) -> None:
+        (self.project / relative).write_text(
+            json.dumps(payload, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+
+    def _snapshot(self) -> dict[Path, bytes]:
+        return {
+            path.relative_to(self.project): path.read_bytes()
+            for path in self.project.rglob("*")
+            if path.is_file()
+        }
+
+    def _jsonl(self, relative: str) -> list[dict]:
+        return [
+            json.loads(line)
+            for line in (self.project / relative).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+    def _write_jsonl(self, relative: str, rows: list[dict]) -> None:
+        (self.project / relative).write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+
+    def test_create_copies_only_the_customer_support_pilot_and_never_overwrites(self) -> None:
+        destination = self.root / "created-pilot"
+        summary = pilot.create_pilot(destination)
+        self.assertEqual(summary["template_id"], "customer-support-agent")
+        self.assertEqual(summary["decision"], "GO")
+        self.assertEqual(pilot.verify_pilot(destination)["status"], "VERIFIED")
+
+        before = {
+            path.relative_to(destination): path.read_bytes()
+            for path in destination.rglob("*")
+            if path.is_file()
+        }
+        with self.assertRaises(pilot.PilotError):
+            pilot.create_pilot(destination)
+        after = {
+            path.relative_to(destination): path.read_bytes()
+            for path in destination.rglob("*")
+            if path.is_file()
+        }
+        self.assertEqual(after, before)
+
+    def test_bind_is_idempotent_and_produces_a_valid_runtime_project(self) -> None:
+        first = pilot.bind_pilot(self.project)
+        snapshot = {
+            path.relative_to(self.project): path.read_bytes()
+            for path in self.project.rglob("*")
+            if path.is_file()
+        }
+        second = pilot.bind_pilot(self.project)
+        rerun = {
+            path.relative_to(self.project): path.read_bytes()
+            for path in self.project.rglob("*")
+            if path.is_file()
+        }
+
+        self.assertEqual(first, second)
+        self.assertEqual(snapshot, rerun)
+        self.assertEqual(first["status"], "VERIFIED")
+        self.assertEqual(first["requirement_count"], 3)
+        self.assertEqual(first["acceptance_criteria_count"], 3)
+        self.assertEqual(first["case_count"], 2)
+        self.assertGreater(first["grader_count"], 10)
+        self.assertEqual(evaluate_project(self.project)["decision"], "PASS")
+
+    def test_bind_invalidates_stale_synthetic_evidence_without_relabeling(self) -> None:
+        pilot.bind_pilot(self.project)
+        trials_before = (self.project / "trials.jsonl").read_bytes()
+        candidate = self.project / "synthetic_candidate.py"
+        candidate.write_text(
+            "raise RuntimeError('changed candidate must require fresh evidence')\n",
+            encoding="utf-8",
+        )
+
+        summary = pilot.bind_pilot(self.project)
+
+        self.assertEqual(summary["status"], "BOUND")
+        self.assertEqual((self.project / "trials.jsonl").read_bytes(), trials_before)
+        self.assertEqual(
+            self._load("evidence-receipt.json")["evidence_status"], "PENDING"
+        )
+        with self.assertRaisesRegex(pilot.PilotError, "evidence is pending"):
+            pilot.verify_pilot(self.project)
+
+        errors = execute_trials(
+            self.project,
+            [sys.executable, str(self.project / "reference_adapter.py")],
+            self.project / "trials.jsonl",
+            timeout_seconds=5,
+        )
+        self.assertEqual(len(errors), 4)
+        self.assertEqual(pilot.bind_pilot(self.project)["status"], "VERIFIED")
+        self.assertEqual(pilot.verify_pilot(self.project)["status"], "VERIFIED")
+        self.assertEqual(evaluate_project(self.project)["decision"], "BLOCKED")
+
+    def test_verify_rejects_tampering_at_every_bound_boundary(self) -> None:
+        pilot.bind_pilot(self.project)
+        bound_files = (
+            "pilot.json",
+            "ci/github-actions.yml",
+            "contracts/pmos-contract.json",
+            "suite.json",
+            "cases.jsonl",
+            "dataset.json",
+            "evidence-receipt.json",
+            "contracts/eval-contract.json",
+            "contracts/engineering-contract.json",
+            "reference_adapter.py",
+            "synthetic_candidate.py",
+            "product-package.json",
+            "tools/repository_pilot.py",
+            "run.json",
+            "trials.jsonl",
+        )
+        for relative in bound_files:
+            with self.subTest(relative=relative):
+                mutated = self.root / f"mutated-{relative.replace('/', '-') }"
+                shutil.copytree(self.project, mutated)
+                target = mutated / relative
+                target.write_bytes(target.read_bytes() + b"\n")
+                with self.assertRaises(pilot.PilotError):
+                    pilot.verify_pilot(mutated)
+
+    def test_candidate_and_adapter_can_live_in_different_repository_paths(self) -> None:
+        repository = self.root / "real-repository"
+        project = repository / "eval" / "customer-support"
+        source = repository / "src" / "candidate.py"
+        source.parent.mkdir(parents=True)
+        source.write_text("def candidate():\n    return 'ready'\n", encoding="utf-8")
+        shutil.copytree(EXAMPLE, project)
+        config = json.loads((project / "pilot.json").read_text(encoding="utf-8"))
+        config["candidate_files"] = ["src/candidate.py"]
+        config["paths"]["trials"] = "trials.candidate.jsonl"
+        config["synthetic_fixture"] = False
+        (project / "pilot.json").write_text(
+            json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
+        summary = pilot.bind_pilot(project, repository)
+
+        self.assertEqual(summary["status"], "BOUND")
+        evidence = project / config["paths"]["trials"]
+        adapter = [sys.executable, str(project / "reference_adapter.py")]
+        self.assertEqual(
+            execute_trials(project, adapter, evidence, timeout_seconds=5), []
+        )
+        with self.assertRaises(pilot.PilotError):
+            pilot.verify_pilot(project, repository)
+        sealed = pilot.bind_pilot(project, repository)
+        self.assertEqual(sealed["status"], "VERIFIED")
+        verified = pilot.verify_pilot(project, repository)
+        self.assertEqual(verified["status"], "VERIFIED")
+        self.assertEqual(verified["candidate_sha256"], summary["candidate_sha256"])
+
+    def test_bind_rejects_unapproved_or_ambiguous_product_intent(self) -> None:
+        pmos = self._load("contracts/pmos-contract.json")
+        invalid_mutations = (
+            lambda value: value.update({"decision": "HOLD"}),
+            lambda value: value.update({"unresolved_questions": ["Which refund policy?"]}),
+            lambda value: value["requirements"].append(value["requirements"][0]),
+            lambda value: value["acceptance_criteria"][0].update(
+                {"requirement_ids": ["FR-999"]}
+            ),
+        )
+        for mutate in invalid_mutations:
+            with self.subTest(line=mutate.__code__.co_firstlineno):
+                candidate = json.loads(json.dumps(pmos))
+                mutate(candidate)
+                self._write("contracts/pmos-contract.json", candidate)
+                with self.assertRaises(pilot.PilotError):
+                    pilot.bind_pilot(self.project)
+                self._write("contracts/pmos-contract.json", pmos)
+
+    def test_verify_requires_complete_case_and_grader_traceability(self) -> None:
+        pilot.bind_pilot(self.project)
+        contract = self._load("contracts/eval-contract.json")
+        contract["traceability"][0]["grader_ids"] = []
+        self._write("contracts/eval-contract.json", contract)
+        with self.assertRaises(pilot.PilotError):
+            pilot.bind_pilot(self.project)
+
+        shutil.rmtree(self.project)
+        shutil.copytree(EXAMPLE, self.project)
+        cases = self._jsonl("cases.jsonl")
+        cases[0]["traceability"]["acceptance_criteria_ids"] = []
+        self._write_jsonl("cases.jsonl", cases)
+        with self.assertRaises(pilot.PilotError):
+            pilot.bind_pilot(self.project)
+
+    def test_bind_rejects_swapped_acceptance_relationships(self) -> None:
+        contract = self._load("contracts/eval-contract.json")
+        contract["traceability"][0]["acceptance_criteria_ids"] = ["AC-003"]
+        contract["traceability"][2]["acceptance_criteria_ids"] = ["AC-001"]
+        self._write("contracts/eval-contract.json", contract)
+
+        with self.assertRaisesRegex(pilot.PilotError, "do not match PMOS links"):
+            pilot.bind_pilot(self.project)
+
+    def test_bind_rejects_a_referenced_case_without_its_fr_ac_relationship(self) -> None:
+        cases = self._jsonl("cases.jsonl")
+        cases[0]["traceability"]["requirement_ids"].remove("FR-001")
+        cases[0]["traceability"]["acceptance_criteria_ids"].remove("AC-001")
+        self._write_jsonl("cases.jsonl", cases)
+
+        with self.assertRaisesRegex(pilot.PilotError, "does not carry its FR/AC"):
+            pilot.bind_pilot(self.project)
+
+    def test_bind_rejects_managed_path_aliases_before_writing(self) -> None:
+        config = self._load("pilot.json")
+        config["paths"]["eval_contract"] = config["paths"]["pmos_contract"]
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(pilot.PilotError, "pilot paths alias"):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_bind_rejects_a_managed_path_that_aliases_pilot_config(self) -> None:
+        config = self._load("pilot.json")
+        config["paths"]["portable_package"] = "pilot.json"
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(pilot.PilotError, "pilot paths alias"):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_bind_rejects_hardlinked_managed_paths_before_writing(self) -> None:
+        alias = self.project / "eval-hardlink.json"
+        alias.hardlink_to(self.project / "contracts" / "pmos-contract.json")
+        config = self._load("pilot.json")
+        config["paths"]["eval_contract"] = alias.name
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(pilot.PilotError, "pilot paths alias"):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_bind_rejects_candidate_aliases_before_writing(self) -> None:
+        config = self._load("pilot.json")
+        config["candidate_files"] = [config["paths"]["pmos_contract"]]
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(
+            pilot.PilotError, "candidate and managed paths alias"
+        ):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_verify_rejects_semantic_trial_tampering_with_preserved_run_ids(self) -> None:
+        pilot.bind_pilot(self.project)
+        trials = self._jsonl("trials.jsonl")
+        trials[0]["outcome"]["decision"] = "REPLACE"
+        self._write_jsonl("trials.jsonl", trials)
+
+        with self.assertRaisesRegex(pilot.PilotError, "exact trial contents"):
+            pilot.verify_pilot(self.project)
+
+    def test_candidate_paths_must_stay_inside_the_selected_repository(self) -> None:
+        config = self._load("pilot.json")
+        config["candidate_files"] = ["../outside.py"]
+        self._write("pilot.json", config)
+        with self.assertRaises(pilot.PilotError):
+            pilot.bind_pilot(self.project)
+
+    def test_harness_owned_paths_cannot_be_reconfigured(self) -> None:
+        harness_paths = ("suite", "dataset", "cases", "run")
+        for key in harness_paths:
+            with self.subTest(key=key):
+                shutil.rmtree(self.project)
+                shutil.copytree(EXAMPLE, self.project)
+                config = self._load("pilot.json")
+                source = self.project / config["paths"][key]
+                alternate = self.project / f"alternate-{source.name}"
+                shutil.copy2(source, alternate)
+                config["paths"][key] = alternate.name
+                self._write("pilot.json", config)
+                before = self._snapshot()
+
+                with self.assertRaisesRegex(
+                    pilot.PilotError, "evaluation harness owns this filename"
+                ):
+                    pilot.bind_pilot(self.project)
+
+                self.assertEqual(self._snapshot(), before)
+
+    def test_ci_example_runs_chain_verification_before_execution(self) -> None:
+        workflow = (self.project / "ci" / "github-actions.yml").read_text(
+            encoding="utf-8"
+        )
+        verify = workflow.index("repository_pilot.py verify")
+        execute = workflow.index("pm-verifier execute")
+        self.assertLess(verify, execute)
+        self.assertIn("1511156a38d14c162ee7c0e92b14d16e43144f47", workflow)
+        self.assertIn("actions/upload-artifact@", workflow)
+
+
+if __name__ == "__main__":
+    unittest.main()

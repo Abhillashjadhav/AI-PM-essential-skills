@@ -1,0 +1,11 @@
+{
+  "candidate_sha256": "ee1f7f3d56a7c110f3ce2a323ab0f69faa27756b2ebc93776151383f594f521a",
+  "evidence_status": "SEALED",
+  "product_id": "synthetic-support-agent",
+  "run_id": "synthetic-support-agent-ee1f7f3d56a7",
+  "run_sha256": "24fb9afd40f5e669c78095456381215dc204803ecfb160bab9d17fc3dd61a7f1",
+  "schema_version": "1.0",
+  "trial_count": 4,
+  "trials_path": "trials.jsonl",
+  "trials_sha256": "512e0e2a57624b584b79e4b122423c1cb5222083b1685d9363be59f86e0e3c8e"
+}

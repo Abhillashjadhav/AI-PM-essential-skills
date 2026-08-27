@@ -59,6 +59,15 @@ Install the bundled package from `pm-verifier/` for CI use. Keep the
 compatibility wrappers only for existing suites. Do not add provider SDKs or
 hidden network calls.
 
+When an approved PMOS package must be carried into an implementation
+repository, read `references/repository-pilot.md` and use the guided
+customer-support pilot. Keep `create`, `bind`, and `verify` as skill-owned
+onboarding operations; do not add another public CLI or infer missing product
+facts. Bind only after the accountable approver has selected `GO` and every
+unresolved question is closed. A real first bind returns `BOUND`; execute the
+adapter, bind again to seal the full trial file, and require read-only
+`VERIFIED` evidence before interpreting a release decision.
+
 ## 4. Run trials and grade
 
 Run at least the suite's `minimum_trials_per_case`. Prefer `pm-verifier
@@ -143,6 +152,12 @@ The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same 
 - Grade the full system and promised memory independently when enabled.
 - Treat missing required system/memory evidence as `BLOCKED`, not a failing score.
 - Bind declared PMOS and engineering contracts by project-relative path and SHA-256.
+- Require stable `FR-*` and `AC-*` IDs and preserve their PMOS relationships through cases and graders.
+- Reject aliases among managed paths or candidate files before writing a repository pilot.
+- Keep harness-owned suite, dataset, cases, and run filenames fixed.
+- Invalidate stale synthetic evidence; never rewrite its provenance to fit a new run.
+- Require a canonical receipt that seals the complete trial file before returning `VERIFIED`.
+- Never create or bind an engineering handoff from `HOLD`, `NO-GO`, or unresolved PMOS intent.
 - Treat safety and privacy defaults as zero tolerated failures unless the approved suite says otherwise.
 - Version and hash datasets, rubrics, prompts, tools, harnesses, and configurations.
 - Keep capability and regression thresholds separate; a capability failure is data, while a regression failure usually blocks release.
@@ -158,3 +173,4 @@ The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same 
 - Empirical `pass@k` and `pass^k` describe recorded trials, not population guarantees.
 - Dependency-free lexical clustering is explainable and reproducible but less semantic than embedding-based clustering.
 - Marketplace installation supplies the PM workflow; the packaged CLI executes a product-specific adapter that must expose real trial evidence.
+- The guided repository pilot is customer-support-specific until it is validated against additional repositories; it is not a general project generator.

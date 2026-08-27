@@ -1,0 +1,52 @@
+{
+  "adapter": {
+    "path": "reference_adapter.py",
+    "sha256": "0ba77dda08d396e01d8e46643e0fa05b592b3b4c1f17c24fd81041d41b49e290"
+  },
+  "automation": {
+    "path": "ci/github-actions.yml",
+    "sha256": "e0ac2366a056540af5e72d8f11510217882c2cc4a2f860b694ea9e8e8c42b872"
+  },
+  "candidate": {
+    "files": [
+      "synthetic_candidate.py"
+    ],
+    "root": "repository",
+    "sha256": "ee1f7f3d56a7c110f3ce2a323ab0f69faa27756b2ebc93776151383f594f521a"
+  },
+  "contracts": {
+    "engineering": {
+      "id": "synthetic-support-build",
+      "path": "contracts/engineering-contract.json",
+      "sha256": "ee3f484925a3ef148196a3ec6eb4075e7ec1c74f48ab6d052a23b0d818ea1c3f",
+      "version": "1.0.0"
+    },
+    "eval": {
+      "id": "synthetic-support-eval",
+      "path": "contracts/eval-contract.json",
+      "sha256": "208299bb013051c2331b5e0d9125f2addf2aae0503bd80be832db37b279b1602",
+      "version": "1.0.0"
+    },
+    "pmos": {
+      "id": "synthetic-support-decision",
+      "path": "contracts/pmos-contract.json",
+      "sha256": "2805446674b40592912a641bd33441476a8745d5475ab0c4f3d868074c97d6ac",
+      "version": "1.0.0"
+    }
+  },
+  "decision": "GO",
+  "package_id": "synthetic-support-agent-portable-package",
+  "pilot_config": {
+    "path": "pilot.json",
+    "sha256": "ef0832fccecd5c4594c4aa1e01327be77d9601e85833144b5b683b10c1b0e4ce"
+  },
+  "product_id": "synthetic-support-agent",
+  "schema_version": "1.0",
+  "synthetic_fixture": true,
+  "template_id": "customer-support-agent",
+  "tooling": {
+    "path": "tools/repository_pilot.py",
+    "sha256": "77b6c24a1f789a5d2b89ecca892e3aea2b4f478a249a850fb905cdf94b76e5a6"
+  },
+  "version": "1.0.0"
+}

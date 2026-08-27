@@ -43,6 +43,11 @@ This document records what this repository's checks establish and what they do n
   redacted for credential/PII patterns; and
 - the package installs without runtime dependencies and the production example
   executes, grades, reports, and inspects from an isolated directory.
+- the customer-support repository pilot refuses overwrites and path escapes,
+  requires approved stable FR/AC traceability, binds PMOS/eval/engineering,
+  candidate, adapter, automation, run, and trial artifacts by digest, rejects
+  boundary tampering, and supports a pre-evidence `BOUND` state followed by
+  verified real-adapter evidence.
 
 ## Manually validated material
 

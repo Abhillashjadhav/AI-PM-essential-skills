@@ -1,4 +1,9 @@
 {
+  "acceptance_criteria_ids": [
+    "AC-001",
+    "AC-002",
+    "AC-003"
+  ],
   "checkpoints": [
     "intake",
     "identity",
@@ -7,6 +12,7 @@
     "delivery"
   ],
   "contract_id": "synthetic-support-build",
+  "eval_contract_sha256": "208299bb013051c2331b5e0d9125f2addf2aae0503bd80be832db37b279b1602",
   "evidence_outputs": [
     "outcome",
     "trajectory",
@@ -28,5 +34,13 @@
       "delete"
     ]
   },
+  "pmos_contract_sha256": "2805446674b40592912a641bd33441476a8745d5475ab0c4f3d868074c97d6ac",
+  "product_id": "synthetic-support-agent",
+  "requirement_ids": [
+    "FR-001",
+    "FR-002",
+    "FR-003"
+  ],
+  "schema_version": "1.0",
   "version": "1.0.0"
 }

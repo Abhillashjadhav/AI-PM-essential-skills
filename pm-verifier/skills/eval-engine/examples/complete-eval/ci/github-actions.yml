@@ -1,0 +1,53 @@
+name: Customer support product contract
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  EVAL_PROJECT: eval/customer-support-pilot
+  PM_VERIFIER_COMMIT: 1511156a38d14c162ee7c0e92b14d16e43144f47
+
+jobs:
+  verify-and-evaluate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-python@v7
+        with:
+          python-version: "3.12"
+      - name: Install the pinned evaluation harness
+        run: |
+          git clone https://github.com/Abhillashjadhav/AI-PM-essential-skills.git "$RUNNER_TEMP/ai-pm-essential-skills"
+          git -C "$RUNNER_TEMP/ai-pm-essential-skills" checkout "$PM_VERIFIER_COMMIT"
+          python -m pip install --no-deps "$RUNNER_TEMP/ai-pm-essential-skills/pm-verifier"
+      - name: Verify the product contract chain
+        run: |
+          python $EVAL_PROJECT/tools/repository_pilot.py verify \
+            --project "$EVAL_PROJECT" --repository-root "$GITHUB_WORKSPACE"
+      - name: Execute twice from fresh adapter processes
+        run: |
+          pm-verifier execute --project "$EVAL_PROJECT" \
+            --trials-out trials.first.jsonl \
+            --results-out results.first.json \
+            -- python "$EVAL_PROJECT/reference_adapter.py"
+          pm-verifier execute --project "$EVAL_PROJECT" \
+            --trials-out trials.second.jsonl \
+            --results-out results.second.json \
+            -- python "$EVAL_PROJECT/reference_adapter.py"
+          cmp "$EVAL_PROJECT/trials.first.jsonl" "$EVAL_PROJECT/trials.second.jsonl"
+          cmp "$EVAL_PROJECT/results.first.json" "$EVAL_PROJECT/results.second.json"
+      - name: Write the PM review report
+        run: |
+          pm-verifier report --results "$EVAL_PROJECT/results.first.json" \
+            --out "$EVAL_PROJECT/report.md"
+      - uses: actions/upload-artifact@v7
+        with:
+          name: customer-support-eval-evidence
+          path: |
+            ${{ env.EVAL_PROJECT }}/trials.first.jsonl
+            ${{ env.EVAL_PROJECT }}/results.first.json
+            ${{ env.EVAL_PROJECT }}/report.md
