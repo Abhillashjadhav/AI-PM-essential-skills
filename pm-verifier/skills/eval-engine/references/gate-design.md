@@ -40,6 +40,17 @@ outcome. They become gates only when the path itself is risk-critical—for
 example, consulting the wrong policy document, skipping identity verification,
 or calling a forbidden tool—even if the final answer happens to be correct.
 
+System checkpoints become gates when the checkpoint is part of the approved
+workflow contract: identity verification, policy selection, durable write, or
+delivery cannot be bought back by a polished final message. Missing checkpoint
+evidence is `BLOCKED`; a present checkpoint with `status=failed` is valid
+failure evidence.
+
+Memory checks exist only for an approved persistence promise. Forget/delete and
+cross-user isolation are normally privacy gates. Freshness, conflict, and
+temporal behavior may be reliability gates or diagnostics according to the
+product contract. Do not add memory gates to a stateless product.
+
 ## Count discipline
 
 Use the smallest complete set. A fixed minimum encourages invented gates; a fixed maximum can hide real safety or contract boundaries. Re-read the spec asking "what output would get this feature turned off?" and retain only checks that pass the three-part gate test.

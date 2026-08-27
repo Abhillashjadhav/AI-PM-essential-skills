@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pm-verifier/schemas/suite-1.0.json",
-  "title": "pm-verifier suite 1.0",
+  "$id": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pm-verifier/schemas/suite-1.1.json",
+  "title": "pm-verifier suite 1.1 with 1.0 compatibility",
   "type": "object",
   "required": [
     "schema_version",
@@ -14,17 +14,168 @@
     "release_rules"
   ],
   "properties": {
-    "schema_version": { "const": "1.0" },
+    "schema_version": { "enum": ["1.0", "1.1"] },
     "suite_id": { "type": "string", "minLength": 1 },
     "suite_version": { "type": "string", "minLength": 1 },
     "name": { "type": "string", "minLength": 1 },
     "suite_type": { "enum": ["capability", "regression"] },
     "minimum_trials_per_case": { "type": "integer", "minimum": 1 },
-    "deterministic_graders": { "type": "array", "minItems": 1 },
-    "model_graders": { "type": "array" },
+    "surfaces": {
+      "type": "array",
+      "minItems": 1,
+      "uniqueItems": true,
+      "items": { "enum": ["outcome", "trajectory", "system", "memory"] }
+    },
+    "system_contract": { "$ref": "#/$defs/system_contract" },
+    "state_contract": { "$ref": "#/$defs/state_contract" },
+    "lineage_contract": { "$ref": "#/$defs/lineage_contract" },
+    "deterministic_graders": {
+      "type": "array",
+      "minItems": 1,
+      "items": { "$ref": "#/$defs/grader" }
+    },
+    "model_graders": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/model_grader" }
+    },
     "rubric": { "type": "array" },
     "calibration": { "type": "object" },
     "release_rules": { "type": "object" }
+  },
+  "allOf": [
+    {
+      "if": {
+        "properties": { "schema_version": { "const": "1.1" } },
+        "required": ["schema_version"]
+      },
+      "then": { "required": ["surfaces"] }
+    },
+    {
+      "if": {
+        "properties": {
+          "surfaces": { "contains": { "const": "system" } }
+        },
+        "required": ["surfaces"]
+      },
+      "then": { "required": ["system_contract"] }
+    },
+    {
+      "if": {
+        "properties": {
+          "surfaces": { "contains": { "const": "memory" } }
+        },
+        "required": ["surfaces"]
+      },
+      "then": { "required": ["state_contract"] }
+    }
+  ],
+  "$defs": {
+    "surface": { "enum": ["outcome", "trajectory", "system", "memory"] },
+    "category": {
+      "enum": ["quality", "safety", "privacy", "reliability", "operational"]
+    },
+    "grader": {
+      "type": "object",
+      "required": ["id", "name", "scope", "category", "check", "gate"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "scope": { "$ref": "#/$defs/surface" },
+        "category": { "$ref": "#/$defs/category" },
+        "check": { "type": "string", "minLength": 1 },
+        "gate": { "type": "boolean" },
+        "actual_path": { "type": "string", "minLength": 1 },
+        "expected_path": { "type": "string", "minLength": 1 },
+        "params": { "type": "object" }
+      },
+      "additionalProperties": true
+    },
+    "model_grader": {
+      "type": "object",
+      "required": ["id", "name", "scope", "category", "prompt_version", "gate"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string", "minLength": 1 },
+        "scope": { "$ref": "#/$defs/surface" },
+        "category": { "$ref": "#/$defs/category" },
+        "prompt_version": { "type": "string", "minLength": 1 },
+        "gate": { "type": "boolean" }
+      },
+      "additionalProperties": true
+    },
+    "system_contract": {
+      "type": "object",
+      "required": [
+        "required_checkpoints",
+        "optional_checkpoints",
+        "identity_field",
+        "continuity_fields"
+      ],
+      "properties": {
+        "required_checkpoints": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "optional_checkpoints": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "identity_field": { "type": "string", "minLength": 1 },
+        "continuity_fields": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "type": "string", "minLength": 1 }
+        }
+      },
+      "additionalProperties": false
+    },
+    "state_contract": {
+      "type": "object",
+      "required": [
+        "enabled",
+        "required_operations",
+        "isolation_dimensions",
+        "maximum_staleness_seconds",
+        "conflict_policy",
+        "require_temporal_order"
+      ],
+      "properties": {
+        "enabled": { "const": true },
+        "required_operations": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["write", "retrieve", "update", "delete"] }
+        },
+        "isolation_dimensions": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["session", "user", "project", "tenant"] }
+        },
+        "maximum_staleness_seconds": { "type": "number", "minimum": 0 },
+        "conflict_policy": { "type": "string", "minLength": 1 },
+        "require_temporal_order": { "type": "boolean" }
+      },
+      "additionalProperties": false
+    },
+    "lineage_contract": {
+      "type": "object",
+      "required": ["required_roles"],
+      "properties": {
+        "required_roles": {
+          "type": "array",
+          "minItems": 1,
+          "uniqueItems": true,
+          "items": { "enum": ["pmos", "engineering"] }
+        }
+      },
+      "additionalProperties": false
+    }
   },
   "additionalProperties": true
 }

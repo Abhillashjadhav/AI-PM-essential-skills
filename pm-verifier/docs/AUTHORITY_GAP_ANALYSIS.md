@@ -37,8 +37,11 @@ harness. The following gaps are now closed by executable code and tests:
 | Raw agreement could approve a degenerate judge | Calibration now requires both human classes, a sample floor, Cohen's kappa, and a Wilson agreement lower bound. Binary and ordinal measures have separate denominators. |
 | Exact trajectory checks were implicitly mandatory gates | Every deterministic/model check now declares `gate: true|false`; risk-critical paths can gate while incidental sequences remain diagnostic. |
 | Capability results were only binary | Partial quality is reported for hill-climbing, but cannot override a failed binary release gate. |
-| Failures were computed but not inspectable | `inspect` joins graded failures to redacted raw outcomes, trajectories, environment fingerprints, and isolation IDs. |
+| Failures were computed but not inspectable | `inspect` joins graded failures to redacted raw outcome, trajectory, system, memory, environment, and isolation evidence. |
 | The runtime was copied rather than shipped | `pm-verifier` is an installable, semantically versioned package with a console entry point and bundled schemas. |
+| End-to-end product workflows were reduced to one outcome and trace | Schema 1.1 adds system checkpoints, identity/state continuity, first-failure preservation, and consequences. |
+| Persistent-state promises were untestable | Optional state contracts add write/retrieve/update/delete, isolation, staleness, conflict, and temporal evidence. |
+| PM and engineering contracts were declared but not bound to runs | Required PMOS/engineering lineage artifacts are project-relative and SHA-256 verified before grading. |
 
 ## Existing-repository findings
 

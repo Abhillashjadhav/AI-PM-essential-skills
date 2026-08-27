@@ -1,6 +1,6 @@
 ---
 name: eval-engine
-description: Use this skill when a user supplies an AI feature spec, PRD, task contract, existing eval suite, traces, outputs, or release question and wants to define good, create or run evals, grade outcomes or agent trajectories, add deterministic or model graders, calibrate an LLM judge against human goldens, compare repeated trials, inspect failure clusters, debug evaluation evidence, or make a CI release decision. Produce one provider-neutral AI Evals for PMs suite through the stable pm-verifier runtime, with binary gates, gradual rubrics, provenance, operational metrics, JSON results, and a Markdown report. Also use for migrating pm-evals or Evals-pass-1 work. Do not use for ordinary non-AI unit testing, a one-off opinion on one output without a quality contract, or live production monitoring.
+description: Use this skill when a user supplies an AI feature spec, PRD, PMOS/task contract, existing eval suite, traces, outputs, state evidence, or release question and wants to define good, create or run evals, grade outcomes, agent trajectories, end-to-end system checkpoints, or promised memory behavior, add deterministic or model graders, calibrate an LLM judge against human goldens, compare repeated trials, inspect failures, debug evaluation evidence, or make a CI release decision. Produce one provider-neutral AI Evals for PMs suite through the stable pm-verifier runtime, with binary gates, gradual rubrics, provenance, operational metrics, JSON results, and a Markdown report. Also use for migrating pm-evals or Evals-pass-1 work. Do not use for ordinary non-AI unit testing, generating the AI application itself, a one-off opinion on one output without a quality contract, or live production monitoring.
 ---
 
 # Eval Engine
@@ -10,7 +10,7 @@ This skill powers **AI Evals for PMs**. Its stable install and CLI identifier is
 
 Keep the user-facing flow simple:
 
-`feature spec → define good → create eval suite → run trials → grade → inspect failures → release decision`
+`product contract → define surfaces → create eval suite → run trials → grade → inspect failures → release decision`
 
 Put framework complexity in the bundled harness, not in the PM's workflow.
 
@@ -23,6 +23,16 @@ Read the spec or existing suite. State the decision the evaluation must support:
 - **Safeguard:** does a safety or privacy control block forbidden behavior?
 
 Ask for missing product facts. Never invent policies, expected fields, thresholds, reference answers, or safety boundaries.
+
+Classify each approved claim against four surfaces:
+
+- **Outcome:** the final user/environment state.
+- **Trajectory:** the risk-critical path, tools, policies, and decisions.
+- **System:** required and optional checkpoints, identity, continuity, first failure, and consequences.
+- **Memory:** only when the product promises persistence; write, retrieve, update, forget, isolation, freshness, conflict, and time semantics.
+
+Safety, privacy, reliability, quality, and operations are cross-cutting grader
+categories. Capability and regression are suite lifecycle purposes.
 
 ## 2. Define good
 
@@ -40,7 +50,9 @@ Create the files in `references/evidence-contract.md`. Record:
 - suite type, version, graders, rubric, and release thresholds;
 - versioned dataset and case metadata for slicing;
 - candidate, model, prompt, tool, harness, and configuration provenance;
-- repeated trial outcomes, full trajectories, cost, latency, tokens, and retries; and
+- optional hash-bound PMOS and engineering contract lineage;
+- repeated trial outcomes, full trajectories, enabled system/memory evidence,
+  cost, latency, tokens, and retries; and
 - explicit `missing_evidence` values rather than inferred defaults.
 
 Install the bundled package from `pm-verifier/` for CI use. Keep the
@@ -55,6 +67,16 @@ Never send expected answers to the adapter. Require a unique `isolation_id` and
 an `environment_fingerprint` for every trial. Capture the actual final
 environment state as `outcome`; do not substitute the agent's claim about what
 happened. Capture ordered tool/model/decision steps as `trajectory`.
+
+For schema 1.1, capture `system.checkpoints` for every required workflow stage.
+Missing required checkpoints block the evaluation; a present failed checkpoint
+is valid failure evidence. Require `system.first_failure_stage` to match the
+first observed failed required checkpoint so later success cannot erase it.
+
+Capture `memory` only when `state_contract.enabled=true`. Require the declared
+operations, isolation dimensions, staleness evidence, conflict evidence, and
+temporal fields. If the product makes no memory promise, omit the memory surface
+and state contract rather than fabricating state tests.
 
 Run deterministic gates first. Skip model scoring for a trial that already failed a deterministic gate. For semantic gates or gradual rubrics:
 
@@ -80,6 +102,8 @@ Read `references/rubric-calibration.md` before making a model grader release-cri
 Show:
 
 - outcome failures separately from trajectory failures;
+- system and memory failures separately from outcome/trajectory failures;
+- first failed system checkpoint and user/operational consequences;
 - silent path failures where the final outcome passed but the trajectory did not;
 - per-case trial success, empirical `pass@k`, and empirical consistency `pass^k`;
 - safety/privacy failures;
@@ -116,6 +140,9 @@ The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same 
 ## Hard rules
 
 - Grade the real outcome and the recorded trajectory independently.
+- Grade the full system and promised memory independently when enabled.
+- Treat missing required system/memory evidence as `BLOCKED`, not a failing score.
+- Bind declared PMOS and engineering contracts by project-relative path and SHA-256.
 - Treat safety and privacy defaults as zero tolerated failures unless the approved suite says otherwise.
 - Version and hash datasets, rubrics, prompts, tools, harnesses, and configurations.
 - Keep capability and regression thresholds separate; a capability failure is data, while a regression failure usually blocks release.

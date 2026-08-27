@@ -10,7 +10,8 @@ from .adapter import execute_trials
 from .bias import analyze_pairwise_bias
 from .calibration import calibrate
 from .engine import evaluate_project
-from .io import EvidenceError, load_json, load_jsonl, write_json
+from .faults import apply_faults
+from .io import EvidenceError, load_json, load_jsonl, write_json, write_jsonl
 from .reporting import render_inspection, render_markdown
 
 
@@ -22,8 +23,8 @@ def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="pm-verifier",
         description=(
-            "AI Evals for PMs: validate evidence, grade repeated trials, "
-            "inspect failures, and gate release."
+            "AI Evals for PMs: grade outcomes, trajectories, systems, and "
+            "promised memory across repeated trials, then gate release."
         ),
     )
     parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
@@ -60,6 +61,12 @@ def build_parser() -> argparse.ArgumentParser:
     inspect.add_argument("--case")
     inspect.add_argument("--trial")
     inspect.add_argument("--out", type=Path)
+    fault = subparsers.add_parser("fault")
+    fault.add_argument("--project", type=Path, default=Path("."))
+    fault.add_argument("--trials", type=Path, default=Path("trials.jsonl"))
+    fault.add_argument("--specs", type=Path, default=Path("faults/specs.json"))
+    fault.add_argument("--name", required=True)
+    fault.add_argument("--out", type=Path, default=Path("trials.faulted.jsonl"))
     calibration = subparsers.add_parser("calibrate")
     calibration.add_argument("--suite", type=Path, default=Path("suite.json"))
     calibration.add_argument("--goldens", type=Path, required=True)
@@ -73,6 +80,46 @@ def build_parser() -> argparse.ArgumentParser:
 
 def _project_path(project: Path, selected: Path) -> Path:
     return selected if selected.is_absolute() else project / selected
+
+
+def _contract_lineage_input_paths(
+    project_root: Path, run: dict[str, object]
+) -> set[Path]:
+    lineage = run.get("contract_lineage")
+    if lineage is None:
+        return set()
+    if not isinstance(lineage, list):
+        raise EvidenceError("run.contract_lineage must be a list")
+
+    protected: set[Path] = set()
+    for index, artifact in enumerate(lineage):
+        label = f"run.contract_lineage[{index}]"
+        if not isinstance(artifact, dict):
+            raise EvidenceError(f"{label} must be an object")
+        declared_path = artifact.get("path")
+        if not isinstance(declared_path, str) or not declared_path.strip():
+            raise EvidenceError(
+                f"{label}.path must be a non-empty project-relative path"
+            )
+        try:
+            relative = Path(declared_path)
+            if relative.is_absolute() or ".." in relative.parts:
+                raise EvidenceError(
+                    f"{label}.path must stay within the evaluation project"
+                )
+            resolved = (project_root / relative).resolve()
+        except EvidenceError:
+            raise
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise EvidenceError(
+                f"{label}.path cannot be resolved safely: {exc}"
+            ) from exc
+        if project_root not in resolved.parents:
+            raise EvidenceError(
+                f"{label}.path must stay within the evaluation project"
+            )
+        protected.add(resolved)
+    return protected
 
 
 def main(argv: Sequence[str] | None = None) -> int:
@@ -151,6 +198,73 @@ def main(argv: Sequence[str] | None = None) -> int:
             print(f"inspect: {args.out}")
         else:
             print(rendered)
+        return 0
+    if args.command == "fault":
+        trials_path = _project_path(args.project, args.trials)
+        specs_path = _project_path(args.project, args.specs)
+        output_path = _project_path(args.project, args.out)
+        try:
+            try:
+                project_root = args.project.resolve()
+                if output_path.is_symlink():
+                    raise EvidenceError("fault output must not be a symbolic link")
+                resolved_output = output_path.resolve()
+                if project_root not in resolved_output.parents:
+                    raise EvidenceError(
+                        "fault output must stay within the evaluation project"
+                    )
+                if output_path.exists():
+                    if not output_path.is_file():
+                        raise EvidenceError(
+                            "existing fault output must be a regular file"
+                        )
+                    if output_path.stat().st_nlink > 1:
+                        raise EvidenceError(
+                            "fault output must not be a multiply linked file"
+                        )
+                protected_inputs = {
+                    trials_path.resolve(),
+                    specs_path.resolve(),
+                    *(
+                        (args.project / name).resolve()
+                        for name in (
+                            "suite.json",
+                            "run.json",
+                            "dataset.json",
+                            "cases.jsonl",
+                            "judgments.jsonl",
+                            "goldens.jsonl",
+                        )
+                    ),
+                }
+                run_path = args.project / "run.json"
+                run = load_json(run_path) if run_path.is_file() else {}
+                protected_inputs.update(
+                    _contract_lineage_input_paths(project_root, run)
+                )
+            except EvidenceError:
+                raise
+            except (OSError, RuntimeError, ValueError) as exc:
+                raise EvidenceError(f"fault paths cannot be resolved safely: {exc}") from exc
+            if resolved_output in protected_inputs:
+                raise EvidenceError("fault output must not overwrite evaluation inputs")
+            if output_path.suffix != ".jsonl" or not output_path.name.startswith(
+                "trials"
+            ):
+                raise EvidenceError(
+                    "fault output must use a trials*.jsonl filename"
+                )
+            trials = load_jsonl(trials_path)
+            named_specs = load_json(specs_path)
+            selected = named_specs.get(args.name)
+            if not isinstance(selected, list):
+                raise EvidenceError(f"unknown or invalid fault name: {args.name!r}")
+            mutated = apply_faults(trials, selected)
+            write_jsonl(output_path, mutated)
+        except EvidenceError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
+        print(f"fault: {args.name} -> {output_path}")
         return 0
     if args.command == "calibrate":
         try:

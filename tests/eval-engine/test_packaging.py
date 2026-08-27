@@ -67,7 +67,7 @@ class PackagingContractTest(unittest.TestCase):
         )
         commands = set(subparser_action.choices)
         self.assertTrue(
-            {"validate", "execute", "run", "inspect", "report", "calibrate"}
+            {"validate", "execute", "run", "inspect", "report", "calibrate", "fault"}
             <= commands
         )
 
@@ -75,8 +75,18 @@ class PackagingContractTest(unittest.TestCase):
         schema_root = HARNESS / "pm_verifier" / "schemas"
         suite = json.loads((schema_root / "suite.schema.json").read_text(encoding="utf-8"))
         result = json.loads((schema_root / "result.schema.json").read_text(encoding="utf-8"))
-        self.assertEqual(suite["properties"]["schema_version"]["const"], "1.0")
-        self.assertEqual(result["properties"]["schema_version"]["const"], "1.0")
+        legacy_suite = json.loads(
+            (schema_root / "suite-1.0.schema.json").read_text(encoding="utf-8")
+        )
+        legacy_result = json.loads(
+            (schema_root / "result-1.0.schema.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            suite["properties"]["schema_version"]["enum"], ["1.0", "1.1"]
+        )
+        self.assertEqual(result["properties"]["schema_version"]["const"], "1.1")
+        self.assertEqual(legacy_suite["properties"]["schema_version"]["const"], "1.0")
+        self.assertEqual(legacy_result["properties"]["schema_version"]["const"], "1.0")
 
 
 if __name__ == "__main__":

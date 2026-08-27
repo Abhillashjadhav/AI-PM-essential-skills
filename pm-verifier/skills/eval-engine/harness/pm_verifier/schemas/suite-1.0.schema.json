@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Abhillashjadhav/AI-PM-essential-skills/pm-verifier/schemas/suite-1.0.json",
+  "title": "pm-verifier legacy suite 1.0",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "suite_id",
+    "suite_version",
+    "name",
+    "suite_type",
+    "minimum_trials_per_case",
+    "deterministic_graders",
+    "release_rules"
+  ],
+  "properties": {
+    "schema_version": { "const": "1.0" },
+    "suite_id": { "type": "string", "minLength": 1 },
+    "suite_version": { "type": "string", "minLength": 1 },
+    "name": { "type": "string", "minLength": 1 },
+    "suite_type": { "enum": ["capability", "regression"] },
+    "minimum_trials_per_case": { "type": "integer", "minimum": 1 },
+    "deterministic_graders": { "type": "array", "minItems": 1 },
+    "model_graders": { "type": "array" },
+    "rubric": { "type": "array" },
+    "calibration": { "type": "object" },
+    "release_rules": { "type": "object" }
+  },
+  "additionalProperties": true
+}

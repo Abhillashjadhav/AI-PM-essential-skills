@@ -1,0 +1,11 @@
+{
+  "acceptance_criteria": [
+    "Resolve an eligible support request with the correct policy",
+    "Preserve ticket, customer, and content identity through delivery",
+    "Remember, update, retrieve, isolate, and forget the requested language preference"
+  ],
+  "contract_id": "synthetic-support-decision",
+  "product_claim": "A support request reaches the user with the correct resolution and promised preference lifecycle",
+  "release_owner": "product",
+  "version": "1.0.0"
+}

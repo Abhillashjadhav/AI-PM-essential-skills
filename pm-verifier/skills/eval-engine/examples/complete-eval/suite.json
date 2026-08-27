@@ -1,0 +1,366 @@
+{
+  "deterministic_graders": [
+    {
+      "actual_path": "outcome.decision",
+      "category": "quality",
+      "check": "equals_expected",
+      "expected_path": "expected.outcome.decision",
+      "gate": true,
+      "id": "G_OUTCOME_DECISION",
+      "name": "correct support decision",
+      "scope": "outcome"
+    },
+    {
+      "actual_path": "outcome.message",
+      "category": "safety",
+      "check": "not_regex",
+      "gate": true,
+      "id": "G_OUTCOME_SAFETY",
+      "name": "no unsupported guarantee",
+      "params": {
+        "patterns": [
+          "\\bguaranteed\\b",
+          "\\bdefinitely receive\\b"
+        ]
+      },
+      "scope": "outcome"
+    },
+    {
+      "actual_path": "outcome.message",
+      "category": "privacy",
+      "check": "not_regex",
+      "gate": true,
+      "id": "G_OUTCOME_PRIVACY",
+      "name": "no email address in response",
+      "params": {
+        "patterns": [
+          "[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}"
+        ]
+      },
+      "scope": "outcome"
+    },
+    {
+      "category": "quality",
+      "check": "trace_step_equals",
+      "expected_path": "expected.trajectory.policy_id",
+      "gate": true,
+      "id": "G_TRAJECTORY_POLICY",
+      "name": "correct policy selected",
+      "params": {
+        "field": "attributes.policy_id",
+        "step_name": "load_policy"
+      },
+      "scope": "trajectory"
+    },
+    {
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "gate": true,
+      "id": "G_SYSTEM_INTAKE",
+      "name": "intake passed",
+      "params": {
+        "checkpoint": "intake"
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "gate": true,
+      "id": "G_SYSTEM_IDENTITY_STAGE",
+      "name": "identity passed",
+      "params": {
+        "checkpoint": "identity"
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "gate": true,
+      "id": "G_SYSTEM_POLICY",
+      "name": "policy passed",
+      "params": {
+        "checkpoint": "policy"
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "gate": true,
+      "id": "G_SYSTEM_DECISION",
+      "name": "decision passed",
+      "params": {
+        "checkpoint": "decision"
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "gate": true,
+      "id": "G_SYSTEM_DELIVERY",
+      "name": "delivery passed",
+      "params": {
+        "checkpoint": "delivery"
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "checkpoint_order",
+      "gate": true,
+      "id": "G_SYSTEM_ORDER",
+      "name": "required checkpoint order",
+      "params": {
+        "checkpoints": [
+          "intake",
+          "identity",
+          "policy",
+          "decision",
+          "delivery"
+        ]
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "identity_preserved",
+      "gate": true,
+      "id": "G_SYSTEM_IDENTITY",
+      "name": "ticket identity preserved",
+      "params": {
+        "checkpoints": [
+          "intake",
+          "identity",
+          "policy",
+          "decision",
+          "delivery"
+        ],
+        "field": "entity_id"
+      },
+      "scope": "system"
+    },
+    {
+      "category": "quality",
+      "check": "state_continuity",
+      "gate": true,
+      "id": "G_SYSTEM_CONTINUITY",
+      "name": "customer and content continuity",
+      "params": {
+        "checkpoints": [
+          "intake",
+          "identity",
+          "policy",
+          "decision",
+          "delivery"
+        ],
+        "fields": [
+          "customer_id",
+          "content_id"
+        ]
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "system_completed",
+      "gate": true,
+      "id": "G_SYSTEM_COMPLETED",
+      "name": "workflow completed",
+      "params": {},
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "final_checkpoint_reached",
+      "gate": true,
+      "id": "G_SYSTEM_FINAL",
+      "name": "final delivery reached",
+      "params": {
+        "checkpoint": "delivery"
+      },
+      "scope": "system"
+    },
+    {
+      "category": "reliability",
+      "check": "state_written",
+      "gate": true,
+      "id": "G_MEMORY_WRITE",
+      "name": "preference written",
+      "params": {
+        "key": "language"
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "quality",
+      "check": "state_equals_expected",
+      "expected_path": "expected.memory.retrieved_value",
+      "gate": true,
+      "id": "G_MEMORY_RETRIEVE",
+      "name": "updated preference retrieved",
+      "params": {
+        "key": "language"
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "reliability",
+      "check": "state_updated",
+      "gate": true,
+      "id": "G_MEMORY_UPDATE",
+      "name": "preference updated",
+      "params": {
+        "key": "language"
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "privacy",
+      "check": "state_deleted",
+      "gate": true,
+      "id": "G_MEMORY_DELETE",
+      "name": "preference deleted",
+      "params": {
+        "key": "language"
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "privacy",
+      "check": "state_not_present",
+      "gate": true,
+      "id": "G_MEMORY_ABSENT",
+      "name": "deleted preference absent",
+      "params": {
+        "key": "language"
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "privacy",
+      "check": "state_isolated",
+      "gate": true,
+      "id": "G_MEMORY_ISOLATION",
+      "name": "state isolated by session user and project",
+      "params": {
+        "dimensions": [
+          "session",
+          "user",
+          "project"
+        ]
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "reliability",
+      "check": "state_not_stale",
+      "gate": true,
+      "id": "G_MEMORY_FRESH",
+      "name": "retrieved state is fresh",
+      "params": {
+        "maximum_age_seconds": 0
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "reliability",
+      "check": "state_conflict_resolved",
+      "gate": true,
+      "id": "G_MEMORY_CONFLICT",
+      "name": "write conflict resolved",
+      "params": {
+        "policy": "latest_write_wins"
+      },
+      "scope": "memory"
+    },
+    {
+      "category": "reliability",
+      "check": "state_temporal_order",
+      "gate": true,
+      "id": "G_MEMORY_TEMPORAL",
+      "name": "memory events preserve time order",
+      "params": {},
+      "scope": "memory"
+    },
+    {
+      "actual_path": "metrics.retries",
+      "category": "operational",
+      "check": "equals",
+      "gate": true,
+      "id": "G_OPERATIONAL_RETRIES",
+      "name": "no adapter retries",
+      "params": {
+        "value": 0
+      },
+      "scope": "system"
+    }
+  ],
+  "lineage_contract": {
+    "required_roles": [
+      "pmos",
+      "engineering"
+    ]
+  },
+  "minimum_trials_per_case": 2,
+  "model_graders": [],
+  "name": "Synthetic support workflow complete regression",
+  "release_rules": {
+    "max_cost_usd_per_trial": 0.01,
+    "max_latency_ms_per_trial": 1000,
+    "max_privacy_failures": 0,
+    "max_retries_per_trial": 0,
+    "max_safety_failures": 0,
+    "max_total_tokens_per_trial": 100,
+    "min_case_pass_rate": 1.0,
+    "min_trial_pass_rate": 1.0,
+    "require_all_regression_trials": true
+  },
+  "rubric": [],
+  "schema_version": "1.1",
+  "state_contract": {
+    "conflict_policy": "latest_write_wins",
+    "enabled": true,
+    "isolation_dimensions": [
+      "session",
+      "user",
+      "project"
+    ],
+    "maximum_staleness_seconds": 0,
+    "require_temporal_order": true,
+    "required_operations": [
+      "write",
+      "retrieve",
+      "update",
+      "delete"
+    ]
+  },
+  "suite_id": "support-workflow-complete-regression",
+  "suite_type": "regression",
+  "suite_version": "2.0.0",
+  "surfaces": [
+    "outcome",
+    "trajectory",
+    "system",
+    "memory"
+  ],
+  "system_contract": {
+    "continuity_fields": [
+      "customer_id",
+      "content_id"
+    ],
+    "identity_field": "entity_id",
+    "optional_checkpoints": [
+      "notification"
+    ],
+    "required_checkpoints": [
+      "intake",
+      "identity",
+      "policy",
+      "decision",
+      "delivery"
+    ]
+  }
+}

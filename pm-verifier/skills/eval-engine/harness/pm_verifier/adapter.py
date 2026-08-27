@@ -93,7 +93,10 @@ def _write_request(stream: BinaryIO, payload: bytes) -> None:
     except (BrokenPipeError, OSError):
         pass
     finally:
-        stream.close()
+        try:
+            stream.close()
+        except (BrokenPipeError, OSError):
+            pass
 
 
 def _invoke_adapter(
@@ -233,6 +236,15 @@ def execute_trials(
     suite = load_json(root / "suite.json")
     run_path = root / "run.json"
     run = load_json(run_path)
+    suite_schema_version = suite.get("schema_version")
+    run_schema_version = run.get("schema_version")
+    if not isinstance(suite_schema_version, str) or suite_schema_version not in {
+        "1.0",
+        "1.1",
+    }:
+        raise EvidenceError("suite.schema_version must be 1.0 or 1.1")
+    if run_schema_version != suite_schema_version:
+        raise EvidenceError("run.schema_version must match suite.schema_version")
     run_id = run.get("run_id")
     if not isinstance(run_id, str) or not run_id:
         raise EvidenceError("run.run_id must be a non-empty string")
@@ -258,7 +270,7 @@ def execute_trials(
         for trial_index in range(1, minimum + 1):
             trial_id = f"{case_id}-t{trial_index}"
             request = {
-                "schema_version": "1.0",
+                "schema_version": suite_schema_version,
                 "case_id": case_id,
                 "trial_id": trial_id,
                 "trial_index": trial_index,

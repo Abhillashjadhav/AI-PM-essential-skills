@@ -1,0 +1,8 @@
+{
+  "cases_path": "cases.jsonl",
+  "cases_sha256": "78036027b9b4201182be25d14858f0ca99f625e014210dd32d9f5429e428be02",
+  "dataset_id": "synthetic-support-complete-cases",
+  "dataset_version": "1.0.0",
+  "schema_version": "1.1",
+  "source": "synthetic-known-answer"
+}

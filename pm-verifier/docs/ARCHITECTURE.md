@@ -5,10 +5,10 @@
 AI Evals for PMs, delivered through the stable `pm-verifier` package and CLI,
 exposes one product flow:
 
-1. **Feature spec** — supply the PRD or task contract.
-2. **Define good** — separate disqualifying gates from gradual rubric criteria.
-3. **Create suite** — freeze capability/regression cases, graders, thresholds, and provenance.
-4. **Run trials** — capture repeated outcomes, trajectories, and operational metrics.
+1. **Product contract** — supply the PRD, PMOS decision, or task contract.
+2. **Define surfaces** — select outcome, trajectory, system, and promised memory claims.
+3. **Create suite** — freeze capability/regression cases, graders, thresholds, lineage, and provenance.
+4. **Run trials** — capture repeated outcomes, trajectories, system/memory evidence, and operational metrics.
 5. **Grade** — run deterministic checks and ingest calibrated model judgments.
 6. **Inspect failures** — view cases, slices, clusters, silent path failures, and invalid evidence.
 7. **Release decision** — emit `PASS`, `FAIL`, or `BLOCKED` for CI and a human-readable report.
@@ -20,12 +20,12 @@ exposes one product flow:
 | Package boundary | `pyproject.toml`, semantic version, console entry point, and bundled versioned JSON schemas provide one supported installation surface. |
 | Execution | `execute` starts a fresh JSON-over-stdio subprocess for every trial, with no shell interpolation and a configured timeout/output limit. Expected answers never cross this boundary. |
 | Evidence boundary | Strict JSON/JSONL loading, stable IDs, hashes, schema versions, provenance, and explicit validation errors. |
-| Trial model | One case can have multiple trials; every trial contains a run binding, outcome, trajectory, metrics, environment fingerprint, and unique isolation ID. |
-| Grading | Deterministic outcome/trajectory/safety/privacy checks run first; each check is explicitly a release gate or diagnostic. Calibrated model judgments handle semantic checks and rubrics. |
+| Trial model | One case can have multiple trials; every trial contains a run binding, outcome, trajectory, enabled system/memory evidence, metrics, environment fingerprint, and unique isolation ID. |
+| Grading | Deterministic checks span outcome, trajectory, system, and memory; quality, safety, privacy, reliability, and operations remain explicit categories. Each check is a release gate or diagnostic. Calibrated model judgments handle semantic checks and rubrics. |
 | Calibration | Held-out human goldens separately produce binary label agreement, Cohen's kappa, a Wilson interval, class-conditional false-positive/negative rates, and ordinal-score error. |
 | Analysis | Binary release results, gradual partial-quality scores, reliability metrics, capability/regression summaries, metadata slices, and deterministic lexical failure clusters. |
 | Decision | Release rules combine evidence validity, disqualifying gates, reliability thresholds, and operational guardrails. |
-| Reporting | `results.json` is canonical machine evidence; `report.md` is the PM/reviewer view; `inspect` joins failures back to redacted raw outcomes and trajectories. |
+| Reporting | `results.json` is canonical machine evidence; `report.md` is the PM/reviewer view; `inspect` joins failures back to redacted raw evidence for every enabled surface. |
 
 The harness is deliberately a local/CI process, not a distributed service.
 Postgres, object storage, worker fleets, tenancy, and hosted orchestration are
@@ -36,7 +36,7 @@ not prerequisites for trustworthy release evaluation and are not present.
 | State | Meaning | CI exit |
 |---|---|---:|
 | `PASS` | Evidence is valid and every release rule passed. | 0 |
-| `FAIL` | Evidence is valid and at least one quality, safety, privacy, regression, or operational gate failed. | 1 |
+| `FAIL` | Evidence is valid and at least one quality, safety, privacy, reliability, regression, or operational rule failed. | 1 |
 | `BLOCKED` | Required evidence is missing, invalid, mismatched, or uncalibrated. No quality claim is allowed. | 2 |
 
 `BLOCKED` is not a softer `FAIL`: it says the evaluation cannot support a
@@ -51,7 +51,8 @@ eval/
 ├── dataset.json            # dataset identity/version/source/cases hash
 ├── cases.jsonl             # inputs, expected evidence, slicing metadata
 ├── run.json                # candidate + model/prompt/tool/harness/config provenance
-├── trials.jsonl            # repeated outcome/trajectory/metric evidence
+├── contracts/              # optional hash-bound PMOS/engineering artifacts
+├── trials.jsonl            # repeated four-surface/metric evidence
 ├── trials.executed.jsonl   # adapter-captured evidence when `execute` is used
 ├── judgments.jsonl         # optional semantic gate/rubric judgments
 ├── calibration.json        # required when model graders are release-critical
@@ -81,6 +82,16 @@ eval/
 - `candidate.sha256` identifies immutable candidate content. Every trial and
   model judgment must match the exact `run_id` and SHA-256 of `run.json`, so a
   provenance or candidate change invalidates stored evidence.
+- Schema 1.1 may require PMOS and engineering lineage roles. Every declared
+  artifact must be a project-relative file whose actual SHA-256 matches
+  `run.contract_lineage`; missing or escaping paths block the run.
+- Required system checkpoints may fail, but they may not silently disappear.
+  Missing/malformed checkpoint evidence is `BLOCKED`; present failed evidence
+  is graded. The declared first failure must match the observed first failed
+  required checkpoint.
+- Memory evidence is mandatory only when the suite enables a state contract.
+  Required operations, isolation checks, staleness, conflict, and temporal
+  evidence then fail closed at the evidence boundary.
 - `run.created_at` is input provenance, not wall-clock output. Consequently,
   identical evidence produces byte-identical canonical results.
 - Adapter input, stdout, and stderr are bounded. Nonzero exits preserve bounded
