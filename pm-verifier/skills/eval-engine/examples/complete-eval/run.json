@@ -33,7 +33,7 @@
   },
   "harness": {
     "name": "pm-verifier",
-    "sha256": "d744533965f9cfb8e99c0e0aac271eaf9e7b474bb20186f72f1948e5f09fd224",
+    "sha256": "4bb6b4be7d907fa5f6baef6a3673ff6f95b168132819731b52208bb1fa790b9c",
     "version": "1.2.0"
   },
   "model": {

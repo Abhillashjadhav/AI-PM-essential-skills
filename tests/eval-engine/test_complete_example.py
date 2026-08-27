@@ -161,6 +161,41 @@ class CompleteExampleTest(unittest.TestCase):
                 self.assertEqual(exit_code, 2)
                 self.assertEqual(source.read_bytes(), before)
 
+    def test_fault_command_rejects_redirected_destinations(self) -> None:
+        adapter = self.project / "reference_adapter.py"
+        before = adapter.read_bytes()
+        symlink = self.project / "trials-fault-link.jsonl"
+        symlink.symlink_to(adapter)
+        exit_code = main(
+            [
+                "fault",
+                "--project",
+                str(self.project),
+                "--name",
+                "system-identity-fail",
+                "--out",
+                symlink.name,
+            ]
+        )
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(adapter.read_bytes(), before)
+        self.assertTrue(symlink.is_symlink())
+
+        outside = Path(self.tempdir.name) / "trials-fault-outside.jsonl"
+        exit_code = main(
+            [
+                "fault",
+                "--project",
+                str(self.project),
+                "--name",
+                "system-identity-fail",
+                "--out",
+                str(outside),
+            ]
+        )
+        self.assertEqual(exit_code, 2)
+        self.assertFalse(outside.exists())
+
     def test_fault_mutations_reject_malformed_evidence_and_specs(self) -> None:
         source = self._rows("trials.jsonl")
         malformed = (

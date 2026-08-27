@@ -836,8 +836,9 @@ def _validate_system_evidence(
             f"trial {trial_id}: system checkpoint indexes must be contiguous and ordered from 1"
         )
 
-    required = contract.get("required_checkpoints", [])
-    for name in required if isinstance(required, list) else []:
+    raw_required = contract.get("required_checkpoints", [])
+    required = raw_required if isinstance(raw_required, list) else []
+    for name in required:
         if isinstance(name, str) and name not in seen_names:
             errors.append(f"trial {trial_id}: required checkpoint {name!r} is missing")
 
@@ -1643,10 +1644,18 @@ def evaluate_project(
         return _blocked([str(exc)], suite)
 
     errors: list[str] = []
-    errors.extend(_validate_suite(suite))
-    errors.extend(_validate_cases(cases))
+    suite_errors = _validate_suite(suite)
+    case_errors = _validate_cases(cases)
+    errors.extend(suite_errors)
+    errors.extend(case_errors)
     minimum = suite.get("minimum_trials_per_case", 1)
-    if isinstance(minimum, int) and not isinstance(minimum, bool) and minimum >= 1:
+    if (
+        not suite_errors
+        and not case_errors
+        and isinstance(minimum, int)
+        and not isinstance(minimum, bool)
+        and minimum >= 1
+    ):
         errors.extend(
             _validate_trials(
                 trials,

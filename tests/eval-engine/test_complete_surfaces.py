@@ -741,6 +741,12 @@ class CompleteSurfaceTest(unittest.TestCase):
     def test_malformed_new_contract_fields_block_without_crashing(self) -> None:
         suite_mutations = (
             lambda suite: suite.update({"schema_version": {"bad": True}}),
+            lambda suite: suite["system_contract"].update(
+                {"required_checkpoints": None}
+            ),
+            lambda suite: suite["system_contract"].update(
+                {"required_checkpoints": True}
+            ),
             lambda suite: suite["system_contract"].update({"continuity_fields": [{}]}),
             lambda suite: suite["state_contract"].update({"required_operations": [{}]}),
             lambda suite: suite["state_contract"].update({"isolation_dimensions": [{}]}),

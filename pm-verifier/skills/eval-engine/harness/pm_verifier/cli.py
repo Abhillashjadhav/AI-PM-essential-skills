@@ -165,7 +165,23 @@ def main(argv: Sequence[str] | None = None) -> int:
         output_path = _project_path(args.project, args.out)
         try:
             try:
+                project_root = args.project.resolve()
+                if output_path.is_symlink():
+                    raise EvidenceError("fault output must not be a symbolic link")
                 resolved_output = output_path.resolve()
+                if project_root not in resolved_output.parents:
+                    raise EvidenceError(
+                        "fault output must stay within the evaluation project"
+                    )
+                if output_path.exists():
+                    if not output_path.is_file():
+                        raise EvidenceError(
+                            "existing fault output must be a regular file"
+                        )
+                    if output_path.stat().st_nlink > 1:
+                        raise EvidenceError(
+                            "fault output must not be a multiply linked file"
+                        )
                 protected_inputs = {
                     trials_path.resolve(),
                     specs_path.resolve(),
@@ -181,6 +197,8 @@ def main(argv: Sequence[str] | None = None) -> int:
                         )
                     ),
                 }
+            except EvidenceError:
+                raise
             except (OSError, RuntimeError, ValueError) as exc:
                 raise EvidenceError(f"fault paths cannot be resolved safely: {exc}") from exc
             if resolved_output in protected_inputs:
