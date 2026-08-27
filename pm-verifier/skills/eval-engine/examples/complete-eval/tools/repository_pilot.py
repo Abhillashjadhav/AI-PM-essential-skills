@@ -23,6 +23,7 @@ REQUIRED_PATH_KEYS = {
     "cases",
     "ci",
     "dataset",
+    "evidence_receipt",
     "engineering_contract",
     "eval_contract",
     "pmos_contract",
@@ -206,7 +207,10 @@ def _project_and_repository(
 
 
 def _config(project: Path) -> dict[str, Any]:
-    config = _load_json(project / "pilot.json", "pilot.json")
+    config = _load_json(
+        _resolve_file(project, "pilot.json", "pilot.json"),
+        "pilot.json",
+    )
     if config.get("schema_version") != "1.0":
         raise PilotError("pilot.schema_version must be '1.0'")
     if config.get("template_id") != TEMPLATE_ID:
@@ -239,17 +243,81 @@ def _config(project: Path) -> dict[str, Any]:
 
 
 def _project_paths(
-    project: Path, config: dict[str, Any], *, require_trials: bool
+    project: Path,
+    config: dict[str, Any],
+    *,
+    require_receipt: bool,
+    require_trials: bool,
 ) -> dict[str, Path]:
     paths = config["paths"]
-    return {
+    optional = set()
+    if not require_receipt:
+        optional.add("evidence_receipt")
+    if not require_trials:
+        optional.add("trials")
+    resolved = {
         key: (
             _resolve_optional_file(project, value, f"pilot.paths.{key}")
-            if key == "trials" and not require_trials
+            if key in optional
             else _resolve_file(project, value, f"pilot.paths.{key}")
         )
         for key, value in paths.items()
     }
+    _reject_aliases(
+        [
+            ("pilot.json", _resolve_file(project, "pilot.json", "pilot.json")),
+            *[(f"pilot.paths.{key}", path) for key, path in resolved.items()],
+        ],
+        "pilot paths",
+    )
+    return resolved
+
+
+def _reject_aliases(entries: Sequence[tuple[str, Path]], label: str) -> None:
+    """Reject lexical aliases and hard links before any binder write occurs."""
+
+    seen_paths: dict[Path, str] = {}
+    seen_files: dict[tuple[int, int], str] = {}
+    for name, path in entries:
+        previous = seen_paths.get(path)
+        if previous is not None:
+            raise PilotError(f"{label} alias the same path: {previous} and {name}")
+        seen_paths[path] = name
+        if not path.exists():
+            continue
+        try:
+            stat = path.stat()
+        except OSError as exc:
+            raise PilotError(f"cannot inspect {name}: {exc}") from exc
+        identity = (stat.st_dev, stat.st_ino)
+        previous = seen_files.get(identity)
+        if previous is not None:
+            raise PilotError(f"{label} alias the same file: {previous} and {name}")
+        seen_files[identity] = name
+
+
+def _candidate_paths(
+    repository: Path,
+    project: Path,
+    config: dict[str, Any],
+    managed_paths: dict[str, Path],
+) -> list[Path]:
+    candidates = [
+        _resolve_file(repository, value, f"pilot.candidate_files[{index}]")
+        for index, value in enumerate(config["candidate_files"])
+    ]
+    _reject_aliases(
+        [
+            ("pilot.json", _resolve_file(project, "pilot.json", "pilot.json")),
+            *[(f"pilot.paths.{key}", path) for key, path in managed_paths.items()],
+            *[
+                (f"pilot.candidate_files[{index}]", path)
+                for index, path in enumerate(candidates)
+            ],
+        ],
+        "candidate and managed paths",
+    )
+    return candidates
 
 
 def _ids(rows: Any, pattern: re.Pattern[str], label: str) -> tuple[str, ...]:
@@ -271,7 +339,7 @@ def _ids(rows: Any, pattern: re.Pattern[str], label: str) -> tuple[str, ...]:
 
 def _validate_pmos(
     pmos: dict[str, Any], product_id: str
-) -> tuple[tuple[str, ...], tuple[str, ...]]:
+) -> tuple[tuple[str, ...], tuple[str, ...], dict[str, frozenset[str]]]:
     if pmos.get("schema_version") != "1.0":
         raise PilotError("PMOS contract schema_version must be '1.0'")
     if pmos.get("product_id") != product_id:
@@ -289,17 +357,23 @@ def _validate_pmos(
         pmos.get("acceptance_criteria"), AC_RE, "PMOS acceptance_criteria"
     )
     requirement_set = set(requirement_ids)
+    acceptance_links: dict[str, frozenset[str]] = {}
     for index, criterion in enumerate(pmos["acceptance_criteria"]):
         linked = criterion.get("requirement_ids")
         if (
             not isinstance(linked, list)
             or not linked
             or not all(isinstance(item, str) for item in linked)
+            or len(linked) != len(set(linked))
             or not set(linked) <= requirement_set
         ):
             raise PilotError(
                 f"PMOS acceptance_criteria[{index}].requirement_ids must reference known FR IDs"
             )
+        acceptance_links[criterion["id"]] = frozenset(linked)
+    linked_requirements = set().union(*acceptance_links.values())
+    if linked_requirements != requirement_set:
+        raise PilotError("PMOS acceptance criteria do not link every requirement")
     for field in (
         "customer_problem",
         "target_user",
@@ -312,7 +386,7 @@ def _validate_pmos(
     for field in ("metrics", "guardrails", "scope", "trade_offs"):
         if not isinstance(pmos.get(field), dict):
             raise PilotError(f"PMOS {field} must be an object")
-    return requirement_ids, acceptance_ids
+    return requirement_ids, acceptance_ids, acceptance_links
 
 
 def _validate_traceability(
@@ -321,10 +395,12 @@ def _validate_traceability(
     eval_contract: dict[str, Any],
     requirement_ids: Sequence[str],
     acceptance_ids: Sequence[str],
+    acceptance_links: dict[str, frozenset[str]],
 ) -> dict[str, int]:
     requirement_set = set(requirement_ids)
     acceptance_set = set(acceptance_ids)
     case_ids: list[str] = []
+    case_links: dict[str, tuple[set[str], set[str]]] = {}
     case_requirement_coverage: set[str] = set()
     case_acceptance_coverage: set[str] = set()
     for index, case in enumerate(cases):
@@ -339,6 +415,7 @@ def _validate_traceability(
             not isinstance(linked_requirements, list)
             or not linked_requirements
             or not all(isinstance(item, str) for item in linked_requirements)
+            or len(linked_requirements) != len(set(linked_requirements))
             or not set(linked_requirements) <= requirement_set
         ):
             raise PilotError(f"case {case_id} has invalid requirement traceability")
@@ -346,11 +423,30 @@ def _validate_traceability(
             not isinstance(linked_acceptance, list)
             or not linked_acceptance
             or not all(isinstance(item, str) for item in linked_acceptance)
+            or len(linked_acceptance) != len(set(linked_acceptance))
             or not set(linked_acceptance) <= acceptance_set
         ):
             raise PilotError(f"case {case_id} has invalid acceptance traceability")
-        case_requirement_coverage.update(linked_requirements)
-        case_acceptance_coverage.update(linked_acceptance)
+        linked_requirement_set = set(linked_requirements)
+        linked_acceptance_set = set(linked_acceptance)
+        for requirement_id in linked_requirement_set:
+            if not any(
+                requirement_id in acceptance_links[acceptance_id]
+                for acceptance_id in linked_acceptance_set
+            ):
+                raise PilotError(
+                    f"case {case_id} does not relate {requirement_id} "
+                    "to an acceptance criterion"
+                )
+        for acceptance_id in linked_acceptance_set:
+            if not acceptance_links[acceptance_id] & linked_requirement_set:
+                raise PilotError(
+                    f"case {case_id} acceptance criterion {acceptance_id} "
+                    "does not relate to a listed requirement"
+                )
+        case_links[case_id] = (linked_requirement_set, linked_acceptance_set)
+        case_requirement_coverage.update(linked_requirement_set)
+        case_acceptance_coverage.update(linked_acceptance_set)
     if len(case_ids) != len(set(case_ids)):
         raise PilotError("cases contain duplicate case_id values")
     if case_requirement_coverage != requirement_set:
@@ -379,6 +475,11 @@ def _validate_traceability(
         if requirement_id not in requirement_set or requirement_id in seen_requirements:
             raise PilotError(f"eval traceability[{index}] has invalid requirement_id")
         seen_requirements.add(requirement_id)
+        expected_acceptance = {
+            acceptance_id
+            for acceptance_id, linked in acceptance_links.items()
+            if requirement_id in linked
+        }
         for key, known, seen in (
             ("acceptance_criteria_ids", acceptance_set, seen_acceptance),
             ("case_ids", set(case_ids), seen_cases),
@@ -389,10 +490,27 @@ def _validate_traceability(
                 not isinstance(values, list)
                 or not values
                 or not all(isinstance(item, str) for item in values)
+                or len(values) != len(set(values))
                 or not set(values) <= known
             ):
                 raise PilotError(f"eval traceability[{index}].{key} is incomplete")
             seen.update(values)
+        row_acceptance = set(row["acceptance_criteria_ids"])
+        if row_acceptance != expected_acceptance:
+            raise PilotError(
+                f"eval traceability[{index}] acceptance criteria do not match "
+                f"PMOS links for {requirement_id}"
+            )
+        for case_id in row["case_ids"]:
+            case_requirements, case_acceptance = case_links[case_id]
+            if (
+                requirement_id not in case_requirements
+                or not row_acceptance <= case_acceptance
+            ):
+                raise PilotError(
+                    f"eval traceability[{index}] case {case_id} does not carry "
+                    "its FR/AC relationship"
+                )
     if seen_requirements != requirement_set:
         raise PilotError("eval contract does not trace every requirement")
     if seen_acceptance != acceptance_set:
@@ -473,7 +591,11 @@ def _expected_package(
 
 
 def _load_context(
-    project: Path, repository_root: Path | None, *, require_trials: bool
+    project: Path,
+    repository_root: Path | None,
+    *,
+    require_receipt: bool,
+    require_trials: bool,
 ) -> tuple[
     Path,
     Path,
@@ -485,15 +607,25 @@ def _load_context(
     list[dict[str, Any]],
     tuple[str, ...],
     tuple[str, ...],
+    dict[str, frozenset[str]],
     dict[str, int],
 ]:
     project, repository = _project_and_repository(project, repository_root)
     config = _config(project)
-    paths = _project_paths(project, config, require_trials=require_trials)
+    paths = _project_paths(
+        project,
+        config,
+        require_receipt=require_receipt,
+        require_trials=require_trials,
+    )
     product_id = config["product"]["id"]
     pmos = _load_json(paths["pmos_contract"], "PMOS contract")
-    requirements, acceptance = _validate_pmos(pmos, product_id)
+    requirements, acceptance, acceptance_links = _validate_pmos(pmos, product_id)
     suite = _load_json(paths["suite"], "suite")
+    if suite.get("schema_version") != "1.1":
+        raise PilotError("suite schema_version must be '1.1'")
+    _non_empty(suite.get("suite_id"), "suite.suite_id")
+    _non_empty(suite.get("suite_version"), "suite.suite_version")
     cases = _load_jsonl(paths["cases"], "cases")
     eval_contract = _load_json(paths["eval_contract"], "eval contract")
     if eval_contract.get("schema_version") != "1.0":
@@ -503,7 +635,12 @@ def _load_context(
     _non_empty(eval_contract.get("contract_id"), "eval contract_id")
     _non_empty(eval_contract.get("version"), "eval version")
     counts = _validate_traceability(
-        cases, suite, eval_contract, requirements, acceptance
+        cases,
+        suite,
+        eval_contract,
+        requirements,
+        acceptance,
+        acceptance_links,
     )
     return (
         project,
@@ -516,7 +653,75 @@ def _load_context(
         cases,
         requirements,
         acceptance,
+        acceptance_links,
         counts,
+    )
+
+
+def _validate_dataset(dataset: dict[str, Any]) -> None:
+    if dataset.get("schema_version") != "1.1":
+        raise PilotError("dataset schema_version must be '1.1'")
+    _non_empty(dataset.get("dataset_id"), "dataset.dataset_id")
+    _non_empty(dataset.get("dataset_version"), "dataset.dataset_version")
+
+
+def _validate_engineering(engineering: dict[str, Any], product_id: str) -> None:
+    if engineering.get("schema_version") != "1.0":
+        raise PilotError("engineering contract schema_version must be '1.0'")
+    if engineering.get("product_id") not in (None, product_id):
+        raise PilotError("engineering contract product_id does not match pilot product")
+    _non_empty(engineering.get("contract_id"), "engineering contract_id")
+    _non_empty(engineering.get("version"), "engineering version")
+
+
+def _validate_run(run: dict[str, Any]) -> None:
+    if run.get("schema_version") != "1.1":
+        raise PilotError("run schema_version must be '1.1'")
+    for field in ("created_at", "harness", "model"):
+        if field not in run:
+            raise PilotError(f"run.{field} is required")
+
+
+def _evidence_receipt(
+    config: dict[str, Any],
+    candidate_sha: str,
+    run: dict[str, Any],
+    *,
+    run_sha: str,
+    trials_sha: str | None,
+    trial_count: int,
+) -> dict[str, Any]:
+    sealed = trials_sha is not None
+    return {
+        "candidate_sha256": candidate_sha,
+        "evidence_status": "SEALED" if sealed else "PENDING",
+        "product_id": config["product"]["id"],
+        "run_id": run["run_id"],
+        "run_sha256": run_sha,
+        "schema_version": "1.0",
+        "trial_count": trial_count if sealed else 0,
+        "trials_path": config["paths"]["trials"],
+        "trials_sha256": trials_sha,
+    }
+
+
+def _load_canonical_json(path: Path, label: str) -> dict[str, Any]:
+    payload = _load_json(path, label)
+    try:
+        content = path.read_text(encoding="utf-8")
+    except (OSError, UnicodeError) as exc:
+        raise PilotError(f"{label} cannot be read canonically: {exc}") from exc
+    if content != _canonical_json(payload):
+        raise PilotError(f"{label} is not canonical JSON")
+    return payload
+
+
+def _trials_match_run(
+    trials: Sequence[dict[str, Any]], run_id: str, run_sha: str
+) -> bool:
+    return all(
+        row.get("run_id") == run_id and row.get("run_sha256") == run_sha
+        for row in trials
     )
 
 
@@ -535,19 +740,38 @@ def bind_pilot(
         requirement_ids,
         acceptance_ids,
         _,
-    ) = _load_context(project, repository_root, require_trials=False)
+        _,
+    ) = _load_context(
+        project,
+        repository_root,
+        require_receipt=False,
+        require_trials=False,
+    )
 
-    for value in config["candidate_files"]:
-        _resolve_file(repository, value, f"candidate file {value!r}")
+    _candidate_paths(repository, project, config, paths)
     candidate_sha = _tree_sha256(repository, config["candidate_files"])
 
-    cases_sha = _sha256(paths["cases"])
+    # Validate every mutable input before the first write. In particular, a
+    # malformed downstream contract must not leave an upstream file rebound.
+    product_id = config["product"]["id"]
     dataset = _load_json(paths["dataset"], "dataset")
+    _validate_dataset(dataset)
+    engineering = _load_json(paths["engineering_contract"], "engineering contract")
+    _validate_engineering(engineering, product_id)
+    run = _load_json(paths["run"], "run")
+    _validate_run(run)
+    trials: list[dict[str, Any]] | None = None
+    if paths["trials"].exists():
+        trials = _load_jsonl(paths["trials"], "trials")
+    elif config["synthetic_fixture"]:
+        raise PilotError("synthetic fixture requires its checked-in trials")
+
+    cases_sha = _sha256(paths["cases"])
     dataset["cases_path"] = paths["cases"].name
     dataset["cases_sha256"] = cases_sha
     _write_json(paths["dataset"], dataset)
 
-    eval_contract["product_id"] = config["product"]["id"]
+    eval_contract["product_id"] = product_id
     eval_contract["pmos_contract"] = {
         "path": config["paths"]["pmos_contract"],
         "sha256": _sha256(paths["pmos_contract"]),
@@ -566,14 +790,7 @@ def bind_pilot(
     }
     _write_json(paths["eval_contract"], eval_contract)
 
-    engineering = _load_json(paths["engineering_contract"], "engineering contract")
-    if engineering.get("schema_version") != "1.0":
-        raise PilotError("engineering contract schema_version must be '1.0'")
-    if engineering.get("product_id") not in (None, config["product"]["id"]):
-        raise PilotError("engineering contract product_id does not match pilot product")
-    _non_empty(engineering.get("contract_id"), "engineering contract_id")
-    _non_empty(engineering.get("version"), "engineering version")
-    engineering["product_id"] = config["product"]["id"]
+    engineering["product_id"] = product_id
     engineering["pmos_contract_sha256"] = _sha256(paths["pmos_contract"])
     engineering["eval_contract_sha256"] = _sha256(paths["eval_contract"])
     engineering["requirement_ids"] = list(requirement_ids)
@@ -586,9 +803,8 @@ def bind_pilot(
     _write_json(paths["portable_package"], package)
     package_sha = _sha256(paths["portable_package"])
 
-    run = _load_json(paths["run"], "run")
     run["candidate"] = {
-        "id": config["product"]["id"],
+        "id": product_id,
         "sha256": candidate_sha,
         "version": config["product"]["version"],
     }
@@ -623,7 +839,7 @@ def bind_pilot(
         "sha256": _sha256(paths["pmos_contract"]),
         "version": pmos["version"],
     }
-    run["run_id"] = f"{config['product']['id']}-{candidate_sha[:12]}"
+    run["run_id"] = f"{product_id}-{candidate_sha[:12]}"
     run["tools"] = [
         {
             "name": "portable-product-package",
@@ -638,20 +854,34 @@ def bind_pilot(
     ]
     _write_json(paths["run"], run)
 
+    run_sha = _sha256(paths["run"])
+    sealed = False
     if config["synthetic_fixture"]:
-        trials = _load_jsonl(paths["trials"], "trials")
-        run_sha = _sha256(paths["run"])
+        assert trials is not None
         adapter_sha = _sha256(paths["adapter"])
         for row in trials:
             row["run_id"] = run["run_id"]
             row["run_sha256"] = run_sha
             row["environment_fingerprint"] = adapter_sha
         _write_jsonl(paths["trials"], trials)
+        sealed = True
+    elif trials is not None and _trials_match_run(trials, run["run_id"], run_sha):
+        sealed = True
+
+    receipt = _evidence_receipt(
+        config,
+        candidate_sha,
+        run,
+        run_sha=run_sha,
+        trials_sha=_sha256(paths["trials"]) if sealed else None,
+        trial_count=len(trials) if sealed and trials is not None else 0,
+    )
+    _write_json(paths["evidence_receipt"], receipt)
 
     return _verify_pilot(
         project,
         repository,
-        require_trials=config["synthetic_fixture"],
+        require_trials=sealed,
     )
 
 
@@ -672,17 +902,19 @@ def _verify_pilot(
         cases,
         requirement_ids,
         acceptance_ids,
+        _,
         counts,
     ) = _load_context(
         project,
         repository_root,
-        require_trials=require_trials,
+        require_receipt=True,
+        require_trials=False,
     )
-    for value in config["candidate_files"]:
-        _resolve_file(repository, value, f"candidate file {value!r}")
+    _candidate_paths(repository, project, config, paths)
     candidate_sha = _tree_sha256(repository, config["candidate_files"])
 
     dataset = _load_json(paths["dataset"], "dataset")
+    _validate_dataset(dataset)
     cases_sha = _sha256(paths["cases"])
     if dataset.get("cases_path") != paths["cases"].name:
         raise PilotError("dataset does not point to the configured cases file")
@@ -703,6 +935,7 @@ def _verify_pilot(
             raise PilotError(f"eval contract {key} binding does not match its artifact")
 
     engineering = _load_json(paths["engineering_contract"], "engineering contract")
+    _validate_engineering(engineering, config["product"]["id"])
     if engineering.get("product_id") != config["product"]["id"]:
         raise PilotError("engineering contract product_id does not match pilot product")
     if engineering.get("pmos_contract_sha256") != _sha256(paths["pmos_contract"]):
@@ -722,6 +955,7 @@ def _verify_pilot(
         raise PilotError("portable product package does not match the bound artifacts")
 
     run = _load_json(paths["run"], "run")
+    _validate_run(run)
     if run.get("candidate") != {
         "id": config["product"]["id"],
         "sha256": candidate_sha,
@@ -783,10 +1017,13 @@ def _verify_pilot(
     if run.get("run_id") != expected_run_id:
         raise PilotError("run_id does not match the candidate digest")
 
+    receipt = _load_canonical_json(paths["evidence_receipt"], "evidence receipt")
+    status = receipt.get("evidence_status")
+    run_sha = _sha256(paths["run"])
     trials: list[dict[str, Any]] = []
-    if require_trials:
+    verified = False
+    if status == "SEALED":
         trials = _load_jsonl(paths["trials"], "trials")
-        run_sha = _sha256(paths["run"])
         for index, row in enumerate(trials):
             if row.get("run_id") != expected_run_id or row.get("run_sha256") != run_sha:
                 raise PilotError(f"trial {index} is not bound to the exact run")
@@ -794,13 +1031,41 @@ def _verify_pilot(
                 "environment_fingerprint"
             ) != _sha256(paths["adapter"]):
                 raise PilotError(f"synthetic trial {index} is not bound to the adapter")
+        expected_receipt = _evidence_receipt(
+            config,
+            candidate_sha,
+            run,
+            run_sha=run_sha,
+            trials_sha=_sha256(paths["trials"]),
+            trial_count=len(trials),
+        )
+        if receipt != expected_receipt:
+            raise PilotError("evidence receipt does not seal the exact trial contents")
+        verified = True
+    elif status == "PENDING":
+        expected_receipt = _evidence_receipt(
+            config,
+            candidate_sha,
+            run,
+            run_sha=run_sha,
+            trials_sha=None,
+            trial_count=0,
+        )
+        if receipt != expected_receipt:
+            raise PilotError("pending evidence receipt does not match the exact run")
+        if require_trials:
+            raise PilotError(
+                "candidate evidence is pending; execute trials and bind again"
+            )
+    else:
+        raise PilotError("evidence receipt status must be PENDING or SEALED")
 
     return {
         **counts,
         "candidate_sha256": candidate_sha,
         "decision": pmos["decision"],
         "product_id": config["product"]["id"],
-        "status": "VERIFIED" if require_trials else "BOUND",
+        "status": "VERIFIED" if verified else "BOUND",
         "template_id": config["template_id"],
         "trial_count": len(trials),
     }

@@ -7,6 +7,8 @@ import json
 import sys
 from pathlib import Path
 
+from synthetic_candidate import resolve_support_issue
+
 
 request = json.load(sys.stdin)
 payload = request["input"]
@@ -15,18 +17,10 @@ customer_id = payload["customer_id"]
 content_id = payload["content_id"]
 memory_script = payload["memory_script"]
 
-rules = {
-    "refund": ("REFUND", "refund-policy-v3", "The eligible order will be refunded."),
-    "missing_delivery": (
-        "REPLACE",
-        "delivery-policy-v2",
-        "A replacement shipment will be created.",
-    ),
-}
 try:
-    decision, policy_id, message = rules[payload["issue_type"]]
-except KeyError as exc:
-    raise SystemExit(f"unknown synthetic issue type: {payload.get('issue_type')}") from exc
+    decision, policy_id, message = resolve_support_issue(payload["issue_type"])
+except ValueError as exc:
+    raise SystemExit(str(exc)) from exc
 
 checkpoint_names = ["intake", "identity", "policy", "decision", "delivery"]
 continuous_state = {"customer_id": customer_id, "content_id": content_id}

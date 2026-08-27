@@ -23,7 +23,8 @@ trajectory, end-to-end system, and optional memory/state grading, calibrated
 model judgments, failure analysis, and an auditable release decision.
 Its guided customer-support pilot can also bind approved PMOS intent, the eval
 contract, Engineering AgentOS, candidate code, and observed evidence without
-changing the stable public CLI.
+changing the stable public CLI. A canonical receipt seals the complete trial
+file before the pilot can return `VERIFIED`.
 
 ## Choose the job you need done
 

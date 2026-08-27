@@ -57,6 +57,26 @@ class RepositoryPilotTest(unittest.TestCase):
             encoding="utf-8",
         )
 
+    def _snapshot(self) -> dict[Path, bytes]:
+        return {
+            path.relative_to(self.project): path.read_bytes()
+            for path in self.project.rglob("*")
+            if path.is_file()
+        }
+
+    def _jsonl(self, relative: str) -> list[dict]:
+        return [
+            json.loads(line)
+            for line in (self.project / relative).read_text(encoding="utf-8").splitlines()
+            if line.strip()
+        ]
+
+    def _write_jsonl(self, relative: str, rows: list[dict]) -> None:
+        (self.project / relative).write_text(
+            "".join(json.dumps(row, sort_keys=True) + "\n" for row in rows),
+            encoding="utf-8",
+        )
+
     def test_create_copies_only_the_customer_support_pilot_and_never_overwrites(self) -> None:
         destination = self.root / "created-pilot"
         summary = pilot.create_pilot(destination)
@@ -110,9 +130,11 @@ class RepositoryPilotTest(unittest.TestCase):
             "suite.json",
             "cases.jsonl",
             "dataset.json",
+            "evidence-receipt.json",
             "contracts/eval-contract.json",
             "contracts/engineering-contract.json",
             "reference_adapter.py",
+            "synthetic_candidate.py",
             "product-package.json",
             "tools/repository_pilot.py",
             "run.json",
@@ -150,6 +172,10 @@ class RepositoryPilotTest(unittest.TestCase):
         self.assertEqual(
             execute_trials(project, adapter, evidence, timeout_seconds=5), []
         )
+        with self.assertRaises(pilot.PilotError):
+            pilot.verify_pilot(project, repository)
+        sealed = pilot.bind_pilot(project, repository)
+        self.assertEqual(sealed["status"], "VERIFIED")
         verified = pilot.verify_pilot(project, repository)
         self.assertEqual(verified["status"], "VERIFIED")
         self.assertEqual(verified["candidate_sha256"], summary["candidate_sha256"])
@@ -183,18 +209,86 @@ class RepositoryPilotTest(unittest.TestCase):
 
         shutil.rmtree(self.project)
         shutil.copytree(EXAMPLE, self.project)
-        cases = [
-            json.loads(line)
-            for line in (self.project / "cases.jsonl").read_text(encoding="utf-8").splitlines()
-            if line.strip()
-        ]
+        cases = self._jsonl("cases.jsonl")
         cases[0]["traceability"]["acceptance_criteria_ids"] = []
-        (self.project / "cases.jsonl").write_text(
-            "".join(json.dumps(row, sort_keys=True) + "\n" for row in cases),
-            encoding="utf-8",
-        )
+        self._write_jsonl("cases.jsonl", cases)
         with self.assertRaises(pilot.PilotError):
             pilot.bind_pilot(self.project)
+
+    def test_bind_rejects_swapped_acceptance_relationships(self) -> None:
+        contract = self._load("contracts/eval-contract.json")
+        contract["traceability"][0]["acceptance_criteria_ids"] = ["AC-003"]
+        contract["traceability"][2]["acceptance_criteria_ids"] = ["AC-001"]
+        self._write("contracts/eval-contract.json", contract)
+
+        with self.assertRaisesRegex(pilot.PilotError, "do not match PMOS links"):
+            pilot.bind_pilot(self.project)
+
+    def test_bind_rejects_a_referenced_case_without_its_fr_ac_relationship(self) -> None:
+        cases = self._jsonl("cases.jsonl")
+        cases[0]["traceability"]["requirement_ids"].remove("FR-001")
+        cases[0]["traceability"]["acceptance_criteria_ids"].remove("AC-001")
+        self._write_jsonl("cases.jsonl", cases)
+
+        with self.assertRaisesRegex(pilot.PilotError, "does not carry its FR/AC"):
+            pilot.bind_pilot(self.project)
+
+    def test_bind_rejects_managed_path_aliases_before_writing(self) -> None:
+        config = self._load("pilot.json")
+        config["paths"]["dataset"] = config["paths"]["pmos_contract"]
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(pilot.PilotError, "pilot paths alias"):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_bind_rejects_a_managed_path_that_aliases_pilot_config(self) -> None:
+        config = self._load("pilot.json")
+        config["paths"]["portable_package"] = "pilot.json"
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(pilot.PilotError, "pilot paths alias"):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_bind_rejects_hardlinked_managed_paths_before_writing(self) -> None:
+        alias = self.project / "dataset-hardlink.json"
+        alias.hardlink_to(self.project / "contracts" / "pmos-contract.json")
+        config = self._load("pilot.json")
+        config["paths"]["dataset"] = alias.name
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(pilot.PilotError, "pilot paths alias"):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_bind_rejects_candidate_aliases_before_writing(self) -> None:
+        config = self._load("pilot.json")
+        config["candidate_files"] = [config["paths"]["pmos_contract"]]
+        self._write("pilot.json", config)
+        before = self._snapshot()
+
+        with self.assertRaisesRegex(
+            pilot.PilotError, "candidate and managed paths alias"
+        ):
+            pilot.bind_pilot(self.project)
+
+        self.assertEqual(self._snapshot(), before)
+
+    def test_verify_rejects_semantic_trial_tampering_with_preserved_run_ids(self) -> None:
+        pilot.bind_pilot(self.project)
+        trials = self._jsonl("trials.jsonl")
+        trials[0]["outcome"]["decision"] = "REPLACE"
+        self._write_jsonl("trials.jsonl", trials)
+
+        with self.assertRaisesRegex(pilot.PilotError, "exact trial contents"):
+            pilot.verify_pilot(self.project)
 
     def test_candidate_paths_must_stay_inside_the_selected_repository(self) -> None:
         config = self._load("pilot.json")

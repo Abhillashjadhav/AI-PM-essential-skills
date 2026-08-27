@@ -17,14 +17,17 @@ data, and its reference adapter makes no model or network call.
 | `contracts/eval-contract.json` | Exact suite, dataset, cases, graders, and FR/AC traceability |
 | `contracts/engineering-contract.json` | Exact PMOS/eval digests, checkpoints, and required evidence |
 | `product-package.json` | Product identity, all three contracts, candidate tree, adapter, pilot config, CI, and verifier tool |
-| `run.json` and `trials.jsonl` | Candidate-bound execution and observed four-surface evidence |
+| `run.json` | Candidate-bound execution configuration and contract lineage |
+| `evidence-receipt.json` and `trials.jsonl` | Canonical SHA-256 seal and complete observed four-surface evidence |
 
 `tools/repository_pilot.py` provides three skill-owned operations without
 changing the stable public `pm-verifier` CLI:
 
 - `create` copies this one canonical template and refuses an existing target;
-- `bind` validates approved intent and writes the digest chain deterministically;
-- `verify` is read-only and rejects stale, ambiguous, escaped, or tampered inputs.
+- `bind` validates approved intent, rejects path aliases before writing, and
+  writes the digest chain plus a pending or sealed evidence receipt;
+- `verify` is read-only and rejects stale, ambiguous, escaped, relationally
+  incorrect, or byte-tampered inputs.
 
 ## Verify and run the canonical package
 
@@ -42,7 +45,7 @@ pm-verifier inspect --results results.json \
 
 The canonical summary is `GO`, 3 requirements, 3 acceptance criteria, 2
 representative cases, 24 deterministic graders, and 4 checked-in trials. The
-known-good evidence returns `PASS`.
+known-good evidence has a `SEALED` full-file receipt and returns `PASS`.
 
 The suite promises durable preference behavior through `state_contract`, so
 memory evidence is required. Remove the memory surface and state contract when

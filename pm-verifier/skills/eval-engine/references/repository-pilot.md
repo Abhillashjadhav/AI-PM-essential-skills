@@ -15,9 +15,11 @@ template only.
 | Runtime evidence | Actual outcomes, traces, checkpoints, memory events, metrics, fingerprints, isolation IDs | Expected answers or contract digests |
 
 The binder accepts only `decision="GO"`, an accountable approver, no unresolved
-questions, unique stable IDs, complete case/grader traceability, safe relative
-paths, and matching product identities. `HOLD`, `NO-GO`, ambiguity, or a digest
-mismatch stops the handoff.
+questions, unique stable IDs, relationally correct FR/AC/case/grader
+traceability, distinct safe paths, and matching product identities. A candidate
+file may not alias a contract, adapter, tool, run, or evidence output, including
+through a hard link. `HOLD`, `NO-GO`, ambiguity, or a digest mismatch stops the
+handoff before any file is rewritten.
 
 ## 1. Create a working copy
 
@@ -40,19 +42,24 @@ Edit the copy in this order:
    `unresolved_questions` empty only when genuinely resolved.
 2. `pilot.json`: use the same product ID/version, set `synthetic_fixture` to
    `false`, list implementation files relative to the selected repository root,
-   and choose the final evidence filename in `paths.trials` before binding.
+   and choose the final evidence and receipt filenames in `paths.trials` and
+   `paths.evidence_receipt` before binding. Every `paths` value must resolve to
+   a distinct file, and candidate files must be distinct from all of them.
 3. `cases.jsonl`, `dataset.json`, and `suite.json`: replace synthetic policies,
    expected outcomes, thresholds, and cases only with approved evidence.
-4. `contracts/eval-contract.json`: trace every FR and AC to at least one case and
-   trace every deterministic grader. Do not leave an untested requirement.
+4. `contracts/eval-contract.json`: preserve each PMOS AC-to-FR relationship,
+   trace it to cases carrying that same relationship, and trace every
+   deterministic grader. Do not leave an untested requirement.
 5. `contracts/engineering-contract.json`: describe checkpoints and evidence
    outputs the implementation will expose. The binder writes the exact PMOS and
    eval digests plus the approved FR/AC lists.
-6. Replace `reference_adapter.py` with a JSON-over-stdio adapter that observes
-   the real candidate. It must not receive expected answers.
+6. Replace `synthetic_candidate.py` with the real candidate files listed from
+   the repository root. Replace `reference_adapter.py` with a JSON-over-stdio
+   adapter that observes those files. The adapter is evidence plumbing, not the
+   candidate, and it must not receive expected answers.
 
-If `paths.trials` names a new file, its parent directory must already exist;
-the file itself may be absent until the first execution.
+If `paths.trials` or `paths.evidence_receipt` names a new file, its parent
+directory must already exist. Both files may be absent at the first bind.
 
 ## 3. Bind the approved package
 
@@ -65,8 +72,9 @@ python3 "$PILOT/tools/repository_pilot.py" bind \
 ```
 
 For a real candidate, a successful first bind returns `status="BOUND"`. It
-does not relabel copied synthetic trials as real evidence. Binding is
-idempotent: rerunning it without an input change produces identical bytes.
+does not relabel copied synthetic trials as real evidence and writes a
+`PENDING` evidence receipt. Binding is idempotent: rerunning it without an
+input change produces identical bytes.
 
 Any approved input change requires a new bind and invalidates prior evidence.
 Review the resulting `product-package.json` and `run.json` before execution.
@@ -83,6 +91,9 @@ pm-verifier execute --project "$PILOT" \
   --results-out results.json \
   -- python3 "$PILOT/reference_adapter.py"
 
+python3 "$PILOT/tools/repository_pilot.py" bind \
+  --project "$PILOT" --repository-root .
+
 python3 "$PILOT/tools/repository_pilot.py" verify \
   --project "$PILOT" --repository-root .
 
@@ -90,9 +101,12 @@ pm-verifier report --results "$PILOT/results.json" \
   --out "$PILOT/report.md"
 ```
 
-`verify` now requires evidence whose `run_id` and `run_sha256` match the bound
-candidate. `pm-verifier` independently validates and grades that evidence. The
-only release states are `PASS`, `FAIL`, and `BLOCKED`.
+The second bind never relabels stale evidence. If every trial names the exact
+run, it writes a canonical `SEALED` receipt containing the SHA-256 digest of
+the complete JSONL bytes. Read-only `verify` requires that receipt and rejects
+any later semantic or formatting change, even when `run_id` and `run_sha256`
+remain untouched. `pm-verifier` independently validates and grades the
+evidence. The only release states are `PASS`, `FAIL`, and `BLOCKED`.
 
 ## 5. Install CI after the first verified run
 
@@ -115,8 +129,10 @@ of these:
 - The PMOS decision is still `GO`, and the approver and product identity are correct.
 - Every `FR-*` and `AC-*` is represented in cases and deterministic or calibrated grading.
 - The engineering contract implements the exact PMOS and eval digests.
-- Candidate files and the adapter match the reviewed repository head.
-- Fresh evidence verifies and the PM report explains every `FAIL` or `BLOCKED` state.
+- Candidate files are separate from managed artifacts, and the candidate and
+  adapter match the reviewed repository head.
+- Fresh evidence has a matching `SEALED` receipt, verifies, and the PM report
+  explains every `FAIL` or `BLOCKED` state.
 
 This pilot proves portable contract and evidence binding for one workflow. It
 does not prove arbitrary-repository compatibility, live-product quality,

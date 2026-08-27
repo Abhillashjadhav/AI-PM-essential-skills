@@ -1,7 +1,7 @@
 {
   "adapter": {
     "path": "reference_adapter.py",
-    "sha256": "fa8553af1d6669df629f9bf420d6e93a399fa5dc18db91db616cce9c164f4ef8"
+    "sha256": "0ba77dda08d396e01d8e46643e0fa05b592b3b4c1f17c24fd81041d41b49e290"
   },
   "automation": {
     "path": "ci/github-actions.yml",
@@ -9,10 +9,10 @@
   },
   "candidate": {
     "files": [
-      "reference_adapter.py"
+      "synthetic_candidate.py"
     ],
     "root": "repository",
-    "sha256": "162f1657fdb323aeae5fbaaa6c8cf10438c0a5f235ebcda2ca3f5f736ee196ad"
+    "sha256": "ee1f7f3d56a7c110f3ce2a323ab0f69faa27756b2ebc93776151383f594f521a"
   },
   "contracts": {
     "engineering": {
@@ -38,7 +38,7 @@
   "package_id": "synthetic-support-agent-portable-package",
   "pilot_config": {
     "path": "pilot.json",
-    "sha256": "839b0829914d409f0af5642a902057ba3b56d030cab6f835ea5c70731a1783a2"
+    "sha256": "ef0832fccecd5c4594c4aa1e01327be77d9601e85833144b5b683b10c1b0e4ce"
   },
   "product_id": "synthetic-support-agent",
   "schema_version": "1.0",
@@ -46,7 +46,7 @@
   "template_id": "customer-support-agent",
   "tooling": {
     "path": "tools/repository_pilot.py",
-    "sha256": "2d75958f3c6e2d7ee3734348d926113862781128e0c737ba4baf96218fe44e98"
+    "sha256": "cdd5c6710589719b5c0fdfb5d48fed60867c692e3b5ee6f6ee72afc4c78b5b89"
   },
   "version": "1.0.0"
 }

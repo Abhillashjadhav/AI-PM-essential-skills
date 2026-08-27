@@ -60,8 +60,9 @@ inspection, and migration. There is no second eval product.
 For an approved PMOS handoff, the skill also includes a customer-support
 repository pilot that binds one product identity across stable `FR/AC` intent,
 the eval suite, Engineering AgentOS checkpoints, candidate files, the evidence
-adapter, and the runtime decision. Its `create`, `bind`, and `verify` operations
-are onboarding tools; the public `pm-verifier` CLI remains unchanged.
+adapter, and a full-file evidence receipt before the runtime decision. Its
+`create`, `bind`, and `verify` operations are onboarding tools; the public
+`pm-verifier` CLI remains unchanged.
 
 ## What it is
 
