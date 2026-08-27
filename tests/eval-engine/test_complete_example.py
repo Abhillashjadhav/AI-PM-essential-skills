@@ -24,7 +24,7 @@ from pm_verifier.adapter import execute_trials  # noqa: E402
 from pm_verifier.cli import main  # noqa: E402
 from pm_verifier.engine import evaluate_project  # noqa: E402
 from pm_verifier.faults import apply_faults  # noqa: E402
-from pm_verifier.io import EvidenceError  # noqa: E402
+from pm_verifier.io import EvidenceError, sha256_file  # noqa: E402
 from pm_verifier.reporting import render_markdown  # noqa: E402
 
 
@@ -160,6 +160,43 @@ class CompleteExampleTest(unittest.TestCase):
                 )
                 self.assertEqual(exit_code, 2)
                 self.assertEqual(source.read_bytes(), before)
+
+    def test_fault_command_refuses_to_overwrite_declared_lineage_artifact(self) -> None:
+        artifact = self.project / "contracts" / "trials-engineering.jsonl"
+        artifact.write_text('{"contract":"engineering"}\n', encoding="utf-8")
+
+        run_path = self.project / "run.json"
+        run = json.loads(run_path.read_text(encoding="utf-8"))
+        engineering = next(
+            item for item in run["contract_lineage"] if item["role"] == "engineering"
+        )
+        engineering["path"] = "contracts/trials-engineering.jsonl"
+        engineering["sha256"] = sha256_file(artifact)
+        run_path.write_text(
+            json.dumps(run, indent=2, sort_keys=True) + "\n",
+            encoding="utf-8",
+        )
+        trials = self._rows("trials.jsonl")
+        run_hash = sha256_file(run_path)
+        for trial in trials:
+            trial["run_sha256"] = run_hash
+        self._write_rows("trials.jsonl", trials)
+        self.assertEqual(evaluate_project(self.project)["decision"], "PASS")
+
+        before = artifact.read_bytes()
+        exit_code = main(
+            [
+                "fault",
+                "--project",
+                str(self.project),
+                "--name",
+                "system-identity-fail",
+                "--out",
+                "contracts/trials-engineering.jsonl",
+            ]
+        )
+        self.assertEqual(exit_code, 2)
+        self.assertEqual(artifact.read_bytes(), before)
 
     def test_fault_command_rejects_redirected_destinations(self) -> None:
         adapter = self.project / "reference_adapter.py"

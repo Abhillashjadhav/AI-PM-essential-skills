@@ -102,4 +102,5 @@ output, unordered trace indexes, missing evidence, invalid fingerprint, or
 reused isolation ID blocks the evaluation.
 
 Use `pm-verifier fault --project <eval> --name <fixture>` to materialize a named
-known-bad mutation without editing source evidence.
+known-bad mutation without editing source evidence. The command also protects
+every project-relative contract artifact declared by `run.contract_lineage`.

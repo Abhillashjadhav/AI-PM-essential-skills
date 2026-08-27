@@ -82,6 +82,46 @@ def _project_path(project: Path, selected: Path) -> Path:
     return selected if selected.is_absolute() else project / selected
 
 
+def _contract_lineage_input_paths(
+    project_root: Path, run: dict[str, object]
+) -> set[Path]:
+    lineage = run.get("contract_lineage")
+    if lineage is None:
+        return set()
+    if not isinstance(lineage, list):
+        raise EvidenceError("run.contract_lineage must be a list")
+
+    protected: set[Path] = set()
+    for index, artifact in enumerate(lineage):
+        label = f"run.contract_lineage[{index}]"
+        if not isinstance(artifact, dict):
+            raise EvidenceError(f"{label} must be an object")
+        declared_path = artifact.get("path")
+        if not isinstance(declared_path, str) or not declared_path.strip():
+            raise EvidenceError(
+                f"{label}.path must be a non-empty project-relative path"
+            )
+        try:
+            relative = Path(declared_path)
+            if relative.is_absolute() or ".." in relative.parts:
+                raise EvidenceError(
+                    f"{label}.path must stay within the evaluation project"
+                )
+            resolved = (project_root / relative).resolve()
+        except EvidenceError:
+            raise
+        except (OSError, RuntimeError, ValueError) as exc:
+            raise EvidenceError(
+                f"{label}.path cannot be resolved safely: {exc}"
+            ) from exc
+        if project_root not in resolved.parents:
+            raise EvidenceError(
+                f"{label}.path must stay within the evaluation project"
+            )
+        protected.add(resolved)
+    return protected
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command in {"prepare", "validate", "run"}:
@@ -197,6 +237,11 @@ def main(argv: Sequence[str] | None = None) -> int:
                         )
                     ),
                 }
+                run_path = args.project / "run.json"
+                run = load_json(run_path) if run_path.is_file() else {}
+                protected_inputs.update(
+                    _contract_lineage_input_paths(project_root, run)
+                )
             except EvidenceError:
                 raise
             except (OSError, RuntimeError, ValueError) as exc:
