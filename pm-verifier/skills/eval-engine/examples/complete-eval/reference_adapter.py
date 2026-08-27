@@ -5,6 +5,7 @@ from __future__ import annotations
 import hashlib
 import json
 import sys
+from pathlib import Path
 
 
 request = json.load(sys.stdin)
@@ -40,7 +41,7 @@ print(
     json.dumps(
         {
             "environment_fingerprint": hashlib.sha256(
-                b"synthetic-support-complete-v1"
+                Path(__file__).read_bytes()
             ).hexdigest(),
             "isolation_id": f"isolation-{request['trial_id']}",
             "memory": {

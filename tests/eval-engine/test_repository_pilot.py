@@ -22,6 +22,7 @@ EXAMPLE = (
 PILOT_TOOL = EXAMPLE / "tools" / "repository_pilot.py"
 sys.path.insert(0, str(HARNESS))
 
+from pm_verifier.adapter import execute_trials  # noqa: E402
 from pm_verifier.engine import evaluate_project  # noqa: E402
 
 
@@ -104,6 +105,7 @@ class RepositoryPilotTest(unittest.TestCase):
         pilot.bind_pilot(self.project)
         bound_files = (
             "pilot.json",
+            "ci/github-actions.yml",
             "contracts/pmos-contract.json",
             "suite.json",
             "cases.jsonl",
@@ -124,6 +126,33 @@ class RepositoryPilotTest(unittest.TestCase):
                 target.write_bytes(target.read_bytes() + b"\n")
                 with self.assertRaises(pilot.PilotError):
                     pilot.verify_pilot(mutated)
+
+    def test_candidate_and_adapter_can_live_in_different_repository_paths(self) -> None:
+        repository = self.root / "real-repository"
+        project = repository / "eval" / "customer-support"
+        source = repository / "src" / "candidate.py"
+        source.parent.mkdir(parents=True)
+        source.write_text("def candidate():\n    return 'ready'\n", encoding="utf-8")
+        shutil.copytree(EXAMPLE, project)
+        config = json.loads((project / "pilot.json").read_text(encoding="utf-8"))
+        config["candidate_files"] = ["src/candidate.py"]
+        config["paths"]["trials"] = "trials.candidate.jsonl"
+        config["synthetic_fixture"] = False
+        (project / "pilot.json").write_text(
+            json.dumps(config, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+        )
+
+        summary = pilot.bind_pilot(project, repository)
+
+        self.assertEqual(summary["status"], "BOUND")
+        evidence = project / config["paths"]["trials"]
+        adapter = [sys.executable, str(project / "reference_adapter.py")]
+        self.assertEqual(
+            execute_trials(project, adapter, evidence, timeout_seconds=5), []
+        )
+        verified = pilot.verify_pilot(project, repository)
+        self.assertEqual(verified["status"], "VERIFIED")
+        self.assertEqual(verified["candidate_sha256"], summary["candidate_sha256"])
 
     def test_bind_rejects_unapproved_or_ambiguous_product_intent(self) -> None:
         pmos = self._load("contracts/pmos-contract.json")

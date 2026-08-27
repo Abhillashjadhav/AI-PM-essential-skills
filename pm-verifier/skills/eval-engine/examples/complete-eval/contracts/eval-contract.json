@@ -1,0 +1,84 @@
+{
+  "cases": {
+    "path": "cases.jsonl",
+    "sha256": "e19866725933641ba134d0f0093795a8dcac6759e1c3f1b5f61678c1f349c921"
+  },
+  "contract_id": "synthetic-support-eval",
+  "dataset": {
+    "path": "dataset.json",
+    "sha256": "161c7a4a2f5aa64d6ed0de0f8d6e6d5ed2bb243319f6c691c645d3515e3c738e"
+  },
+  "pmos_contract": {
+    "path": "contracts/pmos-contract.json",
+    "sha256": "2805446674b40592912a641bd33441476a8745d5475ab0c4f3d868074c97d6ac"
+  },
+  "product_id": "synthetic-support-agent",
+  "schema_version": "1.0",
+  "suite": {
+    "path": "suite.json",
+    "sha256": "48eba5ad3a417ab1eee1673f14f6acba1c6871a3e477371321ce9fd30f2889f6"
+  },
+  "traceability": [
+    {
+      "acceptance_criteria_ids": [
+        "AC-001"
+      ],
+      "case_ids": [
+        "SUPPORT-100",
+        "SUPPORT-200"
+      ],
+      "grader_ids": [
+        "G_OUTCOME_DECISION",
+        "G_OUTCOME_SAFETY",
+        "G_OUTCOME_PRIVACY",
+        "G_TRAJECTORY_POLICY"
+      ],
+      "requirement_id": "FR-001"
+    },
+    {
+      "acceptance_criteria_ids": [
+        "AC-002"
+      ],
+      "case_ids": [
+        "SUPPORT-100",
+        "SUPPORT-200"
+      ],
+      "grader_ids": [
+        "G_SYSTEM_INTAKE",
+        "G_SYSTEM_IDENTITY_STAGE",
+        "G_SYSTEM_POLICY",
+        "G_SYSTEM_DECISION",
+        "G_SYSTEM_DELIVERY",
+        "G_SYSTEM_ORDER",
+        "G_SYSTEM_IDENTITY",
+        "G_SYSTEM_CONTINUITY",
+        "G_SYSTEM_COMPLETED",
+        "G_SYSTEM_FINAL",
+        "G_OPERATIONAL_RETRIES"
+      ],
+      "requirement_id": "FR-002"
+    },
+    {
+      "acceptance_criteria_ids": [
+        "AC-003"
+      ],
+      "case_ids": [
+        "SUPPORT-100",
+        "SUPPORT-200"
+      ],
+      "grader_ids": [
+        "G_MEMORY_WRITE",
+        "G_MEMORY_RETRIEVE",
+        "G_MEMORY_UPDATE",
+        "G_MEMORY_DELETE",
+        "G_MEMORY_ABSENT",
+        "G_MEMORY_ISOLATION",
+        "G_MEMORY_FRESH",
+        "G_MEMORY_CONFLICT",
+        "G_MEMORY_TEMPORAL"
+      ],
+      "requirement_id": "FR-003"
+    }
+  ],
+  "version": "1.0.0"
+}

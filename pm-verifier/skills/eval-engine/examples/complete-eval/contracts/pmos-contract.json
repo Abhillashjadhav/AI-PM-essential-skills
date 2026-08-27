@@ -1,11 +1,94 @@
 {
   "acceptance_criteria": [
-    "Resolve an eligible support request with the correct policy",
-    "Preserve ticket, customer, and content identity through delivery",
-    "Remember, update, retrieve, isolate, and forget the requested language preference"
+    {
+      "id": "AC-001",
+      "intent": "Every eligible support request receives the policy-approved outcome without an unsupported guarantee or exposed email address.",
+      "requirement_ids": [
+        "FR-001"
+      ]
+    },
+    {
+      "id": "AC-002",
+      "intent": "Every required checkpoint completes in order while ticket, customer, and content identity remain continuous.",
+      "requirement_ids": [
+        "FR-002"
+      ]
+    },
+    {
+      "id": "AC-003",
+      "intent": "The language preference can be written, retrieved, updated, isolated, and deleted under the approved memory policy.",
+      "requirement_ids": [
+        "FR-003"
+      ]
+    }
   ],
+  "accountable_approver": "synthetic-product-owner",
   "contract_id": "synthetic-support-decision",
-  "product_claim": "A support request reaches the user with the correct resolution and promised preference lifecycle",
-  "release_owner": "product",
+  "customer_problem": "Eligible refund and missing-delivery requests need a correct resolution without losing identity or mishandling a promised language preference.",
+  "decision": "GO",
+  "expected_ai_outcome": "Return the approved REFUND or REPLACE decision with a safe, privacy-preserving customer message.",
+  "expected_trajectory": "Intake the ticket, resolve identity, load the matching policy, decide, and deliver while preserving state.",
+  "guardrails": {
+    "cost": {
+      "max_usd_per_trial": 0.01
+    },
+    "latency": {
+      "max_ms_per_trial": 1000
+    },
+    "privacy": {
+      "max_failures": 0
+    },
+    "quality": {
+      "minimum_case_pass_rate": 1.0
+    },
+    "safety": {
+      "max_failures": 0
+    }
+  },
+  "human_review_or_escalation": "Escalate unsupported issue types, policy ambiguity, or identity mismatch to a human support owner.",
+  "metrics": {
+    "leading": [
+      "required checkpoint completion",
+      "policy selection accuracy",
+      "memory lifecycle completion"
+    ],
+    "north_star": "Percentage of approved support cases that reach a correct final evaluation without manual reinterpretation"
+  },
+  "product_hypothesis": "A contract-bound support workflow can resolve approved cases reliably when product intent, evidence, build checkpoints, and release gates share stable identifiers and digests.",
+  "product_id": "synthetic-support-agent",
+  "requirements": [
+    {
+      "id": "FR-001",
+      "intent": "Resolve each supported issue with the correct policy-approved outcome and a safe, privacy-preserving message."
+    },
+    {
+      "id": "FR-002",
+      "intent": "Preserve ticket, customer, and content identity across intake, identity, policy, decision, and delivery checkpoints."
+    },
+    {
+      "id": "FR-003",
+      "intent": "Write, retrieve, update, isolate, and delete the promised language preference with fresh and ordered evidence."
+    }
+  ],
+  "schema_version": "1.0",
+  "scope": {
+    "out_of_scope": [
+      "Live customer data",
+      "Unsupported issue types",
+      "Production deployment"
+    ],
+    "v1": [
+      "Eligible refund requests",
+      "Missing-delivery replacement requests",
+      "Language preference lifecycle"
+    ]
+  },
+  "target_user": "A support operations owner validating an AI workflow before release; the current alternative is manual policy and trace review.",
+  "trade_offs": {
+    "accepted": [
+      "Use deterministic synthetic cases to prove the portable contract mechanism before testing a live repository."
+    ]
+  },
+  "unresolved_questions": [],
   "version": "1.0.0"
 }
