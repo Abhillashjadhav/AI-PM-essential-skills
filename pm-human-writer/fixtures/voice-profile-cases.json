@@ -1,0 +1,265 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "calibrate-mixed-sources",
+      "mode": "calibrate",
+      "sources": [
+        {
+          "id": "pair-1",
+          "type": "draft_final_pair",
+          "positive": true,
+          "text": "Draft used a slogan. Final opened with the operational consequence and ended with a decision."
+        },
+        {
+          "id": "pair-2",
+          "type": "draft_final_pair",
+          "positive": true,
+          "text": "Draft hid the trade-off. Final stated the trade-off before the recommendation."
+        },
+        {
+          "id": "final-1",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "A direct product note that moves from failure to mechanism to decision."
+        },
+        {
+          "id": "final-2",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "A short update using plain verbs and uneven sentence lengths."
+        },
+        {
+          "id": "prompt-1",
+          "type": "raw_prompt",
+          "positive": true,
+          "text": "First explain the consequence. Then show the mechanism and the trade-off."
+        },
+        {
+          "id": "ai-1",
+          "type": "ai_draft",
+          "positive": false,
+          "accepted": false,
+          "text": "Here is a transformative framework that changes everything."
+        }
+      ],
+      "expected": {
+        "profile_status": "calibrated",
+        "signals": [
+          {
+            "id": "causal-decision",
+            "description": "Moves from consequence through mechanism to decision.",
+            "confidence": "observed",
+            "evidence_ids": ["pair-1", "final-1", "prompt-1"]
+          },
+          {
+            "id": "explicit-tradeoff",
+            "description": "States the trade-off before the recommendation.",
+            "confidence": "observed",
+            "evidence_ids": ["pair-2", "final-1", "prompt-1"]
+          },
+          {
+            "id": "direct-cadence",
+            "description": "Uses plain verbs with varied sentence lengths.",
+            "confidence": "observed",
+            "evidence_ids": ["pair-1", "final-1", "final-2"]
+          }
+        ],
+        "polish_boundary": {
+          "preserve": ["causal reasoning", "directness"],
+          "clean": ["typos", "filler"]
+        }
+      },
+      "must_use_source_ids": ["pair-1", "pair-2", "final-1"],
+      "must_not_use_source_ids": ["ai-1"],
+      "must_not_persist": []
+    },
+    {
+      "id": "sparse-samples-provisional",
+      "mode": "calibrate",
+      "sources": [
+        {
+          "id": "prompt-1",
+          "type": "raw_prompt",
+          "positive": true,
+          "text": "Start with the decision."
+        }
+      ],
+      "expected": {
+        "profile_status": "provisional",
+        "signals": [
+          {
+            "id": "decision-first",
+            "description": "May prefer decision-first openings.",
+            "confidence": "provisional",
+            "evidence_ids": ["prompt-1"]
+          }
+        ],
+        "polish_boundary": {
+          "preserve": ["decision-first possibility"],
+          "clean": []
+        }
+      },
+      "must_use_source_ids": ["prompt-1"],
+      "must_not_use_source_ids": [],
+      "must_not_persist": []
+    },
+    {
+      "id": "source-weighting-final-over-prompt",
+      "mode": "calibrate",
+      "sources": [
+        {
+          "id": "prompt-1",
+          "type": "raw_prompt",
+          "positive": true,
+          "text": "Add a dramatic opening while I think."
+        },
+        {
+          "id": "prompt-2",
+          "type": "raw_prompt",
+          "positive": true,
+          "text": "Try a slogan for now."
+        },
+        {
+          "id": "prompt-3",
+          "type": "raw_prompt",
+          "positive": true,
+          "text": "Make this sound more exciting."
+        },
+        {
+          "id": "pair-1",
+          "type": "draft_final_pair",
+          "positive": true,
+          "text": "The user removed the dramatic opening and replaced it with the concrete consequence."
+        },
+        {
+          "id": "final-1",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "The post opens with a concrete consequence."
+        },
+        {
+          "id": "final-2",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "The note opens with a direct operational decision."
+        }
+      ],
+      "expected": {
+        "profile_status": "provisional",
+        "signals": [
+          {
+            "id": "plain-openings",
+            "description": "Prefer concrete consequences or decisions over dramatic setup.",
+            "confidence": "observed",
+            "evidence_ids": ["pair-1", "final-1", "final-2"]
+          }
+        ],
+        "polish_boundary": {
+          "preserve": ["concrete openings"],
+          "clean": ["dramatic setup"]
+        }
+      },
+      "must_use_source_ids": ["pair-1", "final-1", "final-2"],
+      "must_not_use_source_ids": ["prompt-1", "prompt-2", "prompt-3"],
+      "must_not_persist": []
+    },
+    {
+      "id": "roughness-is-not-voice",
+      "mode": "calibrate",
+      "sources": [
+        {
+          "id": "prompt-1",
+          "type": "raw_prompt",
+          "positive": true,
+          "text": "See, first first explain teh decision."
+        },
+        {
+          "id": "prompt-2",
+          "type": "raw_prompt",
+          "positive": true,
+          "text": "Okay, you know, make sure the cause is visible visible."
+        },
+        {
+          "id": "final-1",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "Explain the decision first. Make the cause visible."
+        }
+      ],
+      "expected": {
+        "profile_status": "provisional",
+        "signals": [
+          {
+            "id": "decision-and-cause",
+            "description": "Leads with the decision and makes the cause explicit.",
+            "confidence": "observed",
+            "evidence_ids": ["prompt-1", "prompt-2", "final-1"]
+          }
+        ],
+        "polish_boundary": {
+          "preserve": ["decision order", "causal reasoning"],
+          "clean": ["typos", "filler", "duplicated clauses"]
+        }
+      },
+      "must_use_source_ids": ["prompt-1", "prompt-2", "final-1"],
+      "must_not_use_source_ids": [],
+      "must_not_persist": ["teh", "visible visible"],
+      "required_preserve_terms": ["decision order", "causal reasoning"],
+      "required_clean_terms": ["typos", "filler", "duplicated clauses"]
+    },
+    {
+      "id": "privacy-excludes-raw-details",
+      "mode": "calibrate",
+      "sources": [
+        {
+          "id": "final-1",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "Project Cedar missed its private 43% target, so the team stopped the pilot."
+        },
+        {
+          "id": "final-2",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "The writer explains the measured boundary before the decision."
+        },
+        {
+          "id": "final-3",
+          "type": "accepted_final",
+          "positive": true,
+          "text": "The writer keeps private customer details out of public prose."
+        }
+      ],
+      "expected": {
+        "profile_status": "provisional",
+        "signals": [
+          {
+            "id": "boundary-before-decision",
+            "description": "Explains the evidence boundary before the decision.",
+            "confidence": "observed",
+            "evidence_ids": ["final-1", "final-2", "final-3"]
+          }
+        ],
+        "polish_boundary": {
+          "preserve": ["evidence boundary"],
+          "clean": []
+        }
+      },
+      "must_use_source_ids": ["final-1", "final-2", "final-3"],
+      "must_not_use_source_ids": [],
+      "must_not_persist": ["Project Cedar", "43%"]
+    },
+    {
+      "id": "voice-guided-minimum-edit",
+      "mode": "apply",
+      "voice_profile_status": "calibrated",
+      "draft": "We stopped the pilot after the handoff failed three times. The model was accurate; the workflow was not.",
+      "expected_output": "We stopped the pilot after the handoff failed three times. The model was accurate; the workflow was not.",
+      "must_preserve": ["stopped the pilot", "three times", "model was accurate", "workflow was not"],
+      "must_remove": [],
+      "must_not_add": ["revenue", "retention", "customer trust"],
+      "enforce_no_change": true
+    }
+  ]
+}
