@@ -35,7 +35,7 @@ file before the pilot can return `VERIFIED`.
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
 | **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
 | **[mcp-migration-auditor](mcp-migration-auditor/)** | Check MCP configurations against the 2026 specification changes | `Audit my MCP setup` | Per-server `BREAKS`, `DEGRADED`, or `SAFE` verdicts with cited fixes |
-| **[pm-human-writer](pm-human-writer/)** | Preserve a PM's voice while removing recognisable AI-writing patterns | `Rewrite this without flattening my judgment` | Voice-protected rewrite with named edits and evidence constraints |
+| **[pm-human-writer](pm-human-writer/)** | Build a portable voice profile or preserve a writer's voice while removing recognisable AI-writing patterns | `Build my voice profile from these samples` | Evidence-backed voice profile or minimum-effective rewrite with named edits |
 | **[ai-feature-kill-criteria](ai-feature-kill-criteria/)** | Decide whether an AI feature deserves a prototype | `Define kill criteria for this AI feature` | Falsifiable claim, approved thresholds, cheapest decisive test, owner, and decision date |
 
 Install any plugin with the same two-step pattern:
@@ -197,7 +197,7 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 | [`loop-designer/`](loop-designer/) | Guarded-loop design plugin |
 | [`agent-graph-designer/`](agent-graph-designer/) | Multi-agent graph qualification and design plugin |
 | [`mcp-migration-auditor/`](mcp-migration-auditor/) | MCP compatibility and migration plugin |
-| [`pm-human-writer/`](pm-human-writer/) | Voice-preserving product-writing plugin |
+| [`pm-human-writer/`](pm-human-writer/) | Portable voice-calibration and voice-preserving product-writing plugin |
 | [`ai-feature-kill-criteria/`](ai-feature-kill-criteria/) | Pre-build AI feature decision-contract plugin |
 | [`tests/`](tests/) | Manifest, trigger, policy, and known-answer fixtures |
 
