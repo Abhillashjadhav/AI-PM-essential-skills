@@ -33,7 +33,7 @@
     {
       "name": "pm-human-writer",
       "source": "./pm-human-writer",
-      "description": "Voice-preserving product-writing editor: removes recognisable AI-writing patterns, protects facts and product judgment, and returns a clean draft with named edits."
+      "description": "Portable voice-calibration and product-writing editor: builds evidence-backed voice profiles, removes recognisable AI-writing patterns, protects facts and judgment, and returns minimum-effective edits."
     },
     {
       "name": "ai-feature-kill-criteria",
