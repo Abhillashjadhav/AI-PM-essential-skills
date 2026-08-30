@@ -197,7 +197,7 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 | [`loop-designer/`](loop-designer/) | Guarded-loop design plugin |
 | [`agent-graph-designer/`](agent-graph-designer/) | Multi-agent graph qualification and design plugin |
 | [`mcp-migration-auditor/`](mcp-migration-auditor/) | MCP compatibility and migration plugin |
-| [`pm-human-writer/`](pm-human-writer/) | Voice-preserving product-writing plugin |
+| [`pm-human-writer/`](pm-human-writer/) | Portable voice-calibration and voice-preserving product-writing plugin |
 | [`ai-feature-kill-criteria/`](ai-feature-kill-criteria/) | Pre-build AI feature decision-contract plugin |
 | [`tests/`](tests/) | Manifest, trigger, policy, and known-answer fixtures |
 
