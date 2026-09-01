@@ -55,7 +55,7 @@ class TicketSummarizerStarterTest(unittest.TestCase):
         self.assertEqual(result["decision"], "PASS")
         self.assertEqual(result["summary"]["case_count"], 3)
         self.assertEqual(result["summary"]["trial_count"], 6)
-        self.assertEqual(set(result["surfaces"]), {"outcome", "trajectory"})
+        self.assertEqual(set(result["surfaces"]), {"outcome", "trajectory", "system"})
         self.assertNotIn("memory", result["surfaces"])
         self.assertEqual(result["summary"]["safety_failures"], 0)
         self.assertEqual(result["summary"]["privacy_failures"], 0)
@@ -70,6 +70,7 @@ class TicketSummarizerStarterTest(unittest.TestCase):
             "fabricated-claim": "G_OUTCOME_CLAIMS",
             "missing-escalation": "G_OUTCOME_ESCALATION",
             "wrong-order": "G_TRAJECTORY_CHRONOLOGY",
+            "failed-validation-checkpoint": "G_SYSTEM_VALIDATE",
         }
 
         for name, mutations in specs.items():
