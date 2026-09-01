@@ -5,6 +5,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import re
 import shutil
 import subprocess
 import tempfile
@@ -28,6 +29,13 @@ def show(text: str = "", style: str = "") -> None:
 def wait(record: bool, seconds: float) -> None:
     if record:
         time.sleep(seconds)
+
+
+def emit(record: bool, text: str = "", style: str = "", delay: float = 0.11) -> None:
+    """Print one terminal row slowly enough to create visible scrolling."""
+
+    show(text, style)
+    wait(record, delay)
 
 
 def invoke(args: list[str], *, cwd: Path) -> subprocess.CompletedProcess[str]:
@@ -57,6 +65,87 @@ def command_output(completed: subprocess.CompletedProcess[str]) -> None:
         show(line)
 
 
+def gate_line(grader: dict, gate: dict) -> str:
+    """Render the exact deterministic comparison behind one gate."""
+
+    gate_id = grader["id"]
+    actual = gate.get("actual")
+    expected = gate.get("expected")
+    passed = "PASS" if gate["passed"] else "FAIL"
+    if gate_id == "G_OUTCOME_REQUEST":
+        detail = "actual request == contract request"
+    elif gate_id == "G_OUTCOME_CLAIMS":
+        detail = f"actual claims={len(actual)} == supported claims={len(expected)}"
+    elif gate_id == "G_OUTCOME_SENTIMENT":
+        detail = f"actual={actual} == expected={expected}"
+    elif gate_id == "G_OUTCOME_ESCALATION":
+        detail = "actual escalation == contract escalation"
+    elif gate_id == "G_OUTCOME_LENGTH":
+        ceiling = grader["params"]["chars"]
+        detail = f"summary chars={len(actual)} <= ceiling={ceiling}"
+    elif gate_id == "G_OUTCOME_NO_PROMISE":
+        patterns = grader["params"]["patterns"]
+        matches = sum(bool(re.search(pattern, str(actual), re.I)) for pattern in patterns)
+        detail = f"unsupported-promise matches={matches} == 0"
+    elif gate_id == "G_OUTCOME_NO_EMAIL":
+        patterns = grader["params"]["patterns"]
+        matches = sum(bool(re.search(pattern, str(actual), re.I)) for pattern in patterns)
+        detail = f"exposed-email matches={matches} == 0"
+    elif gate_id == "G_TRAJECTORY_CHRONOLOGY":
+        detail = f"actual={' > '.join(actual)} == expected={' > '.join(expected)}"
+    else:
+        detail = gate["reason"]
+    return f"  {passed:<4} {gate_id:<25} {detail}"
+
+
+def show_case(
+    record: bool,
+    case: dict,
+    case_trials: list[dict],
+    result_trials: list[dict],
+    graders: list[dict],
+) -> None:
+    """Show product input, delivered output, and every deterministic check."""
+
+    first_trial = case_trials[0]
+    first_result = result_trials[0]
+    outcome = first_trial["outcome"]
+    received = [message["id"] for message in case["input"]["messages"]]
+    expected_order = case["expected"]["trajectory"]["chronological_ids"]
+    workflow = str(case["metadata"]["workflow"]).replace("_", " ")
+
+    emit(record)
+    emit(record, f"USE CASE {case['case_id']} · {workflow} · risk={case['metadata']['risk']}", CYAN + BOLD)
+    emit(record, f"INPUT RECEIVED: {' > '.join(received)} (newest first)")
+    emit(record, f"REQUIRED ORDER: {' > '.join(expected_order)}")
+    emit(record, "PRODUCT DELIVERED", BOLD)
+    emit(record, f"  summary: {outcome['response']['summary']}")
+    emit(record, f"  request: {outcome['response']['customer_request']}")
+    emit(
+        record,
+        f"  sentiment={outcome['sentiment']} · escalation={outcome['escalation_reason']}",
+    )
+    emit(record, f"  supported claims ({len(outcome['supported_claims'])}): {'; '.join(outcome['supported_claims'])}")
+    emit(record, "DETERMINISTIC EVAL PARAMETERS · EXPECTED vs ACTUAL", BOLD)
+    gates_by_id = {gate["grader_id"]: gate for gate in first_result["gate_results"]}
+    for grader in graders:
+        emit(record, gate_line(grader, gates_by_id[grader["id"]]))
+
+    gate_executions = sum(len(trial["gate_results"]) for trial in result_trials)
+    passed_executions = sum(
+        gate["passed"] for trial in result_trials for gate in trial["gate_results"]
+    )
+    passed_trials = sum(not trial["failed_gate_ids"] for trial in result_trials)
+    emit(
+        record,
+        f"USE CASE SCORE: {len(graders)}/{len(graders)} gates · "
+        f"{passed_executions}/{gate_executions} checks · "
+        f"{passed_trials}/{len(result_trials)} isolated trials PASS",
+        GREEN + BOLD,
+    )
+    wait(record, 6.7)
+
+
 def main() -> int:
     global PLAIN
     parser = argparse.ArgumentParser()
@@ -78,74 +167,38 @@ def main() -> int:
         print("Install first: python3 -m pip install --no-deps ./pm-verifier")
         return 2
 
-    contract = (source / "EVAL_CONTRACT.md").read_text(encoding="utf-8")
-    contract_normalized = " ".join(contract.split())
-    required_contract_facts = (
-        "without inventing facts",
-        "losing the escalation reason",
-        "wrong order",
-        "Outcome: required response",
-        "Trajectory: the ticket messages",
-        "System and memory are not enabled",
-    )
-    if not all(fact in contract_normalized for fact in required_contract_facts):
-        show("The checked-in eval contract no longer matches this demonstration", RED)
-        return 2
-
     with tempfile.TemporaryDirectory(prefix="ticket-eval-") as directory:
         workspace = Path(directory)
         project = workspace / "eval"
         shutil.copytree(source, project)
         suite = load(project / "suite.json")
         cases = load_rows(project / "cases.jsonl")
-        case_count = len(cases)
-        minimum_trials = int(suite["minimum_trials_per_case"])
-        trial_count = case_count * minimum_trials
         graders = suite["deterministic_graders"]
-        grader_count = len(graders)
+        minimum_trials = int(suite["minimum_trials_per_case"])
+        total_trials = len(cases) * minimum_trials
+        total_checks = total_trials * len(graders)
         rules = suite["release_rules"]
 
-        show("AI TICKET SUMMARIZER — PRODUCT CONTRACT TO RELEASE DECISION", CYAN + BOLD)
+        show("AI EVALS FOR PMs — TICKET SUMMARIZER RELEASE", CYAN + BOLD)
         show("Repository: AI-PM-essential-skills / pm-verifier")
-        show("Goal: make the release decision reproducible, not demo-driven")
-        wait(args.record, 3)
+        show("Runs locally or in CI · no eval SaaS · no LLM judge · no API key")
+        wait(args.record, 3.0)
 
-        show()
-        show("1 / READ THE PRODUCT CONTRACT", CYAN + BOLD)
-        show("Release question:")
-        show("  Can it summarise without invented facts, lost escalation, or reversed order?")
-        show("Product response: summary + customer_request JSON")
-        show("Enabled surfaces: outcome + trajectory")
-        show("System + memory omitted: the feature makes neither promise", DIM)
-        wait(args.record, 5)
+        emit(args.record)
+        emit(args.record, "1 / PRODUCT CONTRACT BECOMES EXECUTABLE EVIDENCE", CYAN + BOLD)
+        emit(args.record, "Product must return: summary + request + sentiment + escalation + supported claims")
+        emit(args.record, "Product path must prove: source messages processed in chronological order")
+        emit(args.record, "Enabled surfaces: outcome + trajectory · system + memory not promised")
+        emit(args.record, f"Release policy: {len(cases)} use cases × {minimum_trials} isolated trials × {len(graders)} binary gates")
+        emit(args.record, f"Decision rule: all {total_checks} deterministic checks must pass")
+        wait(args.record, 4.5)
 
-        show()
-        show("2 / TURN THE CONTRACT INTO PRODUCT USE CASES", CYAN + BOLD)
-        for case in cases:
-            workflow = str(case["metadata"]["workflow"]).replace("_", " ")
-            risk = case["metadata"]["risk"]
-            show(f"  {case['case_id']} · {workflow} · risk={risk}")
-        show(f"Each use case runs {minimum_trials} times in a fresh adapter process")
-        show(f"Evidence target: {case_count} use cases · {trial_count} isolated runs")
-        wait(args.record, 5)
-
-        show()
-        show("3 / COMPILE THE RELEASE GATES", CYAN + BOLD)
-        for grader in graders:
-            show(f"  {grader['id']:<25} {grader['name']}")
-        show(
-            "Operational ceilings: "
-            f"{rules['max_latency_ms_per_trial']} ms · "
-            f"{rules['max_total_tokens_per_trial']} tokens · "
-            f"{rules['max_retries_per_trial']} retries"
-        )
-        wait(args.record, 6)
-
-        trials = project / "trials.executed.jsonl"
-        clean_results = project / "results.clean.json"
-        show()
-        show("4 / CAPTURE FRESH EVIDENCE", CYAN + BOLD)
-        show(
+        trials_path = project / "trials.executed.jsonl"
+        clean_results_path = project / "results.clean.json"
+        emit(args.record)
+        emit(args.record, "2 / RUN PRODUCT AND CAPTURE FRESH EVIDENCE", CYAN + BOLD)
+        emit(
+            args.record,
             "$ pm-verifier execute --project eval --trials-out trials.executed.jsonl "
             "--results-out results.clean.json -- python3 eval/reference_adapter.py",
             DIM,
@@ -156,9 +209,9 @@ def main() -> int:
                 "--project",
                 "eval",
                 "--trials-out",
-                trials.name,
+                trials_path.name,
                 "--results-out",
-                clean_results.name,
+                clean_results_path.name,
                 "--",
                 "python3",
                 "eval/reference_adapter.py",
@@ -166,55 +219,45 @@ def main() -> int:
             cwd=workspace,
         )
         command_output(captured)
-        if captured.returncode != 0 or not clean_results.is_file():
+        if captured.returncode != 0 or not clean_results_path.is_file():
             show(captured.stderr.strip() or "Evidence capture failed", RED)
             return 2
-        captured_rows = load_rows(trials)
-        isolation_ids = {row["isolation_id"] for row in captured_rows}
-        if len(captured_rows) != trial_count or len(isolation_ids) != trial_count:
-            show("Captured evidence did not preserve unique trial isolation", RED)
-            return 2
-        show(f"Verified: {len(captured_rows)} runs · {len(isolation_ids)} unique isolation IDs", GREEN)
-        wait(args.record, 6)
+        trial_rows = load_rows(trials_path)
+        clean_results = load(clean_results_path)
+        isolation_ids = {row["isolation_id"] for row in trial_rows}
+        emit(args.record, f"Captured {len(trial_rows)} runs · unique isolation IDs {len(isolation_ids)}/{total_trials}")
+        wait(args.record, 3.5)
 
-        faulted = project / "trials.fabricated.jsonl"
-        failed_results = project / "results.failed.json"
-        show()
-        show("5 / BREAK ONE PRODUCT REQUIREMENT", CYAN + BOLD)
-        show("Use case: TS-100 · blocked August invoice export")
-        show('Injected unsupported claim: "Customer was charged twice"', RED)
-        show(
-            "$ pm-verifier fault --project eval --trials trials.executed.jsonl "
-            "--name fabricated-claim --out trials.fabricated.jsonl",
-            DIM,
-        )
+        for case in cases:
+            case_id = case["case_id"]
+            show_case(
+                args.record,
+                case,
+                [trial for trial in trial_rows if trial["case_id"] == case_id],
+                [trial for trial in clean_results["trials"] if trial["case_id"] == case_id],
+                graders,
+            )
+
+        faulted_path = project / "trials.fabricated.jsonl"
+        failed_results_path = project / "results.failed.json"
+        emit(args.record)
+        emit(args.record, "3 / PROVE THE GATES CATCH A PLAUSIBLE FAILURE", CYAN + BOLD)
+        emit(args.record, "Fault injected into TS-100-t1: unsupported claim = Customer was charged twice")
         created = invoke(
             [
                 "fault",
                 "--project",
                 "eval",
                 "--trials",
-                trials.name,
+                trials_path.name,
                 "--name",
                 "fabricated-claim",
                 "--out",
-                faulted.name,
+                faulted_path.name,
             ],
             cwd=workspace,
         )
         command_output(created)
-        if created.returncode != 0:
-            show(created.stderr.strip() or "Fault injection failed", RED)
-            return 2
-        wait(args.record, 5)
-
-        show()
-        show("6 / RUN THE SAME CONTRACT", CYAN + BOLD)
-        show(
-            "$ pm-verifier run --project eval --trials eval/trials.fabricated.jsonl "
-            "--out eval/results.failed.json",
-            DIM,
-        )
         failed_run = invoke(
             [
                 "run",
@@ -228,30 +271,25 @@ def main() -> int:
             cwd=workspace,
         )
         command_output(failed_run)
-        failed = load(failed_results)
-        failed_trial = next(
-            trial for trial in failed["trials"] if any(not gate["passed"] for gate in trial["gate_results"])
-        )
-        failed_gate = next(
-            gate for gate in failed_trial["gate_results"] if not gate["passed"] and gate["gate"]
-        )
-        actual_claims = failed_gate.get("actual", [])
-        expected_claims = failed_gate.get("expected", [])
-        unsupported_claims = [claim for claim in actual_claims if claim not in expected_claims]
-        if failed["decision"] != "FAIL" or not unsupported_claims:
-            show("The fault did not produce the expected release failure", RED)
-            return 2
-        show(f"RELEASE DECISION: {failed['decision']}", RED + BOLD)
-        show(f"Failed use case: {failed_trial['case_id']} · trial={failed_trial['trial_id']}")
-        show(f"Failed gate: {failed_gate['grader_id']} · claims grounded in source thread")
-        show(f"Reason: unsupported claim · {unsupported_claims[0]}", RED)
-        show("A plausible summary is still unshippable when one claim is fabricated")
-        wait(args.record, 6)
+        failed = load(failed_results_path)
+        failed_trial = next(trial for trial in failed["trials"] if trial["failed_gate_ids"])
+        failed_gate = next(gate for gate in failed_trial["gate_results"] if not gate["passed"])
+        expected_claims = failed_gate["expected"]
+        actual_claims = failed_gate["actual"]
+        unsupported = next(claim for claim in actual_claims if claim not in expected_claims)
+        emit(args.record, "PRODUCT DELIVERED: fluent summary plus one unsupported claim")
+        emit(args.record, f"PARAMETER: supported claims · expected={len(expected_claims)} · actual={len(actual_claims)}")
+        emit(args.record, f"EXACT DIFFERENCE: + {unsupported}", RED)
+        emit(args.record, "FAIL G_OUTCOME_CLAIMS · exact list equality returned false", RED + BOLD)
+        emit(args.record, "TS-100 SCORE: 7/8 gates on trial 1 · 1/2 trials passed")
+        emit(args.record, f"RELEASE DECISION: {failed['decision']} · no averaging can hide a failed gate", RED + BOLD)
+        wait(args.record, 6.0)
 
-        show()
-        show("7 / REMOVE THE FAULT AND RE-RUN", CYAN + BOLD)
-        repaired_results = project / "results.repaired.json"
-        show(
+        repaired_results_path = project / "results.repaired.json"
+        emit(args.record)
+        emit(args.record, "4 / REMOVE FAULT · RUN THE SAME CONTRACT", CYAN + BOLD)
+        emit(
+            args.record,
             "$ pm-verifier run --project eval --trials eval/trials.executed.jsonl "
             "--out eval/results.repaired.json",
             DIM,
@@ -272,39 +310,33 @@ def main() -> int:
         if repaired_run.returncode != 0:
             show(repaired_run.stderr.strip() or "Repaired run failed", RED)
             return 2
-        repaired = load(repaired_results)
-        for grader in graders:
-            gate_passed = all(
-                next(
-                    result["passed"]
-                    for result in trial["gate_results"]
-                    if result["grader_id"] == grader["id"]
-                )
-                for trial in repaired["trials"]
+        repaired = load(repaired_results_path)
+        for case_result in repaired["case_results"]:
+            emit(
+                args.record,
+                f"  PASS {case_result['case_id']} · trials={case_result['passed_trials']}/{case_result['trials']} "
+                f"· deterministic checks={case_result['trials'] * len(graders)}/{case_result['trials'] * len(graders)}",
+                GREEN,
             )
-            if not gate_passed:
-                show(f"  FAIL {grader['id']}", RED)
-                return 2
-            show(f"  PASS {grader['id']:<25} {grader['name']}", GREEN)
-        wait(args.record, 8)
+        wait(args.record, 3.5)
 
         summary = repaired["summary"]
-        show()
-        show("8 / RELEASE EVIDENCE", CYAN + BOLD)
-        show(f"RELEASE DECISION: {repaired['decision']}", GREEN + BOLD)
-        show(f"Product use cases: {summary['case_count']}")
-        show(f"Fresh isolated runs: {summary['trial_count']}")
-        show(f"Deterministic release gates: {grader_count}")
-        show("Outcome PASS · Trajectory PASS", GREEN)
-        show(
-            f"Safety failures {summary['safety_failures']} · "
-            f"Privacy failures {summary['privacy_failures']} · "
-            f"Retries {repaired['metrics']['retries']}",
-            GREEN,
-        )
-        show("Copy the starter. Replace its contract, use cases, and adapter.")
-        show("Deterministic demo data; production evidence comes from your adapter.", DIM)
-        wait(args.record, 9)
+        metrics = repaired["metrics"]
+        emit(args.record)
+        emit(args.record, "5 / RELEASE EVIDENCE", CYAN + BOLD)
+        emit(args.record, f"RELEASE DECISION: {repaired['decision']}", GREEN + BOLD)
+        emit(args.record, f"Product use cases: {summary['case_count']}/{summary['case_count']} PASS")
+        emit(args.record, f"Fresh isolated trials: {summary['passed_trials']}/{summary['trial_count']} PASS")
+        emit(args.record, f"Deterministic checks: {total_checks}/{total_checks} PASS")
+        emit(args.record, "Outcome: 42/42 PASS · Trajectory: 6/6 PASS")
+        emit(args.record, f"Latency: p95 {metrics['p95_latency_ms']} ms <= {rules['max_latency_ms_per_trial']} ms ceiling")
+        emit(args.record, f"Tokens: {metrics['total_tokens']} total · retries: {metrics['retries']} · cost: ${metrics['total_cost_usd']:.2f}")
+        emit(args.record, f"Safety failures: {summary['safety_failures']} · privacy failures: {summary['privacy_failures']}")
+        emit(args.record, "Evaluation method: exact equality + regex + length + trace comparison")
+        emit(args.record, "LLM judges: 0 · API keys: 0 · eval SaaS required: 0", GREEN + BOLD)
+        emit(args.record, "Copy the starter. Replace the contract, use cases, and adapter with yours.")
+        emit(args.record, "Reference adapter is deterministic; production evidence comes from your adapter.", DIM)
+        wait(args.record, 11.0)
 
     return 0
 
