@@ -131,6 +131,13 @@ repeated four-surface trials + PMOS/eval/engineering digest chain + operations
 See the complete workflow in [AI Evals for PMs](pm-verifier/), installed and
 run through the stable `pm-verifier` identifier.
 
+For a smaller copyable package, use the
+[AI ticket-summarizer eval starter](pm-verifier/skills/eval-engine/examples/ticket-summarizer-starter/).
+It turns one feature contract into three synthetic cases, eight deterministic
+gates, fresh isolated trials, a known-bad fabricated-claim failure, and a clean
+release decision without enabling system or memory behavior the feature never
+promised.
+
 ### Recurring task → guarded loop
 
 `loop-designer` makes the safety structure explicit before generating a scheduler:
