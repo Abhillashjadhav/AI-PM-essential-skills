@@ -1,10 +1,15 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "suite_id": "ticket-summarizer-regression",
-  "suite_version": "1.0.0",
-  "name": "AI ticket summarizer regression suite",
+  "suite_version": "1.1.0",
+  "name": "AI ticket summarizer three-surface regression suite",
   "suite_type": "regression",
   "minimum_trials_per_case": 2,
+  "surfaces": [
+    "outcome",
+    "trajectory",
+    "system"
+  ],
   "deterministic_graders": [
     {
       "id": "G_OUTCOME_REQUEST",
@@ -78,17 +83,159 @@
     },
     {
       "id": "G_TRAJECTORY_CHRONOLOGY",
-      "name": "thread processed chronologically",
+      "name": "messages ordered chronologically",
       "scope": "trajectory",
       "category": "quality",
       "check": "trace_step_equals",
       "expected_path": "expected.trajectory.chronological_ids",
       "params": {"step_name": "order_messages", "field": "attributes.chronological_ids"},
       "gate": true
+    },
+    {
+      "id": "G_TRAJECTORY_SOURCE_COUNT",
+      "name": "all source messages passed to ordering tool",
+      "scope": "trajectory",
+      "category": "reliability",
+      "check": "trace_step_equals",
+      "expected_path": "expected.trajectory.source_message_count",
+      "params": {"step_name": "order_messages", "field": "attributes.source_message_count"},
+      "gate": true
+    },
+    {
+      "id": "G_TRAJECTORY_SUMMARY_CASE",
+      "name": "summarizer received correct ticket",
+      "scope": "trajectory",
+      "category": "reliability",
+      "check": "trace_step_equals",
+      "expected_path": "expected.trajectory.case_id",
+      "params": {"step_name": "summarize_thread", "field": "attributes.case_id"},
+      "gate": true
+    },
+    {
+      "id": "G_TRAJECTORY_CLAIM_VALIDATION",
+      "name": "claim validator received complete claim set",
+      "scope": "trajectory",
+      "category": "quality",
+      "check": "trace_step_equals",
+      "expected_path": "expected.trajectory.supported_claim_count",
+      "params": {"step_name": "validate_claims", "field": "attributes.supported_claim_count"},
+      "gate": true
+    },
+    {
+      "id": "G_TRAJECTORY_DELIVERY",
+      "name": "delivery targeted correct ticket",
+      "scope": "trajectory",
+      "category": "reliability",
+      "check": "trace_step_equals",
+      "expected_path": "expected.trajectory.case_id",
+      "params": {"step_name": "deliver_summary", "field": "attributes.case_id"},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_INTAKE",
+      "name": "intake checkpoint passed",
+      "scope": "system",
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "params": {"checkpoint": "intake"},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_ORDER_STAGE",
+      "name": "ordering checkpoint passed",
+      "scope": "system",
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "params": {"checkpoint": "order"},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_SUMMARIZE",
+      "name": "summarization checkpoint passed",
+      "scope": "system",
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "params": {"checkpoint": "summarize"},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_VALIDATE",
+      "name": "validation checkpoint passed",
+      "scope": "system",
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "params": {"checkpoint": "validate"},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_DELIVER",
+      "name": "delivery checkpoint passed",
+      "scope": "system",
+      "category": "reliability",
+      "check": "checkpoint_passed",
+      "params": {"checkpoint": "deliver"},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_ORDER",
+      "name": "required checkpoint order",
+      "scope": "system",
+      "category": "reliability",
+      "check": "checkpoint_order",
+      "params": {"checkpoints": ["intake", "order", "summarize", "validate", "deliver"]},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_IDENTITY",
+      "name": "ticket identity preserved",
+      "scope": "system",
+      "category": "reliability",
+      "check": "identity_preserved",
+      "params": {
+        "checkpoints": ["intake", "order", "summarize", "validate", "deliver"],
+        "field": "entity_id"
+      },
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_CONTINUITY",
+      "name": "thread state remains continuous",
+      "scope": "system",
+      "category": "quality",
+      "check": "state_continuity",
+      "params": {
+        "checkpoints": ["intake", "order", "summarize", "validate", "deliver"],
+        "fields": ["thread_id", "message_count"]
+      },
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_COMPLETED",
+      "name": "workflow completed",
+      "scope": "system",
+      "category": "reliability",
+      "check": "system_completed",
+      "params": {},
+      "gate": true
+    },
+    {
+      "id": "G_SYSTEM_FINAL",
+      "name": "final delivery reached",
+      "scope": "system",
+      "category": "reliability",
+      "check": "final_checkpoint_reached",
+      "params": {"checkpoint": "deliver"},
+      "gate": true
     }
   ],
   "model_graders": [],
   "rubric": [],
+  "system_contract": {
+    "required_checkpoints": ["intake", "order", "summarize", "validate", "deliver"],
+    "optional_checkpoints": [],
+    "identity_field": "entity_id",
+    "continuity_fields": ["thread_id", "message_count"]
+  },
   "release_rules": {
     "min_case_pass_rate": 1.0,
     "min_trial_pass_rate": 1.0,
