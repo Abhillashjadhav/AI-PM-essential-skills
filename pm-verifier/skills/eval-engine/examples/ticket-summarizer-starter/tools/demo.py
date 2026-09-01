@@ -31,7 +31,7 @@ def wait(record: bool, seconds: float) -> None:
         time.sleep(seconds)
 
 
-def emit(record: bool, text: str = "", style: str = "", delay: float = 0.11) -> None:
+def emit(record: bool, text: str = "", style: str = "", delay: float = 0.15) -> None:
     """Print one terminal row slowly enough to create visible scrolling."""
 
     show(text, style)
@@ -91,8 +91,26 @@ def gate_line(grader: dict, gate: dict) -> str:
         patterns = grader["params"]["patterns"]
         matches = sum(bool(re.search(pattern, str(actual), re.I)) for pattern in patterns)
         detail = f"exposed-email matches={matches} == 0"
-    elif gate_id == "G_TRAJECTORY_CHRONOLOGY":
-        detail = f"actual={' > '.join(actual)} == expected={' > '.join(expected)}"
+    elif grader["check"] == "trace_step_equals":
+        if isinstance(actual, list):
+            detail = f"actual={' > '.join(actual)} == expected={' > '.join(expected)}"
+        else:
+            detail = f"actual={actual} == expected={expected}"
+    elif grader["check"] == "checkpoint_passed":
+        detail = f"checkpoint={grader['params']['checkpoint']} actual={actual} == expected=passed"
+    elif grader["check"] == "checkpoint_order":
+        actual_order = " > ".join(
+            name for name, _index in sorted(actual.items(), key=lambda item: item[1])
+        )
+        detail = f"actual={actual_order} == expected={' > '.join(expected)}"
+    elif grader["check"] == "identity_preserved":
+        detail = f"unique ticket IDs={len(set(actual.values()))} == 1 ({expected})"
+    elif grader["check"] == "state_continuity":
+        detail = f"stable fields={','.join(grader['params']['fields'])} across 5 checkpoints"
+    elif grader["check"] == "system_completed":
+        detail = f"completed={actual} == expected=True"
+    elif grader["check"] == "final_checkpoint_reached":
+        detail = f"checkpoint={grader['params']['checkpoint']} present={actual}"
     else:
         detail = gate["reason"]
     return f"  {passed:<4} {gate_id:<25} {detail}"
@@ -118,7 +136,7 @@ def show_case(
     emit(record, f"USE CASE {case['case_id']} · {workflow} · risk={case['metadata']['risk']}", CYAN + BOLD)
     emit(record, f"INPUT RECEIVED: {' > '.join(received)} (newest first)")
     emit(record, f"REQUIRED ORDER: {' > '.join(expected_order)}")
-    emit(record, "PRODUCT DELIVERED", BOLD)
+    emit(record, "OUTCOME DELIVERED", BOLD)
     emit(record, f"  summary: {outcome['response']['summary']}")
     emit(record, f"  request: {outcome['response']['customer_request']}")
     emit(
@@ -126,9 +144,35 @@ def show_case(
         f"  sentiment={outcome['sentiment']} · escalation={outcome['escalation_reason']}",
     )
     emit(record, f"  supported claims ({len(outcome['supported_claims'])}): {'; '.join(outcome['supported_claims'])}")
-    emit(record, "DETERMINISTIC EVAL PARAMETERS · EXPECTED vs ACTUAL", BOLD)
     gates_by_id = {gate["grader_id"]: gate for gate in first_result["gate_results"]}
-    for grader in graders:
+    by_scope = {
+        scope: [grader for grader in graders if grader["scope"] == scope]
+        for scope in ("outcome", "trajectory", "system")
+    }
+
+    emit(record, f"OUTCOME EVALS ({len(by_scope['outcome'])}) · EXPECTED vs ACTUAL", BOLD)
+    for grader in by_scope["outcome"]:
+        emit(record, gate_line(grader, gates_by_id[grader["id"]]))
+
+    trajectory = first_trial["trajectory"]
+    emit(record, "TOOL TRAJECTORY DELIVERED", BOLD)
+    emit(record, "  " + " > ".join(step["name"] for step in trajectory))
+    for step in trajectory:
+        emit(record, f"  {step['name']}: {json.dumps(step['attributes'], separators=(',', ':'))}")
+    emit(record, f"TOOL TRAJECTORY EVALS ({len(by_scope['trajectory'])}) · EXPECTED vs ACTUAL", BOLD)
+    for grader in by_scope["trajectory"]:
+        emit(record, gate_line(grader, gates_by_id[grader["id"]]))
+
+    checkpoints = first_trial["system"]["checkpoints"]
+    emit(record, "SYSTEM WORKFLOW DELIVERED", BOLD)
+    emit(record, "  checkpoints: " + " > ".join(checkpoint["name"] for checkpoint in checkpoints))
+    emit(
+        record,
+        f"  ticket={first_trial['system']['entity_id']} · completed={first_trial['system']['completed']} "
+        f"· state=thread_id+message_count",
+    )
+    emit(record, f"SYSTEM EVALS ({len(by_scope['system'])}) · EXPECTED vs ACTUAL", BOLD)
+    for grader in by_scope["system"]:
         emit(record, gate_line(grader, gates_by_id[grader["id"]]))
 
     gate_executions = sum(len(trial["gate_results"]) for trial in result_trials)
@@ -136,14 +180,77 @@ def show_case(
         gate["passed"] for trial in result_trials for gate in trial["gate_results"]
     )
     passed_trials = sum(not trial["failed_gate_ids"] for trial in result_trials)
+    for scope, label in (
+        ("outcome", "OUTCOME"),
+        ("trajectory", "TOOL TRAJECTORY"),
+        ("system", "SYSTEM"),
+    ):
+        scope_graders = by_scope[scope]
+        scope_checks = [
+            gate
+            for trial in result_trials
+            for gate in trial["gate_results"]
+            if gate["scope"] == scope
+        ]
+        emit(
+            record,
+            f"{label} SCORE: {len(scope_graders)}/{len(scope_graders)} gates · "
+            f"{sum(gate['passed'] for gate in scope_checks)}/{len(scope_checks)} checks PASS",
+            GREEN,
+        )
     emit(
         record,
-        f"USE CASE SCORE: {len(graders)}/{len(graders)} gates · "
+        f"USE CASE TOTAL: {len(graders)}/{len(graders)} gates · "
         f"{passed_executions}/{gate_executions} checks · "
         f"{passed_trials}/{len(result_trials)} isolated trials PASS",
         GREEN + BOLD,
     )
-    wait(record, 6.7)
+    wait(record, 5.0)
+
+
+def run_fault(
+    workspace: Path,
+    project: Path,
+    trials_name: str,
+    fault_name: str,
+    stem: str,
+) -> dict:
+    """Apply one checked-in fault and evaluate it against the unchanged suite."""
+
+    faulted_name = f"trials.{stem}.jsonl"
+    result_name = f"results.{stem}.json"
+    created = invoke(
+        [
+            "fault",
+            "--project",
+            "eval",
+            "--trials",
+            trials_name,
+            "--name",
+            fault_name,
+            "--out",
+            faulted_name,
+        ],
+        cwd=workspace,
+    )
+    command_output(created)
+    completed = invoke(
+        [
+            "run",
+            "--project",
+            "eval",
+            "--trials",
+            f"eval/{faulted_name}",
+            "--out",
+            f"eval/{result_name}",
+        ],
+        cwd=workspace,
+    )
+    command_output(completed)
+    result_path = project / result_name
+    if not result_path.is_file():
+        raise RuntimeError(completed.stderr.strip() or f"{fault_name} did not produce results")
+    return load(result_path)
 
 
 def main() -> int:
@@ -152,7 +259,7 @@ def main() -> int:
     parser.add_argument(
         "--record",
         action="store_true",
-        help="pace output for a roughly 54-second recording (36 seconds at 1.5x)",
+        help="pace output for a longer three-surface recording at 1.5x",
     )
     parser.add_argument(
         "--plain",
@@ -179,7 +286,7 @@ def main() -> int:
         total_checks = total_trials * len(graders)
         rules = suite["release_rules"]
 
-        show("AI EVALS FOR PMs — TICKET SUMMARIZER RELEASE", CYAN + BOLD)
+        show("AI EVALS FOR PMs — THREE-SURFACE RELEASE DECISION", CYAN + BOLD)
         show("Repository: AI-PM-essential-skills / pm-verifier")
         show("Runs locally or in CI · no eval SaaS · no LLM judge · no API key")
         wait(args.record, 3.0)
@@ -187,8 +294,9 @@ def main() -> int:
         emit(args.record)
         emit(args.record, "1 / PRODUCT CONTRACT BECOMES EXECUTABLE EVIDENCE", CYAN + BOLD)
         emit(args.record, "Product must return: summary + request + sentiment + escalation + supported claims")
-        emit(args.record, "Product path must prove: source messages processed in chronological order")
-        emit(args.record, "Enabled surfaces: outcome + trajectory · system + memory not promised")
+        emit(args.record, "Tool path must prove: order > summarize > validate > deliver with correct parameters")
+        emit(args.record, "System must prove: every checkpoint passed, ordered, continuous, and completed")
+        emit(args.record, "Enabled surfaces: OUTCOME + TOOL TRAJECTORY + SYSTEM · memory not promised")
         emit(args.record, f"Release policy: {len(cases)} use cases × {minimum_trials} isolated trials × {len(graders)} binary gates")
         emit(args.record, f"Decision rule: all {total_checks} deterministic checks must pass")
         wait(args.record, 4.5)
@@ -238,52 +346,89 @@ def main() -> int:
                 graders,
             )
 
-        faulted_path = project / "trials.fabricated.jsonl"
-        failed_results_path = project / "results.failed.json"
+        grader_by_id = {grader["id"]: grader for grader in graders}
         emit(args.record)
-        emit(args.record, "3 / PROVE THE GATES CATCH A PLAUSIBLE FAILURE", CYAN + BOLD)
-        emit(args.record, "Fault injected into TS-100-t1: unsupported claim = Customer was charged twice")
-        created = invoke(
-            [
-                "fault",
-                "--project",
-                "eval",
-                "--trials",
-                trials_path.name,
-                "--name",
-                "fabricated-claim",
-                "--out",
-                faulted_path.name,
-            ],
-            cwd=workspace,
+        emit(args.record, "3 / BREAK ONE REQUIREMENT ON EACH SURFACE", CYAN + BOLD)
+
+        emit(args.record)
+        emit(args.record, "3A / OUTCOME FAILURE · TS-100-t1", BOLD)
+        outcome_failed = run_fault(
+            workspace,
+            project,
+            trials_path.name,
+            "fabricated-claim",
+            "outcome",
         )
-        command_output(created)
-        failed_run = invoke(
-            [
-                "run",
-                "--project",
-                "eval",
-                "--trials",
-                "eval/trials.fabricated.jsonl",
-                "--out",
-                "eval/results.failed.json",
-            ],
-            cwd=workspace,
+        outcome_trial = next(
+            trial for trial in outcome_failed["trials"] if trial["failed_gate_ids"]
         )
-        command_output(failed_run)
-        failed = load(failed_results_path)
-        failed_trial = next(trial for trial in failed["trials"] if trial["failed_gate_ids"])
-        failed_gate = next(gate for gate in failed_trial["gate_results"] if not gate["passed"])
-        expected_claims = failed_gate["expected"]
-        actual_claims = failed_gate["actual"]
+        outcome_gate = next(
+            gate for gate in outcome_trial["gate_results"] if not gate["passed"]
+        )
+        expected_claims = outcome_gate["expected"]
+        actual_claims = outcome_gate["actual"]
         unsupported = next(claim for claim in actual_claims if claim not in expected_claims)
-        emit(args.record, "PRODUCT DELIVERED: fluent summary plus one unsupported claim")
-        emit(args.record, f"PARAMETER: supported claims · expected={len(expected_claims)} · actual={len(actual_claims)}")
-        emit(args.record, f"EXACT DIFFERENCE: + {unsupported}", RED)
-        emit(args.record, "FAIL G_OUTCOME_CLAIMS · exact list equality returned false", RED + BOLD)
-        emit(args.record, "TS-100 SCORE: 7/8 gates on trial 1 · 1/2 trials passed")
-        emit(args.record, f"RELEASE DECISION: {failed['decision']} · no averaging can hide a failed gate", RED + BOLD)
-        wait(args.record, 6.0)
+        emit(args.record, "Product output: fluent summary plus one unsupported claim")
+        emit(args.record, f"Expected supported claims={len(expected_claims)} · actual={len(actual_claims)}")
+        emit(args.record, f"Exact difference: + {unsupported}", RED)
+        emit(args.record, gate_line(grader_by_id[outcome_gate["grader_id"]], outcome_gate), RED)
+        emit(args.record, "OUTCOME SCORE: 6/7 gates on trial 1 · RELEASE DECISION: FAIL", RED + BOLD)
+        wait(args.record, 3.0)
+
+        emit(args.record)
+        emit(args.record, "3B / TOOL TRAJECTORY FAILURE · TS-300-t1", BOLD)
+        trajectory_failed = run_fault(
+            workspace,
+            project,
+            trials_path.name,
+            "wrong-order",
+            "trajectory",
+        )
+        trajectory_trial = next(
+            trial for trial in trajectory_failed["trials"] if trial["failed_gate_ids"]
+        )
+        trajectory_gate = next(
+            gate for gate in trajectory_trial["gate_results"] if not gate["passed"]
+        )
+        emit(args.record, "Tool parameter changed: order_messages.chronological_ids")
+        emit(
+            args.record,
+            f"Expected={' > '.join(trajectory_gate['expected'])} · "
+            f"actual={' > '.join(trajectory_gate['actual'])}",
+        )
+        emit(
+            args.record,
+            gate_line(grader_by_id[trajectory_gate["grader_id"]], trajectory_gate),
+            RED,
+        )
+        emit(args.record, "TOOL TRAJECTORY SCORE: 4/5 gates on trial 1 · RELEASE DECISION: FAIL", RED + BOLD)
+        wait(args.record, 3.0)
+
+        emit(args.record)
+        emit(args.record, "3C / SYSTEM FAILURE · TS-200-t1", BOLD)
+        system_failed = run_fault(
+            workspace,
+            project,
+            trials_path.name,
+            "failed-validation-checkpoint",
+            "system",
+        )
+        system_trial = next(
+            trial for trial in system_failed["trials"] if trial["failed_gate_ids"]
+        )
+        system_gates = [
+            gate for gate in system_trial["gate_results"] if not gate["passed"]
+        ]
+        emit(args.record, "System evidence: validate checkpoint=failed · completed=False")
+        for gate in system_gates:
+            emit(
+                args.record,
+                gate_line(grader_by_id[gate["grader_id"]], gate),
+                RED,
+            )
+        emit(args.record, "SYSTEM SCORE: 8/10 gates on trial 1 · RELEASE DECISION: FAIL", RED + BOLD)
+        emit(args.record, "No aggregate score can override a failed binary release gate.")
+        wait(args.record, 4.0)
 
         repaired_results_path = project / "results.repaired.json"
         emit(args.record)
@@ -328,11 +473,19 @@ def main() -> int:
         emit(args.record, f"Product use cases: {summary['case_count']}/{summary['case_count']} PASS")
         emit(args.record, f"Fresh isolated trials: {summary['passed_trials']}/{summary['trial_count']} PASS")
         emit(args.record, f"Deterministic checks: {total_checks}/{total_checks} PASS")
-        emit(args.record, "Outcome: 42/42 PASS · Trajectory: 6/6 PASS")
+        for scope, label in (
+            ("outcome", "Outcome"),
+            ("trajectory", "Tool trajectory"),
+            ("system", "System"),
+        ):
+            scope_checks = (
+                sum(grader["scope"] == scope for grader in graders) * total_trials
+            )
+            emit(args.record, f"{label}: {scope_checks}/{scope_checks} deterministic checks PASS")
         emit(args.record, f"Latency: p95 {metrics['p95_latency_ms']} ms <= {rules['max_latency_ms_per_trial']} ms ceiling")
         emit(args.record, f"Tokens: {metrics['total_tokens']} total · retries: {metrics['retries']} · cost: ${metrics['total_cost_usd']:.2f}")
         emit(args.record, f"Safety failures: {summary['safety_failures']} · privacy failures: {summary['privacy_failures']}")
-        emit(args.record, "Evaluation method: exact equality + regex + length + trace comparison")
+        emit(args.record, "Methods: equality + regex + length + trace parameters + checkpoint contracts")
         emit(args.record, "LLM judges: 0 · API keys: 0 · eval SaaS required: 0", GREEN + BOLD)
         emit(args.record, "Copy the starter. Replace the contract, use cases, and adapter with yours.")
         emit(args.record, "Reference adapter is deterministic; production evidence comes from your adapter.", DIM)
