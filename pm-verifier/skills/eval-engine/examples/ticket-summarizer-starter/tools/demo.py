@@ -65,7 +65,7 @@ def main() -> int:
         show("3 synthetic cases · 2 trials each · 8 deterministic gates")
         show("Enabled surfaces: outcome + trajectory")
         show("Memory omitted: this feature makes no persistence promise", DIM)
-        wait(args.record, 8)
+        wait(args.record, 9)
 
         trials = project / "trials.executed.jsonl"
         clean_results = project / "results.clean.json"
@@ -90,7 +90,7 @@ def main() -> int:
             print(captured.stderr or captured.stdout)
             return 2
         show("Captured 6 fresh trials with unique isolation IDs", GREEN)
-        wait(args.record, 10)
+        wait(args.record, 11)
 
         faulted = project / "trials.fabricated.jsonl"
         failed_results = project / "results.failed.json"
@@ -114,7 +114,7 @@ def main() -> int:
         if created.returncode != 0:
             print(created.stderr or created.stdout)
             return 2
-        wait(args.record, 7)
+        wait(args.record, 8)
 
         show("$ pm-verifier run --project eval --trials trials.fabricated.jsonl", DIM)
         invoke(
@@ -131,7 +131,7 @@ def main() -> int:
         failed = load(failed_results)
         show(f"RELEASE DECISION: {failed['decision']}", RED + BOLD)
         show("Caught: G_OUTCOME_CLAIMS — claim not supported by source thread", RED)
-        wait(args.record, 10)
+        wait(args.record, 11)
 
         show()
         show("3 / REMOVE THE CLAIM AND RERUN THE SAME CONTRACT", CYAN + BOLD)
@@ -166,7 +166,7 @@ def main() -> int:
             f"Retries {repaired['metrics']['retries']}",
             GREEN,
         )
-        wait(args.record, 15)
+        wait(args.record, 16)
 
     return 0
 
