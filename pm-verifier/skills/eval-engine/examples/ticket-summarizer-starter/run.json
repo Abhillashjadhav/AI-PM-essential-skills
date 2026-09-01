@@ -1,0 +1,43 @@
+{
+  "schema_version": "1.0",
+  "run_id": "ticket-summarizer-v1-run-001",
+  "created_at": "2026-09-01T00:00:00+00:00",
+  "candidate": {
+    "id": "ticket-summarizer",
+    "version": "1.0.0",
+    "sha256": "d0d2792ac6ad7d83ab1cc8af10153612441bea33a75b03e3be92cf7949d78879"
+  },
+  "dataset": {
+    "id": "ticket-summarizer-cases",
+    "version": "1.0.0",
+    "cases_sha256": "4d929a1048aebefd4a03fabd5d74c11ffafed5606cae2997a2d8104c6189e7fc"
+  },
+  "model": {
+    "provider": "synthetic",
+    "name": "deterministic-ticket-summarizer",
+    "version": "1.0.0",
+    "parameters": {"temperature": 0}
+  },
+  "prompt": {
+    "id": "ticket-summarizer-prompt",
+    "version": "1.0.0",
+    "sha256": "1111111111111111111111111111111111111111111111111111111111111111"
+  },
+  "tools": [
+    {
+      "name": "thread-orderer",
+      "version": "1.0.0",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222"
+    }
+  ],
+  "harness": {
+    "name": "pm-verifier",
+    "version": "1.2.0",
+    "sha256": "3333333333333333333333333333333333333333333333333333333333333333"
+  },
+  "configuration": {
+    "id": "ticket-summarizer-regression",
+    "version": "1.0.0",
+    "sha256": "ab2f2d5ada7513d05b5897f2525858a75f158ae8b7e7ff247172f183e30e6df9"
+  }
+}

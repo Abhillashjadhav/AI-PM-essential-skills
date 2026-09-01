@@ -1,0 +1,32 @@
+{
+  "fabricated-claim": [
+    {
+      "trial_id": "TS-100-t1",
+      "operation": "set",
+      "path": "outcome.supported_claims",
+      "value": [
+        "August invoice export requested",
+        "Export failed three times",
+        "Month-end close is blocked",
+        "Customer requested escalation",
+        "Customer was charged twice"
+      ]
+    }
+  ],
+  "missing-escalation": [
+    {
+      "trial_id": "TS-100-t1",
+      "operation": "set",
+      "path": "outcome.escalation_reason",
+      "value": "NONE"
+    }
+  ],
+  "wrong-order": [
+    {
+      "trial_id": "TS-300-t1",
+      "operation": "set",
+      "path": "trajectory.0.attributes.chronological_ids",
+      "value": ["M3", "M2", "M1"]
+    }
+  ]
+}
