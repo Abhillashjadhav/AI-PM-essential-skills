@@ -1,8 +1,8 @@
 {
-  "schema_version": "1.0",
+  "schema_version": "1.1",
   "dataset_id": "ticket-summarizer-cases",
-  "dataset_version": "1.0.0",
-  "source": "synthetic-known-answer",
+  "dataset_version": "1.1.0",
+  "source": "deterministic-reference-data",
   "cases_path": "cases.jsonl",
-  "cases_sha256": "4d929a1048aebefd4a03fabd5d74c11ffafed5606cae2997a2d8104c6189e7fc"
+  "cases_sha256": "b3ffb8a24985ea5a97fd1ba5d1d31252d242e2e61961ac598c2bcc07abaef493"
 }
