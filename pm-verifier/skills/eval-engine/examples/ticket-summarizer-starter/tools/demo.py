@@ -58,7 +58,7 @@ def main() -> int:
     parser.add_argument(
         "--record",
         action="store_true",
-        help="pace output for a roughly 55-second video after 1.5x acceleration",
+        help="pace output for a roughly 55-second recording (about 36 seconds at 1.5x)",
     )
     parser.add_argument(
         "--plain",
@@ -90,7 +90,7 @@ def main() -> int:
         )
         show("Enabled surfaces: outcome + trajectory")
         show("Memory omitted: this feature makes no persistence promise", DIM)
-        wait(args.record, 13.5)
+        wait(args.record, 9)
 
         trials = project / "trials.executed.jsonl"
         clean_results = project / "results.clean.json"
@@ -120,7 +120,7 @@ def main() -> int:
             show("Captured evidence did not preserve unique trial isolation")
             return 2
         show(f"Captured {len(captured_rows)} fresh trials with unique isolation IDs", GREEN)
-        wait(args.record, 16.5)
+        wait(args.record, 11)
 
         faulted = project / "trials.fabricated.jsonl"
         failed_results = project / "results.failed.json"
@@ -144,7 +144,7 @@ def main() -> int:
         if created.returncode != 0:
             print(created.stderr or created.stdout)
             return 2
-        wait(args.record, 12)
+        wait(args.record, 8)
 
         show("$ pm-verifier run --project eval --trials trials.fabricated.jsonl", DIM)
         invoke(
@@ -181,7 +181,7 @@ def main() -> int:
             f"{unsupported_claims[0]}",
             RED,
         )
-        wait(args.record, 16.5)
+        wait(args.record, 11)
 
         show()
         show("3 / REMOVE THE CLAIM AND RERUN THE SAME CONTRACT", CYAN + BOLD)
@@ -216,7 +216,7 @@ def main() -> int:
             f"Retries {repaired['metrics']['retries']}",
             GREEN,
         )
-        wait(args.record, 24)
+        wait(args.record, 16)
 
     return 0
 
