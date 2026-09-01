@@ -19,10 +19,11 @@ CYAN = "\033[96m"
 GREEN = "\033[92m"
 RED = "\033[91m"
 DIM = "\033[2m"
+PLAIN = False
 
 
 def show(text: str = "", style: str = "") -> None:
-    print(f"{style}{text}{RESET}", flush=True)
+    print(text if PLAIN else f"{style}{text}{RESET}", flush=True)
 
 
 def wait(record: bool, seconds: float) -> None:
@@ -43,14 +44,29 @@ def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_rows(path: Path) -> list[dict]:
+    return [
+        json.loads(line)
+        for line in path.read_text(encoding="utf-8").splitlines()
+        if line.strip()
+    ]
+
+
 def main() -> int:
+    global PLAIN
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--record",
         action="store_true",
-        help="pace output for a roughly 40-second video after 1.5x acceleration",
+        help="pace output for a roughly 55-second video after 1.5x acceleration",
+    )
+    parser.add_argument(
+        "--plain",
+        action="store_true",
+        help="use only the terminal's existing foreground and background colours",
     )
     args = parser.parse_args()
+    PLAIN = args.plain
 
     source = Path(__file__).resolve().parents[1]
     if shutil.which("pm-verifier") is None:
@@ -60,12 +76,21 @@ def main() -> int:
     with tempfile.TemporaryDirectory(prefix="ticket-eval-") as directory:
         project = Path(directory) / "eval"
         shutil.copytree(source, project)
+        suite = load(project / "suite.json")
+        case_count = sum(
+            1 for line in (project / "cases.jsonl").read_text(encoding="utf-8").splitlines() if line.strip()
+        )
+        trial_count = case_count * int(suite["minimum_trials_per_case"])
+        grader_count = len(suite["deterministic_graders"])
 
         show("AI TICKET SUMMARIZER — SPEC TO RELEASE EVIDENCE", CYAN + BOLD)
-        show("3 synthetic cases · 2 trials each · 8 deterministic gates")
+        show(
+            f"{case_count} synthetic cases · {suite['minimum_trials_per_case']} trials each · "
+            f"{grader_count} deterministic gates"
+        )
         show("Enabled surfaces: outcome + trajectory")
         show("Memory omitted: this feature makes no persistence promise", DIM)
-        wait(args.record, 9)
+        wait(args.record, 13.5)
 
         trials = project / "trials.executed.jsonl"
         clean_results = project / "results.clean.json"
@@ -89,8 +114,13 @@ def main() -> int:
         if captured.returncode != 0 or not clean_results.is_file():
             print(captured.stderr or captured.stdout)
             return 2
-        show("Captured 6 fresh trials with unique isolation IDs", GREEN)
-        wait(args.record, 11)
+        captured_rows = load_rows(trials)
+        isolation_ids = {row["isolation_id"] for row in captured_rows}
+        if len(captured_rows) != trial_count or len(isolation_ids) != trial_count:
+            show("Captured evidence did not preserve unique trial isolation")
+            return 2
+        show(f"Captured {len(captured_rows)} fresh trials with unique isolation IDs", GREEN)
+        wait(args.record, 16.5)
 
         faulted = project / "trials.fabricated.jsonl"
         failed_results = project / "results.failed.json"
@@ -114,7 +144,7 @@ def main() -> int:
         if created.returncode != 0:
             print(created.stderr or created.stdout)
             return 2
-        wait(args.record, 8)
+        wait(args.record, 12)
 
         show("$ pm-verifier run --project eval --trials trials.fabricated.jsonl", DIM)
         invoke(
@@ -130,8 +160,28 @@ def main() -> int:
         )
         failed = load(failed_results)
         show(f"RELEASE DECISION: {failed['decision']}", RED + BOLD)
-        show("Caught: G_OUTCOME_CLAIMS — claim not supported by source thread", RED)
-        wait(args.record, 11)
+        failed_gate = next(
+            gate
+            for trial in failed["trials"]
+            for gate in trial["gate_results"]
+            if not gate["passed"] and gate["gate"]
+        )
+        actual_claims = failed_gate.get("actual", [])
+        expected_claims = failed_gate.get("expected", [])
+        unsupported_claims = [
+            claim
+            for claim in actual_claims
+            if claim not in expected_claims
+        ]
+        if not unsupported_claims:
+            show("Failed gate did not expose the unsupported claim", RED)
+            return 2
+        show(
+            f"Caught: {failed_gate['grader_id']} — unsupported claim: "
+            f"{unsupported_claims[0]}",
+            RED,
+        )
+        wait(args.record, 16.5)
 
         show()
         show("3 / REMOVE THE CLAIM AND RERUN THE SAME CONTRACT", CYAN + BOLD)
@@ -156,7 +206,7 @@ def main() -> int:
         show(f"RELEASE DECISION: {repaired['decision']}", GREEN + BOLD)
         show(
             f"{summary['case_count']} cases · {summary['trial_count']} trials · "
-            "8 deterministic gates",
+            f"{grader_count} deterministic gates",
             GREEN,
         )
         show("Outcome PASS · Trajectory PASS", GREEN)
@@ -166,7 +216,7 @@ def main() -> int:
             f"Retries {repaired['metrics']['retries']}",
             GREEN,
         )
-        wait(args.record, 16)
+        wait(args.record, 24)
 
     return 0
 
