@@ -1,4 +1,4 @@
-"""Synthetic JSON-over-stdio adapter for the ticket-summarizer starter."""
+"""Deterministic JSON-over-stdio adapter for the ticket-summarizer starter."""
 
 from __future__ import annotations
 
@@ -50,9 +50,14 @@ case_id = request["case_id"]
 case_input = request["input"]
 configured = OUTPUTS.get(case_id)
 if configured is None:
-    raise SystemExit(f"unknown synthetic case: {case_id}")
+    raise SystemExit(f"unknown product use case: {case_id}")
 
 chronological_ids = [row["id"] for row in reversed(case_input["messages"])]
+checkpoint_names = ["intake", "order", "summarize", "validate", "deliver"]
+continuous_state = {
+    "thread_id": case_id,
+    "message_count": len(case_input["messages"]),
+}
 print(
     json.dumps(
         {
@@ -73,9 +78,12 @@ print(
             "trajectory": [
                 {
                     "index": 1,
-                    "type": "transform",
+                    "type": "tool",
                     "name": "order_messages",
-                    "attributes": {"chronological_ids": chronological_ids},
+                    "attributes": {
+                        "chronological_ids": chronological_ids,
+                        "source_message_count": len(case_input["messages"]),
+                    },
                 },
                 {
                     "index": 2,
@@ -83,7 +91,38 @@ print(
                     "name": "summarize_thread",
                     "attributes": {"case_id": case_id},
                 },
+                {
+                    "index": 3,
+                    "type": "tool",
+                    "name": "validate_claims",
+                    "attributes": {
+                        "supported_claim_count": len(configured["supported_claims"])
+                    },
+                },
+                {
+                    "index": 4,
+                    "type": "tool",
+                    "name": "deliver_summary",
+                    "attributes": {"case_id": case_id},
+                },
             ],
+            "system": {
+                "checkpoints": [
+                    {
+                        "entity_id": case_id,
+                        "index": index,
+                        "name": name,
+                        "reason": "required ticket-summarizer stage completed",
+                        "state": continuous_state,
+                        "status": "passed",
+                    }
+                    for index, name in enumerate(checkpoint_names, 1)
+                ],
+                "completed": True,
+                "consequences": [],
+                "entity_id": case_id,
+                "first_failure_stage": None,
+            },
             "metrics": {
                 "latency_ms": 4,
                 "input_tokens": 50,
