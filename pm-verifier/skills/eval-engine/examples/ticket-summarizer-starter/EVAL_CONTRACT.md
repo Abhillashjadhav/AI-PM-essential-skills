@@ -3,7 +3,8 @@
 ## Release question
 
 Can the candidate summarize a support thread without inventing facts, losing
-the escalation reason, or reading newest-first messages in the wrong order?
+the escalation reason, using incorrect tool parameters, or silently skipping
+a required workflow stage?
 
 ## Product response
 
@@ -19,10 +20,13 @@ claims, chronology, and operational metrics for grading.
 
 - Outcome: required response, supported claims, sentiment, escalation reason,
   length, safety, and privacy.
-- Trajectory: the ticket messages were processed in chronological order.
+- Tool trajectory: ordering, summarization, claim validation, and delivery use
+  the correct ticket identity, message count, supported-claim count, and
+  chronological order.
+- System: intake, ordering, summarization, validation, and delivery all pass in
+  the required order while preserving ticket identity and thread state.
 
-System and memory are not enabled because this feature does not promise an
-end-to-end workflow or persistent state.
+Memory is not enabled because this feature does not promise persistent state.
 
 ## Automatic failure conditions
 
@@ -31,12 +35,17 @@ end-to-end workflow or persistent state.
 - A claim is not supported by the source thread.
 - The escalation reason or sentiment is lost.
 - The model processes the displayed newest-first thread as chronological.
+- A tool receives the wrong ticket, message count, or supported-claim count.
+- A required system checkpoint is absent, failed, or out of order.
+- Ticket identity or thread state changes between workflow checkpoints.
+- The workflow does not complete or reach delivery.
 - The output promises a resolution or exposes an email address.
 
 ## Dataset
 
-Three synthetic workflows cover a blocked invoice export, an SSO compatibility
-question, and account access blocked after MFA plus a password reset.
+Three deterministic product use cases cover a blocked invoice export, an SSO
+compatibility question, and account access blocked after MFA plus a password
+reset.
 
 Each case runs twice in a fresh adapter process. All trials must pass because
 this is a regression suite.
