@@ -143,6 +143,22 @@ pm-verifier bias \
 The compatibility commands `python3 prepare.py`, `python3 run.py`, and
 `python3 report.py` remain available during migration.
 
+## Copy a smaller starter
+
+Use the [AI ticket-summarizer starter](skills/eval-engine/examples/ticket-summarizer-starter/)
+when you want a compact spec-to-eval package instead of the complete
+four-surface repository pilot. It includes a filled PM-readable eval contract,
+three synthetic cases, eight deterministic gates, a local adapter, known-bad
+faults, and a one-command `FAIL`-to-`PASS` demonstration.
+
+The starter enables only outcome and trajectory because the feature makes no
+system or persistent-memory promise. Copy the directory, replace the approved
+product facts and cases, then expose real evidence through the adapter.
+
+```bash
+python3 pm-verifier/skills/eval-engine/examples/ticket-summarizer-starter/tools/demo.py
+```
+
 Create, verify, and run the complete four-surface repository pilot:
 
 ```bash
