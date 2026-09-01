@@ -3,17 +3,17 @@
 Copy this directory when you want to turn one AI feature specification into a
 runnable local evaluation.
 
-This use case evaluates only `outcome` and `trajectory`. The product does not
-promise a multi-stage system contract or persistent memory, so those surfaces
-are deliberately absent.
+This use case evaluates `outcome`, `trajectory`, and `system`. The product
+contract promises an end-to-end ticket-summarization workflow but no persistent
+memory, so memory remains deliberately absent.
 
 ## What ships
 
 - `EVAL_CONTRACT.md` — the PM-readable contract to replace with your feature;
-- `suite.json` — eight deterministic release gates;
-- `cases.jsonl` — three synthetic ticket threads;
+- `suite.json` — twenty-two deterministic release gates across three surfaces;
+- `cases.jsonl` — three deterministic ticket-thread use cases;
 - `reference_adapter.py` — a dependency-free JSON-over-stdio adapter;
-- `faults/specs.json` — fabricated-claim, missing-escalation, and wrong-order faults;
+- `faults/specs.json` — outcome, tool-trajectory, and system-checkpoint faults;
 - `tools/demo.py` — one command that produces a real FAIL and repaired PASS.
 
 ## Run the use case
@@ -33,12 +33,13 @@ The demo works in a temporary copy. It does not modify the checked-in package.
 2. Replace the product contract in `EVAL_CONTRACT.md`.
 3. Replace `cases.jsonl` with real, approved cases and update `dataset.json`.
 4. Change `suite.json` only for requirements your product actually promises.
-5. Make `reference_adapter.py` expose your real outcome, critical trajectory,
-   metrics, environment fingerprint, and a unique isolation ID.
+5. Make `reference_adapter.py` expose your real outcome, critical tool
+   trajectory, system checkpoints, metrics, environment fingerprint, and a
+   unique isolation ID.
 6. Execute the adapter and review `results.json` plus `report.md` before release.
 
 Never rewrite expected answers to fit an existing output. Missing required
 evidence must remain `BLOCKED`.
 
-The supplied threads, outputs, latency, tokens, and faults are synthetic. The
-adapter makes no model or network call.
+The supplied threads, outputs, latency, tokens, and faults are deterministic
+reference data. The adapter makes no model or network call.
