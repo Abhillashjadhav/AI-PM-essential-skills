@@ -28,5 +28,25 @@
       "path": "trajectory.0.attributes.chronological_ids",
       "value": ["M3", "M2", "M1"]
     }
+  ],
+  "failed-validation-checkpoint": [
+    {
+      "trial_id": "TS-200-t1",
+      "operation": "set",
+      "path": "system.checkpoints.3.status",
+      "value": "failed"
+    },
+    {
+      "trial_id": "TS-200-t1",
+      "operation": "set",
+      "path": "system.completed",
+      "value": false
+    },
+    {
+      "trial_id": "TS-200-t1",
+      "operation": "set",
+      "path": "system.first_failure_stage",
+      "value": "validate"
+    }
   ]
 }
