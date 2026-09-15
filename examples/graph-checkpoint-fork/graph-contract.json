@@ -1,0 +1,483 @@
+{
+  "name": "graph-checkpoint-fork",
+  "version": 1,
+  "qualification": "GRAPH_REQUIRED",
+  "qualification_evidence": [
+    "Order lookup and return-evidence lookup are separate branches after request validation.",
+    "Policy retrieval waits for both artifacts; an independent verifier controls success."
+  ],
+  "outcome": "Correctly verify refund eligibility in a frozen fictional return case after testing an alternative retrieval choice.",
+  "outcome_metric": "Correct verified proposal for the independently specified fixture",
+  "leading_metrics": [
+    "policy date applicability",
+    "amount agreement with the independent rule check"
+  ],
+  "guardrails": [
+    "no real refunds or messages",
+    "blocked proposal is never final output",
+    "original checkpoint and history remain intact"
+  ],
+  "tradeoff": "Additional saved state and explicit task contracts make intervention experiments inspectable.",
+  "start_node": "validate_request",
+  "terminal_nodes": [
+    "VERIFIED",
+    "BLOCKED"
+  ],
+  "node_cap": 6,
+  "concurrency_cap": 2,
+  "total_budget": {
+    "seconds": 10,
+    "enforcement": "cooperative checks between task batches",
+    "model_calls": 0
+  },
+  "max_repairs_per_node": 1,
+  "human_approval_actions": [
+    "Any future real refund, message, or other external action is out of scope."
+  ],
+  "kill_switch": "process termination; an already-written C1 checkpoint remains usable",
+  "nodes": [
+    {
+      "id": "validate_request",
+      "type": "WORKER",
+      "purpose": "Validate the request",
+      "owner": "validate_request worker",
+      "inputs": {
+        "dependencies": [],
+        "schema": "JSON objects validated by task-specific checks in fork_graph.py"
+      },
+      "outputs": {
+        "field": "validate_request",
+        "schema": "task-specific JSON object"
+      },
+      "reads_state": [],
+      "writes_state": [
+        "values.validate_request",
+        "records.validate_request"
+      ],
+      "allowed_tools": [
+        "local immutable fixture reads"
+      ],
+      "permissions": {
+        "read": [
+          "fixture.json",
+          "declared dependency artifacts"
+        ],
+        "write": [
+          "own returned artifact"
+        ],
+        "actions": []
+      },
+      "model_policy": "deterministic Python; no model",
+      "budget": {
+        "model_calls": 0,
+        "tokens": 0,
+        "external_cost": 0
+      },
+      "timeout_seconds": null,
+      "timeout_note": "Fixed local calculations; only the cooperative 10-second graph deadline is enforced. No claim of per-node preemption.",
+      "max_attempts": 2,
+      "verifier": {
+        "role": "coordinator artifact admission",
+        "binary_gate": "validate_artifact succeeds"
+      },
+      "on_exhaustion": "BLOCKED"
+    },
+    {
+      "id": "lookup_order",
+      "type": "WORKER",
+      "purpose": "Retrieve the order",
+      "owner": "lookup_order worker",
+      "inputs": {
+        "dependencies": [
+          "validate_request"
+        ],
+        "schema": "JSON objects validated by task-specific checks in fork_graph.py"
+      },
+      "outputs": {
+        "field": "lookup_order",
+        "schema": "task-specific JSON object"
+      },
+      "reads_state": [
+        "validate_request"
+      ],
+      "writes_state": [
+        "values.lookup_order",
+        "records.lookup_order"
+      ],
+      "allowed_tools": [
+        "local immutable fixture reads"
+      ],
+      "permissions": {
+        "read": [
+          "fixture.json",
+          "declared dependency artifacts"
+        ],
+        "write": [
+          "own returned artifact"
+        ],
+        "actions": []
+      },
+      "model_policy": "deterministic Python; no model",
+      "budget": {
+        "model_calls": 0,
+        "tokens": 0,
+        "external_cost": 0
+      },
+      "timeout_seconds": null,
+      "timeout_note": "Fixed local calculations; only the cooperative 10-second graph deadline is enforced. No claim of per-node preemption.",
+      "max_attempts": 2,
+      "verifier": {
+        "role": "coordinator artifact admission",
+        "binary_gate": "validate_artifact succeeds"
+      },
+      "on_exhaustion": "BLOCKED"
+    },
+    {
+      "id": "inspect_return",
+      "type": "WORKER",
+      "purpose": "Check recorded return evidence",
+      "owner": "inspect_return worker",
+      "inputs": {
+        "dependencies": [
+          "validate_request"
+        ],
+        "schema": "JSON objects validated by task-specific checks in fork_graph.py"
+      },
+      "outputs": {
+        "field": "inspect_return",
+        "schema": "task-specific JSON object"
+      },
+      "reads_state": [
+        "validate_request"
+      ],
+      "writes_state": [
+        "values.inspect_return",
+        "records.inspect_return"
+      ],
+      "allowed_tools": [
+        "local immutable fixture reads"
+      ],
+      "permissions": {
+        "read": [
+          "fixture.json",
+          "declared dependency artifacts"
+        ],
+        "write": [
+          "own returned artifact"
+        ],
+        "actions": []
+      },
+      "model_policy": "deterministic Python; no model",
+      "budget": {
+        "model_calls": 0,
+        "tokens": 0,
+        "external_cost": 0
+      },
+      "timeout_seconds": null,
+      "timeout_note": "Fixed local calculations; only the cooperative 10-second graph deadline is enforced. No claim of per-node preemption.",
+      "max_attempts": 2,
+      "verifier": {
+        "role": "coordinator artifact admission",
+        "binary_gate": "validate_artifact succeeds"
+      },
+      "on_exhaustion": "BLOCKED"
+    },
+    {
+      "id": "retrieve_policy",
+      "type": "WORKER",
+      "purpose": "Retrieve a policy",
+      "owner": "retrieve_policy worker",
+      "inputs": {
+        "dependencies": [
+          "lookup_order",
+          "inspect_return"
+        ],
+        "schema": "JSON objects validated by task-specific checks in fork_graph.py"
+      },
+      "outputs": {
+        "field": "retrieve_policy",
+        "schema": "task-specific JSON object"
+      },
+      "reads_state": [
+        "lookup_order",
+        "inspect_return",
+        "config"
+      ],
+      "writes_state": [
+        "values.retrieve_policy",
+        "records.retrieve_policy"
+      ],
+      "allowed_tools": [
+        "local immutable fixture reads"
+      ],
+      "permissions": {
+        "read": [
+          "fixture.json",
+          "declared dependency artifacts"
+        ],
+        "write": [
+          "own returned artifact"
+        ],
+        "actions": []
+      },
+      "model_policy": "deterministic Python; no model",
+      "budget": {
+        "model_calls": 0,
+        "tokens": 0,
+        "external_cost": 0
+      },
+      "timeout_seconds": null,
+      "timeout_note": "Fixed local calculations; only the cooperative 10-second graph deadline is enforced. No claim of per-node preemption.",
+      "max_attempts": 2,
+      "verifier": {
+        "role": "coordinator artifact admission",
+        "binary_gate": "validate_artifact succeeds"
+      },
+      "on_exhaustion": "BLOCKED"
+    },
+    {
+      "id": "calculate_refund",
+      "type": "WORKER",
+      "purpose": "Calculate a refund proposal",
+      "owner": "calculate_refund worker",
+      "inputs": {
+        "dependencies": [
+          "retrieve_policy",
+          "lookup_order",
+          "inspect_return"
+        ],
+        "schema": "JSON objects validated by task-specific checks in fork_graph.py"
+      },
+      "outputs": {
+        "field": "calculate_refund",
+        "schema": "task-specific JSON object"
+      },
+      "reads_state": [
+        "retrieve_policy",
+        "lookup_order",
+        "inspect_return"
+      ],
+      "writes_state": [
+        "values.calculate_refund",
+        "records.calculate_refund"
+      ],
+      "allowed_tools": [
+        "local immutable fixture reads"
+      ],
+      "permissions": {
+        "read": [
+          "fixture.json",
+          "declared dependency artifacts"
+        ],
+        "write": [
+          "own returned artifact"
+        ],
+        "actions": []
+      },
+      "model_policy": "deterministic Python; no model",
+      "budget": {
+        "model_calls": 0,
+        "tokens": 0,
+        "external_cost": 0
+      },
+      "timeout_seconds": null,
+      "timeout_note": "Fixed local calculations; only the cooperative 10-second graph deadline is enforced. No claim of per-node preemption.",
+      "max_attempts": 2,
+      "verifier": {
+        "role": "coordinator artifact admission",
+        "binary_gate": "validate_artifact succeeds"
+      },
+      "on_exhaustion": "BLOCKED"
+    },
+    {
+      "id": "verify_refund",
+      "type": "VERIFIER",
+      "purpose": "Independently verify the proposal",
+      "owner": "independent rule verifier",
+      "inputs": {
+        "dependencies": [
+          "calculate_refund",
+          "retrieve_policy"
+        ],
+        "schema": "JSON objects validated by task-specific checks in fork_graph.py"
+      },
+      "outputs": {
+        "field": "verify_refund",
+        "schema": "task-specific JSON object"
+      },
+      "reads_state": [
+        "calculate_refund",
+        "retrieve_policy"
+      ],
+      "writes_state": [
+        "values.verify_refund",
+        "records.verify_refund"
+      ],
+      "allowed_tools": [
+        "local immutable fixture reads"
+      ],
+      "permissions": {
+        "read": [
+          "fixture.json",
+          "declared dependency artifacts"
+        ],
+        "write": [
+          "own returned artifact"
+        ],
+        "actions": []
+      },
+      "model_policy": "deterministic Python; no model",
+      "budget": {
+        "model_calls": 0,
+        "tokens": 0,
+        "external_cost": 0
+      },
+      "timeout_seconds": null,
+      "timeout_note": "Fixed local calculations; only the cooperative 10-second graph deadline is enforced. No claim of per-node preemption.",
+      "max_attempts": 2,
+      "verifier": {
+        "role": "coordinator artifact admission",
+        "binary_gate": "validate_artifact succeeds"
+      },
+      "on_exhaustion": "BLOCKED"
+    }
+  ],
+  "edges": [
+    {
+      "id": "validate_request_to_lookup_order",
+      "source": "validate_request",
+      "target": "lookup_order",
+      "type": "FAN_OUT",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "validate_request output to lookup_order input"
+    },
+    {
+      "id": "validate_request_to_inspect_return",
+      "source": "validate_request",
+      "target": "inspect_return",
+      "type": "FAN_OUT",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "validate_request output to inspect_return input"
+    },
+    {
+      "id": "lookup_order_to_retrieve_policy",
+      "source": "lookup_order",
+      "target": "retrieve_policy",
+      "type": "FAN_IN",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "lookup_order output to retrieve_policy input"
+    },
+    {
+      "id": "inspect_return_to_retrieve_policy",
+      "source": "inspect_return",
+      "target": "retrieve_policy",
+      "type": "FAN_IN",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "inspect_return output to retrieve_policy input"
+    },
+    {
+      "id": "retrieve_policy_to_calculate_refund",
+      "source": "retrieve_policy",
+      "target": "calculate_refund",
+      "type": "SEQUENCE",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "retrieve_policy output to calculate_refund input"
+    },
+    {
+      "id": "lookup_order_to_calculate_refund",
+      "source": "lookup_order",
+      "target": "calculate_refund",
+      "type": "SEQUENCE",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "lookup_order output to calculate_refund input"
+    },
+    {
+      "id": "inspect_return_to_calculate_refund",
+      "source": "inspect_return",
+      "target": "calculate_refund",
+      "type": "SEQUENCE",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "inspect_return output to calculate_refund input"
+    },
+    {
+      "id": "calculate_refund_to_verify_refund",
+      "source": "calculate_refund",
+      "target": "verify_refund",
+      "type": "SEQUENCE",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "calculate_refund output to verify_refund input"
+    },
+    {
+      "id": "retrieve_policy_to_verify_refund",
+      "source": "retrieve_policy",
+      "target": "verify_refund",
+      "type": "SEQUENCE",
+      "condition": "all declared dependencies admitted",
+      "evidence_required": "admitted dependency artifacts",
+      "state_mapping": "retrieve_policy output to verify_refund input"
+    }
+  ],
+  "dependencies": {
+    "validate_request": [],
+    "lookup_order": [
+      "validate_request"
+    ],
+    "inspect_return": [
+      "validate_request"
+    ],
+    "retrieve_policy": [
+      "lookup_order",
+      "inspect_return"
+    ],
+    "calculate_refund": [
+      "retrieve_policy",
+      "lookup_order",
+      "inspect_return"
+    ],
+    "verify_refund": [
+      "calculate_refund",
+      "retrieve_policy"
+    ]
+  },
+  "state": {
+    "schema_version": 1,
+    "fields": [
+      "values",
+      "records",
+      "config.retrieval_strategy"
+    ],
+    "idempotency_key": "checkpoint digest plus fork strategy",
+    "checkpoint_after": [
+      "validate_request",
+      "lookup_order",
+      "inspect_return"
+    ],
+    "merge_policy": "each task owns one field; coordinator admits results",
+    "conflict_policy": "reject checkpoint mismatch, incomplete required joins, and existing output paths",
+    "retention_or_redaction": "synthetic local data only; no private inputs"
+  },
+  "joins": [
+    {
+      "node_id": "retrieve_policy",
+      "required_branches": [
+        "lookup_order",
+        "inspect_return"
+      ],
+      "policy": "ALL_REQUIRED",
+      "artifact_schema": "admitted per-task JSON objects",
+      "on_missing": "BLOCKED",
+      "on_failed": "BLOCKED",
+      "on_stale": "reject mismatched fixture or implementation",
+      "on_conflict": "BLOCKED"
+    }
+  ],
+  "implementation_note": "Contract cross-checked with DEPENDENCIES and the actual runner controls; the example is not a production runtime."
+}
