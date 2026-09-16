@@ -1,0 +1,25 @@
+$ python3 terminal_run.py fork --out actual-run-2
+
+Fork the saved run | same customer facts
+Restored C1: 2c1fa9863196
+Changed: text_match -> effective_date
+KEPT  Validate request
+KEPT  Retrieve order
+KEPT  Check return evidence
+[4/6] Retrieve policy ...
+      selected RET-2026
+      valid from 2026-09-01
+[5/6] Calculate refund ...
+      proposed refund: ₹2,400
+[6/6] Verify proposal ...
+      PASS: policy + amount agree
+RESULT VERIFIED | ₹2,400
+Separate fork saved. No refund sent.
+$ python3 terminal_run.py check --out actual-run-2
+
+Recorded-run checks: 8/8 PASS
+Checking the core implementation ...
+Core checks: 25/25 PASS
+One lookup choice changed the proposal by ₹480.
+Original history and C1 are unchanged.
+$ 

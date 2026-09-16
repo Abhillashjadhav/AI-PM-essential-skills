@@ -1,0 +1,16 @@
+{
+  "checks": {
+    "both original files preserved": true,
+    "fork verified at the fixture amount": true,
+    "no live model or external action": true,
+    "one retrieval choice changed": true,
+    "only downstream tasks rerun": true,
+    "original proposal blocked": true,
+    "prefix artifacts unchanged": true,
+    "same saved starting point": true
+  },
+  "core_checks_passed": 25,
+  "difference_rupees": 480,
+  "passed": true,
+  "reading_delays_excluded_from_work_clock": true
+}

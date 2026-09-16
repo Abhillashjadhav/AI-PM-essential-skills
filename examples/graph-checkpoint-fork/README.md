@@ -61,21 +61,35 @@ C1 is saved after request, order, and return evidence are admitted, before polic
 - `evidence/fork-effective_date.json`: changed retrieval choice, selected current policy, INR 2,400 verified proposal.
 - `evidence/fork-unchanged-control.json`: unchanged-choice control.
 - `evidence/required-task-failure.json`: bounded required-task failure blocks completion.
-- `evidence/demo-evidence.json`: 25 checks and the complete comparison used to render the video.
+- `evidence/demo-evidence.json`: 25 checks and the complete original comparison.
 - `evidence/subprocess-transcripts.json`: recorded commands and emitted execution events.
 
 The worker fixture excludes the separate, explicitly specified evaluation oracle. The final verifier independently reads the applicable source rule instead of accepting the selected policy as ground truth. The evaluation also compares the final amount to the oracle fixed before execution.
 
-## Render the terminal video
+## Run and record the live terminal demo
 
-Install Pillow in your local environment and ensure FFmpeg is on PATH. The renderer uses DejaVu Sans and DejaVu Sans Mono from `/usr/share/fonts/truetype/dejavu`; adjust `FONT_ROOT` if needed.
+The live view executes the workers and prints each event as it happens. These commands run in separate processes and require a new output directory:
 
 ```sh
-python3 render_video.py --preview-only
-python3 render_video.py
+python3 terminal_run.py baseline --out my-terminal-run
+python3 terminal_run.py fork --out my-terminal-run
+python3 terminal_run.py check --out my-terminal-run
 ```
 
-The video is a 54-second, 1080 x 1350 silent replay of the recorded execution, with reading pauses. Its terminal style follows the earlier graph/loop videos. The labels explicitly disclose the synthetic case, scripted workers and absence of model calls. It is not an unedited screen capture.
+`terminal_run.py` uses the same graph runner. Its only presentation changes are live event formatting and explicit reading pauses, which are excluded from the cooperative work clock. Use `--delay 0` to remove those pauses. This is not a latency benchmark.
+
+To capture a fresh execution, install Pillow and ensure bash and FFmpeg are on PATH on a POSIX system. Fonts come from `/usr/share/fonts/truetype/dejavu`; adjust `FONT_ROOT` if needed.
+
+```sh
+python3 record_terminal.py
+ffmpeg -i live-capture/terminal-capture-1x.mp4 -vf 'setpts=PTS/1.5' -r 30 -an -c:v libx264 -crf 19 -pix_fmt yuv420p -movflags +faststart graph-engineering-live-terminal-1p5x.mp4
+```
+
+The recorder launches two real bash pseudo-terminals, types the baseline, fork and verification commands, and captures their current terminal buffers continuously at 20 fps while the programs run. The 1.5× export uses 30 fps. The custom terminal viewer follows the previous black-and-white, two-panel graph/loop style at 1920 × 1080. There are no prewritten output slides or scene cuts. The workers remain deterministic and scripted; no model calls or refunds occur.
+
+The default `actual-run` and `live-capture` directories must not already exist. For another capture, use `--run-dir actual-run-2 --out live-capture-2`; both directories should be directly inside this example folder.
+
+Captured evidence is under `recording/`: fresh execution JSON, eight checks specific to the captured run, a fresh 25-check core verification, timed `.cast` terminal events, and the capture manifest. The manifest links the terminal commands, execution checks and video hash. Reading pauses and playback speed are disclosed in the video. The older `render_video.py` is a static replay renderer, retained for reference and superseded by this live recording workflow.
 
 ## Scope of the claim
 
