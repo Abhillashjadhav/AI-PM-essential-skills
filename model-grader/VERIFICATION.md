@@ -191,6 +191,96 @@ written to see the defects at all.
 checked without an LLM judge. That was wrong. The warning is a three-way template
 choice over a computed status, decided in one function, and asserted directly.
 
+## Check 7 · Adjudication 6 clarified — certification made family-wide *(EXECUTED)*
+
+The owner resolved the mismatch Check 6 disclosed: certification is family-wide.
+Reproduced first, implemented second, verified third.
+
+**Part 1 — current behaviour, before any change (v2.2):**
+
+```
+$ python3 reproductions/finding4_certification_scope.py
+P1 blocking=[('HUMAN_VALIDATION_REQUIRED', 'certification')]  C1 blocking=[]
+publication_payload = ['C1']
+'certification' in SHARED = False
+RESULT: DEFECT PRESENT
+```
+
+**After (v2.3):**
+
+```
+C1 blocking=[('HUMAN_VALIDATION_REQUIRED', 'certification')]
+publication_payload = []
+RESULT: DEFECT ABSENT
+```
+
+Asserted on the payload itself — not a status field, not a substring. The payload
+is what a downstream consumer receives, and the only place "no variant is
+published" can be checked honestly.
+
+**Part 4 — preservation checks.** Expected to pass against both versions; that is
+what a preservation check is for, and they are reported as such rather than as
+before/after evidence.
+
+```
+$ python3 reproductions/preservation_certification.py     # identical on v2.2 and v2.3
+TEST 2 approval lifts the certification hold
+      P1 blocking=[]  C1 blocking=[('SOURCE_CONFLICT', 'price')]
+TEST 2 the unrelated blocker still blocks C1, and P1 publishes
+      publication_payload=['P1']  verdict=PASS
+TEST 3 a family with no certification requirement is unaffected
+      blocking={'P1': [], 'C1': []}  publication_payload=['C1', 'P1']  verdict=PASS
+RESULT: ALL PRESERVED
+```
+
+**Mutation checks — both preservation tests discriminate.** A test that passes
+whatever the code does is not a test:
+
+| Mutation | Result |
+|---|---|
+| approval wrongly clears every other blocking issue | **TEST 2 FAILS** — `the unrelated blocker still blocks C1, and P1 publishes` |
+| certification hold applied to a family with no certification requirement | **TEST 3 FAILS** — `a family with no certification requirement is unaffected` |
+| neither mutation present | ALL PRESERVED |
+
+Both mutations were reverted; `grep -c MUTATION grader.py` returns 0.
+
+**Three existing checks changed verdict, and the checks were wrong, not the
+grader.** `certificate-needs-human-review`,
+`document-alone-is-not-human-approval` and
+`wrong-document-review-cannot-authorize-claim` each encoded the superseded
+per-SKU policy — candidate `P1 BLOCKED, C1 READY`. Under the clarified
+adjudication C1 is held too. Updated to hold the family and renamed; the old
+expectations are in `revision_checks_historical.json`, which now preserves five
+superseded checks.
+
+```
+revision 52 / 55   with the three stale checks
+revision 55 / 55   after updating them
+```
+
+**Part 5 — the reproductions now run inside the standard suite.** Check 6 found
+three live defects while the suite reported 55/55 green, because the only thing
+that could see them was a runner nobody was obliged to invoke. `run_checks.py`
+now executes every reproduction and its exit code covers them. A fixture that
+can no longer reach the state it tests (exit 2) is reported as a failure, not
+counted as a pass.
+
+Verified the wiring catches a live defect, by running the suite against the v2.2
+grader:
+
+```
+$ python3 run_checks.py            # v2.2 grader
+revision: 52 / 55
+Regressions: 4 / 5 reproduced defects still absent
+REGRESSION: finding4_certification_scope -> DEFECT PRESENT
+exit=1
+
+$ python3 run_checks.py            # v2.3 grader
+approved 3/3 · fault_injection 13/13 · revision 55/55
+Saved candidate replay 30/30 · Internal metadata 31/31 · Regressions 5/5
+exit=0
+```
+
 ---
 
 ## Evidence limitations
