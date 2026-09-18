@@ -6,7 +6,7 @@ argument-hint: [path to spec, PRD, or task description — or paste it]
 
 # Model Grader
 
-Asks the questions that make a grader buildable and uncheatable. Nothing else.
+Asks the questions that make a grader buildable, and that close the ways one has been cheated before. Nothing else.
 
 A grader needs two things a spec usually lacks. **Shape**: the fields, types, statuses and codes it must produce — without these it cannot be written at all. **Integrity**: the decisions whose absence lets a model satisfy every rule while doing the wrong thing — without these it can be written, and cheated.
 
@@ -50,7 +50,7 @@ The contract is complete when an implementer can build the grader from it withou
 
 Three parts, in order:
 
-- **Per rule:** name the case that fails if this rule is deleted, and name the legitimate answer this rule might wrongly reject. Missing either, the rule is `UNTESTED` or `ONE-SIDED`.
+- **Per rule:** name the case that fails if this rule is deleted, and name the legitimate answer this rule might wrongly reject. Missing either, the rule is `UNSPECIFIED` or `ONE-SIDED`.
 - **Per contract:** can a system satisfy every rule and still do the wrong thing? Can it do the work correctly and fail? Is every rule decidable?
 - **The build dry-run:** hand the contract to a reader who has not seen the interview and ask them to list every question they would need answered before writing the first check. Zero questions means complete. Every question they ask is a gap, and gaps are recorded, not filled in by you.
 

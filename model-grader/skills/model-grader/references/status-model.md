@@ -36,9 +36,9 @@ A `PROPOSED` decision may be written into the contract so the work can continue.
 
 | Value | Meaning |
 |---|---|
-| `UNTESTED` | nobody has named the case that fails if this rule is deleted |
+| `UNSPECIFIED` | nobody has named the case that fails if this rule is deleted |
 | `ONE-SIDED` | the failing case is named but the legitimate answer this rule might wrongly reject is not |
-| `TESTED` | both sides named, and an implementer could write the check from this rule alone |
+| `SPECIFIED` | both sides named, and an implementer could write the check from this rule alone. Says nothing about whether it was run — that is Verification |
 | `NOT DECIDABLE` | the rule cannot be settled from the contract as written; it is a gap, recorded not filled |
 
 **A rule an implementer cannot build from is not finished, however settled its decision.** This gate is answered by the buildability test, not by the interviewer's confidence. See `buildability-test.md`.
@@ -49,7 +49,7 @@ Each rule in the contract shows all four:
 
 ```
 R7 · child inherits from blocked parent
-    decision: APPROVED  examples: BOTH  verification: EXECUTED  buildability: TESTED
+    decision: APPROVED  examples: BOTH  verification: EXECUTED  buildability: SPECIFIED
 ```
 
 ## Why this exists

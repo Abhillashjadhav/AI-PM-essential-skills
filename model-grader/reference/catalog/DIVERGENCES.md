@@ -12,8 +12,7 @@ valid product, warn the seller.
 **Root cause.** The status rule is `wanted = 'BLOCKED' if expected else 'READY'`.
 Any issue blocks the whole record. `SOURCE_CONFLICT` fires on optional fields
 exactly as on required ones. The publication payload is all-or-nothing per record.
-There is no field-withholding path, and no seller-warning channel — warnings are
-grader-computed and never checked against the candidate.
+There is no field-withholding path.
 
 **Executed.** P1 carrying only a disputed `description` → expected status
 `BLOCKED`, absent from the publication payload.
@@ -26,8 +25,22 @@ owner decision, which the four-gate model exists to make visible.
 
 **Required change.** A `WITHHELD` outcome for a single field, distinct from
 blocking the SKU; the withheld field omitted from the payload while the rest
-publishes; a seller-facing warning the grader checks rather than computes.
-Optional-field conflict blocks nothing else; required-field conflict still blocks.
+publishes; seller guidance emitted for it. Optional-field conflict blocks
+nothing else; required-field conflict still blocks.
+
+**OPEN — how the seller guidance is carried.** Decision 4 says "warn the
+seller". It does not say through which channel, and an earlier revision of
+this file asserted the warning must be candidate-written and grader-checked.
+That was the writer's over-specification, not an owner decision, and it is
+withdrawn. Two options, both consistent with decision 4:
+
+| Option | What it means | Cost |
+|---|---|---|
+| **Grader-computed** | the grader derives the guidance from the conflict it detected and reports it, as it already does for `guided_help` | nothing new for the candidate to get wrong; the grader cannot check whether the model understood the conflict |
+| **Candidate-written, grader-checked** | the model must emit the warning and the grader verifies it names the field and the conflicting sources | tests whether the model actually understood; adds a new required output field and a new way to fail |
+
+Unsettled. The owner decides. The D4 implementation should not assume either
+until they do.
 
 ## D2 · Child publishes, but carries a dangling parent reference — partial
 

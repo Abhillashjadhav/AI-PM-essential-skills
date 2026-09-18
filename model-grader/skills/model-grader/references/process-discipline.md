@@ -15,7 +15,7 @@ Every rule must clear four gates. They are independent and none substitutes for 
 | **1 · Decision** | did the owner settle this, in their words? | `OPEN` / `PROPOSED` / `APPROVED` |
 | **2 · Examples** | do both sides exist — what must fail and what must pass? | `MISSING` / `ONE-SIDED` / `BOTH` |
 | **3 · Verification** | was anything actually run, and by whom? | `NOT RUN` / `EXECUTED` / `INDEPENDENTLY REVIEWED` |
-| **4 · Buildability** | can an implementer build this rule without asking? | `TESTED` / `UNTESTED` / `ONE-SIDED` / `NOT DECIDABLE` |
+| **4 · Buildability** | can an implementer build this rule without asking? | `SPECIFIED` / `UNSPECIFIED` / `ONE-SIDED` / `NOT DECIDABLE` |
 
 **Never report a rule as complete on three gates.** The common failure is gate 2 standing in for gate 3 — an example is written, and the rule is called tested. It is not. Writing is not running.
 

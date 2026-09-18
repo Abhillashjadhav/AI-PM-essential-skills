@@ -4,10 +4,12 @@ The exit condition. Run it before emitting anything. A contract that has not pas
 
 ## Level 1 · Per rule
 
-**Name the case that fails if this rule is deleted.** A concrete input and a concrete wrong output that this rule, and only this rule, rejects.
+**Name the case that fails if this rule is deleted.** A concrete input and a concrete wrong output that this rule rejects. Other rules may reject it too — overlapping coverage is normal in a real contract, and demanding that exactly one rule catch each case forces contrived examples that test the contract's tidiness rather than its behaviour.
 
-- Named → `TESTED`. Record the case with the rule.
-- Not named → `UNTESTED`. Do not invent the case. Do not drop the rule — a known gap is worth more than a silent one.
+- Named → `SPECIFIED`. Record the case with the rule.
+- Not named → `UNSPECIFIED`. Do not invent the case. Do not drop the rule — a known gap is worth more than a silent one.
+
+**`SPECIFIED` is not `EXECUTED`.** Naming the case proves the rule is specified well enough to build a check from. Whether that check was ever run is gate 3, Verification, and it is answered separately. This gate and that one are collapsed by anyone in a hurry, which is why they carry different words.
 
 *Why:* in the source project, thirty development cases were built and the grader accepted all thirty. The suite contained zero instances of the rule that three contract revisions had been spent defining, and two of the thirty were the same case duplicated. "Accepted all thirty" measured almost nothing. This question catches it on day one.
 
@@ -39,4 +41,4 @@ Reviewer questions about the *domain* ("what is a variant?") are contract gaps t
 
 A table, one row per rule: rule, testing case, predicted false rejection, decision status, examples status, verification status, buildability status.
 
-Emitted with `UNTESTED` rows, the contract is honest. Emitted without the table, it is not finished.
+Emitted with `UNSPECIFIED` rows, the contract is honest. Emitted without the table, it is not finished.

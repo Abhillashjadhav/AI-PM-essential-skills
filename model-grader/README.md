@@ -1,6 +1,19 @@
 # model-grader
 
-Asks the complete set of questions needed to build a model grader, and nothing else.
+Asks the questions needed to build a model grader, and nothing else.
+
+Twenty-six questions, one worked reference implementation you can run, and an exit test that has not yet been run on a filled contract.
+
+Where the questions came from, since not all of them came from the same place:
+
+| Source | Questions |
+|---|---|
+| Observed exploits against a real grader | B1, B3, B4, B5, B7 |
+| Asked early enough that the exploit never happened | B8 |
+| Argument alone, no probe behind them | **B2, B6** |
+| A coverage audit of that grader's consumed inputs | A9, A10 |
+| A slot-coverage review that found an implementer could not start | A1, A2 |
+| The owner's own bar for what a contract must settle | A3–A8, C1–C8 |
 
 It asks. It does not write graders, evals, rubrics or fixtures.
 
@@ -76,6 +89,28 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 | `model-grader` | asks the 26 questions; ends at a contract and open decisions |
 | `eval-rubric-generator` | turns a settled contract into pass/fail criteria |
 | `pm-verifier` | runs a suite against outputs and issues release evidence |
+
+### No skill in this repository can fix the reference grader
+
+Hard rule 6 forbids this skill from writing grader code, fixtures or scoring,
+and from repairing an existing grader. That is deliberate, and it has a
+consequence worth stating plainly rather than leaving someone to discover:
+
+**`reference/catalog/` ships with known divergences from its own approved
+decisions, and nothing in this repository is allowed to repair them.**
+`DIVERGENCES.md` records D4 and D2. `eval-rubric-generator` starts from a
+settled contract and writes criteria; `pm-verifier` runs suites and issues
+release evidence. Neither modifies a grader either.
+
+So if you routed "build a grader" here, the work stops at a contract, a list
+of open decisions, and — where a grader already exists — a report saying which
+approved decision it diverges from. Repairing that grader is a human's job, or
+another tool's. It is not this skill's, and rule 6 means it will refuse rather
+than quietly start.
+
+That refusal is the point. A skill that both defines correctness and
+implements it is grading its own homework, which is the failure the four-gate
+model exists to make visible.
 
 ## Files
 

@@ -12,6 +12,18 @@ def source(c,sku,f,v):
 def output(o,sku,f,v,ref=None):
     r=next(r for r in o['records'] if r['sku']==sku)
     r['fields'][f]=copy.deepcopy(v);r['evidence'][f]=ref or sku+'.'+f
+def withhold(o,sku,f,refs):
+    """Owner decision 4: the disputed optional field is withheld, the record still publishes.
+
+    The field is absent from the published record, the SKU stays READY, and supplier
+    guidance names the field and the conflicting sources.
+    """
+    r=next(r for r in o['records'] if r['sku']==sku)
+    r['fields'].pop(f,None); r['evidence'].pop(f,None)
+    r['status']='READY'
+    r.setdefault('withheld',[]).append({'field':f,'reason':'SOURCE_CONFLICT','evidence':refs,
+        'action':'Supplier: resolve '+f+' using confirmed source information. The rest of this product is published.'})
+
 def block(o,sku,code,f,refs):
     r=next(r for r in o['records'] if r['sku']==sku)
     r['status']='BLOCKED';r['issues'].append({'code':code,'field':f,'evidence':refs,'action':'Supplier: resolve '+f+' using confirmed source information.'})
@@ -71,19 +83,29 @@ c,o=fresh();c['records'][0]['fields'].pop('price');c['evidence'].pop('P1.price')
 o['records'][0]['fields'].pop('price');o['records'][0]['evidence'].pop('price');block(o,'P1','MISSING_REQUIRED','price',[])
 add('parent-price-missing-child-ready',c,o,rule='Independent child attributes do not inherit parent defects')
 
-# Conflicting optional text uses an explicit authority, never a silent guess.
+# Owner decision 4: an unresolved conflict on an OPTIONAL field withholds that field
+# and publishes the rest. It does not block the SKU. Superseded expectations that had
+# it blocking are in revision_checks_historical.json.
 c,o=fresh();source(c,'P1','description','Slim fit');output(o,'P1','description','Slim fit')
 c['evidence']['P1.description.spec']={'sku':'P1','field':'description','value':'Relaxed fit'}
-refs=['P1.description','P1.description.spec'];block(o,'P1','SOURCE_CONFLICT','description',refs)
-add('optional-description-conflict-needs-authority',c,o,rule='Unresolved optional contradiction still needs authority')
+refs=['P1.description','P1.description.spec']
+withhold(o,'P1','description',refs)
+add('optional-description-conflict-withholds-field',c,o,
+    rule='Decision 4: optional-field conflict withholds the field, publishes the record')
 c['authority_registry']={'P1.description':{'evidence_id':'P1.description.spec','source_location':'supplier-master/spec-v2','supplier_approved':True}}
-o['records'][0].update(status='READY',issues=[]);output(o,'P1','description','Relaxed fit','P1.description.spec')
+# An approved authority resolves the conflict, so nothing is withheld any more.
+o['records'][0].update(status='READY',issues=[]);o['records'][0].pop('withheld',None)
+output(o,'P1','description','Relaxed fit','P1.description.spec')
 add('supplier-designated-authority-resolves-description',c,o)
 bad=copy.deepcopy(o);output(bad,'P1','description','Slim fit')
 add('ignored-authoritative-value',c,bad,'FAIL','WRONG_VALUE')
+# Decision 3 still holds: an unapproved designation does not resolve the conflict.
+# Decision 4 changes only what happens next — withhold, do not block.
 c['authority_registry']['P1.description']['supplier_approved']=False
-output(o,'P1','description','Slim fit');block(o,'P1','SOURCE_CONFLICT','description',refs)
-add('unapproved-authority-cannot-resolve',c,o)
+output(o,'P1','description','Slim fit')
+withhold(o,'P1','description',refs)
+add('unapproved-authority-withholds-not-blocks',c,o,
+    rule='Decision 3 + 4: unapproved authority does not resolve; optional field is withheld, not blocking')
 
 # Explicit edits preserve originals and bind all confirmed family updates.
 c,o=fresh();updated={'components':[{'material':'cotton','percent':'60'},{'material':'polyester','percent':'40'}]}

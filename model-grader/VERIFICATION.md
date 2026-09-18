@@ -6,7 +6,9 @@ Three checks, as scoped. **All three are author-run walkthroughs, not independen
 
 ## Check 1 · Coverage against a working grader *(mechanical, evidence-backed)*
 
-**Method.** Parsed a production T-shirt catalog grader (410 lines, recorded at the time as `revised-v2.1`) and extracted every distinct input it consumes from the case, profile and candidate — 47 keys — plus its 39 issue codes. Mapped each against the question bank. A key with no question behind it is a gap: the contract would not have told an implementer it existed.
+**Method.** Parsed the catalog grader and extracted every distinct input it consumes from the case, profile, record, candidate, output and measurement objects, plus every issue code it emits. Mapped each against the question bank. A key with no question behind it is a gap: the contract would not have told an implementer it existed.
+
+*Originally recorded as "410 lines, `revised-v2.1`, 47 keys, 39 issue codes". Those numbers were wrong and are corrected below — see **Re-run**.*
 
 **Result: 3 gaps found, all now closed.**
 
@@ -18,9 +20,26 @@ Three checks, as scoped. **All three are author-run walkthroughs, not independen
 
 After adding the two questions this audit produced — numbered A7 and A8 at the time, A9 and A10 since Part A gained two upstream questions — **47 of 47** consumed inputs and **39 of 39** issue codes trace to at least one question. Both new questions carry a "found by audit, not by design" note in the bank, so a reader knows which questions are evidence-derived rather than reasoned.
 
-**Open discrepancy, found when the reference shipped.** This check names its target as "410 lines, `revised-v2.1`". In `reference/catalog/`, `grader.py` is the file the reference README calls `revised-v2.1` and it is **427** lines; `baseline_v2.py` is exactly **410**. So the audit ran against one of the two and the label or the count is wrong. Until that is settled, treat 47/47 and 39/39 as coverage against an unidentified one of those two graders, not against `revised-v2.1` specifically. Re-running the audit against `grader.py` is the way to close it; it has not been done.
+**Re-run against `grader.py`, now that the reference ships.** The original numbers could not be reproduced and all three were wrong. `reference/catalog/coverage_audit.py` re-runs the audit; anyone can check it.
 
-**Limitation.** Coverage against one grader in one domain. It shows the bank is sufficient for a task of this shape. It does not establish sufficiency for tasks of other shapes, and a second audit against a different domain would likely find more.
+| | Originally recorded | Actual, `grader.py` |
+|---|---|---|
+| Lines | 410 | **427** |
+| Version | `revised-v2.1` | `revised-v2.1` (confirmed — `VERSION` on line 7) |
+| Consumed inputs | 47 / 47 | **45 / 45** |
+| Issue codes | 39 / 39 | **43 / 43** |
+
+The "410 lines" belonged to `baseline_v2.py`, a different version (`revised-v2`). The audit was run against one file and labelled with another's line count. Nothing was repointed to make the old numbers work: `grader.py` is the file the reference calls `revised-v2.1`, so it is the file audited.
+
+**Coverage still holds, and is better than recorded** — 45 of 45 consumed inputs and 43 of 43 issue codes trace to a question. The conclusion the original audit drew survives; only its arithmetic did not.
+
+**What the re-run additionally shows: the grader exercises 19 of the 26 questions.** Not exercised: **A1, A2, A3, C3, C5, C6, C8**. That is expected for most of them and worth stating rather than hiding:
+
+- **A1, A2** post-date this grader — they were added by the Check 5 slot review.
+- **A3** (outcome and targets) and **C5**, **C6**, **C8** are contract-level and process-level decisions that do not appear as keys or codes in grader source. Their absence here is not evidence they are unnecessary; it is evidence this audit cannot see them.
+- **C3** (blocker versus warning) *is* implemented — the grader separates `err()` from `warnings` — but the distinction lives in control flow rather than in a key or a code, so the extraction does not catch it. A limitation of the method, not a gap in the bank.
+
+**Honest limit on the numbers.** Extraction is mechanical and reproducible. The question each input maps to was decided by hand, in the mapping tables inside `coverage_audit.py`. 45/45 means every input has a question someone argued it belongs to — not that the mapping was independently adjudicated.
 
 ---
 

@@ -129,7 +129,7 @@ May the system self-resolve a disagreement? <answer>
 
 ## Buildability test result
 
-- Rules `UNTESTED`: <list>
+- Rules `UNSPECIFIED`: <list>
 - Rules `ONE-SIDED`: <list>
 - Rules `NOT DECIDABLE`: <list>
 - Can a system satisfy every rule and still do the wrong thing? <answer, or the cheapest way>
