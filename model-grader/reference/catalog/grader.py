@@ -423,9 +423,13 @@ def grade(case,candidate):
     for sku in records:
         if sku in ready:
             row=out[sku]
+            parent=records[sku].get('parent_sku')
+            # D2: never point a published record at a parent absent from this payload.
+            # The relationship stays in `records`; link it when the parent is ready.
+            published_parent=parent if parent in ready else None
             fields={k:v for k,v in row['fields'].items() if k not in withheld_fields.get(sku,set())}
             payload['records'].append({
-                'sku':sku,'role':records[sku]['role'],'parent_sku':records[sku].get('parent_sku'),
+                'sku':sku,'role':records[sku]['role'],'parent_sku':published_parent,
                 'fields':copy.deepcopy(fields), 'display':copy.deepcopy(row['display']),
                 'measurements':[{'id':m['id'],'measurement_type':m['measurement_type'],
                                  'value':m['value'],'unit':m['unit']} for m in row.get('measurements',[])]})
