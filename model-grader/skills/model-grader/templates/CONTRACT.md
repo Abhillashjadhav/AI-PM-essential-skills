@@ -44,7 +44,7 @@ Interview: model-grader v0.1.0 · Contract version: <n>
 | Conflict type | Who resolves | What makes it binding | Scope of the resolution | What is retained of the original |
 |---|---|---|---|---|
 
-May the system self-resolve a disagreement? <answer — usually no>
+May the system self-resolve a disagreement? <answer>
 
 ## Part B · Integrity
 
@@ -59,7 +59,7 @@ May the system self-resolve a disagreement? <answer — usually no>
 | B7 | what the output may never change | |
 | B8 | what nothing counts as | |
 
-**B6 envelope rules (if output is open):** a private envelope may never carry a claim about the subject, and may never reach a publishing or acting consumer. Publication and action consume an explicit projection of checked data, never the raw submission.
+**B6 envelope rules (if output is open):** <the owner's two rules — what a private envelope may never carry, and which consumers it may never reach. See question-bank.md §B6 for what a complete answer names; do not fill this from it.>
 
 ## Part C · Verdict and judgment
 
@@ -86,7 +86,7 @@ May the system self-resolve a disagreement? <answer — usually no>
 |---|---|---|
 | 1 | | |
 
-All blocking rules apply regardless of rank. Ranking informs strictness; it never licenses trading a lower-ranked error for completion.
+**What ranking does and does not license:** <the owner's rule. See question-bank.md §C6 for what a complete answer names; do not fill this from it.>
 
 ### C7 Human judgment
 | Rule | Reviewer | Required evidence | Criteria | Grader records |
