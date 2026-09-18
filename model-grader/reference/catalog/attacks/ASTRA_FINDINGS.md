@@ -53,3 +53,23 @@ No measurement-boundary exploit was found in these targeted probes. Parent enric
 These probes do not measure production reliability or held-out performance. They establish concrete reproducible failures of the present deterministic checker.
 
 A5's observed PASS is exact; its contract classification should receive owner judgment on dependency scope. It concerns a **known-invalid shared material** inherited from an unresolved parent, not a rule that any parent blocker automatically blocks every child. No broader parent-status dependency was assumed.
+
+## Recovered probes — B2 and B6
+
+Written during the first review against `baseline-v1` and never carried into
+this directory. The original execution bundle is not in the repository, so both
+were **re-derived against `baseline_v1.py`** rather than recovered. Each is
+replayable the same way as the `ASTRA_A*` files.
+
+| File | Exploit | baseline-v1 | revised-v2.1 (unchanged in frozen-v2.2) |
+|---|---|---|---|
+| `ASTRA_B2_cross_case_answer_reuse.json` | An answer authored for one case submitted against another. Nothing binds a response to the request it answers. | **16 of the 870 cross-case pairs PASS** | FAIL |
+| `ASTRA_B6_claim_outside_fields.json` | A certification claim parked outside `fields`, where no evidence check reaches it. The output schema is open, so unknown keys ride along unchecked. | PASS at record level, nested object and submission level | FAIL at all three |
+
+The 16 figure was re-measured, not taken from the earlier note: every ordered
+pair of the 30 development cases and 30 candidate answers was run through
+`baseline_v1.grade`, excluding the matched pairs. It agrees with what the first
+review recorded, which is the reason to trust the re-derivation.
+
+Both are closed in `revised-v2.1` — B2 by the `CASE_ID` check, B6 by
+`UNSUPPORTED_OUTPUT_FIELD` against a closed output schema.
