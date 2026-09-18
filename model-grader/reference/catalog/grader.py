@@ -4,7 +4,7 @@ import copy
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
-VERSION = 'revised-v2.1'
+VERSION = 'frozen-v2.2'
 REQUIRED = ('brand','category','subcategory','design','pattern','material','color','size','price')
 SHARED = ('brand','subbrand','category','subcategory','design','pattern','material')
 # These are private envelopes at submission/record level, never catalog fields.

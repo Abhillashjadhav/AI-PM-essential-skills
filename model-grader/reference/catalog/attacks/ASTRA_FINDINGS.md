@@ -61,7 +61,7 @@ this directory. The original execution bundle is not in the repository, so both
 were **re-derived against `baseline_v1.py`** rather than recovered. Each is
 replayable the same way as the `ASTRA_A*` files.
 
-| File | Exploit | baseline-v1 | revised-v2.1 |
+| File | Exploit | baseline-v1 | revised-v2.1 (unchanged in frozen-v2.2) |
 |---|---|---|---|
 | `ASTRA_B2_cross_case_answer_reuse.json` | An answer authored for one case submitted against another. Nothing binds a response to the request it answers. | **16 of the 870 cross-case pairs PASS** | FAIL |
 | `ASTRA_B6_claim_outside_fields.json` | A certification claim parked outside `fields`, where no evidence check reaches it. The output schema is open, so unknown keys ride along unchecked. | PASS at record level, nested object and submission level | FAIL at all three |
