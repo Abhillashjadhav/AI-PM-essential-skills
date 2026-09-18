@@ -40,7 +40,7 @@ found-by-audit rather than reasoned.
 
 | Path | What it is |
 |---|---|
-| `grader.py` | the current grader, `frozen-v2.2` — **frozen for independent evaluation** |
+| `grader.py` | the current grader, `frozen-v2.3` — **frozen for independent evaluation** |
 | `baseline_v1.py`, `baseline_v2.py` | earlier versions, kept for comparison |
 | `contract.md` | the contract it implements |
 | `task_prompt.md` | what the candidate model is told |
@@ -63,8 +63,11 @@ Gate 3 is open. That is the honest state, and leaving it visible is the point.
 
 ## Frozen for independent evaluation
 
-`grader.py` is at **`frozen-v2.2`** and is frozen. No further changes should be
+`grader.py` is at **`frozen-v2.3`** and is frozen. No further changes should be
 made to it.
+
+`frozen-v2.2` (commit `a792f76`) is preserved unchanged as the historical record.
+`frozen-v2.3` supersedes it and is the version to evaluate.
 
 Any subsequent fix goes into a new version. Editing this one voids the
 evaluation: a sealed-case run is only evidence about the artifact it was run
@@ -73,6 +76,6 @@ either version.
 
 What is frozen: `grader.py`. What is not: the fixtures, the documents, and the
 reproductions, which may still gain cases — but a change that alters a verdict
-`frozen-v2.2` produces is a change to the grader by another route, and belongs
+`frozen-v2.3` produces is a change to the grader by another route, and belongs
 in the next version too.
 

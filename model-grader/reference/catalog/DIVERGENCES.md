@@ -1,6 +1,6 @@
 # Divergences from the approved decisions
 
-Executed against `frozen-v2.2` (the D4/D2 results below were first executed against
+Executed against `frozen-v2.3` (the D4/D2 results below were first executed against
 `revised-v2.1` and re-run since). Every result came from a run, not a reading.
 
 ## D4 · Optional-field conflict — RESOLVED
