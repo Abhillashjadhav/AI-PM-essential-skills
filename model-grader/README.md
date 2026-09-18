@@ -2,7 +2,18 @@
 
 Asks the questions needed to build a model grader, and nothing else.
 
-Twenty-six questions derived from observed failures, one worked reference implementation you can run, and an exit test that has not yet been run on a filled contract.
+Twenty-six questions, one worked reference implementation you can run, and an exit test that has not yet been run on a filled contract.
+
+Where the questions came from, since not all of them came from the same place:
+
+| Source | Questions |
+|---|---|
+| Observed exploits against a real grader | B1, B3, B4, B5, B7 |
+| Asked early enough that the exploit never happened | B8 |
+| Argument alone, no probe behind them | **B2, B6** |
+| A coverage audit of that grader's consumed inputs | A9, A10 |
+| A slot-coverage review that found an implementer could not start | A1, A2 |
+| The owner's own bar for what a contract must settle | A3–A8, C1–C8 |
 
 It asks. It does not write graders, evals, rubrics or fixtures.
 
