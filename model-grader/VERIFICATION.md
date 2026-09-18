@@ -281,6 +281,92 @@ Saved candidate replay 30/30 · Internal metadata 31/31 · Regressions 5/5
 exit=0
 ```
 
+## Gate 3 status at `frozen-v2.3` — NOT MET
+
+Gate 3 means: **someone other than the builder has checked that the test
+expectations are correct.** Not that the tests pass. Not that the policy behind
+them was approved. That the expectation encoded in each fixture is the right one,
+checked by someone who did not write it.
+
+Measured at `c31cbd9`. Full map in `reference/catalog/ADJUDICATION_MAP.md`.
+
+### Which fixtures have that evidence
+
+| | Count |
+|---|---|
+| Total fixtures | **102** |
+| An owner judgment governs the expected outcome | 42 |
+| Expected outcome builder-authored and unreviewed | 60 |
+| **Fixtures whose *encoding* an owner signed off** | **3** |
+
+**Three.** `gold/S1.json`, `gold/S2.json`, `gold/S3.json`, each carrying
+`label_status: "owner-approved"`.
+
+The 42 and the 3 measure different things, and only the 3 is Gate 3 evidence. A
+judgment saying "hold the parent and affected children" settles the policy; it
+does not confirm that a particular fixture's records, evidence and expected error
+codes express that policy correctly. That transcription was builder work for 99
+of the 102, and the fixtures say so in their own labels:
+
+```
+gold/S1,S2,S3          "owner-approved"
+revision_checks.json   "development expectation derived from owner rules;
+                        not independent gold"
+gold/faults.json       "builder-derived from approved rules"
+```
+
+So: **3 fixtures have Gate 3 evidence. 99 do not.**
+
+### Independent adjudication is in progress elsewhere
+
+Steps 2 and 3 of the validation plan are being carried out by someone who is not
+the builder. Their results are **not reflected in this file** and nothing here
+anticipates them. When they land, the numbers above change; until then they
+stand as written.
+
+The builder cannot supply this evidence for the builder's own fixtures, and has
+not attempted to.
+
+### No sealed cases have been run
+
+Ten evaluation cases are being authored elsewhere. **Zero have been run.** No
+case exists in this repository and the builder has not seen any of them.
+
+`reference/catalog/run_sealed_cases.py` and `SEALED_CASES.md` are the harness and
+the format, built before the cases exist so neither side sees the other's work.
+The harness was proved on six self-authored throwaway inputs that were then
+deleted; those carry no validation weight and are labelled as such in
+`SEALED_CASES.md`.
+
+### The accuracy targets remain unmeasured
+
+The primary outcome — **more than 98%** of published SKU records correct — and the
+guardrail — **fewer than 0.5%** of valid submissions wrongly rejected — have never
+been measured. Nothing currently in this repository can measure either.
+
+**Ten cases would be an initial independent check, not proof of either target.**
+A clean sealed-case run says the grader agreed with an independent judgment on
+ten cases. It does not establish a rate. Reporting one from ten cases would be
+the same error as calling 52/52 self-consistency an accuracy score.
+
+The runner reports incorrect approvals and incorrect rejections separately and
+never combines them, because the two targets have different denominators and a
+single figure hides which direction is failing.
+
+### Outside what this grader demonstrates
+
+Two capabilities are not in scope for anything measured here, and no result from
+this grader should be read as evidence about either:
+
+- **Durable storage.** The grader is a pure function over one case. It holds no
+  state between runs and nothing here exercises persistence, recovery or
+  migration.
+- **Later parent linking.** Judgment 2 says the relationship is retained and
+  linked when the parent is ready. What is implemented and tested is the
+  same-run case. Re-linking a child in a **later** run is unimplemented and
+  untested, because nothing carries state between runs — which is the same gap as
+  durable storage seen from the other side.
+
 ---
 
 ## Evidence limitations
