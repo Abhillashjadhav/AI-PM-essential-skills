@@ -16,7 +16,7 @@ Without these, the first line of a check cannot be written.
 
 **Ask:** In one sentence, what is this system for? What share of its published output must be correct? What share of valid work may be wrongly rejected? When those two pull against each other, which wins?
 
-**Why:** these numbers set how strict every later rule should be. A grader tuned for a 0.5% wrong-rejection ceiling is a different grader from one tuned to never let a bad record through.
+**Why:** these numbers set how strict every later rule should be. A grader tuned to a tight wrong-rejection ceiling is a different grader from one tuned to never let a bad record through.
 
 **Complete answer names:** the outcome; a correctness target; a wrong-rejection target; the tradeoff direction; and explicitly, whether correctly refusing to act counts toward success. It usually should not — a system that correctly declines everything has completed no work.
 
