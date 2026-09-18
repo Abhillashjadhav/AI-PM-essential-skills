@@ -78,8 +78,18 @@ The file also covers the third case that gets misfiled most often: a malformed f
 2. **Should A8 permit any self-resolution?** The bank recommends no and asks the owner. Left open deliberately.
 3. **Is 24 the right number?** It is what one audit produced. A second audit in a different domain is the way to find out, and the honest expectation is that it adds one or two.
 
+## Check 4 · Automated review sweep *(EXECUTED — not independent adjudication)*
+
+**Method.** Three automated reviewers were run over the plugin before merge: a consistency sweep, a quality-bar audit against the repository's `CLAUDE.md`, and a cold read by a reviewer given only the contract template and the question bank.
+
+**Result: real defects, found and fixed.** Among them: three decisions pre-filled in `CONTRACT.md` in the interviewer's words, violating hard rule 1 in the one artifact the owner signs; a project number surviving in A1's rationale four lines above "Never supply these numbers"; `status-model.md` defining three gates while hard rule 8 forbids stopping at three; `SKILL.md` omitting A1 from its own Part A list and mislabelling C8; and `PROCESS_LEDGER.md` shipping with no section for "Decisions recorded", a trail signal freeze requires.
+
+**Gate status: `EXECUTED`, not `INDEPENDENTLY REVIEWED`.** Every reviewer above was spawned by the same session that made these changes, from the same context, on instructions written by the same party. That is a second sample, not a second party. Under this skill's own gate 3 — "someone who did not build the grader or write the example has adjudicated" — it does not qualify, and claiming otherwise would be the exact collapse gate 3 exists to prevent. The findings are evidence; the reviewing is not independent.
+
+---
+
 ## Evidence limitations
 
-- No fresh model run. No independent adjudication. Every check above was authored and run by the same party that wrote the skill — the same weakness this skill's own gate 3 exists to make visible.
+- **No independent adjudication.** Checks 1–3 were authored and run by the party that wrote the skill. Check 4 was run by automated reviewers spawned from that same session and shares its blind spots by construction — it raises the floor on defects found, and moves gate 3 not at all. Nobody outside has adjudicated any of it.
 - Check 1 is mechanical and reproducible: parse the grader, enumerate its inputs, map them to questions. Checks 2 and 3 are reasoning about a design, and reasoning about a design is not evidence that it works.
 - **The real test has not been run:** give the skill a spec it has never seen, run the full interview with a real owner, hand the resulting contract to an implementer who did not see the interview, and count the questions they ask. That number is the only measure of whether this works. Until then, `v0.1.0`.
