@@ -5,17 +5,23 @@ with a default. A guessed answer looks decided and nobody revisits it.
 
 | # | Question | What it costs to leave open | Who can decide |
 |---|---|---|---|
-| a | **Is a certification claim per-SKU or family-wide?** Adjudication 6 says hold the entire product, but `claims` are per-record and `HUMAN_VALIDATION_REQUIRED` does not propagate to children. Executed: a parent carrying an unapproved certification gets `blocking=[('HUMAN_VALIDATION_REQUIRED','certification')]` while its child gets `blocking=[]` and publishes. `certification` is not in `SHARED`, so nothing propagates. | If certification is family-scoped, the current split publishes an uncertified record alongside a held one. | Owner |
 | b | **Adjudication 5's "seller supplies the missing percentage later; validate and update affected records" — grader scope or workflow scope?** No mechanism exists today. | Either an unbuilt requirement sits in the contract, or a real workflow step has no owner. | Owner |
-| d | **Is `WITHHELD_FIELD_PUBLISHED` the mechanism the owner wants?** Decision 4 says the withheld field is absent from the candidate's fields; without a check that rule is unenforced, so this code was added. It enforces a stated rule rather than inventing one, but the decision did not name a mechanism. | If the owner wants something else, candidates are being failed against a code they never agreed to. | Owner |
 
 ## Settled since the last revision
 
+- **(a) Certification scope.** Settled by owner decision 2026-09-18:
+  **family-wide**. A certification applies to a group, not an individual SKU, so
+  it is evaluated at group level. Implemented in `frozen-v2.3`; recorded in
+  `DECISIONS.md` with the executed evidence.
 - **(c) Decision 4's seller-warning channel.** Settled by owner decision:
   grader-generated, deterministic, three branches driven by the computed status.
   Implemented as `warning_branch()`; see `DIVERGENCES.md`.
+- **(d) `WITHHELD_FIELD_PUBLISHED`.** Approved by the owner 2026-09-18 as
+  implemented. `DECISIONS.md` records what it actually does — it fails the whole
+  SKU, which drops out of the publication payload — rather than only that
+  approval happened.
 - **The eight adjudications.** Complete. Recorded in `DECISIONS.md` with their
-  fixture mapping and the two mismatches they exposed.
+  fixture mapping. Mismatch B is now resolved; mismatch A remains open below.
 
 ## Not yet built
 

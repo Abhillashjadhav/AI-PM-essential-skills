@@ -13,7 +13,7 @@ an approved rule implemented wrongly is an implementation defect, reported as on
 | 3 | Conflicting descriptions, unapproved authoritative source | Recommend a correction to the seller. A database designation does not substitute for seller approval. | ✅ verified |
 | 4 | Only an optional description conflicts | Withhold the disputed description, publish the otherwise valid product, warn the seller. Do not block the whole product. | ✅ implemented (D4) |
 | 5 | "60% cotton, polyester" with no polyester percentage | Preserve both internally, mark polyester's percentage not supplied, never infer 40%. Display "60% cotton". | ✅ verified |
-| 6 | Certification document uploaded, not approved | Hold the entire product. An attachment alone is insufficient. | ⚠️ per-SKU only — see the mismatch below |
+| 6 | Certification document uploaded, not approved | Hold the entire product — parent and every variant. An attachment alone is insufficient. | ✅ implemented family-wide (v2.3) |
 | 7 | Supplier explicitly chooses US/USD | Use the selected market and currency. India/INR defaults must not override. No invented FX, no relabelling. | ✅ verified |
 | 8 | Size chart assigns one measurement to two sizes | Hold the affected SKU and ask the seller to resolve. Never choose automatically. | ✅ verified |
 
@@ -46,21 +46,67 @@ run. `d2-link-retained-when-parent-published` covers a parent that is ready in
 the same run, which is a different thing. Deferred relinking is out of scope for
 this task and is recorded as unaddressed in `DIVERGENCES.md`.
 
-### Mismatch B — adjudication 6 holds the SKU, not the product
+### Mismatch B — adjudication 6 scope — **RESOLVED 2026-09-18**
 
-The adjudication says hold *the entire product*. The implementation holds only
-the SKU carrying the claim. Executed:
+Previously disclosed: the adjudication said hold the entire product, the grader
+held only the SKU carrying the claim.
+
+**Resolved in favour of family-wide**, by the owner, on 2026-09-18.
+
+> **Owner's reasoning, recorded verbatim:** a certification applies to a group,
+> not to an individual SKU. It does not come individually, so it must be
+> evaluated at group level.
+
+**Recorded decision.** Certification approval is a family-wide publication
+requirement. Until the catalog review team approves the certificate's validity
+and applicability, the parent and all variants are held.
+
+**It is a hold, not a pass.** After approval the block lifts and each SKU must
+still satisfy every other check it was already subject to. Approval of the
+certificate is not approval of the SKU.
+
+Implemented in `frozen-v2.3`. Executed:
 
 ```
-P1 with an unapproved certification
-  P1: blocking=[('HUMAN_VALIDATION_REQUIRED', 'certification')]
-  C1: blocking=[]
-  certification is not in SHARED, so nothing propagates to the child
+pending certificate on the parent
+  v2.2   P1 blocking=[HUMAN_VALIDATION_REQUIRED certification]  C1 blocking=[]
+         publication_payload = ['C1']
+  v2.3   P1 blocking=[HUMAN_VALIDATION_REQUIRED certification]
+         C1 blocking=[HUMAN_VALIDATION_REQUIRED certification]
+         publication_payload = []
+
+after approval, C1 independently broken on a required field
+  P1 blocking=[]  C1 blocking=[SOURCE_CONFLICT price]
+  publication_payload = ['P1']   verdict=PASS
 ```
 
-Whether "the entire product" means the SKU or the whole family is a policy
-question the adjudication does not settle, and it is not mine to settle. It is
-in `OPEN_DECISIONS.md`.
+Only certification is scoped this way. `SHARED` is unchanged and no other field
+became family-wide.
+
+### WITHHELD_FIELD_PUBLISHED — **APPROVED 2026-09-18**
+
+The owner has approved the mechanism as implemented. It was added because
+decision 4 says the withheld field is absent from the candidate's fields, and
+without a check that rule was unenforced.
+
+**What the code actually does**, so the record says what was approved rather than
+only that approval happened. Executed against `frozen-v2.3`:
+
+```
+candidate publishes a field whose sources disagree, instead of withholding it
+  errors       : [('WITHHELD_FIELD_PUBLISHED', 'P1', 'description')]
+  P1 expected  : READY | candidate: READY | handling: FAIL
+  verdict      : FAIL
+  payload SKUs : ['C1']          <- P1 dropped out entirely
+  P1 payload has 'description'? : False
+```
+
+**It fails the whole SKU.** Not that field alone, and not a warning without
+penalty. The SKU's *expected* status stays `READY` — the policy does not block it
+— but the candidate's handling of it fails, the run verdict is `FAIL`, and the
+SKU does not reach the publication payload at all. The disputed value never
+reaches the payload either way, because payload construction strips withheld
+fields independently of what the candidate sent.
 
 **These eight adjudications establish expected behaviour for the scenarios they
 cover. They do not mean all 52 revision checks were independently validated. The
