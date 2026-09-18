@@ -50,7 +50,7 @@ The contract is complete when an implementer can build the grader from it withou
 
 Three parts, in order:
 
-- **Per rule:** name the case that fails if this rule is deleted, and name the legitimate answer this rule might wrongly reject. Missing either, the rule is `UNTESTED` or `ONE-SIDED`.
+- **Per rule:** name the case that fails if this rule is deleted, and name the legitimate answer this rule might wrongly reject. Missing either, the rule is `UNSPECIFIED` or `ONE-SIDED`.
 - **Per contract:** can a system satisfy every rule and still do the wrong thing? Can it do the work correctly and fail? Is every rule decidable?
 - **The build dry-run:** hand the contract to a reader who has not seen the interview and ask them to list every question they would need answered before writing the first check. Zero questions means complete. Every question they ask is a gap, and gaps are recorded, not filled in by you.
 
