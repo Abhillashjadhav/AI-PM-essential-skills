@@ -3,7 +3,7 @@
 Owner: <name> · Date: <date> · Status: **DRAFT** until owner approves
 Interview: model-grader v0.1.0 · Contract version: <n>
 
-> Every rule below carries three statuses. `decision` is the owner's; `PROPOSED` means a model suggested it and it is not settled. `examples` is whether both sides exist. `verification` is whether anything was actually run. These are never collapsed.
+> Every rule below carries four gates. `decision` is the owner's; `PROPOSED` means a model suggested it and it is not settled. `examples` is whether both sides exist. `verification` is whether anything was actually run. `buildability` is whether an implementer could write the check from the rule alone. These are never collapsed.
 
 ---
 

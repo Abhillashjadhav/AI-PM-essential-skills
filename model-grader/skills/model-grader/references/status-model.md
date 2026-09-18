@@ -1,6 +1,6 @@
-# Three statuses, never collapsed
+# Four gates, never collapsed
 
-Every rule carries three independent statuses. Collapsing them is how a suite comes to look validated when it is not.
+Every rule carries four independent gates. Collapsing them is how a suite comes to look validated when it is not. The authoritative table is in `process-discipline.md` §The four gates; this file explains what each value means and why the distinctions hold.
 
 ## Decision
 
@@ -32,15 +32,26 @@ A `PROPOSED` decision may be written into the contract so the work can continue.
 
 **Writing an example is not running it. Running it is not independent review.** A rule may sit at `APPROVED / BOTH / NOT RUN` indefinitely and that is an honest state. What is not honest is calling it tested.
 
+## Buildability
+
+| Value | Meaning |
+|---|---|
+| `UNTESTED` | nobody has named the case that fails if this rule is deleted |
+| `ONE-SIDED` | the failing case is named but the legitimate answer this rule might wrongly reject is not |
+| `TESTED` | both sides named, and an implementer could write the check from this rule alone |
+| `NOT DECIDABLE` | the rule cannot be settled from the contract as written; it is a gap, recorded not filled |
+
+**A rule an implementer cannot build from is not finished, however settled its decision.** This gate is answered by the buildability test, not by the interviewer's confidence. See `buildability-test.md`.
+
 ## The combined line
 
-Each rule in the contract shows all three:
+Each rule in the contract shows all four:
 
 ```
 R7 · child inherits from blocked parent
-    decision: APPROVED  examples: BOTH  verification: EXECUTED
+    decision: APPROVED  examples: BOTH  verification: EXECUTED  buildability: TESTED
 ```
 
 ## Why this exists
 
-In the source project a suite of 52 checks reported 52 of 52 matching expectations. The expectations had been written by the same builder that wrote the grader, and the file's own label said so. The suite was internally consistent and established nothing about correctness. Three separate statuses make that visible on every row instead of buried in a footnote.
+In the source project a suite of 52 checks reported 52 of 52 matching expectations. The expectations had been written by the same builder that wrote the grader, and the file's own label said so. The suite was internally consistent and established nothing about correctness. Four separate gates make that visible on every row instead of buried in a footnote.

@@ -16,7 +16,7 @@ This skill asks for both, then tests whether the answers are sufficient. It does
 
 1. **Never answer a question on the owner's behalf.** Propose options, name the tradeoff, recommend one, then stop until they choose. A declined question goes to `OPEN_DECISIONS.md` in their words. Never fill a default, never soften a refusal into a guess — a guessed answer looks decided and nobody revisits it.
 2. **Never ask a question the spec already answers.** Quote the line that answers it and move on. Re-asking settled decisions is how an interview becomes a form nobody finishes.
-3. **Never mark a rule verified because an example was written for it.** Three statuses are tracked separately and never collapsed: the decision, the examples, the verification. Writing an example is not running it. Running it is not having it independently adjudicated. Read `references/status-model.md` and apply it to every rule.
+3. **Never mark a rule verified because an example was written for it.** Four gates are tracked separately and never collapsed: the decision, the examples, the verification, the buildability. Writing an example is not running it. Running it is not having it independently adjudicated. Read `references/status-model.md` and apply all four to every rule.
 4. **Never reopen a settled decision to accommodate existing code.** If an approved rule is implemented wrongly, that is an implementation defect and is reported as one. Unclear expected behaviour is a policy gap and goes to the owner. Read `references/policy-vs-defect.md` before classifying anything as either.
 5. **Never claim a judgment is deterministic when it is not.** A rule whose only test is a view about quality gets a named human reviewer, the evidence they need, and their decision criteria — or it is dropped. Read `references/human-judgment.md`. Do not invent a proxy metric to make a subjective rule look checkable.
 6. **Never expand into building.** No grader code, no eval suite, no fixtures, no scoring. This skill ends at a contract and a list of open decisions.
@@ -64,7 +64,7 @@ Then run the five freeze conditions. Report which fail. Do not freeze past a fai
 
 ### 5. Emit
 
-Three files from `templates/`. `PROCESS_LEDGER.md` carries the trail. `CONTRACT.md` carries the twenty-four answers, both-sided examples, the three statuses per rule, and the buildability table. `OPEN_DECISIONS.md` carries everything declined, in the owner's words, with what it costs to leave open and who can settle it.
+Three files from `templates/`. `PROCESS_LEDGER.md` carries the trail. `CONTRACT.md` carries the twenty-four answers, both-sided examples, the four gates per rule, and the buildability table. `OPEN_DECISIONS.md` carries everything declined, in the owner's words, with what it costs to leave open and who can settle it.
 
 Mark the contract **draft** until the owner approves it. Gaps stay visible in the draft. A contract with four honest open decisions is more usable than one where the interviewer guessed.
 
