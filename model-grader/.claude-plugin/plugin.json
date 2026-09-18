@@ -1,7 +1,7 @@
 {
   "name": "model-grader",
   "version": "0.1.0",
-  "description": "Asks the complete set of questions needed to build a model grader, and nothing else. Twenty-four questions in three parts of eight: the shape a grader mechanically needs, the eight integrity questions whose absence lets a model fake success, and the verdict and judgment rules. Exits on a buildability test, not on the interviewer's opinion.",
+  "description": "Asks the complete set of questions needed to build a model grader, and nothing else. Twenty-six questions: ten on shape, eight on integrity, eight on verdict — the shape a grader mechanically needs, the eight integrity questions whose absence lets a model fake success, and the verdict and judgment rules. Exits on a buildability test, not on the interviewer's opinion.",
   "author": { "name": "Abhillash Jadhav", "url": "https://github.com/Abhillashjadhav" },
   "keywords": ["evals", "ai-pm", "grader", "reward-design", "contract", "reliability", "verification"]
 }

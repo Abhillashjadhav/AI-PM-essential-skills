@@ -2,7 +2,7 @@
 
 One project's answers, to show the **shape** of a complete answer. The numbers and rules are that owner's and are not defaults. Never carry them into another interview.
 
-## A1 Outcome and targets
+## A3 Outcome and targets
 
 - Outcome: publish supplier SKU records to a marketplace catalog without manual editing.
 - Correctness target: at least 98% of published records correct.

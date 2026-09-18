@@ -41,7 +41,7 @@ Five things, each recorded with a timestamp, in the process ledger.
 
 | Signal | What it is | Minimum before freeze |
 |---|---|---|
-| **Questions raised** | every one of the 24 asked, or quoted from the spec as already answered | all 24 accounted for |
+| **Questions raised** | every one of the 26 asked, or quoted from the spec as already answered | all 26 accounted for |
 | **Decisions recorded** | the owner's answer in their own words, per question | one per question, or an entry in `OPEN_DECISIONS.md` |
 | **Revisions** | each contract version with what changed and why | at least one revision after the first draft |
 | **Review** | someone other than the interviewer read the contract and raised findings | at least one review, findings recorded |
@@ -55,7 +55,7 @@ Five things, each recorded with a timestamp, in the process ledger.
 
 All five must hold. Report which fail; never freeze past a failure.
 
-1. All 24 questions answered, quoted as pre-answered, or listed open.
+1. All 26 questions answered, quoted as pre-answered, or listed open.
 2. Every rule shows all four gates explicitly. No blanks, no implied values.
 3. No rule sits at `PROPOSED` in the contract body. Proposed decisions either become `APPROVED` or move to `OPEN_DECISIONS.md`.
 4. The build dry-run has been run and its question count recorded. Zero is the exit condition; any other number means the questions are logged as gaps.

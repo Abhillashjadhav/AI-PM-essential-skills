@@ -6,14 +6,16 @@ The record of how this contract was arrived at. Freeze is blocked without it.
 
 | # | Question | Asked / Quoted from spec / Open | Date |
 |---|---|---|---|
-| A1 | outcome and targets | | |
-| A2 | input and output shape | | |
-| A3 | requirement class per field | | |
-| A4 | allowed values, units, formats | | |
-| A5 | evidence and provenance | | |
-| A6 | record relationships | | |
-| A7 | operations and record states | | |
-| A8 | authority and resolution | | |
+| A1 | the grader itself | | |
+| A2 | reference-based or rule-based | | |
+| A3 | outcome and targets | | |
+| A4 | input and output shape | | |
+| A5 | requirement class per field | | |
+| A6 | allowed values, units, formats | | |
+| A7 | evidence and provenance | | |
+| A8 | record relationships | | |
+| A9 | operations and record states | | |
+| A10 | authority and resolution | | |
 | B1 | addition | | |
 | B2 | binding | | |
 | B3 | comparison | | |
@@ -68,7 +70,7 @@ Exit condition is zero questions. Any other number is recorded in `OPEN_DECISION
 
 | # | Condition | Met? |
 |---|---|---|
-| 1 | all 24 questions accounted for | |
+| 1 | all 26 questions accounted for | |
 | 2 | every rule shows all four gates | |
 | 3 | no `PROPOSED` decision left in the contract body | |
 | 4 | dry-run run, question count recorded | |

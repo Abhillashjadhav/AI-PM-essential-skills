@@ -1,10 +1,10 @@
-# The twenty-four questions
+# The twenty-six questions
 
 Three parts. **Part A** makes a grader possible to write. **Part B** makes it hard to cheat. **Part C** makes its verdicts mean something. Skip Part A and there is nothing to build. Skip Part B and what you build gets walked around. Skip Part C and it produces numbers nobody can interpret.
 
 Ask at most three per turn. Quote the spec where it already answers one.
 
-Eight per part. A7 and A8 were added after an audit of a working grader found it consumed inputs no question asked for — the note on each says so.
+Ten in Part A, eight in each of B and C. A9 and A10 were added after an audit of a working grader found it consumed inputs no question asked for. A1 and A2 were added after a build dry-run found an implementer could not write a first check without them. The note on each says so.
 
 ---
 
@@ -12,7 +12,27 @@ Eight per part. A7 and A8 were added after an audit of a working grader found it
 
 Without these, the first line of a check cannot be written.
 
-## A1 · Outcome and targets
+## A1 · The grader itself
+
+**Ask:** What is the grader called with — just the system's output, or the request too, or the request plus the source documents it was given? What does it return, and about what: one verdict per item, one per submission, or a rate across a run? If several of those, which is the primary one an implementer writes first?
+
+**Why:** every other question in this bank describes the *graded system's* inputs and outputs. None of them describes the grader's, and the two are not the same. A7's citations and B2's request-to-response binding cannot be checked from the output alone — they need what the system was given. An implementer who does not know the grader's own signature cannot write its first line, whatever else the contract settles.
+
+**Complete answer names:** the grader's arguments; its return shape; the unit a verdict attaches to; and if the contract also sets rates across a run, whether measuring them is the grader's job or the harness's.
+
+*Found by dry-run, not by design — see `VERIFICATION.md` Check 5.*
+
+## A2 · Reference-based or rule-based
+
+**Ask:** Is there a known-correct output for each submission to compare against, or is correctness decided by running rules over the sources the system was given? If both, which governs when they disagree?
+
+**Why:** this is upstream of nearly everything else, and it decides what the first check *is* — a diff against gold data, or a rule pass over sources. The same contract produces two different programs depending on the answer, and the later questions read differently under each: under reference-based grading A7's provenance rules are a cross-check, under rule-based they are the check.
+
+**Complete answer names:** which mode governs; where the expected output comes from and who authored it, if reference-based; and the precedence rule if both are in play.
+
+*Found by dry-run, not by design — see `VERIFICATION.md` Check 5.*
+
+## A3 · Outcome and targets
 
 **Ask:** In one sentence, what is this system for? What share of its published output must be correct? What share of valid work may be wrongly rejected? When those two pull against each other, which wins?
 
@@ -22,7 +42,7 @@ Without these, the first line of a check cannot be written.
 
 **Never supply these numbers.** They are the owner's.
 
-## A2 · Input and output shape
+## A4 · Input and output shape
 
 **Ask:** What exactly does the system receive, and what exactly must it return? Field by field, with types and nesting. What is per-item and what is per-submission?
 
@@ -30,7 +50,7 @@ Without these, the first line of a check cannot be written.
 
 **Complete answer names:** every field, its type, whether it sits on the item or the submission, and one full worked example of a correct output.
 
-## A3 · Requirement class per field
+## A5 · Requirement class per field
 
 **Ask:** For each field — always required, required only under some condition, or optional? For conditional fields, required when exactly?
 
@@ -38,7 +58,7 @@ Without these, the first line of a check cannot be written.
 
 **Complete answer names:** the class per field; the trigger condition for every conditional one; and what a missing optional field does (it should do nothing).
 
-## A4 · Allowed values, units and formats
+## A6 · Allowed values, units and formats
 
 **Ask:** Which fields draw from a fixed list? Is there an alias or normalisation map? What units apply, and what conversions are permitted? What happens to a value that is not in the list — block, normalise, or pass through?
 
@@ -46,7 +66,7 @@ Without these, the first line of a check cannot be written.
 
 **Complete answer names:** the enums; the alias map; the unit rules with exact conversion factors; and the unmapped-value decision.
 
-## A5 · Evidence and provenance
+## A7 · Evidence and provenance
 
 **Ask:** Must every output value cite where it came from? In what format? If two supplied sources assert the same value, may either be cited? What makes a citation wrong rather than merely different?
 
@@ -54,7 +74,7 @@ Without these, the first line of a check cannot be written.
 
 **Complete answer names:** whether citation is required and for which fields; the reference format; whether alternate equivalent references are acceptable; and what a citation must prove — that the value exists, or that it belongs to this item.
 
-## A6 · Record relationships
+## A8 · Record relationships
 
 **Ask:** Are items independent, or linked — parent and child, a sequence, a batch, a thread? What establishes a link? Which values are shared across a link and which belong to the item alone?
 
@@ -63,7 +83,7 @@ Without these, the first line of a check cannot be written.
 **Complete answer names:** the link types; what proves a link; the shared set; the item-only set; and whether links may be created by the system or only observed.
 
 
-## A7 · Operations and record states
+## A9 · Operations and record states
 
 **Ask:** What distinct operations does this system perform — create, update, attach to something existing, correct, withdraw? Do the requirements differ per operation? And what states can an incoming item be in — new, existing, proposed, pending a correction, withdrawn — and does its state change what is required of it or what may be done with it?
 
@@ -73,7 +93,7 @@ Without these, the first line of a check cannot be written.
 
 **Found by audit, not by design.** A working grader consumed `operation`, `record_status`, `known_corrections` and `proposed_corrections`. The original bank asked for none of them and the contract would have been unbuildable.
 
-## A8 · Authority and resolution
+## A10 · Authority and resolution
 
 **Ask:** When two supplied sources disagree, who or what decides? What makes a resolution binding — a designated authoritative source, a named person's approval, a recorded supplier confirmation? May the system ever resolve a disagreement itself? And when a resolution arrives, what does it change — this item only, or everything in its family?
 
@@ -223,4 +243,4 @@ Each family exists because its absence let something wrong pass a real grader. S
 
 ## Coverage check before leaving the bank
 
-Twenty-four questions. Every one is either answered, quoted from the spec, or listed in `OPEN_DECISIONS.md`. None is silently skipped, and none is filled in by the interviewer.
+Twenty-six questions. Every one is either answered, quoted from the spec, or listed in `OPEN_DECISIONS.md`. None is silently skipped, and none is filled in by the interviewer.

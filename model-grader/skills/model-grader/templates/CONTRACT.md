@@ -9,38 +9,62 @@ Interview: model-grader v0.1.0 · Contract version: <n>
 
 ## Part A · Shape
 
-### A1 Outcome and targets
+### A1 The grader itself
+
+| | Answer |
+|---|---|
+| Called with | <output only / request + output / request + sources + output> |
+| Returns | <shape> |
+| Verdict unit | <item / submission / run> |
+| Primary verdict an implementer writes first | <which> |
+| Rates across a run measured by | <grader / harness / not measured> |
+
+### A2 Reference-based or rule-based
+
+| | Answer |
+|---|---|
+| Mode | <reference-based / rule-based / both> |
+| If reference-based, expected output comes from | <source, and who authored it> |
+| If both, precedence when they disagree | <which governs> |
+
+**Per-submission expected output.** Required when the mode is reference-based or both. One row per submission in the evaluation set; a pointer to where they live is acceptable if there are many.
+
+| Submission ID | Expected output | Authored by | Approved |
+|---|---|---|---|
+| | | | |
+
+### A3 Outcome and targets
 - Outcome: <one sentence>
 - Correctness target: <owner's number> · Wrong-rejection target: <owner's number>
 - When they conflict: <which wins, and why>
 - Does correctly declining count as success? <answer>
 
-### A2 Input and output shape
+### A4 Input and output shape
 <field list with types; per-item vs per-submission; one full worked example of a correct output>
 
-### A3 Requirement class per field
+### A5 Requirement class per field
 | Field | Required / Conditional / Optional | Condition |
 |---|---|---|
 
-### A4 Allowed values, units, formats
+### A6 Allowed values, units, formats
 | Field | Allowed values | Aliases | Units and conversion | Unmapped value → |
 |---|---|---|---|---|
 
-### A5 Evidence and provenance
+### A7 Evidence and provenance
 <citation required for which fields; reference format; alternate equivalent references; what a citation must prove>
 
-### A6 Record relationships
+### A8 Record relationships
 | Link type | What proves it | Shared values | Item-only values | May the system create it? |
 |---|---|---|---|---|
 
-### A7 Operations and record states
+### A9 Operations and record states
 | Operation | Requirements that differ |
 |---|---|
 
 | Record state | What is required | What may be done with it |
 |---|---|---|
 
-### A8 Authority and resolution
+### A10 Authority and resolution
 | Conflict type | Who resolves | What makes it binding | Scope of the resolution | What is retained of the original |
 |---|---|---|---|---|
 

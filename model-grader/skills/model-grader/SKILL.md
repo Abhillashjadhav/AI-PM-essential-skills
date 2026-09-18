@@ -1,6 +1,6 @@
 ---
 name: model-grader
-description: Use this skill when someone needs to define what correct output means for an AI feature so that a grader can be built from the answers. Triggers on "build a grader", "define good", "what should the eval check", "how do we know the agent got it right", "write the acceptance criteria", "is this spec complete enough to test", "the agent keeps doing X and nobody agreed whether that is wrong", or any handoff where a model will be judged against a description a human wrote. Runs a twenty-four question interview in three parts — output shape, integrity, verdict and judgment — then a buildability test, and emits a contract an implementer can build from plus an explicit list of undecided items. Do NOT use to write grader code, run an eval suite, score model output, or repair an existing grader.
+description: Use this skill when someone needs to define what correct output means for an AI feature so that a grader can be built from the answers. Triggers on "build a grader", "define good", "what should the eval check", "how do we know the agent got it right", "write the acceptance criteria", "is this spec complete enough to test", "the agent keeps doing X and nobody agreed whether that is wrong", or any handoff where a model will be judged against a description a human wrote. Runs a twenty-six question interview in three parts — output shape, integrity, verdict and judgment — then a buildability test, and emits a contract an implementer can build from plus an explicit list of undecided items. Do NOT use to write grader code, run an eval suite, score model output, or repair an existing grader.
 argument-hint: [path to spec, PRD, or task description — or paste it]
 ---
 
@@ -22,7 +22,7 @@ This skill asks for both, then tests whether the answers are sufficient. It does
 6. **Never expand into building.** No grader code, no eval suite, no fixtures, no scoring. This skill ends at a contract and a list of open decisions.
 7. **Ask at most three questions per turn,** in plain language, with the reason each one matters. This is an interview, not a form.
 8. **Never report a rule complete on three of four gates.** Decision, Examples, Verification and Buildability are independent and none substitutes for another. The usual failure is treating a written example as verification. Read `references/process-discipline.md`.
-9. **Never freeze without the trail.** A contract is trustworthy because of how it was arrived at, not because it reads well. All 24 questions accounted for, four gates shown per rule, no `PROPOSED` decision left in the body, the dry-run run and counted, and at least one review by someone who is not the interviewer. Report which condition fails; never freeze past a failure.
+9. **Never freeze without the trail.** A contract is trustworthy because of how it was arrived at, not because it reads well. All 26 questions accounted for, four gates shown per rule, no `PROPOSED` decision left in the body, the dry-run run and counted, and at least one review by someone who is not the interviewer. Report which condition fails; never freeze past a failure.
 
 ## The flow
 
@@ -34,11 +34,11 @@ Before any rule, establish what the system is for. Read `references/question-ban
 
 Targets are the owner's numbers, always. Never supply them. A worked example using one project's targets is in `examples/catalog.md` — it is an illustration of the shape of an answer, not a default to apply.
 
-### 1–3. The twenty-four questions
+### 1–3. The twenty-six questions
 
 Read `references/question-bank.md` and work through it in order. Three parts:
 
-- **Part A · Shape (A1–A8)** — what a grader mechanically needs to exist. Outcome and targets, input and output shape, requirement classes, allowed values, evidence and provenance, record relationships, operations and record states, authority and resolution. Skip one of these and the grader cannot be written.
+- **Part A · Shape (A1–A10)** — what a grader mechanically needs to exist. The grader itself, reference-based or rule-based, outcome and targets, input and output shape, requirement classes, allowed values, evidence and provenance, record relationships, operations and record states, authority and resolution. Skip one of these and the grader cannot be written. A1 and A2 come first because they decide what the grader *is*; everything after them describes the system being graded.
 - **Part B · Integrity (B1–B8)** — what stops it being cheated. Seven of the eight carry the concrete exploit that got through when it went unasked; B8 is the one the source project asked in time, and its bank entry says so. State the failure in one line when you ask, and for B8 state what it prevents; a question with no failure attached is a checklist item and gets waved through.
 - **Part C · Verdict and judgment (C1–C8)** — statuses, issue codes, blocker versus warning, tolerances, rollup and denominator, error ranking, human judgment, verification plan.
 
@@ -64,7 +64,7 @@ Then run the five freeze conditions. Report which fail. Do not freeze past a fai
 
 ### 5. Emit
 
-Three files from `templates/`. `PROCESS_LEDGER.md` carries the trail. `CONTRACT.md` carries the twenty-four answers, both-sided examples, the four gates per rule, and the buildability table. `OPEN_DECISIONS.md` carries everything declined, in the owner's words, with what it costs to leave open and who can settle it.
+Three files from `templates/`. `PROCESS_LEDGER.md` carries the trail. `CONTRACT.md` carries the twenty-six answers, both-sided examples, the four gates per rule, and the buildability table. `OPEN_DECISIONS.md` carries everything declined, in the owner's words, with what it costs to leave open and who can settle it.
 
 Mark the contract **draft** until the owner approves it. Gaps stay visible in the draft. A contract with four honest open decisions is more usable than one where the interviewer guessed.
 

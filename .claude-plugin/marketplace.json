@@ -43,7 +43,7 @@
     {
       "name": "model-grader",
       "source": "./model-grader",
-      "description": "Asks the 24 questions needed to build a model grader and nothing else: output shape, the eight integrity questions whose absence lets a model fake success, and the verdict rules. Tracks four gates per rule, exits on a buildability dry-run, and blocks freeze without a recorded trail."
+      "description": "Asks the 26 questions needed to build a model grader and nothing else: what the grader itself is, output shape, the eight integrity questions whose absence lets a model fake success, and the verdict rules. Tracks four gates per rule, exits on a buildability dry-run, and blocks freeze without a recorded trail."
     }
   ]
 }

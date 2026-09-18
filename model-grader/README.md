@@ -31,9 +31,9 @@ Part B of the question bank is those eight failures, generalised. The bank is a 
 
 ## Structure
 
-**24 questions, three parts of eight.**
+**26 questions: ten, then eight, then eight.**
 
-- **Part A · Shape (A1–A8)** — outcome and targets, input/output shape, requirement classes, allowed values and units, evidence format, record relationships, operations and record states, authority and resolution.
+- **Part A · Shape (A1–A10)** — the grader itself, reference-based or rule-based, outcome and targets, input and output shape, requirement classes, allowed values, evidence and provenance, record relationships, operations and record states, authority and resolution. A1 and A2 define the grader itself; the rest define the system it grades.
 - **Part B · Integrity (B1–B8)** — addition, binding, comparison, preservation, dependency, output shape and the private envelope, fixed context, completion.
 - **Part C · Verdict (C1–C8)** — statuses, issue codes, blocker vs warning, tolerances, rollup and denominator, error ranking, human judgment, verification plan.
 
@@ -55,7 +55,7 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 
 **Input:** a two-line spec — *"The agent reads a supplier price sheet and writes rows into our pricing table. It should get the prices right."*
 
-**Expected output:** states back what the system consumes and produces, classifies it as derived, and asks at most three questions in its first turn, drawn from A1 and A2 — for example: *what share of published rows must be correct, and what share of valid submissions may be wrongly rejected?*; *field by field, what does a row contain?*; *does correctly refusing to write a row count as success?* Each question carries one line on why it matters.
+**Expected output:** states back what the system consumes and produces, classifies it as derived, and asks at most three questions in its first turn, drawn from A1–A3 — for example: *what share of published rows must be correct, and what share of valid submissions may be wrongly rejected?*; *field by field, what does a row contain?*; *does correctly refusing to write a row count as success?* Each question carries one line on why it matters.
 
 **Expected non-output:** no rubric, no eval code, no acceptance criteria written on the owner's behalf, no assumed targets, no filled-in defaults.
 
@@ -65,7 +65,7 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 
 | Skill | Where it starts and stops |
 |---|---|
-| `model-grader` | asks the 24 questions; ends at a contract and open decisions |
+| `model-grader` | asks the 26 questions; ends at a contract and open decisions |
 | `eval-rubric-generator` | turns a settled contract into pass/fail criteria |
 | `pm-verifier` | runs a suite against outputs and issues release evidence |
 
@@ -75,7 +75,7 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 skills/model-grader/
   SKILL.md
   references/
-    question-bank.md        the 24 questions, each with why it exists
+    question-bank.md        the 26 questions, each with why it exists
     status-model.md         the four gates and why they never collapse
     policy-vs-defect.md     policy gap vs implementation defect vs invalid fixture
     human-judgment.md       when a rule cannot be code
