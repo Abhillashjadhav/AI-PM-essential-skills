@@ -116,6 +116,6 @@ May the system self-resolve a disagreement? <answer>
 
 - [ ] Owner has read every `PROPOSED` decision and approved or changed it
 - [ ] Owner has approved the error ranking
-- [ ] Build dry-run raised zero questions
+- [ ] Build dry-run has been run, its question count recorded, and every question it raised logged in `OPEN_DECISIONS.md`
 
 Contract is **DRAFT** until all three are checked.
