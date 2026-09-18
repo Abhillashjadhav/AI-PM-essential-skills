@@ -1,6 +1,6 @@
 # T-shirt Lab Contract v1.4 — Approved Lab Baseline
 
-**Owner:** Abhillash Jadhav · **Updated:** 18 September 2026  
+**Owner:** Abhillash Jadhav · **Updated:** 18 September 2026
 **Status:** Approved by Abhillash on 18 September 2026 as v1.4, including the supplier-designated flagship-parent rule. Frozen business-rule baseline for implementation. The preceding v1.3 received reviewer PASS; this does not claim a separate reviewer run on v1.4. Model choice and run count remain pending. No grader has been implemented or tested.
 
 ## Contract
