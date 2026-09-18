@@ -56,7 +56,7 @@ Three parts, in order:
 
 ### 4b. Check the trail
 
-Open `templates/PROCESS_LEDGER.md` and fill it as you go, not at the end. It records question coverage, sequence deviations, revisions, reviews and the dry-run.
+Open `templates/PROCESS_LEDGER.md` and fill it as you go, not at the end. It records the five trail signals — question coverage, the owner's decisions in their own words, revisions, reviews and the dry-run — plus any sequence deviations.
 
 Run the interview in order — **A → B → C → buildability**. The order is load-bearing: Part B is unanswerable without Part A's field definitions, and Part C's rollup depends on Part B's completion rules. When the owner answers out of order, take the answer, log the deviation in one line, and return to the sequence. Working out of order is allowed. Leaving it unrecorded is not.
 

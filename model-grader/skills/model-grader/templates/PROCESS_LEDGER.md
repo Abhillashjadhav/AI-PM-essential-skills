@@ -33,6 +33,14 @@ The record of how this contract was arrived at. Freeze is blocked without it.
 
 **24 of 24 accounted for:** yes / no — <list any not accounted for>
 
+## Decisions recorded
+
+One row per question. The owner's answer in their own words — not a paraphrase, not the interviewer's tidy-up. A question with no answer here must have an entry in `OPEN_DECISIONS.md` instead; it may not be blank in both.
+
+| # | Question | Owner's answer, their words | Date | Or: logged in OPEN_DECISIONS.md |
+|---|---|---|---|---|
+| | | | | |
+
 ## Sequence deviations
 
 | Date | Departed from | Why | Returned to sequence |

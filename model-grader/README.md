@@ -41,7 +41,7 @@ Part B of the question bank is those eight failures, generalised. The bank is a 
 
 **Exit on a buildability test, not an opinion.** Hand the contract to a reader who did not see the interview and count the questions they still need answered. Zero is the exit condition. Anything else is a logged gap.
 
-**A trail before freeze.** Question coverage, sequence deviations, revisions, at least one review by someone who is not the interviewer, and the dry-run. A contract with no recorded revisions and no reviews may be correct — nobody can tell, which is the same problem.
+**A trail before freeze.** Question coverage, the owner's decisions in their own words, revisions, at least one review by someone who is not the interviewer, and the dry-run. A contract with no recorded revisions and no reviews may be correct — nobody can tell, which is the same problem.
 
 ## Use
 
