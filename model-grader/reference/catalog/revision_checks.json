@@ -6271,7 +6271,7 @@
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
-    "name": "optional-description-conflict-needs-authority",
+    "name": "optional-description-conflict-withholds-field",
     "input": {
       "case_id": "D01",
       "contract_version": "1.4",
@@ -6536,8 +6536,7 @@
             },
             "color": "Red",
             "size": "L",
-            "price": "1490",
-            "description": "Slim fit"
+            "price": "1490"
           },
           "evidence": {
             "brand": "P1.brand",
@@ -6549,25 +6548,25 @@
             "material": "P1.material",
             "color": "P1.color",
             "size": "P1.size",
-            "price": "P1.price",
-            "description": "P1.description"
+            "price": "P1.price"
           },
-          "status": "BLOCKED",
-          "issues": [
+          "status": "READY",
+          "issues": [],
+          "display": {
+            "text": "80% cotton, 20% polyester"
+          },
+          "measurements": [],
+          "withheld": [
             {
-              "code": "SOURCE_CONFLICT",
               "field": "description",
+              "reason": "SOURCE_CONFLICT",
               "evidence": [
                 "P1.description",
                 "P1.description.spec"
               ],
-              "action": "Supplier: resolve description using confirmed source information."
+              "action": "Supplier: resolve description using confirmed source information. The rest of this product is published."
             }
-          ],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+          ]
         },
         {
           "sku": "C1",
@@ -6619,7 +6618,7 @@
     },
     "expected": "PASS",
     "required_error": null,
-    "rule": "Unresolved optional contradiction still needs authority",
+    "rule": "Decision 4: optional-field conflict withholds the field, publishes the record",
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
@@ -7321,7 +7320,7 @@
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
-    "name": "unapproved-authority-cannot-resolve",
+    "name": "unapproved-authority-withholds-not-blocks",
     "input": {
       "case_id": "D01",
       "contract_version": "1.4",
@@ -7593,8 +7592,7 @@
             },
             "color": "Red",
             "size": "L",
-            "price": "1490",
-            "description": "Slim fit"
+            "price": "1490"
           },
           "evidence": {
             "brand": "P1.brand",
@@ -7606,25 +7604,25 @@
             "material": "P1.material",
             "color": "P1.color",
             "size": "P1.size",
-            "price": "P1.price",
-            "description": "P1.description"
+            "price": "P1.price"
           },
-          "status": "BLOCKED",
-          "issues": [
+          "status": "READY",
+          "issues": [],
+          "display": {
+            "text": "80% cotton, 20% polyester"
+          },
+          "measurements": [],
+          "withheld": [
             {
-              "code": "SOURCE_CONFLICT",
               "field": "description",
+              "reason": "SOURCE_CONFLICT",
               "evidence": [
                 "P1.description",
                 "P1.description.spec"
               ],
-              "action": "Supplier: resolve description using confirmed source information."
+              "action": "Supplier: resolve description using confirmed source information. The rest of this product is published."
             }
-          ],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+          ]
         },
         {
           "sku": "C1",
@@ -7676,7 +7674,7 @@
     },
     "expected": "PASS",
     "required_error": null,
-    "rule": "",
+    "rule": "Decision 3 + 4: unapproved authority does not resolve; optional field is withheld, not blocking",
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
