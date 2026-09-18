@@ -276,22 +276,22 @@ def report(rows, load_errors, folder):
 
     print(f'Sealed-case run - grader {VERSION}')
     print(f'cases from: {folder}')
-    print('=' * 100)
-    print(f"{'case':<10}{'status':<16}{'exp.vrd':<9}{'act.vrd':<9}{'vrd':<5}{'pub':<5}{'guid':<6}{'checked'}")
-    print('-' * 100)
+    print('=' * 120)
+    print(f"{'case':<36}{'status':<18}{'exp.vrd':<9}{'act.vrd':<13}{'vrd':<5}{'pub':<5}{'guid':<6}{'checked'}")
+    print('-' * 120)
     for r in rows:
         def mark(scored, key):
             if not scored: return '-'
             return 'yes' if r.get(key) else 'NO'
-        print(f"{r['case_id']:<10}{r['status']:<16}"
-              f"{str(r.get('expected_verdict','-')):<9}{str(r.get('actual_verdict','-')):<9}"
+        print(f"{r['case_id']:<36}{r['status']:<18}"
+              f"{str(r.get('expected_verdict','-')):<9}{str(r.get('actual_verdict','-')):<13}"
               f"{mark(r['verdict_scored'],'verdict_agrees'):<5}"
               f"{mark(r['publication_scored'],'publication_agrees'):<5}"
               f"{mark(r['guidance_scored'],'guidance_agrees'):<6}"
               f"{','.join(r['checked']) if r['checked'] else '(nothing)'}")
-        for m in r['mismatches']: print(f"{'':<10}  -> {m}")
-        if r.get('note'): print(f"{'':<10}  -> {r['note']}")
-    print('-' * 100)
+        for m in r['mismatches']: print(f"{'':<36}  -> {m}")
+        if r.get('note'): print(f"{'':<36}  -> {r['note']}")
+    print('-' * 120)
 
     print('WHAT WAS ACTUALLY CHECKED - three separate measurements, three subsets')
     print()
@@ -324,7 +324,7 @@ def report(rows, load_errors, folder):
     if excluded:
         print()
         print(f'EXCLUDED FROM EVERY DENOMINATOR: {len(excluded)}')
-        for r in excluded: print(f'  - {r["case_id"]:<10} {r["status"]:<16} {r["note"]}')
+        for r in excluded: print(f'  - {r["case_id"]:<36} {r["status"]:<18} {r["note"]}')
     if errored:
         print()
         print(f'GRADER ERRORS: {len(errored)}')
@@ -334,8 +334,9 @@ def report(rows, load_errors, folder):
         print(f'CASES THAT COULD NOT BE LOADED: {len(load_errors)}')
         for e in load_errors: print(f'  - {e}')
     print()
-    print('Ten cases are an initial independent check. They do not measure the >98%')
-    print('publication-accuracy target or the <0.5% wrong-rejection target.')
+    print(f'{len(rows)} case(s) are an initial independent check. A run this size does')
+    print('not measure the >98% publication-accuracy target or the <0.5%')
+    print('wrong-rejection target.')
 
     return (len(approvals) + len(rejections) + len(errored) + len(load_errors) + len(malformed) + len(setup_err) + len(schema_err)
             + sum(1 for r in p_scored if not r.get('publication_agrees'))
