@@ -12,7 +12,7 @@ A grader needs two things most specs lack.
 
 **Integrity** — the decisions whose absence lets a model satisfy every rule while doing the wrong thing. Without these it can be written, and cheated.
 
-The second half is not hypothetical. A catalog grader built against a carefully written contract caught **12 of 12** deliberately injected faults, then missed **8 of 8** real exploits. Every one traced to a decision the contract never made:
+The second half is not hypothetical. In one author-run exercise, a catalog grader built against a carefully written contract caught every deliberately injected fault, then missed every real exploit tried against it. Each miss traced to a decision the contract never made:
 
 | Decision never made | What got through |
 |---|---|
@@ -26,6 +26,8 @@ The second half is not hypothetical. A catalog grader built against a carefully 
 | which request values may never change | currency relabelled, amounts intact |
 
 Part B of the question bank is those eight failures, generalised. The bank is a failure log turned into an interview, not a checklist someone invented.
+
+> **On the numbers in this README.** Every figure here comes from one author-run exercise against a single grader in a single domain, and that grader is not shipped — so nothing here is independently reproducible. `VERIFICATION.md` records the method, the counts and the limitations in full. Read the eight rows above as a failure log that motivated eight questions, not as a benchmark.
 
 ## Structure
 
