@@ -14,18 +14,26 @@ A grader needs two things most specs lack.
 
 The second half is not hypothetical. In one author-run exercise, a catalog grader built against a carefully written contract caught every deliberately injected fault, then missed every real exploit tried against it. Each miss traced to a decision the contract never made:
 
-| Decision never made | What got through |
-|---|---|
-| what the output may add that the source did not | an invented label contradicting its own numbers |
-| what binds an answer to its request | one answer passed as the answer to four different cases |
-| which values compare as numbers, which as text | a correct answer rejected over `10.0` vs `10` |
-| where casing carries meaning | a rule evaded by capitalising one word |
-| what must be preserved when unused | supplied metadata silently dropped |
-| what makes a source fit to depend on | a record inherited from a blocked parent and published |
-| whether the output schema is closed | claims parked outside the expected structure |
-| which request values may never change | currency relabelled, amounts intact |
+**Five wrong answers the grader accepted.** Each is a replayable probe under `reference/catalog/attacks/`.
 
-Part B of the question bank is those eight failures, generalised. The bank is a failure log turned into an interview, not a checklist someone invented.
+| Decision never made | What got through | Probe |
+|---|---|---|
+| what the output may add that the source did not | an invented label contradicting its own numbers | `ASTRA_A1` |
+| where casing carries meaning | a rule evaded by capitalising one word | `ASTRA_A3` |
+| what must be preserved when unused | supplied metadata silently dropped | `ASTRA_A4` |
+| what makes a source fit to depend on | a record inherited from a blocked parent and published | `ASTRA_A5` |
+| which request values may never change | currency relabelled, amounts intact | `ASTRA_A2` |
+
+**Two right answers it rejected.** The same missing decisions cut both ways, which is why B3 carries both directions.
+
+| Decision never made | What was wrongly rejected | Probe |
+|---|---|---|
+| which values compare as numbers, which as text | a correct answer rejected over `10.0` vs `10` | `FR1` |
+| what counts as a valid evidence reference | a correct answer rejected over the spelling of an evidence key | `FR2` |
+
+**Two more questions come from reasoning, not from a probe.** B2 (what binds an answer to its request) and B6 (whether the output schema is closed) have no shipped attack behind them. They are in the bank on argument, and the bank says so rather than letting them borrow the others' evidence.
+
+Six of Part B's eight questions are those seven observed failures, generalised. The bank is mostly a failure log turned into an interview, and the two questions that are not are labelled above rather than passed off as evidence-derived.
 
 > **On the numbers in this README.** Every figure here comes from one author-run exercise against a single grader in a single domain, and that grader is not shipped — so nothing here is independently reproducible. `VERIFICATION.md` records the method, the counts and the limitations in full. Read the eight rows above as a failure log that motivated eight questions, not as a benchmark.
 
