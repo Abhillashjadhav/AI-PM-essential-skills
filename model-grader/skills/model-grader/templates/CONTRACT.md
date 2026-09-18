@@ -34,8 +34,8 @@ Interview: model-grader v0.1.0 · Contract version: <n>
 |---|---|---|---|---|
 
 ### A7 Operations and record states
-| Operation | Requirements that differ | |
-|---|---|---|
+| Operation | Requirements that differ |
+|---|---|
 
 | Record state | What is required | What may be done with it |
 |---|---|---|
