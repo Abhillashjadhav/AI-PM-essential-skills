@@ -18,7 +18,7 @@ Status: decisions supplied by Abhillash in this conversation after the independe
 
 ## Outcome and measurement
 
-Main outcome: percentage of published SKU records that are correct against independently adjudicated evidence and the contract. Target: at least 98%. Wrong rejections: no more than 0.5% of valid submitted SKU records. The denominator for publication errors is approved/published records; the denominator for wrong rejections is valid submitted records. Correctly blocked incomplete records are reported separately, without treating correct blocking as publication success. Counts and denominators must accompany every percentage. Offline READY outputs are publishable proposals, not actual published records. These are targets, not measured achievements or permission to knowingly publish errors.
+Main outcome: percentage of published SKU records that are correct against independently adjudicated evidence and the contract. Target: **greater than 98%**. Wrong rejections: **less than 0.5%** of valid submitted SKU records. Both boundaries are exclusive, per `DECISIONS.md`: exactly 98.0% correct does not meet the target, and exactly 0.5% wrongly rejected does not meet the guardrail. The denominator for publication errors is approved/published records; the denominator for wrong rejections is valid submitted records. Correctly blocked incomplete records are reported separately, without treating correct blocking as publication success. Counts and denominators must accompany every percentage. Offline READY outputs are publishable proposals, not actual published records. These are targets, not measured achievements or permission to knowingly publish errors.
 
 ## Owner decisions
 
