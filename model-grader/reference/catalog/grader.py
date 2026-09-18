@@ -219,10 +219,28 @@ def check_setup(case):
         if 'material' in values[sku]: material_key(values[sku]['material'])
     return records,values
 
+def required_fields(p):
+    """The COMPUTED required set, not the static REQUIRED tuple.
+
+    subbrand is required only when the profile says it applies. Partitioning
+    blocking from withholding against the static tuple would treat a subbrand
+    conflict as optional and publish a record that must block — a false accept.
+    """
+    return list(REQUIRED)+(['subbrand'] if p.get('subbrand_applicable',True) else [])
+
+def withholds(issue,p):
+    """Owner decision 4: an unresolved conflict on a non-required field withholds
+    that field instead of blocking the SKU."""
+    return issue['code']=='SOURCE_CONFLICT' and issue['field'] not in required_fields(p)
+
+def partition_issues(issues,p):
+    """(blocking, withholding). Blocking decides status; withholding decides fields."""
+    return [i for i in issues if not withholds(i,p)],[i for i in issues if withholds(i,p)]
+
 def expected_issues(case,records,values,sku):
     r=records[sku]; fs=values[sku]; p=case['profile']; issues=[]
     def add(code,f,refs): issues.append({'code':code,'field':f,'evidence':refs})
-    required=list(REQUIRED)+(['subbrand'] if p.get('subbrand_applicable',True) else [])
+    required=required_fields(p)
     for f in required:
         if f not in fs or fs[f] is None or fs[f]=='': add('MISSING_REQUIRED',f,[])
     for f,allowed in p.get('allowed',{}).items():
@@ -312,12 +330,15 @@ def grade(case,candidate):
         out[sku]=row
     for sku in out.keys()-records.keys(): err('INVENTED_SKU',sku)
     for sku in records.keys()-out.keys(): err('OMITTED_SKU',sku)
+    withheld_fields={}
     for sku,r in records.items():
         if sku not in out: continue
         o=out[sku]; fs=values[sku]; before=len(errors)
         try:
             expected=expected_issues(case,records,values,sku)
-            wanted='BLOCKED' if expected else 'READY'
+            blocking,withholding=partition_issues(expected,case['profile'])
+            withheld_fields[sku]={i['field'] for i in withholding}
+            wanted='BLOCKED' if blocking else 'READY'
             if o.get('status')!=wanted: err('FALSE_BLOCK' if wanted=='READY' else 'FALSE_READY',sku,detail=f'Expected {wanted}')
             if o.get('role')!=r['role'] or o.get('parent_sku')!=r.get('parent_sku'): err('FAMILY_LINK',sku)
             for key in o.keys()-{'sku','role','parent_sku','fields','evidence','status','issues','display','measurements','record_status'}-INTERNAL_KEYS:
@@ -326,6 +347,13 @@ def grade(case,candidate):
             supplied=o.get('fields',{})
             if not isinstance(supplied,dict): raise ValueError('fields must be object')
             for f,v in fs.items():
+                if f in withheld_fields[sku]:
+                    # Decision 4: the field is withheld, so its absence is required and
+                    # its presence is a defect. Publishing a value whose sources disagree
+                    # is the failure withholding exists to prevent.
+                    if f in supplied: err('WITHHELD_FIELD_PUBLISHED',sku,f,
+                        detail='Sources disagree on this field; it is withheld, not published.')
+                    continue
                 if f not in supplied: err('OMITTED_FACT',sku,f); continue
                 if not same(f,canonical(f,v,case['profile']),supplied[f]): err('WRONG_VALUE',sku,f)
                 ref=o.get('evidence',{}).get(f)
@@ -333,17 +361,19 @@ def grade(case,candidate):
             for f in supplied.keys()-fs.keys(): err('UNSUPPORTED_VALUE',sku,f)
             oi=o.get('issues',[])
             if not isinstance(oi,list): raise ValueError('issues must be list')
-            expected_keys={(x['code'],x['field']):x for x in expected}
+            expected_keys={(x['code'],x['field']):x for x in blocking}
+            permitted_keys={(x['code'],x['field']):x for x in withholding}
+            known=dict(expected_keys); known.update(permitted_keys)
             actual_keys=set()
             for i in oi:
                 key=(i['code'],i['field']); actual_keys.add(key)
-                if key not in expected_keys: err('SPURIOUS_ISSUE',sku,i['field']); continue
-                actual_refs=i.get('evidence',[]);expected_refs=expected_keys[key]['evidence']
+                if key not in known: err('SPURIOUS_ISSUE',sku,i['field']); continue
+                actual_refs=i.get('evidence',[]);expected_refs=known[key]['evidence']
                 if not (all(any(evidence_matches(case,a,b) for b in expected_refs) for a in actual_refs)
                         and all(any(evidence_matches(case,a,b) for a in actual_refs) for b in expected_refs)):
                     err('ISSUE_EVIDENCE',sku,i['field'])
                 if not isinstance(i.get('action'),str) or not i['action'].strip(): err('MISSING_ACTION',sku,i['field'])
-            if actual_keys!=set(expected_keys): err('ISSUE_COVERAGE',sku)
+            if not set(expected_keys)<=actual_keys: err('ISSUE_COVERAGE',sku)
             if 'material' in fs:
                 exp,label=display_expected(fs['material']); d=o.get('display',{})
                 for key in d.keys()-{'text','derived_remainder'}: err('UNSUPPORTED_OUTPUT_FIELD',sku,'display.'+key)
@@ -383,6 +413,7 @@ def grade(case,candidate):
             per.append({'sku':sku,'expected_status':wanted,'candidate_status':o.get('status'),'handling':'PASS' if before==len(errors) else 'FAIL'})
         except (KeyError,TypeError,ValueError,InvalidOperation,AttributeError) as e: err('MALFORMED_RECORD',sku,detail=str(e))
     guided=guided_help(case,records,values)
+    warnings_for_seller=seller_warnings(case,records,values)
     # Global identity/context errors invalidate the batch; do not advertise publishable SKUs.
     global_error=any(not x.get('sku') for x in errors)
     ready={x['sku'] for x in per if x['handling']=='PASS' and x['expected_status']=='READY'} if not global_error else set()
@@ -392,12 +423,57 @@ def grade(case,candidate):
     for sku in records:
         if sku in ready:
             row=out[sku]
+            fields={k:v for k,v in row['fields'].items() if k not in withheld_fields.get(sku,set())}
             payload['records'].append({
                 'sku':sku,'role':records[sku]['role'],'parent_sku':records[sku].get('parent_sku'),
-                'fields':copy.deepcopy(row['fields']), 'display':copy.deepcopy(row['display']),
+                'fields':copy.deepcopy(fields), 'display':copy.deepcopy(row['display']),
                 'measurements':[{'id':m['id'],'measurement_type':m['measurement_type'],
                                  'value':m['value'],'unit':m['unit']} for m in row.get('measurements',[])]})
-    return {'verdict':'FAIL' if errors else 'PASS','errors':errors,'warnings':warnings,'records':per,'guided_help':guided,'publication_payload':payload,'correctly_handled':sum(x['handling']=='PASS' for x in per) if not global_error else 0,'publishable':sum(x['handling']=='PASS' and x['expected_status']=='READY' for x in per) if not global_error else 0,'incomplete':sum(x['handling']=='PASS' and x['expected_status']=='BLOCKED' for x in per)}
+    return {'verdict':'FAIL' if errors else 'PASS','errors':errors,'warnings':warnings,'records':per,'guided_help':guided,'seller_warnings':warnings_for_seller,'withheld':{k:sorted(v) for k,v in withheld_fields.items() if v},'publication_payload':payload,'correctly_handled':sum(x['handling']=='PASS' for x in per) if not global_error else 0,'publishable':sum(x['handling']=='PASS' and x['expected_status']=='READY' for x in per) if not global_error else 0,'incomplete':sum(x['handling']=='PASS' and x['expected_status']=='BLOCKED' for x in per)}
+
+def designated_but_unapproved(case,sku,field):
+    """A designation is not an approval (decision 3).
+
+    Returns the designated evidence id when a registry entry names one for this
+    field but the supplier has not approved it. authority() returns None in that
+    case, so the conflict is still unresolved and the field stays withheld — but
+    the seller can be told which value the designation points at.
+    """
+    entry=case.get('authority_registry',{}).get(f'{sku}.{field}')
+    if entry and entry.get('supplier_approved') is not True: return entry.get('evidence_id')
+    return None
+
+def seller_warnings(case,records,values):
+    """Deterministic seller guidance for every withheld field. Owner decision 4.
+
+    Generated by the grader from the detected conflict, never written by the
+    candidate. Each warning carries the SKU, the field, the conflicting source
+    values, and the required action.
+
+    The grader checks that a warning exists and names the right field and
+    evidence. It does not grade the wording: grading prose needs a judge, and a
+    judge has been ruled out for this lab.
+    """
+    p=case['profile']; out=[]
+    for sku in records:
+        _,withholding=partition_issues(expected_issues(case,records,values,sku),p)
+        for i in withholding:
+            f=i['field']
+            conflicting=[{'evidence_id':ref,'value':case['evidence'][ref]['value']}
+                         for ref in i['evidence'] if ref in case['evidence']]
+            w={'sku':sku,'field':f,'conflicting_values':conflicting,
+               'action':('Sources disagree on '+f+'. It is withheld and the rest of this product is '
+                         'published. Confirm the correct value to publish it.')}
+            designated=designated_but_unapproved(case,sku,f)
+            if designated and designated in case['evidence']:
+                w['recommended_value']=case['evidence'][designated]['value']
+                w['recommended_from']=designated
+                w['action']=('Sources disagree on '+f+'. The designated source gives '
+                             +repr(case['evidence'][designated]['value'])+', but it is not supplier-approved, '
+                             'so '+f+' stays withheld and the rest of this product is published. '
+                             'Approve that source to publish '+f+'.')
+            out.append(w)
+    return out
 
 def guided_help(case,records=None,values=None):
     if records is None: records,values=check_setup(case)
