@@ -20,11 +20,15 @@ supplier-approved, the warning recommends that value and the field stays withhel
 — a designation is not an approval (decision 3). This is no longer an open
 question.
 
-**Accepted hole.** The grader checks that a warning exists and that it names the
-right field and the right evidence. It does not grade the wording. Grading prose
-needs a judge, and a judge is ruled out for this lab. A warning that names the
-correct field and sources but explains itself badly passes, and nothing here
-would catch that.
+**No hole here.** An earlier revision of this file claimed the warning wording
+could not be checked without an LLM judge. That was wrong and is withdrawn. The
+warning is a fixed template choice with three outcomes — `blocked`,
+`eligible_for_publication`, `awaiting_approval` — and the choice is a pure
+function of the SKU's computed status and whether a designated-but-unapproved
+source exists. `warning_branch()` is the single place it is decided, the status
+is passed in from `grade()` rather than re-derived, and the branch is emitted on
+every warning so it can be asserted directly. Fully deterministic, fully
+checkable, no judge involved.
 
 **One mechanism not named in the decision.** The decision says the withheld field
 is absent from the candidate's fields. Without a check that requirement is
