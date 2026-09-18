@@ -55,7 +55,7 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 
 **Input:** a two-line spec — *"The agent reads a supplier price sheet and writes rows into our pricing table. It should get the prices right."*
 
-**Expected output:** states back what the system consumes and produces, classifies it as derived, and asks at most three questions in its first turn, drawn from A1–A3 — for example: *what share of published rows must be correct, and what share of valid submissions may be wrongly rejected?*; *field by field, what does a row contain?*; *does correctly refusing to write a row count as success?* Each question carries one line on why it matters.
+**Expected output:** states back what the system consumes and produces, classifies it as derived, and asks at most three questions in its first turn, drawn from A1–A3 in order — for example: *when the grader runs, is it handed the supplier's price sheet as well as the rows the agent wrote, or only the rows?*; *is there a known-correct set of rows to compare against, or is correctness decided by checking the rows back against the sheet?*; *what share of published rows must be correct, and what share of valid submissions may be wrongly rejected?* Each question carries one line on why it matters.
 
 **Expected non-output:** no rubric, no eval code, no acceptance criteria written on the owner's behalf, no assumed targets, no filled-in defaults.
 
