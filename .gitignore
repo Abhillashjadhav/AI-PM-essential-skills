@@ -1,2 +1,4 @@
 __pycache__/
 *.py[cod]
+model-grader/reference/catalog/__pycache__/
+model-grader/reference/catalog/execution_*/
