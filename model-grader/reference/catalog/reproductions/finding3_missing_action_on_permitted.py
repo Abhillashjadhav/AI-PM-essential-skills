@@ -39,4 +39,18 @@ report(rows, 'reporting it WITHOUT an action is penalised',
 report(rows, 'so a permitted issue is not optional in both directions',
        silent['verdict'] == 'PASS' and no_action['verdict'] == 'FAIL',
        'silent PASS vs mentioned-without-action FAIL on identical facts')
+# "Permitted means optional in both directions" also rules out being penalised for
+# HOW it is reported, not just whether.
+wrong_ev = grader.grade(*build(
+    {'code': 'SOURCE_CONFLICT', 'field': 'description', 'action': 'Confirm it.'}))
+case, cand = build(None)
+rec(cand, 'P1')['issues'].append({'code': 'SOURCE_CONFLICT', 'field': 'description',
+                                  'evidence': ['P1.price'], 'action': 'Confirm it.'})
+bad_ev = grader.grade(case, cand)
+report(rows, 'a permitted issue with mismatched evidence is penalised',
+       any(c in ('ISSUE_EVIDENCE', 'SPURIOUS_ISSUE') for c, s_, f in codes(bad_ev)),
+       f"verdict = {bad_ev['verdict']}, errors = {codes(bad_ev)}")
+report(rows, 'a permitted issue ever raises SPURIOUS_ISSUE',
+       any(c == 'SPURIOUS_ISSUE' for c, s_, f in codes(no_action) + codes(wrong_ev) + codes(bad_ev)),
+       'permitted keys are in `known`, so the spurious branch is not reached')
 sys.exit(emit('Finding 3 - MISSING_ACTION on permitted issues', rows))

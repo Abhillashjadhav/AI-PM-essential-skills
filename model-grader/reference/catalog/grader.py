@@ -399,6 +399,11 @@ def grade(case,candidate):
             for i in oi:
                 key=(i['code'],i['field']); actual_keys.add(key)
                 if key not in known: err('SPURIOUS_ISSUE',sku,i['field']); continue
+                # A permitted issue is optional in BOTH directions: the candidate may
+                # report it or stay silent, and neither is penalised. Reporting one can
+                # therefore never be worse than saying nothing, so no check below applies
+                # to it. Expected issues are still held to evidence and action.
+                if key in permitted_keys and key not in expected_keys: continue
                 actual_refs=i.get('evidence',[]);expected_refs=known[key]['evidence']
                 if not (all(any(evidence_matches(case,a,b) for b in expected_refs) for a in actual_refs)
                         and all(any(evidence_matches(case,a,b) for a in actual_refs) for b in expected_refs)):
