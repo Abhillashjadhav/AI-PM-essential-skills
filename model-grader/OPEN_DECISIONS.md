@@ -1,6 +1,6 @@
 # Open decisions — model-grader itself
 
-Gaps in **this skill**, found by the build dry-run recorded as Check 5 in `VERIFICATION.md`.
+Gaps in **this skill**, found by the template slot-coverage review recorded as Check 5 in `VERIFICATION.md`.
 
 Not to be confused with `skills/model-grader/templates/OPEN_DECISIONS.md`, which is the blank template the skill emits for a product owner's contract. This file is the skill's own ledger, kept beside `VERIFICATION.md` and `BAR.md`.
 
@@ -10,29 +10,30 @@ Not to be confused with `skills/model-grader/templates/OPEN_DECISIONS.md`, which
 
 A reviewer was given `templates/CONTRACT.md` and `references/question-bank.md` and nothing else — no `SKILL.md`, no `buildability-test.md`, no README, no repository context, and no indication it was being tested. It was told an owner's answers would be filled into that template and handed to it, and asked what it would still need before writing the **first check** of a grader.
 
-That is the dry-run as `buildability-test.md` defines it. It is not independent adjudication — see the gate-3 note in `VERIFICATION.md` Check 4.
+This measures slot coverage, not buildability — a blank template is unbuildable by construction. It is not the skill's exit test and not independent adjudication; see `VERIFICATION.md` Checks 4 and 5.
 
-**It returned 18 questions. The exit condition is zero.**
+**It returned 18 questions.** Two were missing slots; see Status below.
 
-## The structural finding
+## Status
 
-The individual questions cluster into three, and the cluster matters more than the list.
+Of the 18, **two were missing slots and are closed.** The owner's decision was to extend the bank by two questions and one template slot, not by eighteen:
 
-**1 · The contract never says what the grader is called with.** Both documents specify the *graded system's* inputs and outputs, never the grader's. But B2 asks for "the identifier carried from request to response, and the check comparing them", which is uncheckable unless the request is in hand, and A5's citation rules need the source documents. Whether the grader receives `(output)`, `(request, output)` or `(request, sources, output)` is undetermined, and the first check is a different program in each case.
+- **A1 · The grader itself** — what it is called with, what it returns, at what granularity. Closes gaps 1 and 3.
+- **A2 · Reference-based or rule-based** — closes gap 2, and carries a per-submission expected-output table in `CONTRACT.md`.
 
-**2 · The contract never says what the grader returns, or over what unit.** Three levels appear — per-item (A2), item-to-batch rollup (C5), and corpus-level shares (A1) — and none is designated as the verdict. Whether the grader also measures A1's targets is unstated.
+**The remaining sixteen stay open, unanswered.** They are not defects. Check 5 handed a reviewer a *blank* template, which measures slot coverage rather than buildability — a blank form always raises questions about cells nobody has filled. Most of the sixteen are questions a contract filled in for a real product may well answer. Which ones survive that is unknown until the exit test is actually run.
 
-**3 · Reference-based or rule-based grading is undetermined.** A2's rationale says a grader "compares a returned structure against an expected one", implying per-submission gold data. But the contract has one worked example for the whole feature and no slot for per-submission expected output, while B1 and A5 describe checking against supplied sources instead.
-
-Under the skill's own framing these are Part A shape questions — the class it says must be answered or the grader cannot be written at all.
+They are recorded here so the next dry-run can be compared against them rather than starting over.
 
 ## The 18
 
-### What the grader receives and returns
+### Closed by A1 and A2
 
-1. What does the grader itself receive — `(output)`, `(request, output)`, or `(request, sources, output)`? B2 and A5 both require more than the output.
-2. Is there an expected output per submission, or only rules? A2's rationale implies reference-based grading; the contract has no per-submission gold slot.
-3. What unit does the verdict cover — item, batch, or corpus — and is the grader responsible for measuring A1's shares?
+1. *(closed — A1)* What does the grader itself receive — `(output)`, `(request, output)`, or `(request, sources, output)`? B2 and A5 both require more than the output.
+2. *(closed — A2 and the expected-output table)* Is there an expected output per submission, or only rules? A2's rationale implies reference-based grading; the contract has no per-submission gold slot.
+3. *(closed — A1)* What unit does the verdict cover — item, batch, or corpus — and is the grader responsible for measuring A1's shares?
+### Still open
+
 4. Is the Rule register the complete set of checks, or a restatement of Parts A–C? Parts A–C carry enforceable rules with no ID. If a register row contradicts the Part A cell it came from, which governs?
 
 ### Contract states the implementer must act on
