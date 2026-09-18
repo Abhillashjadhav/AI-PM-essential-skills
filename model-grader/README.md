@@ -1,6 +1,8 @@
 # model-grader
 
-Asks the complete set of questions needed to build a model grader, and nothing else.
+Asks the questions needed to build a model grader, and nothing else.
+
+Twenty-six questions derived from observed failures, one worked reference implementation you can run, and an exit test that has not yet been run on a filled contract.
 
 It asks. It does not write graders, evals, rubrics or fixtures.
 

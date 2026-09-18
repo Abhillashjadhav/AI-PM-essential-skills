@@ -6,7 +6,7 @@ argument-hint: [path to spec, PRD, or task description — or paste it]
 
 # Model Grader
 
-Asks the questions that make a grader buildable and uncheatable. Nothing else.
+Asks the questions that make a grader buildable, and that close the ways one has been cheated before. Nothing else.
 
 A grader needs two things a spec usually lacks. **Shape**: the fields, types, statuses and codes it must produce — without these it cannot be written at all. **Integrity**: the decisions whose absence lets a model satisfy every rule while doing the wrong thing — without these it can be written, and cheated.
 
