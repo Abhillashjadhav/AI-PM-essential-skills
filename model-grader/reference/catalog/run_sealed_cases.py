@@ -32,6 +32,13 @@ D = Path(__file__).resolve().parent
 sys.path.insert(0, str(D))
 from grader import grade, VERSION            # noqa: E402
 
+class CaseSchemaError(Exception):
+    """A case is structurally readable but an expectation block is not in the
+    published shape, so it cannot be compared. This is reported as its own
+    status and excluded from every denominator - never silently skipped, and
+    never crashed on. The runner does not reinterpret a nonconforming block.
+    """
+
 REQUIRED_KEYS = ('case_id', 'input', 'candidate', 'expected_verdict',
                  'expected_publication', 'owner_approval', 'review_status')
 VERDICTS = ('PASS', 'FAIL', None)
@@ -57,6 +64,9 @@ def compare_publication(exp, result):
     checked, mismatches = [], []
     payload = result['publication_payload']['records']
 
+    if not isinstance(exp, dict):
+        raise CaseSchemaError(
+            'expected_publication must be an object or null; got ' + type(exp).__name__)
     if 'sku_ids' in exp and exp['sku_ids'] is not None:
         checked.append('sku_ids')
         actual = sorted(r['sku'] for r in payload)
@@ -109,6 +119,10 @@ def compare_guidance(req, result):
     a given value. Wording is never compared.
     """
     checked, mismatches = [], []
+    if not isinstance(req, dict):
+        raise CaseSchemaError(
+            'expected_seller_guidance must be an object with "required" and/or '
+            '"must_not_warn" lists; got ' + type(req).__name__)
     warnings = result.get('seller_warnings', [])
     for i, want in enumerate(req.get('required', [])):
         label = f"{want.get('sku')}/{want.get('field')}"
@@ -180,6 +194,19 @@ def run(folder):
             row['actual_verdict'] = f'ERROR:{type(e).__name__}'
             rows.append(row); continue
 
+        # SETUP_ERROR is the grader's "this fixture is unusable" outcome. It returns
+        # no publication_payload, so nothing downstream can be compared. Report it as
+        # its own status and score nothing rather than crashing on the missing key.
+        if 'publication_payload' not in result:
+            row['status'] = 'SETUP_ERROR'
+            row['actual_verdict'] = result.get('verdict', 'SETUP_ERROR')
+            row['expected_verdict'] = c['expected_verdict']
+            row['note'] = ('grader rejected the fixture before grading: '
+                           + '; '.join(str(e.get('detail') or e.get('code') or e) if isinstance(e, dict) else str(e)
+                                       for e in result.get('errors', []))
+                           + ' - nothing scored')
+            rows.append(row); continue
+
         row['actual_verdict'] = result['verdict']
         row['expected_verdict'] = c['expected_verdict']
 
@@ -193,36 +220,52 @@ def run(folder):
                                 else 'incorrect_rejection' if c['expected_verdict'] == 'PASS' and result['verdict'] == 'FAIL'
                                 else 'agreement')
 
-        if c['expected_publication'] is None:
-            row['publication_note'] = 'expected_publication null - contract does not determine it, not scored'
-        else:
-            ck, mm = compare_publication(c['expected_publication'], result)
-            row['publication_parts_checked'] = ck
-            row['checked'] += [f'pub.{p}' for p in ck]
-            row['mismatches'] += mm
-            if ck:
-                row['publication_scored'] = True
-                row['publication_agrees'] = not mm
-            else:
-                row['publication_note'] = 'expected_publication supplied but named no part - not scored'
-
-        g = c.get('expected_seller_guidance')
-        if g:
-            ck, mm = compare_guidance(g, result)
-            row['guidance_parts_checked'] = ck
-            row['checked'] += [f'guid.{p}' for p in ck]
-            row['mismatches'] += mm
-            if ck:
-                row['guidance_scored'] = True
-                row['guidance_agrees'] = not mm
+        try:
+            score_expectations(c, result, row)
+        except CaseSchemaError as e:
+            row['status'] = 'CASE_SCHEMA_ERROR'
+            row['checked'] = []
+            row['verdict_scored'] = row['publication_scored'] = row['guidance_scored'] = False
+            row['note'] = ('case not in the published expectation shape: ' + str(e)
+                           + ' - nothing scored')
+            rows.append(row); continue
 
         row['status'] = 'SCORED' if row['checked'] else 'NOTHING TO CHECK'
         rows.append(row)
     return rows, load_errors
 
+def score_expectations(c, result, row):
+    """Fill row's verdict/publication/guidance scoring. Raises CaseSchemaError
+    when an expectation block is not in the published shape."""
+    if c['expected_publication'] is None:
+        row['publication_note'] = 'expected_publication null - contract does not determine it, not scored'
+    else:
+        ck, mm = compare_publication(c['expected_publication'], result)
+        row['publication_parts_checked'] = ck
+        row['checked'] += [f'pub.{p}' for p in ck]
+        row['mismatches'] += mm
+        if ck:
+            row['publication_scored'] = True
+            row['publication_agrees'] = not mm
+        else:
+            row['publication_note'] = 'expected_publication supplied but named no part - not scored'
+
+    g = c.get('expected_seller_guidance')
+    if g:
+        ck, mm = compare_guidance(g, result)
+        row['guidance_parts_checked'] = ck
+        row['checked'] += [f'guid.{p}' for p in ck]
+        row['mismatches'] += mm
+        if ck:
+            row['guidance_scored'] = True
+            row['guidance_agrees'] = not mm
+
+
 def report(rows, load_errors, folder):
     unapproved  = [r for r in rows if r['status'] == 'UNAPPROVED']
     malformed   = [r for r in rows if r['status'] == 'MALFORMED']
+    setup_err   = [r for r in rows if r['status'] == 'SETUP_ERROR']
+    schema_err  = [r for r in rows if r['status'] == 'CASE_SCHEMA_ERROR']
     notexec     = [r for r in rows if r['status'] == 'NOT EXECUTABLE']
     errored     = [r for r in rows if r['status'] == 'GRADER ERROR']
     v_scored    = [r for r in rows if r['verdict_scored']]
@@ -277,7 +320,7 @@ def report(rows, load_errors, folder):
     print('that case - only the columns marked yes/NO were compared. The three')
     print('denominators are separate and are never combined into one number.')
 
-    excluded = unapproved + notexec + malformed
+    excluded = unapproved + notexec + malformed + setup_err + schema_err
     if excluded:
         print()
         print(f'EXCLUDED FROM EVERY DENOMINATOR: {len(excluded)}')
@@ -294,7 +337,7 @@ def report(rows, load_errors, folder):
     print('Ten cases are an initial independent check. They do not measure the >98%')
     print('publication-accuracy target or the <0.5% wrong-rejection target.')
 
-    return (len(approvals) + len(rejections) + len(errored) + len(load_errors) + len(malformed)
+    return (len(approvals) + len(rejections) + len(errored) + len(load_errors) + len(malformed) + len(setup_err) + len(schema_err)
             + sum(1 for r in p_scored if not r.get('publication_agrees'))
             + sum(1 for r in g_scored if not r.get('guidance_agrees')))
 
