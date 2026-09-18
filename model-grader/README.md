@@ -61,6 +61,8 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 
 ## Boundary
 
+| Skill | Where it starts and stops |
+|---|---|
 | `model-grader` | asks the 24 questions; ends at a contract and open decisions |
 | `eval-rubric-generator` | turns a settled contract into pass/fail criteria |
 | `pm-verifier` | runs a suite against outputs and issues release evidence |
