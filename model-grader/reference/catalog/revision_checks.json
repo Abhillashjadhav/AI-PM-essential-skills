@@ -11077,7 +11077,7 @@
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
-    "name": "certificate-needs-human-review",
+    "name": "certificate-needs-human-review-holds-family",
     "input": {
       "case_id": "D01",
       "contract_version": "1.4",
@@ -11361,7 +11361,7 @@
               "evidence": [
                 "P1.certification"
               ],
-              "action": "Supplier: resolve certification using confirmed source information."
+              "action": "Supply the supporting document and a human validation record for this claim. Publication remains blocked."
             }
           ],
           "display": {
@@ -11408,8 +11408,17 @@
             "size": "C1.size",
             "price": "C1.price"
           },
-          "status": "READY",
-          "issues": [],
+          "status": "BLOCKED",
+          "issues": [
+            {
+              "code": "HUMAN_VALIDATION_REQUIRED",
+              "field": "certification",
+              "evidence": [
+                "P1.certification"
+              ],
+              "action": "Supply the supporting document and a human validation record for this claim. Publication remains blocked."
+            }
+          ],
           "display": {
             "text": "80% cotton, 20% polyester"
           },
@@ -11419,11 +11428,11 @@
     },
     "expected": "PASS",
     "required_error": null,
-    "rule": "",
+    "rule": "Adjudication 6: a pending certificate holds the parent and every variant",
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
-    "name": "document-alone-is-not-human-approval",
+    "name": "document-alone-is-not-human-approval-holds-family",
     "input": {
       "case_id": "D01",
       "contract_version": "1.4",
@@ -11713,7 +11722,7 @@
               "evidence": [
                 "P1.certification"
               ],
-              "action": "Supplier: resolve certification using confirmed source information."
+              "action": "Supply the supporting document and a human validation record for this claim. Publication remains blocked."
             }
           ],
           "display": {
@@ -11760,8 +11769,17 @@
             "size": "C1.size",
             "price": "C1.price"
           },
-          "status": "READY",
-          "issues": [],
+          "status": "BLOCKED",
+          "issues": [
+            {
+              "code": "HUMAN_VALIDATION_REQUIRED",
+              "field": "certification",
+              "evidence": [
+                "P1.certification"
+              ],
+              "action": "Supply the supporting document and a human validation record for this claim. Publication remains blocked."
+            }
+          ],
           "display": {
             "text": "80% cotton, 20% polyester"
           },
@@ -11771,7 +11789,7 @@
     },
     "expected": "PASS",
     "required_error": null,
-    "rule": "",
+    "rule": "Adjudication 6: a document without approval holds the whole family",
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
@@ -12125,7 +12143,7 @@
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {
-    "name": "wrong-document-review-cannot-authorize-claim",
+    "name": "wrong-document-review-cannot-authorize-claim-holds-family",
     "input": {
       "case_id": "D01",
       "contract_version": "1.4",
@@ -12422,7 +12440,7 @@
               "evidence": [
                 "P1.certification"
               ],
-              "action": "Supplier: resolve certification using confirmed source information."
+              "action": "Supply the supporting document and a human validation record for this claim. Publication remains blocked."
             }
           ],
           "display": {
@@ -12469,8 +12487,17 @@
             "size": "C1.size",
             "price": "C1.price"
           },
-          "status": "READY",
-          "issues": [],
+          "status": "BLOCKED",
+          "issues": [
+            {
+              "code": "HUMAN_VALIDATION_REQUIRED",
+              "field": "certification",
+              "evidence": [
+                "P1.certification"
+              ],
+              "action": "Supply the supporting document and a human validation record for this claim. Publication remains blocked."
+            }
+          ],
           "display": {
             "text": "80% cotton, 20% polyester"
           },
@@ -12480,7 +12507,7 @@
     },
     "expected": "PASS",
     "required_error": null,
-    "rule": "",
+    "rule": "Adjudication 6: a mismatched review authorises nothing and holds the whole family",
     "label_status": "development expectation derived from owner rules; not independent gold"
   },
   {

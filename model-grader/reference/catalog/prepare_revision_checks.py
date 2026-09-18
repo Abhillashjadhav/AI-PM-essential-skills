@@ -160,17 +160,30 @@ bad=copy.deepcopy(o);bad['records'][0]['fields']['material']['components'].pop()
 add('partial-display-is-not-permission-to-drop-source',c,bad,'FAIL','WRONG_VALUE')
 
 # Human validation is tied to the exact claim and document in fixture input.
+# Adjudication 6, clarified: a certification is evaluated at GROUP level, so a
+# pending certificate holds the parent AND every variant. The superseded
+# expectations, which published the child, are in revision_checks_historical.json.
+def hold_family(o,refs):
+    for r in o['records']:
+        r['status']='BLOCKED'
+        r['issues']=[{'code':'HUMAN_VALIDATION_REQUIRED','field':'certification','evidence':refs,
+                      'action':'Supply the supporting document and a human validation record for this claim. Publication remains blocked.'}]
 c,o=fresh();source(c,'P1','certification','Lab certificate X');output(o,'P1','certification','Lab certificate X')
-block(o,'P1','HUMAN_VALIDATION_REQUIRED','certification',['P1.certification'])
-add('certificate-needs-human-review',c,o)
+hold_family(o,['P1.certification'])
+add('certificate-needs-human-review-holds-family',c,o,
+    rule='Adjudication 6: a pending certificate holds the parent and every variant')
 c['records'][0]['claims']=[{'field':'certification','document_ref':'supplier/doc-x'}]
-add('document-alone-is-not-human-approval',c,o)
+add('document-alone-is-not-human-approval-holds-family',c,o,
+    rule='Adjudication 6: a document without approval holds the whole family')
 c['records'][0]['claims'][0]['human_review']={'status':'approved','reviewer':'fixture-human','reviewed_at':'2026-09-18','document_ref':'supplier/doc-x','evidence_id':'P1.certification'}
-o['records'][0].update(status='READY',issues=[])
+# Approval lifts the hold on the WHOLE family, not just the record carrying the
+# claim — hold_family blocked every member, so every member is released.
+for r in o['records']: r.update(status='READY',issues=[])
 add('supplied-human-attestation-allows-claim',c,o,rule='Synthetic attestation, not live document verification')
 c['records'][0]['claims'][0]['human_review']['document_ref']='supplier/different-document'
-block(o,'P1','HUMAN_VALIDATION_REQUIRED','certification',['P1.certification'])
-add('wrong-document-review-cannot-authorize-claim',c,o)
+hold_family(o,['P1.certification'])
+add('wrong-document-review-cannot-authorize-claim-holds-family',c,o,
+    rule='Adjudication 6: a mismatched review authorises nothing and holds the whole family')
 
 # Ambiguous source measurements block the SKU, with supplier action.
 c,o=fresh();c['records'][0]['measurements']=[{'id':'chest','type':'chest','value':'25','evidence_id':'P1.measurement.chest'}]
