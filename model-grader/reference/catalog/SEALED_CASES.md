@@ -68,14 +68,47 @@ candidate that correctly blocks a defective product is a `PASS`.**
 |---|---|---|
 | `sku_ids` | SKUs expected in the payload. `[]` means nothing publishes. | whole set |
 | `withheld_fields` | `{sku: [fields]}` expected withheld. `{}` means none. | whole map, empties dropped |
-| `parent_links` | `{sku: parent_sku-or-null}` in the payload. | **only the SKUs you name** |
+| `parent_links` | parent links in the payload. **See the table below — `null` and `{}` mean different things.** | depends |
+| `parent_links_exhaustive` | optional flag, default `false`. | see below |
 
 **The three are compared separately and reported separately.** Supply only the
 parts you want checked — omit one, or set it `null`, and it is not compared and
-not counted. `parent_links` is narrowed to the SKUs you name, so a case can
-assert one link without restating the whole payload.
+not counted.
 
 Set the whole object to `null` when the contract does not determine publication.
+
+#### `parent_links` — `null` and `{}` are not the same
+
+This is the pair an author will get wrong, so it is spelled out.
+
+| Value | Meaning | Denominator |
+|---|---|---|
+| `null` | **Not asserted.** The comparison is skipped. | **excluded** |
+| `{}` | **Asserted: no published SKU carries a parent link.** | included |
+| `{"C1": "P1"}` | Asserted for the named SKUs only. Says nothing about others. | included |
+| `{"C1": null}` | Asserted: C1 publishes with **no** parent link. | included |
+
+`null` checks nothing. `{}` is a real assertion and can fail.
+
+An author writing `{}` to mean "no links" must not get a silent pass. **A check
+that cannot fail is worse than no check**, and this is exactly adjudication 2's
+territory — a valid child publishing independently with no parent link.
+
+#### `parent_links_exhaustive`
+
+Optional, default `false` when absent. Only meaningful alongside a non-empty map.
+
+| | Behaviour |
+|---|---|
+| absent / `false` | Only the SKUs named in the map are compared. A link on an unnamed SKU is ignored. |
+| `true` | The map is the complete set. **Any SKU carrying a parent link that the map does not name is a mismatch.** |
+
+`{}` is already exhaustive by meaning, so the flag adds nothing there.
+
+**`parent_links: null` together with `parent_links_exhaustive` is a malformed
+case.** The flag is meaningless without a map, and the runner refuses to pick an
+interpretation: the case is reported `MALFORMED` and excluded from every
+denominator.
 
 ### `expected_seller_guidance` — meaning, never wording
 
@@ -100,12 +133,13 @@ meaning and the named SKU/field.
 | Condition | Treatment |
 |---|---|
 | `owner_approval` != `"APPROVED"` | **Refused.** Reported as `UNAPPROVED`, never scored. |
+| `parent_links` `null` **and** `parent_links_exhaustive` supplied | **Malformed.** Reported as `MALFORMED`, no interpretation picked. |
 | `review_status` == `"AMBIGUOUS"` | **Not executable.** Listed, never guessed. |
 | `expected_verdict` is `null` | Verdict not scored. The case may still be scored on publication or guidance. |
 | `expected_publication` is `null` | Publication not scored. |
 | unparseable / missing a required key | Listed by filename with the reason. Never silently dropped. |
 
-`UNAPPROVED` and `AMBIGUOUS` are **excluded from every denominator.**
+`UNAPPROVED`, `AMBIGUOUS` and `MALFORMED` are **excluded from every denominator.**
 
 ## Three measurements, three subsets, three denominators
 
@@ -145,46 +179,78 @@ unmeasured, and a clean run does not change that.
 ## Runner branch proof
 
 Every branch was exercised with throwaway inputs the builder invented for that
-purpose and then deleted. Executed at `frozen-v2.3`:
+purpose and then deleted. Executed at `frozen-v2.3`.
+
+### Schema branches
 
 ```
 case      status          exp.vrd  act.vrd  vrd  pub  guid  checked
 T-01      SCORED          PASS     PASS     yes  yes  -     verdict,pub.sku_ids,pub.withheld_fields,pub.parent_links
 T-02      SCORED          PASS     PASS     yes  NO   -     verdict,pub.sku_ids,pub.withheld_fields,pub.parent_links
-            -> sku_ids expected ['P1'] got ['C1', 'P1']
-            -> parent_links expected {'C1': None} got {'C1': 'P1'}
 T-03      SCORED          FAIL     FAIL     yes  -    -     verdict
-T-04      NOT EXECUTABLE  -        -        -    -    -     (nothing)
-            -> review_status AMBIGUOUS - expectation deliberately unset
-T-05      UNAPPROVED      -        -        -    -    -     (nothing)
-            -> owner_approval is 'PENDING', not APPROVED - refused
+T-04      NOT EXECUTABLE  -        -        -    -    -     (nothing)   review_status AMBIGUOUS
+T-05      UNAPPROVED      -        -        -    -    -     (nothing)   owner_approval 'PENDING'
 T-06      SCORED          None     PASS     -    yes  -     pub.sku_ids
 T-07      SCORED          PASS     PASS     yes  -    NO    verdict,guid.P1/description
-            -> P1/description: no seller guidance emitted
 T-08      SCORED          PASS     PASS     yes  -    yes   verdict,guid.!P1/description
-
-CANDIDATE GRADING    denominator 5   agreements 5 / 5
-PUBLICATION          denominator 3   agreements 2 / 3
-  parts compared     : ['parent_links', 'sku_ids', 'withheld_fields']
-SELLER GUIDANCE      denominator 2   agreements 1 / 2
-
-EXCLUDED FROM EVERY DENOMINATOR: 2   (T-05 unapproved, T-04 ambiguous)
-CASES THAT COULD NOT BE LOADED: 2   (bad JSON, missing required keys)
+c09/c10   load errors: bad JSON; missing required keys
 ```
 
-Both error counters were proved separately, since neither fired above:
+Both error counters, proved separately since neither fired above:
 
 ```
-E-APPROVE SCORED  FAIL PASS  NO   ->  INCORRECT APPROVALS  : 1 ['E-APPROVE']
-E-REJECT  SCORED  PASS FAIL  NO   ->  INCORRECT REJECTIONS : 1 ['E-REJECT']
+E-APPROVE  FAIL/PASS  ->  INCORRECT APPROVALS  : 1 ['E-APPROVE']
+E-REJECT   PASS/FAIL  ->  INCORRECT REJECTIONS : 1 ['E-REJECT']
 ```
 
-**Those inputs were self-authored and carry no validation weight whatsoever.**
-Several were deliberately mislabelled — a valid candidate marked `FAIL`, a
-correct payload asserted wrong — for the sole purpose of making each branch and
-counter fire so the wiring could be seen working. They show the runner reports
-what it claims to report. They say nothing about whether the grader is correct,
-and they have been deleted.
+### `parent_links` branches
+
+`PL-1` uses a payload with no parent links at all — the parent blocked on a
+required-field conflict, the child publishing alone. That is adjudication 2's
+scenario, and the case `{}` exists to check.
+
+```
+case      status          exp.vrd  act.vrd  vrd  pub  guid  checked
+PL-1      SCORED          PASS     PASS     yes  yes  -     verdict,pub.parent_links
+PL-2      SCORED          PASS     PASS     yes  NO   -     verdict,pub.parent_links
+            -> parent_links {} asserts no published SKU carries a parent link, but {'C1': 'P1'} does
+PL-3      SCORED          PASS     PASS     yes  yes  -     verdict,pub.parent_links
+PL-4      SCORED          PASS     PASS     yes  NO   -     verdict,pub.parent_links
+            -> parent_links_exhaustive: {'C1': 'P1'} carries a parent link and is not named in the map
+PL-5      SCORED          PASS     PASS     yes  NO   -     verdict,pub.parent_links
+            -> parent_links expected {'C1': None} got {'C1': 'P1'}
+PL-6      SCORED          PASS     PASS     yes  yes  -     verdict,pub.sku_ids
+PL-7      MALFORMED       -        -        -    -    -     (nothing)
+            -> parent_links is null but parent_links_exhaustive is supplied - the flag is
+               meaningless without a map; not interpreting it
+PL-8      SCORED          PASS     PASS     yes  yes  -     verdict,pub.parent_links
+
+CANDIDATE GRADING    denominator 7   agreements 7 / 7
+PUBLICATION          denominator 7   agreements 4 / 7
+  parts compared     : ['parent_links', 'sku_ids']
+EXCLUDED FROM EVERY DENOMINATOR: 1   (PL-7 malformed)
+```
+
+| Case | Branch | Result |
+|---|---|---|
+| PL-1 | `{}` with no links in the payload | passes |
+| PL-2 | `{}` with `C1 -> P1` present | **fails** — the silent pass is closed |
+| PL-3 | map names `P1` only, flag absent, `C1` linked | passes, `C1` ignored |
+| PL-4 | same map, flag `true` | **fails** — unnamed link caught |
+| PL-5 | `{"C1": null}` but `C1` publishes linked | **fails** |
+| PL-6 | `parent_links: null` | skipped — `checked` shows `pub.sku_ids` only |
+| PL-7 | `null` + `parent_links_exhaustive` | `MALFORMED`, excluded |
+| PL-8 | `{"C1": "P1"}` correct | passes |
+
+`PL-6`'s machine record confirms the exclusion rather than only the display:
+`checked ['verdict', 'pub.sku_ids'] | parts ['sku_ids']` — `parent_links` absent.
+
+**All of these inputs were self-authored and carry no validation weight
+whatsoever.** Several were deliberately mislabelled or given deliberately wrong
+expectations, for the sole purpose of making each branch and counter fire so the
+wiring could be seen working. They show the runner reports what it claims to
+report. They say nothing about whether the grader is correct, and they have been
+deleted.
 
 `grader.py` was byte-identical before and after:
 `06413b289ef53d0d71aa23aaf9a50b9257c01534`.

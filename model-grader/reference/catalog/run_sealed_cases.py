@@ -70,15 +70,34 @@ def compare_publication(exp, result):
         if want != got:
             mismatches.append(f'withheld_fields expected {want} got {got}')
 
+    # parent_links semantics, settled before case authoring:
+    #   null          not asserted - skipped, out of the denominator
+    #   {}            asserted - NO published SKU carries a parent link
+    #   {"C1":"P1"}   asserted for the named SKUs only; silent about others
+    #   {"C1":null}   asserted - C1 publishes with no parent link
+    # parent_links_exhaustive (default false) additionally forbids a parent link
+    # on any SKU the map does not name. An author writing {} to mean "no links"
+    # must not get a silent pass: a check that cannot fail is worse than none.
     if 'parent_links' in exp and exp['parent_links'] is not None:
         checked.append('parent_links')
         got = {r['sku']: r.get('parent_sku') for r in payload}
         want = dict(exp['parent_links'])
-        # Compare only the SKUs the case names, so a case may assert one link
-        # without having to restate the whole payload.
-        narrowed = {k: got.get(k) for k in want}
-        if want != narrowed:
-            mismatches.append(f'parent_links expected {want} got {narrowed}')
+        exhaustive = bool(exp.get('parent_links_exhaustive', False))
+        if not want:
+            # {} is an assertion in its own right, and is exhaustive by meaning.
+            offenders = {s: p for s, p in got.items() if p is not None}
+            if offenders:
+                mismatches.append(f'parent_links {{}} asserts no published SKU carries a '
+                                  f'parent link, but {offenders} does')
+        else:
+            narrowed = {k: got.get(k) for k in want}
+            if want != narrowed:
+                mismatches.append(f'parent_links expected {want} got {narrowed}')
+            if exhaustive:
+                unnamed = {s: p for s, p in got.items() if p is not None and s not in want}
+                if unnamed:
+                    mismatches.append(f'parent_links_exhaustive: {unnamed} carries a parent '
+                                      f'link and is not named in the map')
 
     return checked, mismatches
 
@@ -135,6 +154,14 @@ def run(folder):
                'reason': c.get('reason', ''),
                'checked': [], 'mismatches': [],
                'verdict_scored': False, 'publication_scored': False, 'guidance_scored': False}
+
+        ep = c.get('expected_publication')
+        if isinstance(ep, dict) and ep.get('parent_links') is None \
+                and 'parent_links_exhaustive' in ep:
+            row['status'] = 'MALFORMED'
+            row['note'] = ('parent_links is null but parent_links_exhaustive is supplied - '
+                           'the flag is meaningless without a map; not interpreting it')
+            rows.append(row); continue
 
         if c.get('owner_approval') != 'APPROVED':
             row['status'] = 'UNAPPROVED'
@@ -195,6 +222,7 @@ def run(folder):
 
 def report(rows, load_errors, folder):
     unapproved  = [r for r in rows if r['status'] == 'UNAPPROVED']
+    malformed   = [r for r in rows if r['status'] == 'MALFORMED']
     notexec     = [r for r in rows if r['status'] == 'NOT EXECUTABLE']
     errored     = [r for r in rows if r['status'] == 'GRADER ERROR']
     v_scored    = [r for r in rows if r['verdict_scored']]
@@ -249,7 +277,7 @@ def report(rows, load_errors, folder):
     print('that case - only the columns marked yes/NO were compared. The three')
     print('denominators are separate and are never combined into one number.')
 
-    excluded = unapproved + notexec
+    excluded = unapproved + notexec + malformed
     if excluded:
         print()
         print(f'EXCLUDED FROM EVERY DENOMINATOR: {len(excluded)}')
@@ -266,7 +294,7 @@ def report(rows, load_errors, folder):
     print('Ten cases are an initial independent check. They do not measure the >98%')
     print('publication-accuracy target or the <0.5% wrong-rejection target.')
 
-    return (len(approvals) + len(rejections) + len(errored) + len(load_errors)
+    return (len(approvals) + len(rejections) + len(errored) + len(load_errors) + len(malformed)
             + sum(1 for r in p_scored if not r.get('publication_agrees'))
             + sum(1 for r in g_scored if not r.get('guidance_agrees')))
 
