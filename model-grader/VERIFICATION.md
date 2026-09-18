@@ -24,10 +24,10 @@ After adding the two questions this audit produced — numbered A7 and A8 at the
 
 | | Originally recorded | Actual, `grader.py` |
 |---|---|---|
-| Lines | 410 | **427** |
+| Lines | 410 | **427** at the time of the re-run; **507** after the D4/D2 implementation |
 | Version | `revised-v2.1` | `revised-v2.1` (confirmed — `VERSION` on line 7) |
 | Consumed inputs | 47 / 47 | **45 / 45** |
-| Issue codes | 39 / 39 | **43 / 43** |
+| Issue codes | 39 / 39 | **43 / 43** at the re-run; **44 / 44** after D4 added `WITHHELD_FIELD_PUBLISHED` |
 
 The "410 lines" belonged to `baseline_v2.py`, a different version (`revised-v2`). The audit was run against one file and labelled with another's line count. Nothing was repointed to make the old numbers work: `grader.py` is the file the reference calls `revised-v2.1`, so it is the file audited.
 
@@ -38,6 +38,8 @@ The "410 lines" belonged to `baseline_v2.py`, a different version (`revised-v2`)
 - **A1, A2** post-date this grader — they were added by the Check 5 slot review.
 - **A3** (outcome and targets) and **C5**, **C6**, **C8** are contract-level and process-level decisions that do not appear as keys or codes in grader source. Their absence here is not evidence they are unnecessary; it is evidence this audit cannot see them.
 - **C3** (blocker versus warning) *is* implemented — the grader separates `err()` from `warnings` — but the distinction lives in control flow rather than in a key or a code, so the extraction does not catch it. A limitation of the method, not a gap in the bank.
+
+**Kept current.** `coverage_audit.py` runs against `grader.py` as it is, so these numbers move when the grader does. The D4 implementation added one issue code and the audit caught it as untraced until it was mapped to A5 — which is the check working, not a defect.
 
 **Honest limit on the numbers.** Extraction is mechanical and reproducible. The question each input maps to was decided by hand, in the mapping tables inside `coverage_audit.py`. 45/45 means every input has a question someone argued it belongs to — not that the mapping was independently adjudicated.
 
