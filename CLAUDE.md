@@ -29,6 +29,7 @@ Plugin skills fire natively once `.claude/settings.json` (marketplace + `enabled
 - Improve or tune an existing prompt → `pm-tactical/skills/prompt-optimizer-loop/SKILL.md`
 - Audit MCP connectors / context filling up too fast → `pm-tactical/skills/cli-over-mcp-auditor/SKILL.md`
 - Set up project memory / remember stakeholders across sessions → `pm-tactical/skills/pm-context-system/SKILL.md`
+- Define what correct output means so a grader can be built / "build a grader" / "what should the eval check" → `model-grader/skills/model-grader/SKILL.md`
 
 ## Session header protocol
 On the first substantial prompt of a session, run whichever of model-complexity-router, cli-over-mcp-auditor, and pm-context-system have something to say *at that moment* and combine their lines into ONE compact header (max 4 lines) above the task response, instead of three separate interruptions. Each skill stays silent when it has nothing useful to say — an empty check contributes zero lines to the header, not a placeholder line.
