@@ -15,6 +15,6 @@ Yes, and the verification is the exit condition rather than a claim. The build d
 Nine hard rules in SKILL.md. Load-bearing ones: never answer on the owner's behalf; never mark a rule verified because an example was written; never reopen a settled decision to accommodate existing code; never claim a judgment is deterministic when it is not; never freeze without the trail.
 
 **5. What is the smallest shippable version?**
-SKILL.md, six references, three templates, one worked example. No code, no fixtures, no runner. Domain-neutral: all questions are about provenance, identity, comparison, dependency, verdict and process. (Written pre-audit at 22 questions; the shipped bank is 24 — A7 and A8 were added by the coverage audit in `VERIFICATION.md`.) None is domain-specific. The one example that uses concrete numbers is explicitly labelled as shape rather than default.
+SKILL.md, six references, three templates, one worked example. No code, no fixtures, no runner. Domain-neutral: all questions are about provenance, identity, comparison, dependency, verdict and process. (Written pre-audit at 22 questions; the shipped bank is 26. The coverage audit in `VERIFICATION.md` added two, now numbered A9 and A10, and the Check 5 slot-coverage review added A1 and A2.) None is domain-specific. The one example that uses concrete numbers is explicitly labelled as shape rather than default.
 
 **Two attempts max, then delete the branch.**

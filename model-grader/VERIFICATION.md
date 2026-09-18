@@ -12,11 +12,11 @@ Three checks, as scoped. **All three are author-run walkthroughs, not independen
 
 | Grader inputs with no question behind them | Gap | Fix |
 |---|---|---|
-| `operation`, `record_status`, `known_corrections`, `proposed_corrections` | nothing asked what operations exist, what states a record can be in, or what happens to an item with a change in flight | **A7 · Operations and record states** |
-| `authority_registry`, `approved`, `supplier_edits`, `family_wide` | nothing asked who resolves a disagreement, what makes a resolution binding, or how far it propagates | **A8 · Authority and resolution** |
-| (combined) | the bank asked what makes a source *fit to depend on* (B5) but never who decides when two sources disagree | folded into A8 |
+| `operation`, `record_status`, `known_corrections`, `proposed_corrections` | nothing asked what operations exist, what states a record can be in, or what happens to an item with a change in flight | **A9 · Operations and record states** (A7 at the time) |
+| `authority_registry`, `approved`, `supplier_edits`, `family_wide` | nothing asked who resolves a disagreement, what makes a resolution binding, or how far it propagates | **A10 · Authority and resolution** (A8 at the time) |
+| (combined) | the bank asked what makes a source *fit to depend on* (B5) but never who decides when two sources disagree | folded into A10 |
 
-After adding A7 and A8, **47 of 47** consumed inputs and **39 of 39** issue codes trace to at least one question. Both new questions carry a "found by audit, not by design" note in the bank, so a reader knows which questions are evidence-derived rather than reasoned.
+After adding the two questions this audit produced — numbered A7 and A8 at the time, A9 and A10 since Part A gained two upstream questions — **47 of 47** consumed inputs and **39 of 39** issue codes trace to at least one question. Both new questions carry a "found by audit, not by design" note in the bank, so a reader knows which questions are evidence-derived rather than reasoned.
 
 **Limitation.** Coverage against one grader in one domain. It shows the bank is sufficient for a task of this shape. It does not establish sufficiency for tasks of other shapes, and a second audit against a different domain would likely find more.
 
@@ -56,8 +56,8 @@ The file also covers the third case that gets misfiled most often: a malformed f
 |---|---|
 | Renamed `contract-interviewer` → `model-grader` | owner |
 | Restructured into three parts of eight: Shape / Integrity / Verdict | owner's bar — answers must be sufficient to build from, not merely catch cheats |
-| Added Part A entirely (A1–A6): outcome and targets, output shape, requirement classes, allowed values, evidence format, record relationships | owner's bar |
-| Added A7 and A8 | **Check 1 audit** |
+| Added Part A entirely (A1–A6 at the time, now A3–A8): outcome and targets, input and output shape, requirement classes, allowed values, evidence and provenance, record relationships | owner's bar |
+| Added the two operations/authority questions, now A9 and A10 | **Check 1 audit** |
 | Added Part C (C1–C8): statuses, issue codes, blocker vs warning, tolerances, rollup and denominator, error ranking, human judgment, verification plan | owner's bar |
 | Four gates per rule, never collapsed | brief §4 |
 | `policy-vs-defect.md` | brief §2 |
@@ -67,6 +67,7 @@ The file also covers the third case that gets misfiled most often: a malformed f
 | Three questions per turn, gaps visible, owner approval before final | brief §7 |
 | `process-discipline.md` + `PROCESS_LEDGER.md`: sequence, trail, five freeze conditions | owner — the GitHub-signal requirement |
 | Buildability dry-run as the exit condition | this revision |
+| Added A1 (the grader itself) and A2 (reference-based or rule-based), and a per-submission expected-output slot | **Check 5 slot review** |
 
 **Correction to the brief as given.** It specified 98% correctness and 0.5% wrong-rejection as targets in the skill. Those are one project's numbers. Hardcoding them would have had the skill supply an owner's decision — the exact failure hard rule 1 exists to prevent. They now appear only in `examples/catalog.md`, explicitly labelled as the shape of an answer rather than a default, and A1 requires the owner to state their own.
 
