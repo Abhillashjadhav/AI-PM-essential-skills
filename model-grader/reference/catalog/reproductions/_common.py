@@ -32,16 +32,28 @@ def withhold(cand, sku, field):
     r['fields'].pop(field, None)
     r['evidence'].pop(field, None)
 
-def report(rows, name, reproduced, detail):
-    rows.append({'check': name, 'reproduced': reproduced, 'detail': detail})
+def report(rows, name, holds, detail, kind='defect'):
+    """kind='setup' asserts the fixture reached the state under test.
+    kind='defect' asserts the defective behaviour itself. Only defect rows decide
+    the exit code — a setup row that stops holding means the fixture broke, which
+    is reported separately so it cannot be mistaken for a fix."""
+    rows.append({'check': name, 'holds': holds, 'detail': detail, 'kind': kind})
 
 def emit(title, rows):
     print(title)
     print('=' * len(title))
     for r in rows:
-        print(f"  [{'REPRODUCED' if r['reproduced'] else 'not reproduced'}] {r['check']}")
+        if r['kind'] == 'setup':
+            tag = 'setup ok' if r['holds'] else 'SETUP BROKEN'
+        else:
+            tag = 'DEFECT' if r['holds'] else 'clean'
+        print(f"  [{tag}] {r['check']}")
         print(f"      {r['detail']}")
-    any_repro = any(r['reproduced'] for r in rows)
+    setup_broken = [r for r in rows if r['kind'] == 'setup' and not r['holds']]
+    defects = [r for r in rows if r['kind'] == 'defect' and r['holds']]
     print()
-    print('RESULT:', 'DEFECT PRESENT' if any_repro else 'DEFECT ABSENT (fixed or never present)')
-    return 1 if any_repro else 0
+    if setup_broken:
+        print('RESULT: FIXTURE BROKEN - the case no longer reaches the state under test')
+        return 2
+    print('RESULT:', 'DEFECT PRESENT' if defects else 'DEFECT ABSENT')
+    return 1 if defects else 0

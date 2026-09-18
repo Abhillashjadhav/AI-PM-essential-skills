@@ -32,10 +32,10 @@ asserts_publication = bool(warn) and 'published' in warn[0]['action']
 rows = []
 report(rows, 'P1 is BLOCKED by the required-field conflict',
        p1['expected_status'] == 'BLOCKED',
-       f"P1 expected_status = {p1['expected_status']}")
+       f"P1 expected_status = {p1['expected_status']}", kind='setup')
 report(rows, 'P1 is absent from the publication payload',
        'P1' not in published,
-       f"payload SKUs = {sorted(published)}")
+       f"payload SKUs = {sorted(published)}", kind='setup')
 report(rows, 'yet the seller warning asserts the product IS published',
        asserts_publication,
        f"action = {warn[0]['action'] if warn else '(no warning)'}")

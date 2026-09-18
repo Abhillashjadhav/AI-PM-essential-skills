@@ -237,10 +237,38 @@ def partition_issues(issues,p):
     """(blocking, withholding). Blocking decides status; withholding decides fields."""
     return [i for i in issues if not withholds(i,p)],[i for i in issues if withholds(i,p)]
 
+def conflict_resolved(case,sku,field):
+    """A conflict is resolved only by a supplier-approved authority or an approved edit."""
+    return bool(authority(case,sku,field)) or any(
+        e.get('approved') is True and e['sku']==sku and e['field']==field
+        for e in case.get('supplier_edits',[]))
+
+def unresolved_conflicts(case,fs,r,sku):
+    """{field: evidence refs} for every field on THIS record whose sources disagree.
+
+    Two ways a conflict arrives: declared in the record, or implied by two
+    evidence entries for the same field holding different values. Both feed the
+    SOURCE_CONFLICT issues, and both must be visible to the family check so it
+    can tell a withheld field from a real family disagreement.
+    """
+    out={}
+    for c in r.get('conflicts',[]):
+        if not conflict_resolved(case,sku,c['field']): out.setdefault(c['field'],c['evidence'])
+    for f in fs:
+        refs=[key for key,e in case['evidence'].items() if e['sku']==sku and e['field']==f]
+        if len(refs)>1 and any(not same(f,case['evidence'][refs[0]]['value'],case['evidence'][x]['value']) for x in refs[1:]):
+            if not conflict_resolved(case,sku,f): out.setdefault(f,refs)
+    return out
+
 def expected_issues(case,records,values,sku):
     r=records[sku]; fs=values[sku]; p=case['profile']; issues=[]
     def add(code,f,refs): issues.append({'code':code,'field':f,'evidence':refs})
     required=required_fields(p)
+    # Fields THIS record withholds: an unresolved conflict on a non-required field.
+    # Scoped to this SKU only — a sibling that is not withholding the same field is
+    # unaffected, and required fields are never in here.
+    conflicts_here=unresolved_conflicts(case,fs,r,sku)
+    withheld_here={f for f in conflicts_here if f not in required}
     for f in required:
         if f not in fs or fs[f] is None or fs[f]=='': add('MISSING_REQUIRED',f,[])
     for f,allowed in p.get('allowed',{}).items():
@@ -256,6 +284,11 @@ def expected_issues(case,records,values,sku):
     if r['role']=='child':
         parent=r['parent_sku']
         for f in SHARED:
+            # A field this record is withholding has no settled value to compare, so a
+            # family difference on it is not established. Narrow on purpose: only this
+            # field, only on this SKU, and never a required one — withheld_here cannot
+            # contain a required field.
+            if f in withheld_here: continue
             if f in fs and f in values[parent] and not same(f,canonical(f,fs[f],p),canonical(f,values[parent][f],p)):
                 add('FAMILY_MISMATCH',f,[source_ref(case,sku,f),source_ref(case,parent,f)])
         for problem in expected_issues(case,records,values,parent):
@@ -266,14 +299,8 @@ def expected_issues(case,records,values,sku):
                 if withholds(problem,p): add('SOURCE_CONFLICT',problem['field'],problem['evidence'])
                 else: add('PARENT_UNRESOLVED',problem['field'],problem['evidence'])
     # A supplied conflict is resolved only by the selected authority or explicit approved edit.
-    for c in r.get('conflicts',[]):
-        resolved=authority(case,sku,c['field']) or any(e.get('approved') is True and e['sku']==sku and e['field']==c['field'] for e in case.get('supplier_edits',[]))
-        if not resolved: add('SOURCE_CONFLICT',c['field'],c['evidence'])
-    for f in fs:
-        refs=[key for key,e in case['evidence'].items() if e['sku']==sku and e['field']==f]
-        if len(refs)>1 and any(not same(f,case['evidence'][refs[0]]['value'],case['evidence'][x]['value']) for x in refs[1:]):
-            resolved=authority(case,sku,f) or any(e.get('approved') is True and e['sku']==sku and e['field']==f for e in case.get('supplier_edits',[]))
-            if not resolved and not any(x['code']=='SOURCE_CONFLICT' and x['field']==f for x in issues): add('SOURCE_CONFLICT',f,refs)
+    for f,refs in conflicts_here.items():
+        if not any(x['code']=='SOURCE_CONFLICT' and x['field']==f for x in issues): add('SOURCE_CONFLICT',f,refs)
     for correction in r.get('proposed_corrections',[]):
         f=correction['field']
         if not any(e.get('approved') is True and e['sku']==sku and e['field']==f for e in case.get('supplier_edits',[])):

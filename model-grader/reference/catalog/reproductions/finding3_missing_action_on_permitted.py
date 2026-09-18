@@ -30,9 +30,9 @@ def codes(r): return [(e['code'], e.get('sku'), e.get('field')) for e in r['erro
 
 rows = []
 report(rows, 'staying silent about the permitted issue passes',
-       silent['verdict'] == 'PASS', f"verdict = {silent['verdict']}, errors = {codes(silent)}")
+       silent['verdict'] == 'PASS', f"verdict = {silent['verdict']}, errors = {codes(silent)}", kind='setup')
 report(rows, 'reporting it WITH an action passes',
-       with_action['verdict'] == 'PASS', f"verdict = {with_action['verdict']}, errors = {codes(with_action)}")
+       with_action['verdict'] == 'PASS', f"verdict = {with_action['verdict']}, errors = {codes(with_action)}", kind='setup')
 report(rows, 'reporting it WITHOUT an action is penalised',
        any(c == 'MISSING_ACTION' for c, s, f in codes(no_action)),
        f"verdict = {no_action['verdict']}, errors = {codes(no_action)}")
