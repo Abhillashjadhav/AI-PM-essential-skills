@@ -97,6 +97,28 @@ def run():
     rows.append({'case':'d4-withheld-field-absent-from-payload',
                  'matched':('Slim fit' not in payload_text and 'Relaxed fit' not in payload_text),
                  'expected':'neither disputed value appears in the publication payload'})
+    # D4: "an optional-field conflict blocks nothing else" — and a child is something else.
+    def shared_conflict(applicable):
+        c=copy.deepcopy(base['input']); o=copy.deepcopy(base['candidate'])
+        c['profile']['subbrand_applicable']=applicable
+        c['evidence']['P1.subbrand.alt']={'sku':'P1','field':'subbrand','value':'Premium'}
+        next(r for r in c['records'] if r['sku']=='P1').setdefault('conflicts',[]).append(
+            {'field':'subbrand','evidence':['P1.subbrand','P1.subbrand.alt']})
+        if not applicable:
+            for sku in ('P1','C1'):
+                rec=next(r for r in o['records'] if r['sku']==sku)
+                rec['fields'].pop('subbrand',None); rec['evidence'].pop('subbrand',None)
+        return grade(c,o)
+    r_opt=shared_conflict(False)
+    rows.append({'case':'d4-withheld-shared-field-does-not-block-the-child',
+                 'matched':all(x['expected_status']=='READY' for x in r_opt['records'])
+                           and set(r_opt.get('withheld',{}))=={'P1','C1'},
+                 'expected':'optional shared conflict withholds on parent and child; neither blocks'})
+    r_req=shared_conflict(True)
+    rows.append({'case':'d4-required-shared-field-still-blocks-the-child',
+                 'matched':all(x['expected_status']=='BLOCKED' for x in r_req['records'])
+                           and not r_req.get('withheld'),
+                 'expected':'required shared conflict still blocks parent and child'})
     rows.append({'case':'d4-seller-warning-names-field-and-evidence',
                  'matched':any(w['sku']=='P1' and w['field']=='description'
                                and {e['evidence_id'] for e in w['conflicting_values']}
