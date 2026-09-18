@@ -130,6 +130,67 @@ The 18 are recorded in `OPEN_DECISIONS.md` at this plugin's root, unanswered, pe
 
 This reviewer was also spawned by the session that made these changes, so Check 4's gate-3 caveat applies here unchanged: `EXECUTED`, not `INDEPENDENTLY REVIEWED`.
 
+## Check 6 · External review — three defects reproduced and repaired *(EXECUTED)*
+
+An external review reported three defects. Each was **reproduced before any code
+changed**, with a minimal fixture under `reference/catalog/reproductions/`. The
+fixtures stay as regression cases: exit 1 while the defect is present, 0 once it
+is gone.
+
+```
+$ python3 reproductions/run_reproductions.py        # before any repair
+Finding 1 - FAMILY_MISMATCH on a withheld optional field   RESULT: DEFECT PRESENT
+Finding 2 - warning branch inconsistent with final status  RESULT: DEFECT PRESENT
+Finding 3 - MISSING_ACTION on permitted issues             RESULT: DEFECT PRESENT
+0 of 3 findings absent
+
+$ python3 reproductions/run_reproductions.py        # after the three repairs
+...                                                        RESULT: DEFECT ABSENT  (x3)
+3 of 3 findings absent
+```
+
+| Finding | Reproduced as | Repair |
+|---|---|---|
+| 1 · `FAMILY_MISMATCH` on a withheld field | `C1 withholding=[SOURCE_CONFLICT subbrand]` and `C1 blocking=[FAMILY_MISMATCH subbrand]` — the same field withheld and blocked at once | The family check skips a field **this record** is withholding. Verified narrow: a sibling not withholding it still gets `FAMILY_MISMATCH`, and a required shared conflict still blocks |
+| 2 · warning branch vs status | `P1 expected_status=BLOCKED`, `payload=['C1']`, warning said *"the rest of this product is published"* | `warning_branch(status, designated)` — three outcomes, status passed in from `grade()`, `branch` emitted on every warning |
+| 3 · `MISSING_ACTION` on permitted | silent PASS, with-action PASS, **without-action FAIL** on identical facts | Permitted issues skip the per-issue checks entirely |
+
+**Finding 2 did not match its description, and that is recorded rather than
+quietly corrected.** The report named three branches. Before the repair only two
+existed, and neither consulted the computed status — both asserted publication
+unconditionally. The defect was real; its shape was not as described.
+
+**Two fixtures were wrong on the first attempt and were fixed, not accepted.**
+Finding 1's first version asserted on `errors`, where the defect does not appear —
+`FAMILY_MISMATCH` is an *expected* issue, so it sets `wanted=BLOCKED` and the
+honest candidate trips `FALSE_READY` instead. Finding 2's first version matched the
+substring `"published"`, which also matches `"not published"`, so it would have
+passed the repaired text and the broken text alike. Both were rewritten to assert
+on the structure that actually carries the defect.
+
+**Repairs 1 and 2 were each verified by re-introducing the defect**, because a test
+that passes either way is not a test:
+
+```
+repair 2, status ignored  ->  mismatches = [('blocked','P1','description',
+                                             'eligible_for_publication','blocked','BLOCKED')]
+repair 2, repaired        ->  mismatches = none
+```
+
+**Suite counts, before and after all three repairs — identical:**
+
+```
+approved 3/3 · fault_injection 13/13 · revision 55/55 · replay 30/30 · metadata 31/31
+```
+
+No check changed its verdict. The repairs removed penalties that no fixture was
+exercising, which is why the counts hold and why the reproductions had to be
+written to see the defects at all.
+
+**Withdrawn.** An earlier revision claimed the seller-warning wording could not be
+checked without an LLM judge. That was wrong. The warning is a three-way template
+choice over a computed status, decided in one function, and asserted directly.
+
 ---
 
 ## Evidence limitations
