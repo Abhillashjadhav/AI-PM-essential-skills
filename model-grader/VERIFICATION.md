@@ -86,13 +86,15 @@ The file also covers the third case that gets misfiled most often: a malformed f
 
 **Gate status: `EXECUTED`, not `INDEPENDENTLY REVIEWED`.** Every reviewer above was spawned by the same session that made these changes, from the same context, on instructions written by the same party. That is a second sample, not a second party. Under this skill's own gate 3 — "someone who did not build the grader or write the example has adjudicated" — it does not qualify, and claiming otherwise would be the exact collapse gate 3 exists to prevent. The findings are evidence; the reviewing is not independent.
 
-## Check 5 · Build dry-run — the exit condition *(EXECUTED — FAILED)*
+## Check 5 · Template slot coverage *(EXECUTED — not the exit test)*
 
 **Method.** A reviewer was handed `templates/CONTRACT.md` and `references/question-bank.md` and nothing else — no `SKILL.md`, no `buildability-test.md`, no README, no repository context, and no indication it was being tested. It was told an owner's answers would be filled into that template and handed to it, and asked what it would still need before writing the **first check** of a grader.
 
-That is the dry-run as `buildability-test.md` defines it, run for the first time.
+**This is not the skill's exit test, and the earlier framing of it as one was wrong.** The reviewer was handed a *blank template*, not a contract filled in for a real product. What that measures is slot coverage: whether the template has somewhere to write every decision an implementer needs. It cannot measure buildability, because a blank form is unbuildable by construction — a reader will always have questions about cells nobody has filled.
 
-**Result: 18 questions. The exit condition is zero.** The skill does not pass its own exit test.
+The exit test as `buildability-test.md` defines it needs a contract completed through a real interview about a real product, handed to an implementer who did not sit through it. That has still never been run.
+
+**Result: 18 questions, of which two were missing slots.** Two decisions had nowhere to be written at all — what the grader is called with and returns, and whether grading is reference-based or rule-based — and those are genuine slot-coverage failures, now closed by A1, A2 and the per-submission expected-output table. The remaining sixteen are questions a filled contract may well answer; they are logged as gaps rather than treated as defects.
 
 The 18 are recorded in `OPEN_DECISIONS.md` at this plugin's root, unanswered, per hard rule 1 and the dry-run's own instruction that gaps are recorded rather than filled in by the party holding the document. Three clusters carry the weight, and all three are Part A shape questions by the skill's own classification — the class it says must be answered or the grader cannot be written at all:
 
@@ -100,7 +102,7 @@ The 18 are recorded in `OPEN_DECISIONS.md` at this plugin's root, unanswered, pe
 2. **It never states what the grader returns, or over what unit.** Per-item, batch rollup and corpus-level shares all appear; none is designated the verdict.
 3. **Reference-based versus rule-based grading is undetermined.** A2's rationale implies per-submission gold data; the contract has no slot for any.
 
-**What this does and does not establish.** It is one dry-run, by one reader, against the template rather than a filled-in contract — some questions an owner's answers would settle. It is still the first time the exit condition has been measured rather than asserted, and the measurement is 18, not zero. Unresolved decision 3 below expected a second domain to add "one or two" questions. That estimate was wrong by an order of magnitude.
+**What this does and does not establish.** It found two real holes in the template and produced sixteen questions worth checking against a filled contract. It establishes nothing about whether the skill's exit condition is met, because it did not test that. Unresolved decision 3 below expected a second domain to add "one or two" questions to the bank; two were added, so that estimate held.
 
 This reviewer was also spawned by the session that made these changes, so Check 4's gate-3 caveat applies here unchanged: `EXECUTED`, not `INDEPENDENTLY REVIEWED`.
 
@@ -110,4 +112,4 @@ This reviewer was also spawned by the session that made these changes, so Check 
 
 - **No independent adjudication.** Checks 1–3 were authored and run by the party that wrote the skill. Check 4 was run by automated reviewers spawned from that same session and shares its blind spots by construction — it raises the floor on defects found, and moves gate 3 not at all. Nobody outside has adjudicated any of it.
 - Check 1 is mechanical and reproducible: parse the grader, enumerate its inputs, map them to questions. Checks 2 and 3 are reasoning about a design, and reasoning about a design is not evidence that it works.
-- **The real test is now half-run, and it failed.** Check 5 performed the second half — hand the contract to an implementer who did not see the interview and count their questions — against the template rather than a contract filled in by a real owner. The count is 18 against an exit condition of zero. The first half is still outstanding: run the full interview on an unseen spec with a real owner, then re-run the dry-run against what comes out. Until both halves pass, `v0.1.0`, and the exit condition is a claim the skill makes about itself that the evidence does not support.
+- **The exit test has still never been run.** Check 5 tested the template for slot coverage, not a contract for buildability, and the two are different measurements — an earlier revision of this file conflated them. The exit test requires the full interview run on an unseen spec with a real owner, the resulting contract handed to an implementer who did not see the interview, and their questions counted. Until that happens the exit condition remains a claim this skill makes about itself with no measurement behind it, and the version stays `v0.1.0`.
