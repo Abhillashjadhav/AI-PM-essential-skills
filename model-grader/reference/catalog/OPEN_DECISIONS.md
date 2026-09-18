@@ -38,11 +38,10 @@ with a default. A guessed answer looks decided and nobody revisits it.
   shape of 102 builder-authored fixtures, and nowhere a case author can read.
   This is the single finding of the nine-case run.
 
-- **Ten sealed cases.** Input, candidate output, owner verdict, owner one-line
-  reason, mixing valid work and plausible mistakes. Must be prepared without
-  access to the grader, the revision checks or the attacks, and the verdicts are
-  the owner's to assign. **Until these exist and are owner-signed, no accuracy
-  claim is possible.**
+- **Sealed cases that the grader can read.** Nine were authored, owner-signed
+  and run; all nine were rejected before grading (`EVALUATION_v2.3.md`). There is
+  no tenth case and none is outstanding. **Until cases exist that both parties
+  can produce and consume, no accuracy claim is possible.**
 - **The accuracy targets are unmeasured.** The primary outcome (**> 98%** of
   published SKU records correct) and the guardrail (**< 0.5%** of valid
   submissions wrongly rejected) have never been measured, and nothing currently

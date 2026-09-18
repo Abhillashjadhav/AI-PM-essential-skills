@@ -396,10 +396,11 @@ The primary outcome — **more than 98%** of published SKU records correct — a
 guardrail — **fewer than 0.5%** of valid submissions wrongly rejected — have never
 been measured. Nothing currently in this repository can measure either.
 
-**Ten cases would be an initial independent check, not proof of either target.**
-A clean sealed-case run says the grader agreed with an independent judgment on
-ten cases. It does not establish a rate. Reporting one from ten cases would be
-the same error as calling 52/52 self-consistency an accuracy score.
+**Nine cases are an initial independent check, not proof of either target.**
+A clean sealed-case run would say the grader agreed with an independent judgment
+on nine cases. It does not establish a rate. Reporting one from nine cases would
+be the same error as calling 52/52 self-consistency an accuracy score. The run
+that happened was not clean: none of the nine was scored.
 
 The runner reports incorrect approvals and incorrect rejections separately and
 never combines them, because the two targets have different denominators and a

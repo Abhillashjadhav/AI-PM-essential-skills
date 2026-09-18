@@ -22,6 +22,6 @@ Supported extra descriptions remain allowed in fields with evidence. Unknown fac
 
 ## Still pending
 
-The independent reviewer should adjudicate fresh variants; the owner still needs the agreed sample of eight judgments and ten sealed cases prepared outside this builder thread. The 98% publication correctness / 0.5% wrong-rejection targets are not established by these checks. No fresh Sol, Sonnet, Astra or Fable call occurred.
+The independent reviewer should adjudicate fresh variants; the owner still needs the agreed sample of eight judgments; the nine sealed cases prepared outside this builder thread have been run and none was scored (`EVALUATION_v2.3.md`). The 98% publication correctness / 0.5% wrong-rejection targets are not established by these checks. No fresh Sol, Sonnet, Astra or Fable call occurred.
 
 See REVIEW_WITH_CLAUDE.md for independent execution and SETUP.md for source authority setup.

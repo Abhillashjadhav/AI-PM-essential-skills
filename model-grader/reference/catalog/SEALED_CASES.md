@@ -1,8 +1,9 @@
 # Sealed evaluation cases — schema and runner
 
-Ten cases are authored elsewhere. **No cases live in this repository** and the
-builder has not seen them. This file is the published schema; the runner is
-aligned to it, so neither side edits after the cases arrive.
+Nine cases, UCA-01 to UCA-09, are authored elsewhere. **No cases live in this
+repository** and the builder had not seen them before running them. There is no
+tenth case; its absence is not missing data. This file is the published schema;
+the runner is aligned to it, so neither side edits after the cases arrive.
 
 Schema per `04_DATA_FORMAT.md`.
 
@@ -167,14 +168,17 @@ INCORRECT REJECTIONS  expected PASS, grader returned FAIL
 A product correctly left unpublished by a candidate that handled it right is an
 **agreement**, not a rejection.
 
-## What ten cases establish
+## What nine cases establish
 
 An initial independent check that the grader agrees with someone else's judgment
 on cases the builder did not author.
 
 **They do not measure the >98% publication-accuracy target or the <0.5%
-wrong-rejection target.** Ten cases cannot measure either. Those remain
+wrong-rejection target.** Nine cases cannot measure either. Those remain
 unmeasured, and a clean run does not change that.
+
+The nine cases have been run. See `EVALUATION_v2.3.md`: all nine were rejected
+before grading, and all three denominators are zero.
 
 ## Runner branch proof
 
