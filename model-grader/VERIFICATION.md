@@ -281,7 +281,7 @@ Saved candidate replay 30/30 · Internal metadata 31/31 · Regressions 5/5
 exit=0
 ```
 
-## Gate 3 status at `frozen-v2.3` — NOT MET
+## Gate 3 status at `frozen-v2.3` — NOT MET (nine sealed cases run, none scored)
 
 Gate 3 means: **someone other than the builder has checked that the test
 expectations are correct.** Not that the tests pass. Not that the policy behind
@@ -327,16 +327,68 @@ stand as written.
 The builder cannot supply this evidence for the builder's own fixtures, and has
 not attempted to.
 
-### No sealed cases have been run
+### Nine sealed cases have been run. Gate 3 is not closed by them.
 
-Ten evaluation cases are being authored elsewhere. **Zero have been run.** No
-case exists in this repository and the builder has not seen any of them.
+Nine cases, UCA-01 to UCA-09, were authored by someone who is not the builder
+and who had **no sight of the grader**, and were **owner-approved before
+execution** (`owner_approval: "APPROVED"` on all nine). The builder read them
+only to run them and edited nothing in any case file. The cases are not
+committed to this repository. Full report:
+`reference/catalog/EVALUATION_v2.3.md`.
+
+**What the run showed.** All nine were rejected before grading with
+`SETUP_ERROR: material must be object`. Nothing was scored:
+
+| Measurement | Denominator | Agreements |
+|---|---|---|
+| Candidate grading | **0** | 0 / 0 |
+| Publication correctness | **0** | 0 / 0 |
+| Seller guidance | **0** | 0 / 0 |
+
+**Both error directions:** incorrect approvals **0**, incorrect rejections
+**0**. Both zeros mean *not measured*, not *no errors found*. No case reached
+the verdict stage, so neither direction was exercised at all.
+
+The `checked` column is empty for all nine rows. A `SETUP_ERROR` returns no
+`publication_payload`, so there is nothing to compare on any axis.
+
+The cause is a grader-enforced input format that is written nowhere — recorded
+as open decision (e). One implementation defect was confirmed behind it
+(`MALFORMED_RECORD` attributed to a well-formed candidate record,
+`EVALUATION_v2.3.md` F3), reproduced from a shipped fixture. `frozen-v2.3` was
+preserved unchanged; the defect is reported, not repaired.
+
+**Nine cases do not establish the targets.** The primary outcome (**> 98%** of
+published SKU records correct) and the guardrail (**< 0.5%** of valid
+submissions wrongly rejected) are not measurable from nine cases even had all
+nine run. Zero of nine ran. Nothing here moves either number off "unmeasured".
+
+**Gate 3 remains NOT MET.** 60 of 102 fixtures are still builder-authored with
+no independent adjudication of their expected outcome, and only 3 have an
+owner-signed encoding. Running nine cases against the grader does not review
+those 102 expectations; it is a different check, and it did not complete.
+
+### Scope, recorded so it is not mistaken for a gap
+
+- **Durable storage is outside scope.** No requirement in this contract asks
+  the grader to persist anything between runs.
+- **Grouping a child SKU under a parent is a manual supplier action**, performed
+  after both SKUs exist as independently published SKUs. It is not a grader
+  obligation. Owner scope ruling 2026-09-18; see `DECISIONS.md`, Mismatch A.
+
+### The harness
 
 `reference/catalog/run_sealed_cases.py` and `SEALED_CASES.md` are the harness and
-the format, built before the cases exist so neither side sees the other's work.
+the format, built before the cases existed so neither side saw the other's work.
 The harness was proved on six self-authored throwaway inputs that were then
 deleted; those carry no validation weight and are labelled as such in
 `SEALED_CASES.md`.
+
+The run exposed one defect in the harness itself: `compare_guidance()` compares
+against `seller_warnings` only, and reports "no seller guidance emitted" for
+guidance the grader does emit through `guided_help`. Recorded as open decision
+(g); not silently changed, because which channel an expectation asserts against
+is not the builder's to decide.
 
 ### The accuracy targets remain unmeasured
 
