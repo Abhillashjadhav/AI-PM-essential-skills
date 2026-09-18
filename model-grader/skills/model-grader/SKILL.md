@@ -40,7 +40,7 @@ Read `references/question-bank.md` and work through it in order. Three parts:
 
 - **Part A · Shape (A1–A8)** — what a grader mechanically needs to exist. Output schema, requirement classes, allowed values, evidence format, record relationships, operations and record states, authority and resolution. Skip one of these and the grader cannot be written.
 - **Part B · Integrity (B1–B8)** — what stops it being cheated. Each of the eight carries the concrete exploit that got through when it went unasked. State the failure in one line when you ask; a question with no failure attached is a checklist item and gets waved through.
-- **Part C · Verdict and judgment (C1–C8)** — statuses, issue codes, blocker versus warning, tolerances, rollup and denominator, error ranking, human judgment, outcome targets.
+- **Part C · Verdict and judgment (C1–C8)** — statuses, issue codes, blocker versus warning, tolerances, rollup and denominator, error ranking, human judgment, verification plan.
 
 For every rule collected, capture **both sides**: an incorrect example that must fail, and a legitimate example that must pass, each with its expected reason and the owner decision behind it. Show the complete relevant input so the owner can judge it fairly rather than from a fragment. Any example you propose is tagged `UNAPPROVED` until the owner adjudicates it.
 
