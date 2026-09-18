@@ -37,6 +37,21 @@ Any filename ending `.json`. Cases run in filename order; `case01.json` …
 | `reason` | no | One line of rationale. Carried into the output; never used in the comparison. |
 | `input` | yes | The case the system was given: sources, evidence, profile, records. |
 | `candidate` | yes | The output being judged. |
+| `expected_publication` | no | List of SKU ids you expect in the publication payload, e.g. `["P1"]`. Use `[]` for "nothing should publish". **Added after the original format was published** — cases written without it still run, and are reported as `(not specified)` and excluded from the publication denominator rather than counted either way. |
+
+### Two denominators, never merged
+
+Candidate grading and publication correctness are scored separately:
+
+```
+CANDIDATE GRADING   denominator = all cases
+PUBLICATION         denominator = only cases carrying an expected_publication
+```
+
+**A product correctly left unpublished by a candidate that handled it right is an
+agreement, not a rejection.** The two error directions are keyed off the
+candidate's verdict, never off whether SKUs published. A candidate can correctly
+earn `PASS` on a case where nothing publishes.
 
 `PASS` means the candidate handled the case correctly. `FAIL` means it did not.
 The verdict is about the candidate's work, not about whether the product should

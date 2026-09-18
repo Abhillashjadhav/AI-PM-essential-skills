@@ -53,15 +53,28 @@ def run(folder):
         except ValueError as e:
             load_errors.append(str(e)); continue
         try:
-            actual = grade(c['input'], c['candidate'])['verdict']
+            result = grade(c['input'], c['candidate'])
+            actual = result['verdict']
+            published = sorted(r['sku'] for r in result['publication_payload']['records'])
         except Exception as e:
             # A grader crash is a result, not an excuse to skip the case.
-            actual = f'ERROR:{type(e).__name__}'
+            actual, published = f'ERROR:{type(e).__name__}', None
         expected = c['expected_verdict']
+        # Publication expectation is OPTIONAL. Cases written against the original
+        # format do not carry one; those are reported as "not specified" and are
+        # excluded from the publication denominator rather than counted either way.
+        exp_pub = c.get('expected_publication')
+        pub_agrees = None if exp_pub is None or published is None else (sorted(exp_pub) == published)
         rows.append({'case_id': c['case_id'], 'file': f.name,
                      'expected_verdict': expected, 'actual_verdict': actual,
                      'agrees': actual == expected,
+                     'expected_publication': exp_pub,
+                     'actual_publication': published,
+                     'publication_agrees': pub_agrees,
                      'reason': c.get('reason', ''),
+                     # Direction is keyed off the CANDIDATE's verdict, never off
+                     # publication. A product correctly left unpublished by a
+                     # candidate that handled it right is an agreement.
                      'direction': ('incorrect_approval' if expected == 'FAIL' and actual == 'PASS'
                                    else 'incorrect_rejection' if expected == 'PASS' and actual == 'FAIL'
                                    else 'other_disagreement' if actual != expected
@@ -77,14 +90,26 @@ def report(rows, load_errors, folder):
     print(f'Sealed-case run - grader {VERSION}')
     print(f'cases from: {folder}')
     print('=' * 68)
-    print(f"{'case':<16}{'expected':<12}{'actual':<12}{'agreement'}")
+    print(f"{'case':<12}{'exp.vrd':<10}{'act.vrd':<10}{'ok':<5}"
+          f"{'expected pub':<22}{'actual pub':<22}{'ok'}")
     print('-' * 68)
     for r in rows:
-        print(f"{r['case_id']:<16}{r['expected_verdict']:<12}{r['actual_verdict']:<12}"
-              f"{'yes' if r['agrees'] else 'NO'}")
+        ep = '(not specified)' if r['expected_publication'] is None else str(sorted(r['expected_publication']))
+        ap = '(grader error)' if r['actual_publication'] is None else str(r['actual_publication'])
+        po = '-' if r['publication_agrees'] is None else ('yes' if r['publication_agrees'] else 'NO')
+        print(f"{r['case_id']:<12}{r['expected_verdict']:<10}{r['actual_verdict']:<10}"
+              f"{'yes' if r['agrees'] else 'NO':<5}{ep:<22}{ap:<22}{po}")
     print('-' * 68)
-    print(f'Total cases        : {len(rows)}')
-    print(f'Agreements         : {len(agree)}')
+    pub_scored = [r for r in rows if r['publication_agrees'] is not None]
+    pub_ok = [r for r in pub_scored if r['publication_agrees']]
+    print(f'CANDIDATE GRADING   denominator {len(rows)} cases')
+    print(f'  agreements        : {len(agree)} / {len(rows)}')
+    print(f'PUBLICATION         denominator {len(pub_scored)} cases '
+          f'(cases carrying an expected_publication)')
+    print(f'  agreements        : {len(pub_ok)} / {len(pub_scored)}' if pub_scored
+          else '  no case carried an expected_publication; nothing scored')
+    if pub_scored and len(pub_scored) != len(rows):
+        print(f'  {len(rows)-len(pub_scored)} case(s) carried no publication expectation and are not scored here')
     print()
     print(f'INCORRECT APPROVALS : {len(approvals)}   '
           f'{[r["case_id"] for r in approvals] if approvals else "none"}')
@@ -96,6 +121,9 @@ def report(rows, load_errors, folder):
         print(f'OTHER DISAGREEMENTS : {len(other)}   {[r["case_id"] for r in other]}')
         print('   (grader raised an error or returned a verdict outside PASS/FAIL)')
     print()
+    print('Directions are keyed off the candidate verdict, not publication: a product')
+    print('correctly left unpublished by a candidate that handled it right is an')
+    print('agreement, not a rejection. The two denominators above are separate.')
     print('The two error directions are reported separately and are not combined')
     print('into an accuracy figure. Ten cases are an initial independent check;')
     print('they do not measure the >98% publication-accuracy or <0.5%')
