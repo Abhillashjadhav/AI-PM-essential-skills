@@ -75,3 +75,11 @@ An implementer reads the contract and writes the grader without coming back. An 
 ## What this is not
 
 Not a grader, an eval, a rubric generator, or a repair tool. Its output is their input.
+
+## Limitations
+
+- **The exit condition has never been measured on a real contract.** The buildability dry-run has been run against the blank template, which tests slot coverage, not buildability. `VERIFICATION.md` Check 5 records this.
+- **Gate 3 needs a second person.** `INDEPENDENTLY REVIEWED` means someone who did not build the grader adjudicated the expected answers. A solo owner cannot reach it, and the skill reports the gate unmet rather than rounding up.
+- **The question bank is derived from one domain.** A9 and A10 came from auditing a catalog grader; A1 and A2 from a slot review. A second audit in a different domain is the expected way to find the next gap, and free-text domains are the least tested.
+- **Nothing is mechanically enforced.** The four gates, the freeze conditions and the sequence are documentation. The skill can be talked out of any of them by an owner in a hurry; it will say so, and it cannot stop them.
+- **It ends at a contract.** No grader code, no fixtures, no scoring. Whether the contract was any good is only knowable after someone builds from it.
