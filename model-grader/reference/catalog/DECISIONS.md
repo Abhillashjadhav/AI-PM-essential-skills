@@ -9,7 +9,7 @@ an approved rule implemented wrongly is an implementation defect, reported as on
 | # | Scenario | Required behaviour | Implemented? |
 |---|---|---|---|
 | 1 | Parent has conflicting material composition | Hold the parent and affected children. A child's own matching evidence does not resolve the parent's conflict in a shared material attribute. | ✅ verified |
-| 2 | Parent lacks its own price; shared attributes validated | An otherwise complete child may publish as an individual product. It does not become a parent. Retain the intended relationship internally and link when the parent is ready. | ⚠️ partial |
+| 2 | Parent lacks its own price; shared attributes validated | An otherwise complete child may publish as an individual product. It does not become a parent. **Grouping is a manual supplier action after both SKUs exist — not a grader obligation.** | ✅ implemented |
 | 3 | Conflicting descriptions, unapproved authoritative source | Recommend a correction to the seller. A database designation does not substitute for seller approval. | ✅ verified |
 | 4 | Only an optional description conflicts | Withhold the disputed description, publish the otherwise valid product, warn the seller. Do not block the whole product. | ✅ implemented (D4) |
 | 5 | "60% cotton, polyester" with no polyester percentage | Preserve both internally, mark polyester's percentage not supplied, never infer 40%. Display "60% cotton". | ✅ verified |
@@ -30,7 +30,7 @@ the presented scenarios, mapped to the fixtures that exercise them.
 | # | Adjudication | Fixtures | Mapping |
 |---|---|---|---|
 | 1 | Unresolved parent material conflict blocks parent and affected children | `parent-conflict-own-evidence-child-blocked`, `parent-conflict-independent-child-cannot-publish`, `parent-conflict-inherited-child-blocked`, `ASTRA_A5_inherit_unvalidated_parent` | clean |
-| 2 | A valid child may publish individually while the parent lacks its independent price; link later | `parent-price-missing-child-ready`; `d2-child-publishes-without-dangling-parent`, `d2-link-retained-when-parent-published` | **partial — see mismatch A** |
+| 2 | A valid child may publish individually while the parent lacks its independent price | `parent-price-missing-child-ready`; `d2-child-publishes-without-dangling-parent` (metadata-26), `d2-link-retained-when-parent-published` (metadata-27) | ADJUDICATED (3) |
 | 3 | A designated source does not replace seller approval for a correction | `unapproved-authority-withholds-not-blocks`, `ignored-authoritative-value`, `supplier-designated-authority-resolves-description`, `pending-correction-blocks`, `supplier-approved-correction`, `known-typo-requires-supplier-approval` | clean |
 | 4 | Withhold a conflicting optional description, publish the otherwise valid product, warn the seller | `optional-conflict-withheld-silently`, `optional-conflict-withheld-and-reported`, `optional-conflict-must-not-block`, `optional-conflict-must-not-publish-disputed`, `d4-*` in `check_metadata.py` | clean |
 | 5 | Preserve all supplied material information internally; do not invent missing percentages. Allow validated seller updates | `partial-parent-display-preserves-unknown-internally`, `partial-display-is-not-permission-to-drop-source`, `compatible-partial-child-inherits-percent`, `ASTRA_A4_drop_material_metadata`, `approved-family-edit-updates-children`, `wrong-derived-remainder-rejected`, `missing-derived-provenance-rejected` | clean |
@@ -38,13 +38,34 @@ the presented scenarios, mapped to the fixtures that exercise them.
 | 7 | Explicit supplier market selection overrides defaults | `explicit-destination`, `supported-us-destination`, `unsupported-currency`, `ASTRA_A2_currency_relabel` | clean |
 | 8 | Overlapping size boundaries block the affected SKU pending seller correction | `overlapping-size-bands-block`, `double-owned-size-endpoint-block`, `size-boundary-crossing-still-fails`, `owned-boundary-endpoint-still-passes` | clean |
 
-### Mismatch A — adjudication 2, "link later" is unimplemented
+### Mismatch A — adjudication 2 scope — **RESOLVED 2026-09-18**
 
-The publish-individually half is covered. The *link later* half is not: nothing
-re-links a child to its parent once the parent becomes publishable in a later
-run. `d2-link-retained-when-parent-published` covers a parent that is ready in
-the same run, which is a different thing. Deferred relinking is out of scope for
-this task and is recorded as unaddressed in `DIVERGENCES.md`.
+Previously disclosed: the publish-individually half was covered, the "link
+later" half was not, and nothing re-linked a child once its parent became
+publishable in a later run.
+
+**Resolved by owner scope ruling on 2026-09-18. It was never a grader
+obligation.**
+
+> **Owner's ruling, recorded verbatim:** Grouping a child SKU under a parent is
+> a manual supplier action performed after both SKUs exist as independent
+> published SKUs. It is not a grader obligation. A child whose parent is not
+> ready publishes as an individual SKU; the grader has no retain-and-relink
+> requirement and no later-run obligation of any kind.
+
+**This supersedes adjudication 2's "link later" clause as a grader
+requirement.** There is no gap to close, because there was never a requirement.
+
+What remains, unchanged and covered:
+
+| Case | Behaviour | Fixture |
+|---|---|---|
+| Parent not ready | the child publishes as an individual SKU with no parent link | `d2-child-publishes-without-dangling-parent` (metadata-26) |
+| Parent and child both publish in the same run | the payload carries the link | `d2-link-retained-when-parent-published` (metadata-27) |
+
+Both pass at `frozen-v2.3`. No code changed for this ruling — the grader already
+behaved this way; what changed is that the behaviour is now correct by decision
+rather than incomplete against one.
 
 ### Mismatch B — adjudication 6 scope — **RESOLVED 2026-09-18**
 

@@ -20,6 +20,10 @@ with a default. A guessed answer looks decided and nobody revisits it.
   implemented. `DECISIONS.md` records what it actually does — it fails the whole
   SKU, which drops out of the publication payload — rather than only that
   approval happened.
+- **Deferred relinking.** Closed by owner scope ruling 2026-09-18: grouping a
+  child under a parent is a manual supplier action after both SKUs exist, not a
+  grader obligation. There is no later-run requirement of any kind, so there is
+  no gap. See `DECISIONS.md`, Mismatch A.
 - **The eight adjudications.** Complete. Recorded in `DECISIONS.md` with their
   fixture mapping. Mismatch B is now resolved; mismatch A remains open below.
 
@@ -35,6 +39,3 @@ with a default. A guessed answer looks decided and nobody revisits it.
   submissions wrongly rejected) have never been measured, and nothing currently
   in the repository can measure them. Every number the suite reports is
   self-consistency against builder-authored expectations.
-- **Deferred relinking.** Adjudication 2's "link later" — re-linking a child to
-  its parent once the parent becomes publishable in a later run — is
-  unimplemented and out of scope for the current task. See `DIVERGENCES.md`.

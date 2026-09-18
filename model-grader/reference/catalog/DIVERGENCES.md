@@ -48,13 +48,12 @@ parent is also in `ready`. The relationship stays in the records map, so it is
 retained internally and available to link once the parent publishes. A downstream
 consumer no longer sees a child pointing at a parent that is not there.
 
-**Deferred relinking is unaddressed.** Adjudication 2 says the relationship is
-retained internally and linked *when the parent is ready*. What is implemented is
-the same-run case: if the parent is publishable in this run the link is kept, and
-if it is not the child publishes without a dangling pointer. Nothing re-links a
-child to its parent in a **later** run, because nothing here carries state
-between runs. That half of adjudication 2 is not built, was out of scope for this
-task, and is recorded in `OPEN_DECISIONS.md` rather than treated as done.
+**Deferred relinking is not a grader obligation.** An earlier revision recorded
+it as unaddressed. Owner scope ruling of 2026-09-18: grouping a child under a
+parent is a manual supplier action performed after both SKUs exist as
+independent published SKUs. The grader has no retain-and-relink requirement and
+no later-run obligation of any kind, so there is nothing outstanding here. The
+same-run case is unchanged and covered by metadata-27.
 
 `FAMILY_LINK` was deliberately not touched. It governs what the candidate
 declares, not what the grader publishes. Relaxing it would wrongly reject a

@@ -46,7 +46,7 @@ check, and for 99 fixtures nobody has.
 | Judgment | Fixture(s) | Status |
 |---|---|---|
 | **1** · Unresolved parent material conflict blocks parent and affected children | `revision_checks.json`: `parent-conflict-own-evidence-child-blocked`, `parent-conflict-independent-child-cannot-publish`, `parent-conflict-inherited-child-blocked` | ADJUDICATED (3) |
-| **2** · A valid child may publish individually while the parent lacks its independent price; link later | `revision_checks.json`: `parent-price-missing-child-ready` · `check_metadata.py`: `d2-child-publishes-without-dangling-parent`, `d2-link-retained-when-parent-published` | ADJUDICATED (3) — **coverage gap, below** |
+| **2** · A valid child may publish individually while the parent lacks its independent price | `revision_checks.json`: `parent-price-missing-child-ready` · `check_metadata.py`: `d2-child-publishes-without-dangling-parent` (metadata-26), `d2-link-retained-when-parent-published` (metadata-27) | ADJUDICATED (3) |
 | **3** · A designated source does not replace seller approval for a correction | `revision_checks.json`: `supplier-designated-authority-resolves-description`, `ignored-authoritative-value`, `unapproved-authority-withholds-not-blocks`, `pending-correction-blocks`, `supplier-approved-correction`, `authority-can-supply-missing-required-fact`, `known-typo-requires-supplier-approval` | ADJUDICATED (7) |
 | **4** · Withhold a conflicting optional description, publish the otherwise valid product, warn the seller | `revision_checks.json`: `optional-conflict-withheld-silently`, `optional-conflict-withheld-and-reported`, `optional-conflict-must-not-block` · `check_metadata.py`: `d4-withheld-field-absent-from-payload`, `d4-withheld-shared-field-does-not-block-the-child`, `d4-required-shared-field-still-blocks-the-child` | ADJUDICATED (6) |
 | **5** · Preserve all supplied material information internally; do not invent missing percentages; allow validated seller updates | `revision_checks.json`: `approved-family-edit-updates-children`, `stale-child-after-approved-edit`, `compatible-partial-child-inherits-percent`, `partial-parent-display-preserves-unknown-internally`, `partial-display-is-not-permission-to-drop-source`, `wrong-derived-remainder-rejected`, `missing-derived-provenance-rejected` | ADJUDICATED (7) |
@@ -83,17 +83,20 @@ Two were disclosed in earlier passes and both are closed:
 
 No fixture currently asserts an outcome that contradicts a judgment.
 
-## Coverage gap — judgment 2, not a mismatch
+## Judgment 2 — the coverage gap is closed, by ruling not by code
 
-Judgment 2 says the relationship is retained and linked *when the parent is
-ready*. The fixtures cover the same-run case: the child publishes without a
-dangling pointer when the parent is blocked, and keeps the link when the parent
-publishes in that same run. **Nothing covers a later run**, because nothing in
-this grader carries state between runs.
+An earlier revision recorded a gap: judgment 2 said link the child *when the
+parent is ready*, and only the same-run case was covered.
 
-No fixture asserts the wrong thing here, so it is not a MISMATCH. It is an
-uncovered half of an adjudicated judgment, and it is recorded as such rather than
-counted as covered.
+**Owner scope ruling, 2026-09-18: there was never a grader obligation.**
+Grouping a child under a parent is a manual supplier action performed after both
+SKUs exist as independent published SKUs. The grader has no retain-and-relink
+requirement and no later-run obligation of any kind. This supersedes the "link
+later" clause as a grader requirement.
+
+Judgment 2 is therefore fully covered by its three fixtures, and the count above
+is unchanged at 3. Nothing became covered that was not already exercised — the
+requirement was withdrawn, not satisfied.
 
 ## The 60 unadjudicated
 
