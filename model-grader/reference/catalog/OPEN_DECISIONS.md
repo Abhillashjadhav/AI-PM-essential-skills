@@ -6,6 +6,11 @@ with a default. A guessed answer looks decided and nobody revisits it.
 | # | Question | What it costs to leave open | Who can decide |
 |---|---|---|---|
 | b | **Adjudication 5's "seller supplies the missing percentage later; validate and update affected records" — grader scope or workflow scope?** No mechanism exists today. | Either an unbuilt requirement sits in the contract, or a real workflow step has no owner. | Owner |
+| e | **What shape is an input `evidence` value?** The grader requires a `material` evidence value to be an object (`material_key`: `material must be object`) and requires `evidence[f'{sku}.{field}'].value` to equal the record's field value exactly. No contract, prompt or `SEALED_CASES.md` clause says so. The nine sealed-case authors wrote source prose (`"60% cotton / 40% polyester (spec sheet A)"`), modelling evidence as what a source says and `fields` as the value derived from it. | All nine cases were rejected before grading. Until this is written down and published, no one outside the builder can author a case the grader will read. | Owner |
+| f | **Is `expected_publication.withheld_fields` scoped to what published?** A SKU that fails and does not publish still appears in the grader's `withheld` map. UCA-06's author expected `{}` — nothing published, so nothing withheld. `SEALED_CASES.md` does not say, and the runner's choice to compare against `result['withheld']` rather than a payload-scoped map was a builder decision. | A publication check that means two things measures neither. | Owner |
+| g | **Which channel does `expected_seller_guidance` assert against?** `seller_warnings()` covers withheld optional fields only (Decision 4); blocking issues are carried by `guided_help()`. Of the 8 sku+field pairs the authors asserted, 8 are in `guided_help` and 2 in `seller_warnings`. | The harness currently reports "no seller guidance emitted" for guidance that exists. Left open, the guidance denominator is meaningless. | Owner |
+| h | **Is the list form of `expected_seller_guidance` accepted, and is prose ever compared?** The cases supply `[{sku, field, warning_meaning, supplier_action}]`; the published schema is `{required, must_not_warn}` and forbids wording comparison. `sku` + `field` maps over cleanly; the two prose keys cannot be compared under the current rule. | Six cases score no guidance at all. Either the schema accepts the list form or case authors must be told otherwise before the next round. | Owner |
+| i | **A required field whose sources conflict and which therefore carries no value: one issue or two?** The grader expects both `MISSING_REQUIRED` and `SOURCE_CONFLICT`, and `ISSUE_COVERAGE` fails if either is missing. UCA-02's candidate reported the conflict alone and its author judged that a PASS. Reproduced on shipped `inputs/D01.json`. | A candidate that diagnoses the problem correctly is marked wrong for not also reporting its consequence. Drives a wrong rejection. | Owner |
 
 ## Settled since the last revision
 
@@ -28,6 +33,10 @@ with a default. A guessed answer looks decided and nobody revisits it.
   fixture mapping. Mismatch B is now resolved; mismatch A remains open below.
 
 ## Not yet built
+
+- **A published input format.** See (e). The format exists in code and in the
+  shape of 102 builder-authored fixtures, and nowhere a case author can read.
+  This is the single finding of the nine-case run.
 
 - **Ten sealed cases.** Input, candidate output, owner verdict, owner one-line
   reason, mixing valid work and plausible mistakes. Must be prepared without
