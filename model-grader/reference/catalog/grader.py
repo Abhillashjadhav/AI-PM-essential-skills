@@ -260,7 +260,11 @@ def expected_issues(case,records,values,sku):
                 add('FAMILY_MISMATCH',f,[source_ref(case,sku,f),source_ref(case,parent,f)])
         for problem in expected_issues(case,records,values,parent):
             if problem['field'] in SHARED and not any(i['field']==problem['field'] for i in issues):
-                add('PARENT_UNRESOLVED',problem['field'],problem['evidence'])
+                # Decision 4: an optional-field conflict blocks nothing else, and a child
+                # is something else. A parent problem that only withholds propagates as a
+                # withholding conflict on the child's inherited copy, not as a blocker.
+                if withholds(problem,p): add('SOURCE_CONFLICT',problem['field'],problem['evidence'])
+                else: add('PARENT_UNRESOLVED',problem['field'],problem['evidence'])
     # A supplied conflict is resolved only by the selected authority or explicit approved edit.
     for c in r.get('conflicts',[]):
         resolved=authority(case,sku,c['field']) or any(e.get('approved') is True and e['sku']==sku and e['field']==c['field'] for e in case.get('supplier_edits',[]))
