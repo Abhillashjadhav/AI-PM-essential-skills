@@ -24,6 +24,7 @@ EXPECTED_PLUGINS = (
     "agent-graph-designer",
     "pm-human-writer",
     "ai-feature-kill-criteria",
+    "model-grader",
 )
 STANDALONE_SKILLS = (
     "token-cost-estimator",
