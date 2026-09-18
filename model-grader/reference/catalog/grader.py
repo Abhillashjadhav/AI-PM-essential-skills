@@ -260,6 +260,54 @@ def unresolved_conflicts(case,fs,r,sku):
             if not conflict_resolved(case,sku,f): out.setdefault(f,refs)
     return out
 
+REVIEW_FIELDS=('certification','certificate','compliance','safety_claim','organic_certified')
+
+def family_root(records,sku):
+    """The flagship parent that defines this SKU's family. A parent roots its own."""
+    r=records[sku]
+    return r['parent_sku'] if r['role']=='child' else sku
+
+def family_members(records,root):
+    """Every SKU in the family, parent included, in stable order."""
+    return [s for s in records if family_root(records,s)==root]
+
+def certification_holds(case,fs,r,sku,p):
+    """Certification-style claims on ONE record that lack an approved review.
+
+    Returns [(field, evidence_refs)]. Deliberately does not call expected_issues:
+    the family scan below runs this over every member, and recursion through
+    expected_issues would not terminate.
+    """
+    out=[]
+    for requirement in r.get('claims',[]):
+        f=requirement['field']; review=requirement.get('human_review',{})
+        if (not requirement.get('document_ref') or review.get('status')!='approved' or not review.get('reviewer') or not review.get('reviewed_at')
+            or review.get('document_ref')!=requirement['document_ref']
+            or not evidence_matches(case,review.get('evidence_id'),source_ref(case,sku,f))):
+            out.append((f,[source_ref(case,sku,f)] if f in fs else []))
+    review_fields=set(REVIEW_FIELDS)|set(p.get('human_review_fields',[]))
+    declared={x['field'] for x in r.get('claims',[])}
+    for f in sorted(fs.keys() & review_fields - declared):
+        out.append((f,[source_ref(case,sku,f)]))
+    return out
+
+def family_certification_holds(case,records,values,sku,p):
+    """Owner adjudication 6: a certification is evaluated at GROUP level.
+
+    A certification applies to a group, not to an individual SKU — it does not
+    come individually. So a pending or unapproved certificate on ANY member holds
+    the parent and every variant, whichever member carries the claim.
+
+    This is a hold, not a pass. It adds a blocking issue; it removes none. After
+    approval the hold lifts and each SKU still faces every other check.
+    """
+    root=family_root(records,sku)
+    out=[]
+    for member in family_members(records,root):
+        for f,refs in certification_holds(case,values[member],records[member],member,p):
+            out.append((f,refs,member))
+    return out
+
 def expected_issues(case,records,values,sku):
     r=records[sku]; fs=values[sku]; p=case['profile']; issues=[]
     def add(code,f,refs): issues.append({'code':code,'field':f,'evidence':refs})
@@ -311,16 +359,12 @@ def expected_issues(case,records,values,sku):
         if isinstance(current,str) and any(norm(current)==norm(k) for k in mappings):
             add('SUPPLIER_APPROVAL_REQUIRED',f,[source_ref(case,sku,f)])
     # These are input attestations in this offline lab, not document authentication.
-    for requirement in r.get('claims',[]):
-        f=requirement['field']; review=requirement.get('human_review',{})
-        if (not requirement.get('document_ref') or review.get('status')!='approved' or not review.get('reviewer') or not review.get('reviewed_at')
-            or review.get('document_ref')!=requirement['document_ref']
-            or not evidence_matches(case,review.get('evidence_id'),source_ref(case,sku,f))):
-            add('HUMAN_VALIDATION_REQUIRED',f,[source_ref(case,sku,f)] if f in fs else [])
-    review_fields={'certification','certificate','compliance','safety_claim','organic_certified'} | set(p.get('human_review_fields',[]))
-    declared={x['field'] for x in r.get('claims',[])}
-    for f in fs.keys() & review_fields - declared:
-        add('HUMAN_VALIDATION_REQUIRED',f,[source_ref(case,sku,f)])
+    # Adjudication 6: certification is family-wide. A pending certificate on ANY
+    # member holds this SKU, whichever member carries the claim. Only certification
+    # -style fields are scoped this way; SHARED is unchanged.
+    for f,refs,origin in family_certification_holds(case,records,values,sku,p):
+        if any(i['code']=='HUMAN_VALIDATION_REQUIRED' and i['field']==f for i in issues): continue
+        add('HUMAN_VALIDATION_REQUIRED',f,refs)
     for m in r.get('measurements',[]):
         if m.get('unit') not in ('in','cm'):
             add('MEASUREMENT_INPUT','measurement:'+m.get('id','unknown'),[])
