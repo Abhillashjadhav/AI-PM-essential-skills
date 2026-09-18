@@ -6,7 +6,7 @@ Three checks, as scoped. **All three are author-run walkthroughs, not independen
 
 ## Check 1 · Coverage against a working grader *(mechanical, evidence-backed)*
 
-**Method.** Parsed a production T-shirt catalog grader (410 lines, `revised-v2.1`) and extracted every distinct input it consumes from the case, profile and candidate — 47 keys — plus its 39 issue codes. Mapped each against the question bank. A key with no question behind it is a gap: the contract would not have told an implementer it existed.
+**Method.** Parsed a production T-shirt catalog grader (410 lines, recorded at the time as `revised-v2.1`) and extracted every distinct input it consumes from the case, profile and candidate — 47 keys — plus its 39 issue codes. Mapped each against the question bank. A key with no question behind it is a gap: the contract would not have told an implementer it existed.
 
 **Result: 3 gaps found, all now closed.**
 
@@ -17,6 +17,8 @@ Three checks, as scoped. **All three are author-run walkthroughs, not independen
 | (combined) | the bank asked what makes a source *fit to depend on* (B5) but never who decides when two sources disagree | folded into A10 |
 
 After adding the two questions this audit produced — numbered A7 and A8 at the time, A9 and A10 since Part A gained two upstream questions — **47 of 47** consumed inputs and **39 of 39** issue codes trace to at least one question. Both new questions carry a "found by audit, not by design" note in the bank, so a reader knows which questions are evidence-derived rather than reasoned.
+
+**Open discrepancy, found when the reference shipped.** This check names its target as "410 lines, `revised-v2.1`". In `reference/catalog/`, `grader.py` is the file the reference README calls `revised-v2.1` and it is **427** lines; `baseline_v2.py` is exactly **410**. So the audit ran against one of the two and the label or the count is wrong. Until that is settled, treat 47/47 and 39/39 as coverage against an unidentified one of those two graders, not against `revised-v2.1` specifically. Re-running the audit against `grader.py` is the way to close it; it has not been done.
 
 **Limitation.** Coverage against one grader in one domain. It shows the bank is sufficient for a task of this shape. It does not establish sufficiency for tasks of other shapes, and a second audit against a different domain would likely find more.
 

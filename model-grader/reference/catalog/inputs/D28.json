@@ -1,0 +1,213 @@
+{
+  "case_id": "D28",
+  "contract_version": "1.4",
+  "catalog": {
+    "country": "IN",
+    "currency": "INR"
+  },
+  "profile": {
+    "subbrand_applicable": false,
+    "aliases": {
+      "size": {
+        "Medium": "M",
+        "Large": "L"
+      }
+    },
+    "allowed": {
+      "size": [
+        "S",
+        "M",
+        "L",
+        "XL"
+      ],
+      "color": [
+        "Red",
+        "Black",
+        "Blue"
+      ],
+      "subcategory": [
+        "crew neck",
+        "polo"
+      ],
+      "pattern": [
+        "plain",
+        "striped"
+      ]
+    }
+  },
+  "flagship_skus": [
+    "P1"
+  ],
+  "records": [
+    {
+      "sku": "P1",
+      "role": "parent",
+      "record_status": "existing",
+      "parent_sku": null,
+      "fields": {
+        "brand": "Acme",
+        "category": "T-shirt",
+        "subcategory": "crew neck",
+        "design": "plain-no-print",
+        "pattern": "plain",
+        "material": {
+          "components": [
+            {
+              "material": "cotton",
+              "percent": "80"
+            },
+            {
+              "material": "polyester",
+              "percent": "20"
+            }
+          ]
+        },
+        "color": "Red",
+        "size": "L",
+        "price": "1490"
+      }
+    },
+    {
+      "sku": "C1",
+      "role": "child",
+      "record_status": "proposed",
+      "parent_sku": "P1",
+      "fields": {
+        "brand": "Acme",
+        "category": "T-shirt",
+        "subcategory": "crew neck",
+        "design": "plain-no-print",
+        "pattern": "plain",
+        "material": {
+          "components": [
+            {
+              "material": "cotton",
+              "percent": "80"
+            },
+            {
+              "material": "polyester",
+              "percent": "20"
+            }
+          ]
+        },
+        "color": "Black",
+        "size": "M",
+        "price": "990"
+      }
+    }
+  ],
+  "evidence": {
+    "P1.brand": {
+      "sku": "P1",
+      "field": "brand",
+      "value": "Acme"
+    },
+    "P1.category": {
+      "sku": "P1",
+      "field": "category",
+      "value": "T-shirt"
+    },
+    "P1.subcategory": {
+      "sku": "P1",
+      "field": "subcategory",
+      "value": "crew neck"
+    },
+    "P1.design": {
+      "sku": "P1",
+      "field": "design",
+      "value": "plain-no-print"
+    },
+    "P1.pattern": {
+      "sku": "P1",
+      "field": "pattern",
+      "value": "plain"
+    },
+    "P1.material": {
+      "sku": "P1",
+      "field": "material",
+      "value": {
+        "components": [
+          {
+            "material": "cotton",
+            "percent": "80"
+          },
+          {
+            "material": "polyester",
+            "percent": "20"
+          }
+        ]
+      }
+    },
+    "P1.color": {
+      "sku": "P1",
+      "field": "color",
+      "value": "Red"
+    },
+    "P1.size": {
+      "sku": "P1",
+      "field": "size",
+      "value": "L"
+    },
+    "P1.price": {
+      "sku": "P1",
+      "field": "price",
+      "value": "1490"
+    },
+    "C1.brand": {
+      "sku": "C1",
+      "field": "brand",
+      "value": "Acme"
+    },
+    "C1.category": {
+      "sku": "C1",
+      "field": "category",
+      "value": "T-shirt"
+    },
+    "C1.subcategory": {
+      "sku": "C1",
+      "field": "subcategory",
+      "value": "crew neck"
+    },
+    "C1.design": {
+      "sku": "C1",
+      "field": "design",
+      "value": "plain-no-print"
+    },
+    "C1.pattern": {
+      "sku": "C1",
+      "field": "pattern",
+      "value": "plain"
+    },
+    "C1.material": {
+      "sku": "C1",
+      "field": "material",
+      "value": {
+        "components": [
+          {
+            "material": "cotton",
+            "percent": "80"
+          },
+          {
+            "material": "polyester",
+            "percent": "20"
+          }
+        ]
+      }
+    },
+    "C1.color": {
+      "sku": "C1",
+      "field": "color",
+      "value": "Black"
+    },
+    "C1.size": {
+      "sku": "C1",
+      "field": "size",
+      "value": "M"
+    },
+    "C1.price": {
+      "sku": "C1",
+      "field": "price",
+      "value": "990"
+    }
+  }
+}

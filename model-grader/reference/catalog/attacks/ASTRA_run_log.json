@@ -1,0 +1,439 @@
+[
+  {
+    "name": "baseline_sanity_S1",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 2,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "A1_invented_named_blend",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 2,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "A2_currency_relabel",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 2,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "A3_named_blend_case",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 2,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "A4_drop_material_metadata",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 2,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "A5_inherit_unvalidated_parent",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "BLOCKED",
+          "candidate_status": "BLOCKED",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 1,
+      "incomplete": 1
+    }
+  },
+  {
+    "name": "FR1_equivalent_remainder_string",
+    "result": {
+      "verdict": "FAIL",
+      "errors": [
+        {
+          "code": "REMAINDER_PROVENANCE",
+          "sku": "P1",
+          "field": "material",
+          "detail": ""
+        }
+      ],
+      "warnings": [
+        {
+          "sku": "P1",
+          "code": "COMPOSITION_INCOMPLETE"
+        },
+        {
+          "sku": "C1",
+          "code": "COMPOSITION_INCOMPLETE"
+        }
+      ],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "FAIL"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 1,
+      "publishable": 1,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "FR2_equivalent_source_reference",
+    "result": {
+      "verdict": "FAIL",
+      "errors": [
+        {
+          "code": "WRONG_EVIDENCE",
+          "sku": "P1",
+          "field": "material",
+          "detail": ""
+        }
+      ],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "FAIL"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 1,
+      "publishable": 1,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "CONTROL_boundary_crossing",
+    "result": {
+      "verdict": "FAIL",
+      "errors": [
+        {
+          "code": "SIZE_BOUNDARY",
+          "sku": "P1",
+          "field": null,
+          "detail": ""
+        }
+      ],
+      "warnings": [
+        {
+          "sku": "P1",
+          "code": "CONVERSION_P2"
+        }
+      ],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "FAIL"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 1,
+      "publishable": 1,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "CONTROL_owned_boundary_endpoint",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [
+        {
+          "sku": "P1",
+          "code": "CONVERSION_P2"
+        }
+      ],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 2,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "CONTROL_tolerance_no_boundary",
+    "result": {
+      "verdict": "PASS",
+      "errors": [],
+      "warnings": [
+        {
+          "sku": "P1",
+          "code": "CONVERSION_P2"
+        }
+      ],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 2,
+      "publishable": 2,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "CONTROL_wrong_sku_close_conversion",
+    "result": {
+      "verdict": "FAIL",
+      "errors": [
+        {
+          "code": "MEASUREMENT_SOURCE",
+          "sku": "P1",
+          "field": null,
+          "detail": ""
+        }
+      ],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "FAIL"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 1,
+      "publishable": 1,
+      "incomplete": 0
+    }
+  },
+  {
+    "name": "CONTROL_enrich_parent_from_child",
+    "result": {
+      "verdict": "FAIL",
+      "errors": [
+        {
+          "code": "WRONG_VALUE",
+          "sku": "P1",
+          "field": "material",
+          "detail": ""
+        },
+        {
+          "code": "WRONG_EVIDENCE",
+          "sku": "P1",
+          "field": "material",
+          "detail": ""
+        },
+        {
+          "code": "DISPLAY_VALUE",
+          "sku": "P1",
+          "field": "material",
+          "detail": ""
+        }
+      ],
+      "warnings": [],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "FAIL"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "BLOCKED",
+          "candidate_status": "BLOCKED",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 1,
+      "publishable": 0,
+      "incomplete": 1
+    }
+  },
+  {
+    "name": "CONTROL_drop_known_component",
+    "result": {
+      "verdict": "FAIL",
+      "errors": [
+        {
+          "code": "WRONG_VALUE",
+          "sku": "P1",
+          "field": "material",
+          "detail": ""
+        }
+      ],
+      "warnings": [
+        {
+          "sku": "P1",
+          "code": "COMPOSITION_INCOMPLETE"
+        },
+        {
+          "sku": "C1",
+          "code": "COMPOSITION_INCOMPLETE"
+        }
+      ],
+      "records": [
+        {
+          "sku": "P1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "FAIL"
+        },
+        {
+          "sku": "C1",
+          "expected_status": "READY",
+          "candidate_status": "READY",
+          "handling": "PASS"
+        }
+      ],
+      "correctly_handled": 1,
+      "publishable": 1,
+      "incomplete": 0
+    }
+  }
+]
