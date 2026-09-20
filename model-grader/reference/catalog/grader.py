@@ -134,7 +134,13 @@ def settled(values,sku,field):
     only supplies() is what produced the false MALFORMED_RECORD.
     """
     v=values.get(sku,{}).get(field)
-    return v is not None and v!=''
+    if v is None or v=='': return False
+    # An empty container is not a value either. effective() previously asked this
+    # by truthiness (`cm and pm`), which treated {} and [] as nothing; keep that.
+    # Zero is deliberately NOT excluded: expected_issues counts 0 as present for
+    # MISSING_REQUIRED, and settled() must agree with it about what is there.
+    if isinstance(v,(dict,list,tuple,set)) and not v: return False
+    return True
 
 def effective(case):
     records={r['sku']:r for r in case['records']}
@@ -196,10 +202,6 @@ def source_ref(case,sku,field):
     if r['role']=='child':
         parent=next(x for x in case['records'] if x['sku']==r['parent_sku'])
         _,values=effective(case)
-        # The parent is consulted only where it supplies this field. This is not a
-        # guard around the lookup below - it is the question asked before the
-        # lookup exists. Where the parent supplies nothing for `field`, resolution
-        # never enters this branch, so values[parent][field] cannot be reached.
         # Two different questions, asked in order.
         #   supplies() - has the parent supplied this field at all? A declared
         #                conflict counts; that is what blocks the child.
