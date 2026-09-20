@@ -306,6 +306,63 @@ in `EVALUATION_v2.4.md`; with the D1 crash repaired and this ruling applied,
 UCA-02's disagreement is settled against the case rather than against the
 grader.
 
+## A child's `PARENT_UNRESOLVED` carries every parent problem's evidence — **OWNER RULING 2026-09-20**
+
+Recorded verbatim.
+
+> A child's PARENT_UNRESOLVED carries the evidence of every parent problem on
+> that field, not the first one encountered. This is the same principle as the
+> ruling on reporting every blocking problem present: a candidate that cites the
+> conflicting sources is doing what the seller needs, and must never be failed
+> for it.
+
+### What was wrong
+
+A required shared field whose sources disagree trips two problems on the parent,
+and `expected_issues` builds them in this order because the required-field loop
+runs before conflicts are appended:
+
+```
+MISSING_REQUIRED  material  evidence []
+SOURCE_CONFLICT   material  evidence ['P1.material.a', 'P1.material.b']
+```
+
+The propagation loop took the **first** problem for the field and skipped the
+rest, so the child's `PARENT_UNRESOLVED` inherited the empty evidence and the
+disagreeing sources were discarded. `ISSUE_EVIDENCE` compares in both directions,
+so a candidate that cited them was failed:
+
+```
+child's PARENT_UNRESOLVED expected evidence: []
+candidate cites:                             ['P1.material.a', 'P1.material.b']
+-> ISSUE_EVIDENCE  C1  material
+```
+
+### The repair, in `frozen-v2.6`
+
+The parent's problems are grouped by field before anything is emitted, and one
+issue per field carries the **union** of every problem's evidence, in stable
+order, deduplicated. Not the first one found, and not a special case for
+`MISSING_REQUIRED` — any number of problems on a field contribute.
+
+Decision 4's withhold/block split is preserved explicitly: a field propagates as
+`SOURCE_CONFLICT` only when **all** of the parent's problems on it withhold. One
+blocking problem is enough to block; withholding is the weaker outcome and
+cannot override it.
+
+Regression case: `reproductions/ruling_parent_unresolved_evidence.py`, which
+reports `DEFECT PRESENT` on `frozen-v2.5` and `DEFECT ABSENT` on `frozen-v2.6`,
+and asserts both that the evidence is complete and that the propagation still
+fires.
+
+### Why this is the same principle
+
+The ruling above on reporting every blocking problem says a record reports every
+problem present on it, not the first one found. This says the same thing about
+what a propagated issue carries. In both cases the failure mode was the grader
+stopping at the first thing it found and penalising a candidate for being more
+complete than it was.
+
 ## Rendering guidance for a seller is downstream — **OWNER NOTE 2026-09-20**
 
 The grader emits **structured** guidance: `seller_warnings` carries the SKU, the
