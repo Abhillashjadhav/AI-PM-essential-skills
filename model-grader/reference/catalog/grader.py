@@ -548,6 +548,30 @@ def warning_branch(status,designated):
     if status!='READY': return 'blocked'
     return 'awaiting_approval' if designated else 'eligible_for_publication'
 
+def source_phrase(case,ref):
+    """How to name one evidence entry to a seller: its source_note when it has
+    one, otherwise nothing. Ruling 2 - never the internal evidence id."""
+    note=case.get('evidence',{}).get(ref,{}).get('source_note')
+    return note if isinstance(note,str) and note.strip() else None
+
+def attributed_values(case,refs):
+    """"the spec sheet A says X, the supplier invoice says Y", or None.
+
+    Returns None unless EVERY cited entry carries a source_note. A half-attributed
+    sentence would name one source and leave the other anonymous, which reads as
+    though the unnamed one did not exist. Falling back whole keeps the two
+    wordings clean and keeps absence from changing anything a seller can act on
+    beyond losing the names.
+    """
+    parts=[]
+    for ref in refs:
+        note=source_phrase(case,ref)
+        if not note: return None
+        e=case['evidence'][ref]
+        parts.append(f"{note} says {e['value']!r}")
+    if len(parts)<2: return None
+    return ', '.join(parts[:-1])+' and '+parts[-1]
+
 def seller_warnings(case,records,values,status_by_sku):
     """Deterministic seller guidance for every withheld field. Owner decision 4.
 
@@ -567,26 +591,39 @@ def seller_warnings(case,records,values,status_by_sku):
         _,withholding=partition_issues(expected_issues(case,records,values,sku),p)
         for i in withholding:
             f=i['field']
-            conflicting=[{'evidence_id':ref,'value':case['evidence'][ref]['value']}
-                         for ref in i['evidence'] if ref in case['evidence']]
+            conflicting=[]
+            for ref in i['evidence']:
+                if ref not in case['evidence']: continue
+                entry={'evidence_id':ref,'value':case['evidence'][ref]['value']}
+                note=source_phrase(case,ref)
+                if note: entry['source_note']=note
+                conflicting.append(entry)
             designated=designated_but_unapproved(case,sku,f)
             has_designation=bool(designated and designated in case['evidence'])
             status=status_by_sku.get(sku,'BLOCKED')
             branch=warning_branch(status,has_designation)
             w={'sku':sku,'field':f,'branch':branch,'conflicting_values':conflicting}
+            # Ruling 2: name the sources the seller recognises when every cited
+            # entry carries a source_note; otherwise say exactly what v2.3 said.
+            # The branch, the withholding and the verdict are already decided
+            # above and none of them can see this.
+            attributed=attributed_values(case,[x['evidence_id'] for x in conflicting])
+            disagree=('On '+f+', '+attributed+'.') if attributed else ('Sources disagree on '+f+'.')
             if branch=='blocked':
-                w['action']=('Sources disagree on '+f+', so it is withheld. This product is '
+                w['action']=(disagree+' It is withheld. This product is '
                              'not published for other reasons; resolve those first, then '
                              'confirm the correct '+f+'.')
             elif branch=='awaiting_approval':
                 w['recommended_value']=case['evidence'][designated]['value']
                 w['recommended_from']=designated
-                w['action']=('Sources disagree on '+f+'. The designated source gives '
+                named=source_phrase(case,designated)
+                w['action']=(disagree+' The designated source'
+                             +(' ('+named+')' if named else '')+' gives '
                              +repr(case['evidence'][designated]['value'])+', but it is not '
                              'supplier-approved, so '+f+' stays withheld while the rest of this '
                              'product is published. Approve that source to publish '+f+'.')
             else:
-                w['action']=('Sources disagree on '+f+'. It is withheld and the rest of this '
+                w['action']=(disagree+' It is withheld and the rest of this '
                              'product is published. Confirm the correct value to publish '+f+'.')
             out.append(w)
     return out

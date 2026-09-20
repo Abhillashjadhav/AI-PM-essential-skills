@@ -15,7 +15,7 @@ def run_regressions():
     folder=D/'reproductions'
     if not folder.is_dir(): return []
     rows=[]
-    for f in sorted(list(folder.glob('finding*.py'))+list(folder.glob('preservation*.py'))):
+    for f in sorted(list(folder.glob('finding*.py'))+list(folder.glob('preservation*.py'))+list(folder.glob('ruling*.py'))):
         r=subprocess.run([sys.executable,str(f)],cwd=folder,capture_output=True,text=True)
         detail={0:'defect absent',1:'DEFECT PRESENT',2:'FIXTURE BROKEN'}.get(r.returncode,
                  'exit '+str(r.returncode))
