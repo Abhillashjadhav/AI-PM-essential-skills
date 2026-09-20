@@ -92,14 +92,14 @@ RUNNER EXIT=1
 | Case | exp → act verdict | expected publication | actual publication | guidance asserted | result | `checked` |
 |---|---|---|---|---|---|---|
 | UCA-01 | PASS → PASS | `["KL-RN-CHG-M-001","KL-RN-FGR-M-002"]`, withheld `{}`, links `{FGR→CHG}` | same — **agrees** | none | — | `verdict, pub.sku_ids, pub.withheld_fields, pub.parent_links` |
-| UCA-02 | **PASS → FAIL** | `[]`, `{}`, `{}` | same — agrees | 2 pairs | **NO** | + `guid.KL-RN-NVY-M-010/material`, `guid.KL-RN-NVY-S-011/material` |
-| UCA-03 | FAIL → FAIL | `[]`, `{}`, `{}` | same — agrees | 2 pairs | **NO** | + `guid.SW-PL-BLK-L-020/material`, `guid.SW-PL-BLK-XL-021/material` |
-| UCA-04 | PASS → PASS | `["AR-CN-WHT-L-031"]`, `{}`, `{}` | same — agrees | 1 pair | **NO** | + `guid.AR-CN-WHT-M-030/price` |
-| UCA-05 | PASS → PASS | `["BR-VN-RED-M-041"]`, withheld `{BR…: [recommended_browse_nodes]}` | same — agrees | 1 pair | **yes** | + `guid.BR-VN-RED-M-041/recommended_browse_nodes` |
-| UCA-06 | FAIL → FAIL | `[]`, **withheld `{}`**, `{}` | `[]`, **`{HF…: [recommended_browse_nodes]}`** — **NO** | 1 pair | yes | `verdict, pub.sku_ids, pub.withheld_fields, pub.parent_links, guid.HF-TK-OLV-M-050/recommended_browse_nodes` |
+| UCA-02 | **PASS → FAIL** | `[]`, `{}`, `{}` | same — agrees | 2 pairs | yes | + `guid.KL-RN-NVY-M-010/material [guided_help]`, `guid.KL-RN-NVY-S-011/material [guided_help]` |
+| UCA-03 | FAIL → FAIL | `[]`, `{}`, `{}` | same — agrees | 2 pairs | yes | + `guid.SW-PL-BLK-L-020/material [guided_help]`, `guid.SW-PL-BLK-XL-021/material [guided_help]` |
+| UCA-04 | PASS → PASS | `["AR-CN-WHT-L-031"]`, `{}`, `{}` | same — agrees | 1 pair | yes | + `guid.AR-CN-WHT-M-030/price [guided_help]` |
+| UCA-05 | PASS → PASS | `["BR-VN-RED-M-041"]`, withheld `{BR…: [recommended_browse_nodes]}` | same — agrees | 1 pair | yes | + `guid.BR-VN-RED-M-041/recommended_browse_nodes [seller_warnings+guided_help]` |
+| UCA-06 | FAIL → FAIL | `[]`, **withheld `{}`**, `{}` | `[]`, **`{HF…: [recommended_browse_nodes]}`** — **NO, overruled** | 1 pair | yes | `verdict, pub.sku_ids, pub.withheld_fields, pub.parent_links, guid.HF-TK-OLV-M-050/recommended_browse_nodes [seller_warnings+guided_help]` |
 | UCA-07 | FAIL → FAIL | `[]`, `{}`, `{}` | same — agrees | none | — | `verdict, pub.sku_ids, pub.withheld_fields, pub.parent_links` |
 | UCA-08 | PASS → PASS | `["MT-VN-NAT-M-070"]`, `{}`, `{}` | same — agrees | none | — | `verdict, pub.sku_ids, pub.withheld_fields, pub.parent_links` |
-| UCA-09 | PASS → PASS | `[]`, `{}`, `{}` | same — agrees | 1 pair | **NO** | + `guid.CW-CN-SKY-M-080/measurement:m1` |
+| UCA-09 | PASS → PASS | `[]`, `{}`, `{}` | same — agrees | 1 pair | yes | + `guid.CW-CN-SKY-M-080/measurement:m1 [guided_help]` |
 
 On every case that asserted publication, all three parts — `sku_ids`,
 `withheld_fields`, `parent_links` — were compared. Prose keys on guidance
@@ -111,8 +111,12 @@ on every entry that carries them; wording is never matched.
 | Measurement | Denominator | Agreements | Excluded |
 |---|---|---|---|
 | Candidate grading | **9** | **8 / 9** | 0 |
-| Publication correctness | **9** | **8 / 9** | 0 |
-| Seller guidance | **6** | **2 / 6** | 3 (assert no guidance) |
+| Publication correctness | **9** | **8 / 9** raw · **9 / 9** after the (f) ruling | 0 |
+| Seller guidance | **6** | **6 / 6** | 3 (assert no guidance) |
+
+Both publication figures are shown. The raw comparison marks UCA-06 `NO`; the
+owner ruling of 2026-09-20 overrules that case's expectation (§3.2). The
+adjustment is stated, never absorbed into the raw number.
 
 ### Both error directions
 
@@ -139,7 +143,13 @@ nine is not evidence of a low false-accept rate.** It is nine cases.
 
 ## 3. Classification of every disagreement
 
-Four disagreements across three cases.
+Two disagreements, on UCA-02 and UCA-06. **Both are overruled expectations,
+settled by owner ruling against the case rather than against the grader, and
+neither case was edited.** A third area — seller guidance — disagreed under the
+first run of these cases and no longer does; §3.3 records why, since the reason
+was a harness fault rather than anything the grader did.
+
+Nothing is classified IMPLEMENTATION DEFECT, POLICY AMBIGUITY or INVALID CASE.
 
 ### 3.1 UCA-02, verdict — OVERRULED EXPECTATION (not a defect, not counted)
 
@@ -197,79 +207,87 @@ child candidate cites            : ['KL-RN-NVY-M-010.material.a', 'KL-RN-NVY-M-0
 The repair is confirmed on an independently authored case, not only on its own
 regression fixture.
 
-### 3.2 UCA-06, publication — POLICY AMBIGUITY
-
-Open decision **(f)**, unchanged.
+### 3.2 UCA-06, publication — OVERRULED EXPECTATION (not a defect, not counted)
 
 ```
 expected_publication: {"sku_ids": [], "withheld_fields": {}, "parent_links": {}}
-actual sku_ids      : []
+actual sku_ids      : []                      <- agrees
+actual parent_links : {}                      <- agrees
 actual withheld     : {"HF-TK-OLV-M-050": ["recommended_browse_nodes"]}
 ```
 
-`sku_ids` and `parent_links` agree. The author's reading is that nothing
-published, so nothing was withheld *from a publication*. The grader's `withheld`
-is a global analysis map covering every record regardless of publication.
-`SEALED_CASES.md` does not say which the key means, and the runner's choice to
-compare against `result['withheld']` rather than a payload-scoped map was a
-builder decision. Two defensible readings, no owner choice yet.
+The author's reading was that nothing published, so nothing was withheld. Owner
+ruling 2026-09-20 settles it the other way:
 
-**Not an implementation defect:** the grader's map is self-consistent and the
-SKU genuinely is withholding that field. **Not an invalid case:** the key sits
-inside `expected_publication`, which favours the author's reading.
+> When a SKU fails and does not publish, `withheld_fields` still names the field
+> that was at issue. The seller needs to know which field sank it; an empty list
+> tells them nothing.
 
-### 3.3 UCA-02, UCA-03, UCA-04, UCA-09, seller guidance — POLICY AMBIGUITY
+The grader is right, **the case's `withheld_fields: {}` is overruled by owner
+ruling, and the case was not edited.** This was open decision (f), now closed;
+no grader change was needed, because naming the field is what the grader already
+did.
 
-Open decision **(g)**, unchanged. Four of the six guidance disagreements report
-`no seller guidance emitted`. **That conclusion is an artefact of which channel
-the harness reads, and the guidance exists:**
+### 3.3 Seller guidance — RESOLVED, the guidance existed all along
+
+Under the first run of these cases four of six guidance assertions reported `no
+seller guidance emitted`. That was the harness reading one channel. Owner ruling
+2026-09-20:
+
+> Seller guidance must tell the seller why the record is blocked AND what to do
+> about it. Only together is it actionable. The harness therefore reads both
+> seller_warnings and guided_help, and names which channel carried each pair, so
+> that "this blocks you" and "here is what to do" stay distinguishable.
+
+`compare_guidance` now reads both and names the channel per pair. No expectation
+was changed and the grader was not touched:
 
 ```
-case                              sku/field                                   seller_warnings  guided_help
-UCA-02-PARENT-CONFLICT-BLOCK      KL-RN-NVY-M-010/material                    NO               yes
-UCA-02-PARENT-CONFLICT-BLOCK      KL-RN-NVY-S-011/material                    NO               yes
-UCA-03-PARENT-CONFLICT-CHILD-LEAK SW-PL-BLK-L-020/material                    NO               yes
-UCA-03-PARENT-CONFLICT-CHILD-LEAK SW-PL-BLK-XL-021/material                   NO               yes
-UCA-04-PARENTLESS-PRICE-CHILD     AR-CN-WHT-M-030/price                       NO               yes
-UCA-05-OPTIONAL-CONFLICT-WITHHELD BR-VN-RED-M-041/recommended_browse_nodes    yes              yes
-UCA-06-WITHHELD-FIELD-PUBLISHED   HF-TK-OLV-M-050/recommended_browse_nodes    yes              yes
-UCA-09-SIZE-CHART-AMBIGUOUS       CW-CN-SKY-M-080/measurement:m1              NO               yes
-
-asserted pairs 8 | in seller_warnings 2 | in guided_help 8
+before   SELLER GUIDANCE  denominator 6   agreements 2 / 6
+after    SELLER GUIDANCE  denominator 6   agreements 6 / 6
 ```
 
-`seller_warnings()` covers withheld optional fields only, per Decision 4;
-blocking issues are carried by `guided_help()`. `compare_guidance` reads
-`seller_warnings` alone. **All eight asserted pairs are covered by the grader,
-including UCA-09's `measurement:m1`.** Under a both-channel reading the guidance
-figure would be 6/6 rather than 2/6.
+| Case | pair | carried by |
+|---|---|---|
+| UCA-02 | `KL-RN-NVY-M-010/material` | `guided_help` |
+| UCA-02 | `KL-RN-NVY-S-011/material` | `guided_help` |
+| UCA-03 | `SW-PL-BLK-L-020/material` | `guided_help` |
+| UCA-03 | `SW-PL-BLK-XL-021/material` | `guided_help` |
+| UCA-04 | `AR-CN-WHT-M-030/price` | `guided_help` |
+| UCA-05 | `BR-VN-RED-M-041/recommended_browse_nodes` | `seller_warnings+guided_help` |
+| UCA-06 | `HF-TK-OLV-M-050/recommended_browse_nodes` | `seller_warnings+guided_help` |
+| UCA-09 | `CW-CN-SKY-M-080/measurement:m1` | `guided_help` |
 
-The harness was **not** changed to read both channels, because which channel an
-expectation asserts against is an owner question, not the builder's. Until (g)
-is settled the seller-guidance denominator says little: its 2/6 measures a
-channel choice, not the grader's guidance.
+All eight asserted pairs are carried. Open decision (g) is closed.
 
 ### Nothing classified INVALID CASE, and nothing classified IMPLEMENTATION DEFECT
 
-No case was found to contradict a documented rule. The one defect touching this
-run — **(k)** — does not cause a wrong verdict on any of the nine; it miscodes a
-correct error and abandons the rest of that record. It remains open and
-deferred, not closed, and the abandonment is the reason it is not cosmetic.
+No case was found to contradict a documented rule. Two disagreements are **overruled expectations**, settled by owner ruling
+against the case rather than against the grader: UCA-02's verdict (§3.1) and
+UCA-06's `withheld_fields` (§3.2). Neither is counted as an error in either
+direction, and neither case was edited.
+
+The one defect touching this run — **(k)** — does not cause a wrong verdict on
+any of the nine; it miscodes a correct error and abandons the rest of that
+record. It remains open and deferred, not closed, and the abandonment is the
+reason it is not cosmetic.
 
 ---
 
 ## 4. What this run establishes, and what it does not
 
-**Establishes.** All nine cases reached the grader; none was excluded by the
-harness or the fixture format. The verdict and publication axes agree on eight
-of nine each, with the single verdict disagreement resolved by owner ruling
-against the case rather than against the grader. The (l) repair is confirmed on
-an independently authored case.
+**Establishes.** The grader's verdict was correct on all nine cases. Eight of
+the nine were confirmed by an independent author who never saw the code; on the
+ninth the author's expectation was overruled by owner ruling. Publication agrees
+on all nine once UCA-06's overruled expectation is set aside, and every one of
+the eight asserted guidance pairs is carried by the grader. All nine cases
+reached the grader; none was excluded by the harness or the fixture format. The
+(l) repair is confirmed on an independently authored case.
 
-**Does not establish.** Any rate, in either direction. Nine cases in the verdict
-and publication denominators, six in guidance, of which four disagreements turn
-on an unsettled channel question. The **>98%** and **<0.5%** targets remain
-unmeasured and nothing here moves them. Gate 3 is unaffected and remains
+**Does not establish.** Any rate, in either direction. Nine cases do not
+establish the production accuracy targets. The **>98%** publication-correctness
+target and the **<0.5%** wrong-rejection guardrail remain unmeasured and nothing
+here moves them. Gate 3 is unaffected and remains
 **NOT MET**: 60 of 102 fixtures are still builder-authored and unadjudicated,
 and running cases against the grader is a different check from reviewing those
 expectations.

@@ -404,18 +404,26 @@ publish.
 | Measurement | Denominator | Agreements | Excluded |
 |---|---|---|---|
 | Candidate grading | **9** | **8 / 9** | 0 |
-| Publication correctness | **9** | **8 / 9** | 0 |
-| Seller guidance | **6** | **2 / 6** | 3 (assert no guidance) |
+| Publication correctness | **9** | **8 / 9** raw · **9 / 9** after the (f) ruling | 0 |
+| Seller guidance | **6** | **6 / 6** | 3 (assert no guidance) |
 
 Incorrect approvals **0**. Incorrect rejections **0** — the runner tallies one
 (`UCA-02-PARENT-CONFLICT-BLOCK`) against the case's `expected_verdict`, and that
 expectation is overruled by the 2026-09-20 ruling that a record reports every
 blocking problem present on it. The case was not edited.
 
-The four seller-guidance disagreements are a channel question, not missing
-guidance: all eight asserted sku+field pairs are carried by `guided_help`, two
-of them by `seller_warnings`, and the harness reads only the latter. Open
-decision (g).
+Seller guidance is 6/6. The four disagreements in the first run of these cases
+were the harness reading one channel; owner ruling 2026-09-20 settled that it
+reads both and names which carried each pair. All eight asserted sku+field pairs
+are carried by the grader. Open decision (g) closed.
+
+UCA-06's `withheld_fields: {}` is likewise overruled by owner ruling — the
+report names the field that caused the failure. Open decision (f) closed. Neither
+case was edited.
+
+**The grader's verdict was correct on all nine cases. Eight of the nine were
+confirmed by an independent author who never saw the code; on the ninth the
+author's expectation was overruled by owner ruling.**
 
 **No expectation has ever been changed.** Across all three encodings,
 `expected_verdict`, `expected_publication`, `expected_seller_guidance`, `reason`

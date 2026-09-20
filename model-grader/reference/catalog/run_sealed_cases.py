@@ -151,11 +151,12 @@ def guidance_for(result, sku, field):
         if w.get('sku') == sku and w.get('field') == field:
             if 'seller_warnings' not in channels: channels.append('seller_warnings')
             hits.append(w)
-            refs |= {e.get('evidence_id') for e in w.get('conflicting_values', [])}
+            refs |= {e['evidence_id'] for e in w.get('conflicting_values', [])
+                     if e.get('evidence_id')}
     for g in result.get('guided_help', []):
         if g.get('sku') == sku and g.get('field') == field:
             if 'guided_help' not in channels: channels.append('guided_help')
-            refs |= set(g.get('evidence', []))
+            refs |= {x for x in g.get('evidence', []) if x}
     return channels, hits, refs
 
 def compare_guidance(req, result):
@@ -187,7 +188,17 @@ def compare_guidance(req, result):
             not_compared.append(f'{label}: {key}')
         if not channels:
             mismatches.append(f'{label}: no seller guidance emitted in either channel'); continue
-        hit = hits[0] if hits else None
+        # Not hits[0]. The grader emits at most one seller_warnings entry per
+        # sku+field, but that is an invariant of the grader, not of this harness,
+        # and "take the first one found" is the exact pattern the rulings of
+        # 2026-09-20 condemned twice. If it is ever violated, say so instead of
+        # silently choosing.
+        if len(hits) > 1:
+            mismatches.append(f'{label}: {len(hits)} seller_warnings entries for one '
+                              f'sku+field; the harness will not pick one')
+            hit = None
+        else:
+            hit = hits[0] if hits else None
         if 'branch' in want:
             if hit is None:
                 mismatches.append(f"{label}: branch {want['branch']!r} asserted, but only "
