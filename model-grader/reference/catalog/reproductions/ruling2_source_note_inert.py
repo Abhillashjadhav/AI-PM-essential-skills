@@ -80,4 +80,44 @@ report(rows, 'guidance text differs when notes are present', g_notes == g_plain,
        f"with notes: {g_notes[0] if g_notes else '(none)'}\n"
        f"      without  : {g_plain[0] if g_plain else '(none)'}")
 
+# --- 4. without notes, every branch falls back to today's behaviour ---------
+# The ruling says "where source_note is absent, fall back to today's behaviour".
+# Not to a rewording of it. These are the three v2.3 sentences, recorded here as
+# literals so a tidy-up of the guidance text cannot silently change what a seller
+# reads when no note is supplied. Verified against
+# `git show c31cbd9:model-grader/reference/catalog/grader.py`.
+V23 = {
+ 'eligible_for_publication':
+   "Sources disagree on description. It is withheld and the rest of this "
+   "product is published. Confirm the correct value to publish description.",
+ 'blocked':
+   "Sources disagree on description, so it is withheld. This product is "
+   "not published for other reasons; resolve those first, then "
+   "confirm the correct description.",
+ 'awaiting_approval':
+   "Sources disagree on description. The designated source gives "
+   "'A heavier winter weave', but it is not supplier-approved, so description "
+   "stays withheld while the rest of this product is published. Approve that "
+   "source to publish description.",
+}
+
+def plain_action(designate=False, block=False):
+    case, cand, _ = build(False)
+    if designate:
+        case.setdefault('authority_registry', {})['P1.description'] = {
+            'evidence_id': 'P1.description.alt', 'source_location': 'p2',
+            'supplier_approved': False}
+    if block:
+        rec(case, 'P1')['fields'].pop('price'); case['evidence'].pop('P1.price')
+        rec(cand, 'P1')['fields'].pop('price', None)
+        rec(cand, 'P1')['evidence'].pop('price', None)
+    w = next(x for x in grade(case, cand)['seller_warnings'] if x['sku'] == 'P1')
+    return w['branch'], w['action']
+
+for designate, block in ((False, False), (False, True), (True, False)):
+    branch, action = plain_action(designate, block)
+    report(rows, f'no-notes wording drifted from v2.3 on branch {branch!r}',
+           action != V23[branch],
+           action if action == V23[branch] else f'v2.3: {V23[branch]}\n      v2.4: {action}')
+
 sys.exit(emit('Ruling 2 - source_note is carried, quoted, and never decides anything', rows))

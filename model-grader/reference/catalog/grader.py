@@ -7,13 +7,13 @@ from pathlib import Path
 VERSION = 'frozen-v2.4'
 REQUIRED = ('brand','category','subcategory','design','pattern','material','color','size','price')
 SHARED = ('brand','subbrand','category','subcategory','design','pattern','material')
-# These are private envelopes at submission/record level, never catalog fields.
-# Arbitrary company metadata belongs under internal_metadata. No consumer in
-# this package executes, interprets, or publishes these values.
 # Every key an evidence entry may carry. 'source_note' is optional and inert:
 # ruling 2 forbids the grader from comparing it or deciding anything with it.
 EVIDENCE_KEYS = frozenset({'sku','field','value','source_note'})
 
+# These are private envelopes at submission/record level, never catalog fields.
+# Arbitrary company metadata belongs under internal_metadata. No consumer in
+# this package executes, interprets, or publishes these values.
 INTERNAL_KEYS = frozenset({'internal_metadata','notes','confidence','_debug','warnings',
                            'created_at','updated_at','processed_at'})
 
@@ -637,7 +637,11 @@ def seller_warnings(case,records,values,status_by_sku):
             attributed=attributed_values(case,[x['evidence_id'] for x in conflicting])
             disagree=('On '+f+', '+attributed+'.') if attributed else ('Sources disagree on '+f+'.')
             if branch=='blocked':
-                w['action']=(disagree+' It is withheld. This product is '
+                # Without notes this must read exactly as v2.3 did, comma and all:
+                # the ruling says fall back to today's behaviour, not to a rewording.
+                lead=(('On '+f+', '+attributed+'. It is withheld.') if attributed
+                      else ('Sources disagree on '+f+', so it is withheld.'))
+                w['action']=(lead+' This product is '
                              'not published for other reasons; resolve those first, then '
                              'confirm the correct '+f+'.')
             elif branch=='awaiting_approval':
