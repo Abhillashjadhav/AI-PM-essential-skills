@@ -327,7 +327,7 @@ stand as written.
 The builder cannot supply this evidence for the builder's own fixtures, and has
 not attempted to.
 
-### Sealed cases: run twice. Gate 3 is not closed by either run.
+### Sealed cases: run three times. Gate 3 is not closed by any run.
 
 Nine cases, UCA-01 to UCA-09, were authored by someone who is not the builder
 and who had **no sight of the grader**, and were **owner-approved before
@@ -392,6 +392,38 @@ conflict, producing a false `MALFORMED_RECORD` against a well-formed child. The
 v2.4 repair narrowed that class; it did not eliminate it.
 
 Three cases measure nothing about the targets.
+
+### Third run, against `frozen-v2.6` (2026-09-20)
+
+Full report: `reference/catalog/EVALUATION_v2.6.md`.
+
+**All nine cases reached the grader. None was excluded by the harness or the
+fixture format** — the previous run excluded six, four of which expected SKUs to
+publish.
+
+| Measurement | Denominator | Agreements | Excluded |
+|---|---|---|---|
+| Candidate grading | **9** | **8 / 9** | 0 |
+| Publication correctness | **9** | **8 / 9** | 0 |
+| Seller guidance | **6** | **2 / 6** | 3 (assert no guidance) |
+
+Incorrect approvals **0**. Incorrect rejections **0** — the runner tallies one
+(`UCA-02-PARENT-CONFLICT-BLOCK`) against the case's `expected_verdict`, and that
+expectation is overruled by the 2026-09-20 ruling that a record reports every
+blocking problem present on it. The case was not edited.
+
+The four seller-guidance disagreements are a channel question, not missing
+guidance: all eight asserted sku+field pairs are carried by `guided_help`, two
+of them by `seller_warnings`, and the harness reads only the latter. Open
+decision (g).
+
+**No expectation has ever been changed.** Across all three encodings,
+`expected_verdict`, `expected_publication`, `expected_seller_guidance`, `reason`
+and `candidate` hash identically on all nine cases; only `input` moved. The
+input format was documented after the first run rejected every case against it,
+which weakens the evidence and is stated in the report rather than softened.
+
+Nine cases measure nothing about the targets.
 
 **Gate 3 remains NOT MET.** 60 of 102 fixtures are still builder-authored with
 no independent adjudication of their expected outcome, and only 3 have an
