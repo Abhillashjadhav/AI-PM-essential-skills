@@ -363,6 +363,57 @@ what a propagated issue carries. In both cases the failure mode was the grader
 stopping at the first thing it found and penalising a candidate for being more
 complete than it was.
 
+## The report names the field that caused the failure — **OWNER RULING 2026-09-20**
+
+> When a SKU fails and does not publish, `withheld_fields` still names the field
+> that was at issue. The seller needs to know which field sank it; an empty list
+> tells them nothing.
+
+This is existing grader behaviour and **no grader change was made**. `withheld`
+is built for every record regardless of publication, so a SKU that fails still
+reports the field that was withheld.
+
+**Whose expectation this overrules, and where.**
+`UCA-06-WITHHELD-FIELD-PUBLISHED` expects `withheld_fields: {}` on the reasoning
+that nothing published, so nothing was withheld. The grader returns:
+
+```
+expected_publication: {"sku_ids": [], "withheld_fields": {}, "parent_links": {}}
+actual sku_ids      : []                      <- agrees
+actual withheld     : {"HF-TK-OLV-M-050": ["recommended_browse_nodes"]}
+```
+
+Under this ruling the grader is right and **the case's `withheld_fields: {}` is
+overruled by owner ruling.** The case is not edited. Open decision (f) is
+closed.
+
+## Seller guidance must say why and what to do — **OWNER RULING 2026-09-20**
+
+Recorded verbatim.
+
+> Seller guidance must tell the seller why the record is blocked AND what to do
+> about it. Only together is it actionable. The harness therefore reads both
+> seller_warnings and guided_help, and names which channel carried each pair, so
+> that "this blocks you" and "here is what to do" stay distinguishable.
+
+Fixed in the harness, not the grader: `compare_guidance` read `seller_warnings`
+alone and reported "no seller guidance emitted" for guidance the grader does
+emit through `guided_help`. On the nine sealed cases that cost four of six:
+
+```
+before   SELLER GUIDANCE  denominator 6   agreements 2 / 6
+after    SELLER GUIDANCE  denominator 6   agreements 6 / 6
+```
+
+Each pair now names its channel, so the two halves stay distinguishable:
+
+```
+guid.KL-RN-NVY-M-010/material [guided_help]
+guid.BR-VN-RED-M-041/recommended_browse_nodes [seller_warnings+guided_help]
+```
+
+Open decision (g) is closed.
+
 ## Rendering guidance for a seller is downstream — **OWNER NOTE 2026-09-20**
 
 The grader emits **structured** guidance: `seller_warnings` carries the SKU, the

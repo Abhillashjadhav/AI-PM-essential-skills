@@ -6,12 +6,31 @@ with a default. A guessed answer looks decided and nobody revisits it.
 | # | Question | What it costs to leave open | Who can decide |
 |---|---|---|---|
 | b | **Adjudication 5's "seller supplies the missing percentage later; validate and update affected records" — grader scope or workflow scope?** No mechanism exists today. | Either an unbuilt requirement sits in the contract, or a real workflow step has no owner. | Owner |
-| f | **Is `expected_publication.withheld_fields` scoped to what published?** A SKU that fails and does not publish still appears in the grader's `withheld` map. UCA-06's author expected `{}` — nothing published, so nothing withheld. `SEALED_CASES.md` does not say, and the runner's choice to compare against `result['withheld']` rather than a payload-scoped map was a builder decision. | A publication check that means two things measures neither. | Owner |
-| g | **Which channel does `expected_seller_guidance` assert against?** `seller_warnings()` covers withheld optional fields only (Decision 4); blocking issues are carried by `guided_help()`. Of the 8 sku+field pairs the authors asserted, 8 are in `guided_help` and 2 in `seller_warnings`. | The harness currently reports "no seller guidance emitted" for guidance that exists. Left open, the guidance denominator is meaningless. | Owner |
-| h | **Is the list form of `expected_seller_guidance` accepted, and is prose ever compared?** The cases supply `[{sku, field, warning_meaning, supplier_action}]`; the published schema is `{required, must_not_warn}` and forbids wording comparison. `sku` + `field` maps over cleanly; the two prose keys cannot be compared under the current rule. | Six cases score no guidance at all. Either the schema accepts the list form or case authors must be told otherwise before the next round. | Owner |
 | k | **`text_parts` raises `ValueError` for candidate text outside the grammar, and the catch-all reports it as `MALFORMED_RECORD`.** The surrounding code's intent is plainly `DISPLAY_VALUE` — it writes `if text_parts(...) != ek: err('DISPLAY_VALUE',...)` — but the parser raises instead of returning, so the comparison never happens. **Deferred by owner 2026-09-20, explicitly not as cosmetic.** | **The verdict is correct** — the candidate's text really is outside the grammar, so `FAIL` is right — but `MALFORMED_RECORD` is raised from the catch-all wrapping the whole per-record block, so **every remaining check on that record is abandoned**. That is the same silent hole as F3: a real defect later in the record is never examined, and it can hide errors in both directions. A right verdict reached with the rest of the record unchecked is not a safe verdict. | Owner |
 
 ## Settled since the last revision
+
+- **(h) Is the list form of `expected_seller_guidance` accepted, and is prose
+  ever compared.** Settled by owner ruling 2026-09-20: **the plain list is
+  valid**, and prose is never compared — "meaning, never wording" still holds,
+  so `warning_meaning` and `supplier_action` are named in the report as not
+  compared rather than silently ignored. Implemented in `normalise_guidance()`
+  and documented in `SEALED_CASES.md`. *Recorded late: the ruling was given and
+  implemented before this entry was moved out of the open table.*
+
+- **(f) Is `expected_publication.withheld_fields` scoped to what published.**
+  Settled by owner ruling 2026-09-20: **no — the report names the field that
+  caused the failure.** "The seller needs to know which field sank it; an empty
+  list tells them nothing." Existing grader behaviour; no grader change.
+  `UCA-06-WITHHELD-FIELD-PUBLISHED`'s `withheld_fields: {}` is overruled by the
+  ruling and the case was not edited.
+
+- **(g) Which channel `expected_seller_guidance` asserts against.** Settled by
+  owner ruling 2026-09-20: **both.** "Seller guidance must tell the seller why
+  the record is blocked AND what to do about it. Only together is it
+  actionable." Fixed in the harness, not the grader; each pair now names the
+  channel that carried it. The guidance figure on the nine cases moved 2/6 to
+  6/6.
 
 - **(l) What a child's `PARENT_UNRESOLVED` carries.** Settled by owner ruling
   2026-09-20: **the evidence of every parent problem on that field**, not the
