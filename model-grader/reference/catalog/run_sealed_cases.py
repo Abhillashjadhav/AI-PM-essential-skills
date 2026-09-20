@@ -166,7 +166,7 @@ def run(folder):
                'owner_approval': c.get('owner_approval'),
                'review_status': c.get('review_status'),
                'reason': c.get('reason', ''),
-               'checked': [], 'mismatches': [],
+               'checked': [], 'mismatches': [], 'schema_errors': [],
                'verdict_scored': False, 'publication_scored': False, 'guidance_scored': False}
 
         ep = c.get('expected_publication')
@@ -220,45 +220,61 @@ def run(folder):
                                 else 'incorrect_rejection' if c['expected_verdict'] == 'PASS' and result['verdict'] == 'FAIL'
                                 else 'agreement')
 
-        try:
-            score_expectations(c, result, row)
-        except CaseSchemaError as e:
-            row['status'] = 'CASE_SCHEMA_ERROR'
-            row['checked'] = []
-            row['verdict_scored'] = row['publication_scored'] = row['guidance_scored'] = False
-            row['note'] = ('case not in the published expectation shape: ' + str(e)
-                           + ' - nothing scored')
-            rows.append(row); continue
+        score_expectations(c, result, row)
 
-        row['status'] = 'SCORED' if row['checked'] else 'NOTHING TO CHECK'
+        # A nonconforming expectation block costs its OWN measurement and nothing
+        # else. The three are separate subsets by design - "the three are compared
+        # separately and reported separately" - so a guidance block in the wrong
+        # shape must not suppress the verdict and publication comparisons, which
+        # are readable and were asserted. Suppressing them hides real
+        # disagreements behind a formatting problem.
+        if row['schema_errors'] and not row['checked']:
+            row['status'] = 'CASE_SCHEMA_ERROR'
+        else:
+            row['status'] = 'SCORED' if row['checked'] else 'NOTHING TO CHECK'
         rows.append(row)
     return rows, load_errors
 
 def score_expectations(c, result, row):
-    """Fill row's verdict/publication/guidance scoring. Raises CaseSchemaError
-    when an expectation block is not in the published shape."""
+    """Fill row's publication and guidance scoring.
+
+    A CaseSchemaError is caught per block, not per case: it removes that one
+    measurement from its own denominator and leaves the other two alone.
+    """
     if c['expected_publication'] is None:
         row['publication_note'] = 'expected_publication null - contract does not determine it, not scored'
     else:
-        ck, mm = compare_publication(c['expected_publication'], result)
-        row['publication_parts_checked'] = ck
-        row['checked'] += [f'pub.{p}' for p in ck]
-        row['mismatches'] += mm
-        if ck:
-            row['publication_scored'] = True
-            row['publication_agrees'] = not mm
+        try:
+            ck, mm = compare_publication(c['expected_publication'], result)
+        except CaseSchemaError as e:
+            row['schema_errors'].append('expected_publication: ' + str(e))
+            row['publication_note'] = ('expected_publication not in the published shape - '
+                                       'not scored, and out of the publication denominator')
         else:
-            row['publication_note'] = 'expected_publication supplied but named no part - not scored'
+            row['publication_parts_checked'] = ck
+            row['checked'] += [f'pub.{p}' for p in ck]
+            row['mismatches'] += mm
+            if ck:
+                row['publication_scored'] = True
+                row['publication_agrees'] = not mm
+            else:
+                row['publication_note'] = 'expected_publication supplied but named no part - not scored'
 
     g = c.get('expected_seller_guidance')
     if g:
-        ck, mm = compare_guidance(g, result)
-        row['guidance_parts_checked'] = ck
-        row['checked'] += [f'guid.{p}' for p in ck]
-        row['mismatches'] += mm
-        if ck:
-            row['guidance_scored'] = True
-            row['guidance_agrees'] = not mm
+        try:
+            ck, mm = compare_guidance(g, result)
+        except CaseSchemaError as e:
+            row['schema_errors'].append('expected_seller_guidance: ' + str(e))
+            row['guidance_note'] = ('expected_seller_guidance not in the published shape - '
+                                    'not scored, and out of the guidance denominator')
+        else:
+            row['guidance_parts_checked'] = ck
+            row['checked'] += [f'guid.{p}' for p in ck]
+            row['mismatches'] += mm
+            if ck:
+                row['guidance_scored'] = True
+                row['guidance_agrees'] = not mm
 
 
 def report(rows, load_errors, folder):
@@ -290,6 +306,7 @@ def report(rows, load_errors, folder):
               f"{mark(r['guidance_scored'],'guidance_agrees'):<6}"
               f"{','.join(r['checked']) if r['checked'] else '(nothing)'}")
         for m in r['mismatches']: print(f"{'':<36}  -> {m}")
+        for e in r.get('schema_errors', []): print(f"{'':<36}  -> not in the published shape, {e}")
         if r.get('note'): print(f"{'':<36}  -> {r['note']}")
     print('-' * 120)
 
@@ -302,8 +319,15 @@ def report(rows, load_errors, folder):
     if p_scored:
         parts = sorted({p for r in p_scored for p in r.get('publication_parts_checked', [])})
         print(f'  parts compared     : {parts}   (only the parts each case supplied)')
+    blocked_blocks = [(r['case_id'], e) for r in rows for e in r.get('schema_errors', [])]
     print(f'SELLER GUIDANCE      denominator {len(g_scored)} case(s) carrying expected_seller_guidance')
     print(f'  agreements         : {sum(1 for r in g_scored if r.get("guidance_agrees"))} / {len(g_scored)}')
+    if blocked_blocks:
+        print()
+        print(f'EXPECTATION BLOCKS NOT IN THE PUBLISHED SHAPE: {len(blocked_blocks)}')
+        print('  Each costs its own measurement only. The other two subsets for that')
+        print('  case are still compared and still counted.')
+        for cid, e in blocked_blocks: print(f'  - {cid:<36} {e}')
     print()
     print(f'INCORRECT APPROVALS  : {len(approvals)}   '
           f'{[r["case_id"] for r in approvals] if approvals else "none"}')
