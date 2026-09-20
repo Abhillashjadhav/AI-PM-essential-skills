@@ -137,6 +137,48 @@ adjudicated.**
 (The suite is now 55 revision checks, not 52; the three added by the D4 work are
 builder-authored like the rest.)
 
+## Publishing and grouping are separate acts — **OWNER RULING 2026-09-20**
+
+Recorded verbatim. This is the owner's wording, not a paraphrase.
+
+> Publishing and grouping are separate acts. A SKU is evaluated and published on
+> its own values alone. A parent-child relationship may be declared by the seller
+> at submission or after both SKUs are already live — either is valid. A record
+> naming a parent that is not live has no parent for grading purposes: no
+> inheritance, no family comparison, no parent-derived blocking. It publishes if
+> its own values are valid. A parent that is missing or wrong is a partial
+> submission and is the seller's to complete; it never holds back a valid child.
+> Family rules — shared-field conflicts, certification holds — apply only among
+> SKUs that are live together.
+
+### What this supersedes
+
+It supersedes the F3 finding in `EVALUATION_v2.3.md`. F3 reported that
+`source_ref` reads `values[parent['sku']]['material']` and raises `KeyError`
+when the parent has no material, and that the catch-all in `grade()` reports
+that as `MALFORMED_RECORD` against a well-formed candidate record.
+
+F3 is **not a missing guard to add**. Under this ruling the lookup should never
+happen: it resolves a child against a parent that is not live, and for such a
+record there is no parent to resolve against. The repair establishes liveness
+before any parent-derived logic runs, so the branch is unreachable. Wrapping the
+lookup in `try`/`except` would preserve the wrong question and hide the error.
+
+### What is unchanged
+
+- **Adjudication 1.** When parent and child are both live, an unresolved parent
+  conflict still blocks the child.
+- **Adjudication 6.** A certification still holds a live family: a pending or
+  unapproved certificate on any live member holds the parent and every live
+  variant.
+
+### Implementation status
+
+Recorded, not yet implemented. The ruling's operative term is "live", and the
+grader has no such concept today. Which records count as live is an owner
+question that the ruling's text does not settle on its own; it is raised in
+`OPEN_DECISIONS.md` and the repair waits on the answer rather than guessing it.
+
 ## Accuracy targets
 
 **Primary outcome:** correct published SKU records ÷ all published SKU records **> 98%**
