@@ -327,7 +327,7 @@ stand as written.
 The builder cannot supply this evidence for the builder's own fixtures, and has
 not attempted to.
 
-### Nine sealed cases have been run. Gate 3 is not closed by them.
+### Sealed cases: run twice. Gate 3 is not closed by either run.
 
 Nine cases, UCA-01 to UCA-09, were authored by someone who is not the builder
 and who had **no sight of the grader**, and were **owner-approved before
@@ -362,6 +362,36 @@ preserved unchanged; the defect is reported, not repaired.
 published SKU records correct) and the guardrail (**< 0.5%** of valid
 submissions wrongly rejected) are not measurable from nine cases even had all
 nine run. Zero of nine ran. Nothing here moves either number off "unmeasured".
+
+### Second run, against `frozen-v2.4` (2026-09-20)
+
+The nine cases were re-run after rulings 1 and 2 documented the input format.
+Full report: `reference/catalog/EVALUATION_v2.4.md`.
+
+**The format was documented after the cases first failed against it.** That is a
+real weakness in this evidence. What did *not* change is any expectation:
+`expected_verdict`, `expected_publication` and `expected_seller_guidance` are
+byte-identical to round one across all nine, as is every candidate. Only four
+inputs were reformatted.
+
+| Measurement | Denominator | Agreements |
+|---|---|---|
+| Candidate grading | **3** | **2 / 3** |
+| Publication correctness | **3** | **3 / 3** |
+| Seller guidance | **0** | 0 / 0 |
+
+Incorrect approvals **0**; incorrect rejections **1**
+(`UCA-02-PARENT-CONFLICT-BLOCK`). Six cases still returned `SETUP_ERROR`:
+their `material` evidence values were not converted to the documented object
+form. Three reached the grader, where round one had none.
+
+One implementation defect was confirmed in `frozen-v2.4` and reported, not
+repaired: `source_ref` at `grader.py:190` still reads
+`values[parent][field]` where the parent supplies the field only as a declared
+conflict, producing a false `MALFORMED_RECORD` against a well-formed child. The
+v2.4 repair narrowed that class; it did not eliminate it.
+
+Three cases measure nothing about the targets.
 
 **Gate 3 remains NOT MET.** 60 of 102 fixtures are still builder-authored with
 no independent adjudication of their expected outcome, and only 3 have an
