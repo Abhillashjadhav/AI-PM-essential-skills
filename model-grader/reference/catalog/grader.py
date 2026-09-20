@@ -4,7 +4,7 @@ import copy
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
-VERSION = 'frozen-v2.5'
+VERSION = 'frozen-v2.6'
 REQUIRED = ('brand','category','subcategory','design','pattern','material','color','size','price')
 SHARED = ('brand','subbrand','category','subcategory','design','pattern','material')
 # Every key an evidence entry may carry. 'source_note' is optional and inert:
@@ -402,17 +402,36 @@ def expected_issues(case,records,values,sku):
             if f in withheld_here: continue
             if f in fs and f in values[parent] and not same(f,canonical(f,fs[f],p),canonical(f,values[parent][f],p)):
                 add('FAMILY_MISMATCH',f,[source_ref(case,sku,f),source_ref(case,parent,f)])
+        # Group the parent's problems by field before emitting anything.
+        #
+        # Ruling 2026-09-20: a child's PARENT_UNRESOLVED carries the evidence of
+        # EVERY parent problem on that field, not the first one encountered. One
+        # field can trip several problems at once - a required field whose sources
+        # disagree carries both MISSING_REQUIRED (no evidence) and SOURCE_CONFLICT
+        # (the disagreeing sources) - and taking the first one found discarded the
+        # sources. A candidate citing them was then failed with ISSUE_EVIDENCE for
+        # supplying exactly what the seller needs.
+        parent_problems={}
         for problem in expected_issues(case,records,values,parent):
+            f=problem['field']
             # Ruling 2026-09-20: nothing propagates from a field the parent does
             # not supply. A parent missing a shared field is a partial submission
             # and is the seller's to complete; it never holds back a valid child.
-            if not supplies(case,values,parent,problem['field']): continue
-            if problem['field'] in SHARED and not any(i['field']==problem['field'] for i in issues):
-                # Decision 4: an optional-field conflict blocks nothing else, and a child
-                # is something else. A parent problem that only withholds propagates as a
-                # withholding conflict on the child's inherited copy, not as a blocker.
-                if withholds(problem,p): add('SOURCE_CONFLICT',problem['field'],problem['evidence'])
-                else: add('PARENT_UNRESOLVED',problem['field'],problem['evidence'])
+            if f not in SHARED or not supplies(case,values,parent,f): continue
+            parent_problems.setdefault(f,[]).append(problem)
+        for f,problems in parent_problems.items():
+            if any(i['field']==f for i in issues): continue
+            refs=[]
+            for problem in problems:
+                for ref in problem['evidence']:
+                    if ref not in refs: refs.append(ref)
+            # Decision 4: an optional-field conflict blocks nothing else, and a child
+            # is something else. A parent problem that only withholds propagates as a
+            # withholding conflict on the child's inherited copy, not as a blocker.
+            # One blocking problem on the field is enough to block; withholding is
+            # the weaker outcome and cannot override it.
+            if all(withholds(problem,p) for problem in problems): add('SOURCE_CONFLICT',f,refs)
+            else: add('PARENT_UNRESOLVED',f,refs)
     # A supplied conflict is resolved only by the selected authority or explicit approved edit.
     for f,refs in conflicts_here.items():
         if not any(x['code']=='SOURCE_CONFLICT' and x['field']==f for x in issues): add('SOURCE_CONFLICT',f,refs)
