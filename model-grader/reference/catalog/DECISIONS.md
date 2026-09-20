@@ -252,6 +252,69 @@ fact`). Both are fixture-validity rules that predate this ruling and neither
 produces the false `MALFORMED_RECORD` this repair removes. Left untouched
 deliberately; raise them separately if they should change.
 
+## A record reports every blocking problem present on it — **OWNER RULING 2026-09-20**
+
+Recorded verbatim.
+
+> A record reports every blocking problem present on it, not the first one
+> found. A missing required field is rejected and the seller is asked for the
+> data. Conflicting sources are reported to the seller showing where the
+> conflict is. When both are true of the same record, both are reported.
+> Capabilities are evaluated atomically, but one record may trip several at
+> once; each capability reports whenever it applies. No separate
+> combined-capability case is needed.
+
+### What this settles
+
+`ISSUE_COVERAGE` demanding **both** `MISSING_REQUIRED` and `SOURCE_CONFLICT` on
+a required field whose sources disagree is **correct**. Open decision (i) is
+closed in favour of the existing behaviour. **No grader change was made for this
+ruling.**
+
+A required field whose sources disagree carries no settled value, so both are
+true of that record at once:
+
+```
+KL-RN-NVY-M-010  blocking=[('MISSING_REQUIRED','material'), ('SOURCE_CONFLICT','material')]
+```
+
+Each says something the seller needs and neither substitutes for the other: the
+first says the data is not usable as submitted, the second says where the
+disagreement is.
+
+### Whose expectation this overrules, and where
+
+**`UCA-02-PARENT-CONFLICT-BLOCK`.** Its independently authored candidate reports
+the conflict alone:
+
+```
+KL-RN-NVY-M-010  status=BLOCKED  issues=[('SOURCE_CONFLICT','material')]
+```
+
+and its author judged that `PASS`. Under this ruling that candidate is
+incomplete and `ISSUE_COVERAGE` is right to fail it, so **the case's
+`expected_verdict: "PASS"` is overruled by owner ruling.** The expectation is
+not edited — it stands as the author wrote it, and this record is where the
+disagreement is resolved.
+
+`UCA-03-PARENT-CONFLICT-CHILD-LEAK` carries the same `ISSUE_COVERAGE` on its
+parent. Its `expected_verdict` is `FAIL` and the grader returns `FAIL`, so the
+ruling changes nothing about that case's outcome.
+
+This was the sole POLICY AMBIGUITY behind the one incorrect rejection recorded
+in `EVALUATION_v2.4.md`; with the D1 crash repaired and this ruling applied,
+UCA-02's disagreement is settled against the case rather than against the
+grader.
+
+## Rendering guidance for a seller is downstream — **OWNER NOTE 2026-09-20**
+
+The grader emits **structured** guidance: `seller_warnings` carries the SKU, the
+field, the branch, the conflicting values with their evidence ids and any
+`source_note`, and the required action. Rendering that conversationally for a
+seller-facing chat is a downstream concern and is not this grader's job. Nothing
+in the grader should be shaped by how the text will eventually read to a seller
+beyond being complete, deterministic and attributable.
+
 ## Accuracy targets
 
 **Primary outcome:** correct published SKU records ÷ all published SKU records **> 98%**
