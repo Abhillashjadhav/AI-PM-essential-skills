@@ -4,7 +4,7 @@ import copy
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
-VERSION = 'frozen-v2.4'
+VERSION = 'frozen-v2.5'
 REQUIRED = ('brand','category','subcategory','design','pattern','material','color','size','price')
 SHARED = ('brand','subbrand','category','subcategory','design','pattern','material')
 # Every key an evidence entry may carry. 'source_note' is optional and inert:
@@ -122,6 +122,20 @@ def compatible_partial(child,parent):
     return equivalent({k:v for k,v in child.items() if k!='components'},
                       {k:v for k,v in parent.items() if k!='components'})
 
+def settled(values,sku,field):
+    """Does this record carry a settled VALUE for `field` - something another
+    record can be resolved against?
+
+    Distinct from supplies(), and the distinction is the whole of the repair.
+    A parent whose two sources disagree HAS SUPPLIED material: it blocks the
+    child, which is adjudication 1. It has SETTLED nothing: there is no agreed
+    value to inherit from or compare against. Blocking propagation asks
+    supplies(); value resolution asks settled(). Reading a value after asking
+    only supplies() is what produced the false MALFORMED_RECORD.
+    """
+    v=values.get(sku,{}).get(field)
+    return v is not None and v!=''
+
 def effective(case):
     records={r['sku']:r for r in case['records']}
     if len(records)!=len(case['records']): raise SetupError('duplicate source SKU')
@@ -150,8 +164,10 @@ def effective(case):
             if f not in out[r['parent_sku']]: raise SetupError('missing inherited parent fact')
             if f not in out[sku]: out[sku][f]=copy.deepcopy(out[r['parent_sku']][f])
         if r['role']=='child':
-            cm=out[sku].get('material');pm=out[r['parent_sku']].get('material')
-            if cm and pm and compatible_partial(cm,pm): out[sku]['material']=copy.deepcopy(pm)
+            parent=r['parent_sku']
+            if settled(out,sku,'material') and settled(out,parent,'material') \
+               and compatible_partial(out[sku]['material'],out[parent]['material']):
+                out[sku]['material']=copy.deepcopy(out[parent]['material'])
     return records,out
 
 def supplies(case,values,sku,field):
@@ -167,8 +183,7 @@ def supplies(case,values,sku,field):
     still blocks the child. A parent that carries no material at all has supplied
     nothing to disagree about, and there is no parent-derived question to ask.
     """
-    v=values.get(sku,{})
-    if field in v and v[field] is not None and v[field]!='': return True
+    if settled(values,sku,field): return True
     r=next((x for x in case['records'] if x['sku']==sku),None)
     return bool(r) and any(c.get('field')==field for c in r.get('conflicts',[]))
 
@@ -185,9 +200,20 @@ def source_ref(case,sku,field):
         # guard around the lookup below - it is the question asked before the
         # lookup exists. Where the parent supplies nothing for `field`, resolution
         # never enters this branch, so values[parent][field] cannot be reached.
+        # Two different questions, asked in order.
+        #   supplies() - has the parent supplied this field at all? A declared
+        #                conflict counts; that is what blocks the child.
+        #   settled()  - is there an agreed value to resolve against? A
+        #                conflict-only parent has none, so the composition
+        #                comparison below is not a question that can be asked
+        #                of it, and is never reached.
+        # The comparison reads values[parent][field]; settled() establishes that
+        # it exists before the branch that needs it. No try/except.
         if supplies(case,values,parent['sku'],field) and (
             (field in r.get('inherit_fields',[]) and field not in r['fields']) or (
-             field=='material' and r['fields'].get(field) and compatible_partial(r['fields'][field],values[parent['sku']][field]))):
+             field=='material' and r['fields'].get(field)
+             and settled(values,parent['sku'],field)
+             and compatible_partial(r['fields'][field],values[parent['sku']][field]))):
             return source_ref(case,parent['sku'],field)
     return authority(case,sku,field) or f'{sku}.{field}'
 
