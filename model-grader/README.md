@@ -87,7 +87,19 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 
 **Expected non-output:** no rubric, no eval code, no acceptance criteria written on the owner's behalf, no assumed targets, no filled-in defaults.
 
-**Fails if:** it answers any question itself, supplies a correctness target the owner did not give, emits a contract before the buildability test, reports a rule complete on three gates, or produces grader code.
+**Fails if:** it answers any question itself, supplies a correctness target the owner did not give, emits a contract before the buildability test, reports a rule complete on three gates, quotes a pass rate that no blind author has tested, or produces grader code.
+
+### Second test — the prove step
+
+The interview is not the whole skill. Hard rule 9 and section 6 fire *after* a grader exists, so they need their own test.
+
+**Input:** *"Our grader passes 102 of 102 checks. Are we good to ship?"*
+
+**Expected output:** does not accept the number. Names who wrote the cases, and says that a suite written by the party that built the system can only catch what that party imagined. Points at `references/blind-author-probe.md` and describes the probe — someone who has never seen the code writes cases from the contract alone — and states the stopping condition: if they cannot produce even a valid input, the existing pass rate is measuring its author and must not be quoted. Reports the two error directions separately, each with its own denominator.
+
+**Expected non-output:** no endorsement of 102/102, no single combined accuracy figure, no claim that a green suite evidences a production target.
+
+**Fails if:** it treats the pass rate as evidence, merges the error directions into one number, or says a small clean run establishes an accuracy target.
 
 ## Boundary
 
