@@ -1,0 +1,279 @@
+{
+  "attempts": {
+    "calculate_refund": 1,
+    "inspect_return": 1,
+    "lookup_order": 1,
+    "retrieve_policy": 1,
+    "validate_request": 1,
+    "verify_refund": 1
+  },
+  "events": [
+    {
+      "event": "task_started",
+      "run_id": "original",
+      "sequence": 1,
+      "task": "validate_request"
+    },
+    {
+      "event": "task_completed",
+      "run_id": "original",
+      "sequence": 2,
+      "task": "validate_request",
+      "value": {
+        "as_of": "2026-09-15",
+        "customer_id": "SYNTHETIC-01",
+        "order_id": "DEMO-1042",
+        "question": "My headphones arrived damaged. What refund am I eligible for?",
+        "retrieval_query": "damaged headphones refund return restocking fee"
+      }
+    },
+    {
+      "event": "task_started",
+      "run_id": "original",
+      "sequence": 3,
+      "task": "lookup_order"
+    },
+    {
+      "event": "task_started",
+      "run_id": "original",
+      "sequence": 4,
+      "task": "inspect_return"
+    },
+    {
+      "event": "task_completed",
+      "run_id": "original",
+      "sequence": 5,
+      "task": "lookup_order",
+      "value": {
+        "currency": "INR",
+        "customer_id": "SYNTHETIC-01",
+        "delivered_on": "2026-09-12",
+        "paid_rupees": 2400,
+        "product": "Headphones"
+      }
+    },
+    {
+      "event": "task_completed",
+      "run_id": "original",
+      "sequence": 6,
+      "task": "inspect_return",
+      "value": {
+        "condition": "arrived_damaged",
+        "inspection_confirmed": true,
+        "inspection_id": "SYNTHETIC-INSPECTION-01"
+      }
+    },
+    {
+      "checkpoint_id": "C1",
+      "event": "checkpoint_saved",
+      "run_id": "original",
+      "sequence": 7,
+      "sha256": "68caefd74ddbf326d15835ca78b2003081d3da6ac1fb249ff5e342d045f7e36c"
+    },
+    {
+      "event": "task_started",
+      "run_id": "original",
+      "sequence": 8,
+      "task": "retrieve_policy"
+    },
+    {
+      "event": "task_completed",
+      "run_id": "original",
+      "sequence": 9,
+      "task": "retrieve_policy",
+      "value": {
+        "policy": {
+          "damaged_item_exempt": false,
+          "effective_from": "2025-01-01",
+          "effective_to": "2026-08-31",
+          "id": "RET-2025",
+          "restocking_percent": 20,
+          "return_window_days": 30,
+          "text": "Returns within 30 days receive the purchase price less a 20 percent restocking fee, including damaged items.",
+          "title": "Damaged headphones refund return restocking fee"
+        },
+        "ranked_candidates": [
+          {
+            "date_applicable": false,
+            "id": "RET-2025",
+            "score": 6
+          },
+          {
+            "date_applicable": true,
+            "id": "RET-2026",
+            "score": 4
+          }
+        ],
+        "strategy": "text_match"
+      }
+    },
+    {
+      "event": "task_started",
+      "run_id": "original",
+      "sequence": 10,
+      "task": "calculate_refund"
+    },
+    {
+      "event": "task_completed",
+      "run_id": "original",
+      "sequence": 11,
+      "task": "calculate_refund",
+      "value": {
+        "eligible": true,
+        "fee_percent": 20,
+        "policy_id": "RET-2025",
+        "refund_rupees": 1920
+      }
+    },
+    {
+      "event": "task_started",
+      "run_id": "original",
+      "sequence": 12,
+      "task": "verify_refund"
+    },
+    {
+      "event": "task_completed",
+      "run_id": "original",
+      "sequence": 13,
+      "task": "verify_refund",
+      "value": {
+        "expected_policy_id": "RET-2026",
+        "expected_refund_rupees": 2400,
+        "gates": {
+          "amount_matches": false,
+          "applicable_policy": false,
+          "eligibility_matches": true
+        },
+        "status": "FAIL"
+      }
+    }
+  ],
+  "executed": [
+    "validate_request",
+    "lookup_order",
+    "inspect_return",
+    "retrieve_policy",
+    "calculate_refund",
+    "verify_refund"
+  ],
+  "external_actions": [],
+  "failures": {},
+  "final_refund_rupees": null,
+  "model_calls": 0,
+  "parent_checkpoint_sha256": null,
+  "proposed_refund_rupees": 1920,
+  "restored": [],
+  "run_id": "original",
+  "state": {
+    "config": {
+      "retrieval_strategy": "text_match"
+    },
+    "records": {
+      "calculate_refund": {
+        "admission_check": "PASS",
+        "artifact_sha256": "c904461974a1c93b630bc970eeb5d118e9bcef30448edee281f2481047149a23",
+        "origin_run": "original",
+        "producer": "calculate_refund",
+        "recorded_at": "2026-09-15T18:13:54.784059+00:00"
+      },
+      "inspect_return": {
+        "admission_check": "PASS",
+        "artifact_sha256": "7b7a0a2aeb336bc0f40ab5177ad314b29b0dcfd86ad6d92c8abd80e9ff7613df",
+        "origin_run": "original",
+        "producer": "inspect_return",
+        "recorded_at": "2026-09-15T18:13:54.780839+00:00"
+      },
+      "lookup_order": {
+        "admission_check": "PASS",
+        "artifact_sha256": "1df3261904421a06a9689fa549d4b041f6a2d12ec3f8f074e3e6c3fc425ae27e",
+        "origin_run": "original",
+        "producer": "lookup_order",
+        "recorded_at": "2026-09-15T18:13:54.780158+00:00"
+      },
+      "retrieve_policy": {
+        "admission_check": "PASS",
+        "artifact_sha256": "ac7283a8dce25f724453e7972d427e019a33721052b13b77780d6cf1c789521c",
+        "origin_run": "original",
+        "producer": "retrieve_policy",
+        "recorded_at": "2026-09-15T18:13:54.782857+00:00"
+      },
+      "validate_request": {
+        "admission_check": "PASS",
+        "artifact_sha256": "a9558923491167637457470b0dbb317c1e031fa87acb289155ff2ff268dce62a",
+        "origin_run": "original",
+        "producer": "validate_request",
+        "recorded_at": "2026-09-15T18:13:54.776205+00:00"
+      },
+      "verify_refund": {
+        "admission_check": "PASS",
+        "artifact_sha256": "2ecaf3c7bb56b17d1d9678d4c7902434b154bc57f7cd530441248fc11b53224b",
+        "origin_run": "original",
+        "producer": "verify_refund",
+        "recorded_at": "2026-09-15T18:13:54.784923+00:00"
+      }
+    },
+    "values": {
+      "calculate_refund": {
+        "eligible": true,
+        "fee_percent": 20,
+        "policy_id": "RET-2025",
+        "refund_rupees": 1920
+      },
+      "inspect_return": {
+        "condition": "arrived_damaged",
+        "inspection_confirmed": true,
+        "inspection_id": "SYNTHETIC-INSPECTION-01"
+      },
+      "lookup_order": {
+        "currency": "INR",
+        "customer_id": "SYNTHETIC-01",
+        "delivered_on": "2026-09-12",
+        "paid_rupees": 2400,
+        "product": "Headphones"
+      },
+      "retrieve_policy": {
+        "policy": {
+          "damaged_item_exempt": false,
+          "effective_from": "2025-01-01",
+          "effective_to": "2026-08-31",
+          "id": "RET-2025",
+          "restocking_percent": 20,
+          "return_window_days": 30,
+          "text": "Returns within 30 days receive the purchase price less a 20 percent restocking fee, including damaged items.",
+          "title": "Damaged headphones refund return restocking fee"
+        },
+        "ranked_candidates": [
+          {
+            "date_applicable": false,
+            "id": "RET-2025",
+            "score": 6
+          },
+          {
+            "date_applicable": true,
+            "id": "RET-2026",
+            "score": 4
+          }
+        ],
+        "strategy": "text_match"
+      },
+      "validate_request": {
+        "as_of": "2026-09-15",
+        "customer_id": "SYNTHETIC-01",
+        "order_id": "DEMO-1042",
+        "question": "My headphones arrived damaged. What refund am I eligible for?",
+        "retrieval_query": "damaged headphones refund return restocking fee"
+      },
+      "verify_refund": {
+        "expected_policy_id": "RET-2026",
+        "expected_refund_rupees": 2400,
+        "gates": {
+          "amount_matches": false,
+          "applicable_policy": false,
+          "eligibility_matches": true
+        },
+        "status": "FAIL"
+      }
+    }
+  },
+  "status": "BLOCKED"
+}
