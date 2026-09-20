@@ -4,7 +4,7 @@ import copy
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
-VERSION = 'frozen-v2.3'
+VERSION = 'frozen-v2.4'
 REQUIRED = ('brand','category','subcategory','design','pattern','material','color','size','price')
 SHARED = ('brand','subbrand','category','subcategory','design','pattern','material')
 # These are private envelopes at submission/record level, never catalog fields.
@@ -154,6 +154,24 @@ def effective(case):
             if cm and pm and compatible_partial(cm,pm): out[sku]['material']=copy.deepcopy(pm)
     return records,out
 
+def supplies(case,values,sku,field):
+    """Does this record actually supply `field`?
+
+    Owner ruling 2026-09-20: parent-derived logic for a field runs only where the
+    parent actually supplies that field - a settled value, or a conflict declared
+    on it. Where the parent supplies nothing for that field, the child is
+    evaluated on its own values alone.
+
+    A conflict counts: a parent whose two sources disagree about material has
+    supplied a material, it is simply disputed. That is adjudication 1, and it
+    still blocks the child. A parent that carries no material at all has supplied
+    nothing to disagree about, and there is no parent-derived question to ask.
+    """
+    v=values.get(sku,{})
+    if field in v and v[field] is not None and v[field]!='': return True
+    r=next((x for x in case['records'] if x['sku']==sku),None)
+    return bool(r) and any(c.get('field')==field for c in r.get('conflicts',[]))
+
 def source_ref(case,sku,field):
     r=next(r for r in case['records'] if r['sku']==sku)
     for e in reversed(case.get('supplier_edits',[])):
@@ -163,8 +181,13 @@ def source_ref(case,sku,field):
     if r['role']=='child':
         parent=next(x for x in case['records'] if x['sku']==r['parent_sku'])
         _,values=effective(case)
-        if (field in r.get('inherit_fields',[]) and field not in r['fields']) or (
-            field=='material' and r['fields'].get(field) and compatible_partial(r['fields'][field],values[parent['sku']][field])):
+        # The parent is consulted only where it supplies this field. This is not a
+        # guard around the lookup below - it is the question asked before the
+        # lookup exists. Where the parent supplies nothing for `field`, resolution
+        # never enters this branch, so values[parent][field] cannot be reached.
+        if supplies(case,values,parent['sku'],field) and (
+            (field in r.get('inherit_fields',[]) and field not in r['fields']) or (
+             field=='material' and r['fields'].get(field) and compatible_partial(r['fields'][field],values[parent['sku']][field]))):
             return source_ref(case,parent['sku'],field)
     return authority(case,sku,field) or f'{sku}.{field}'
 
@@ -354,6 +377,10 @@ def expected_issues(case,records,values,sku):
             if f in fs and f in values[parent] and not same(f,canonical(f,fs[f],p),canonical(f,values[parent][f],p)):
                 add('FAMILY_MISMATCH',f,[source_ref(case,sku,f),source_ref(case,parent,f)])
         for problem in expected_issues(case,records,values,parent):
+            # Ruling 2026-09-20: nothing propagates from a field the parent does
+            # not supply. A parent missing a shared field is a partial submission
+            # and is the seller's to complete; it never holds back a valid child.
+            if not supplies(case,values,parent,problem['field']): continue
             if problem['field'] in SHARED and not any(i['field']==problem['field'] for i in issues):
                 # Decision 4: an optional-field conflict blocks nothing else, and a child
                 # is something else. A parent problem that only withholds propagates as a

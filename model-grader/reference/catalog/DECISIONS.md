@@ -139,7 +139,19 @@ builder-authored like the rest.)
 
 ## Publishing and grouping are separate acts — **OWNER RULING 2026-09-20**
 
-Recorded verbatim. This is the owner's wording, not a paraphrase.
+### The rule, as it is implemented
+
+> Parent-derived logic for a field runs only where the parent actually supplies
+> that field — a settled value or a declared conflict on it. Where the parent
+> supplies nothing for that field, the child is evaluated on its own values
+> alone.
+
+**This is field-scoped.** It is the operative form of the ruling and the one the
+grader implements, in `supplies()`.
+
+### The ruling as first stated, and why the wording changed
+
+The owner's original wording was record-scoped:
 
 > Publishing and grouping are separate acts. A SKU is evaluated and published on
 > its own values alone. A parent-child relationship may be declared by the seller
@@ -151,6 +163,38 @@ Recorded verbatim. This is the owner's wording, not a paraphrase.
 > Family rules — shared-field conflicts, certification holds — apply only among
 > SKUs that are live together.
 
+The intent of that paragraph stands unchanged. Its phrase **"a parent that is not
+live" was imprecise, not a separate rule** — owner clarification 2026-09-20. Read
+record-scoped it could not be implemented: measured on the shipped fixtures, the
+parents in the adjudication 1 fixtures and the parent in the adjudication 2
+fixture are *all* `record_status: existing` and *all* invalid on their own
+values, so no record-level test of "live" separates them. What separates them,
+and always has, is the field:
+
+```
+adjudication 1  P1 parent existing  SOURCE_CONFLICT material   C1 PARENT_UNRESOLVED
+adjudication 2  P1 parent existing  MISSING_REQUIRED price     C1 blocking=[]
+```
+
+`material` is in `SHARED` and propagates; `price` is not and never did. The
+field-scoped rule above states that directly.
+
+### What the two forms agree on
+
+- A partial parent never holds back a valid child. The child publishes on its
+  own values.
+- A parent that is missing or wrong is the seller's to complete.
+- Publishing and grouping stay separate acts; the relationship may be declared
+  at submission or after both SKUs are live.
+
+### The boundary the rule creates
+
+A parent that carries **no settled value but declares a conflict** on the field
+*has* supplied it — the value is disputed, not absent — so it still blocks the
+child. Only a parent that supplies nothing at all makes the child standalone.
+Proved both ways in `reproductions/ruling3_preserves_adjudications.py`
+(ADJ 1b and its discriminator).
+
 ### What this supersedes
 
 It supersedes the F3 finding in `EVALUATION_v2.3.md`. F3 reported that
@@ -158,26 +202,55 @@ It supersedes the F3 finding in `EVALUATION_v2.3.md`. F3 reported that
 when the parent has no material, and that the catch-all in `grade()` reports
 that as `MALFORMED_RECORD` against a well-formed candidate record.
 
-F3 is **not a missing guard to add**. Under this ruling the lookup should never
-happen: it resolves a child against a parent that is not live, and for such a
-record there is no parent to resolve against. The repair establishes liveness
-before any parent-derived logic runs, so the branch is unreachable. Wrapping the
-lookup in `try`/`except` would preserve the wrong question and hide the error.
+F3 was **not a missing guard**. The lookup should never happen, and it no longer
+can: `supplies()` is asked before resolution enters the parent branch at all, so
+the branch is unreachable for a field the parent does not supply. No `try`/`except`
+was added — that would have preserved the wrong question and hidden the error.
+
+Reproduced from a shipped fixture (`inputs/D01.json` with the parent's material
+removed), before and after:
+
+```
+frozen-v2.3                                    frozen-v2.4
+MALFORMED_RECORD C1 detail "'material'"        no MALFORMED_RECORD against C1
+C1 blocking [('PARENT_UNRESOLVED','material')] C1 blocking []
+published []                                   published ['C1']
+later checks abandoned:                        later checks run:
+  wrong composition text gives                   wrong composition text gives
+  [FALSE_READY, MALFORMED_RECORD]                 [DISPLAY_VALUE, 'material']
+P1 blocking [('MISSING_REQUIRED','material')]  P1 blocking [('MISSING_REQUIRED','material')]
+```
+
+The last line is the point of the ruling: the partial parent is still the
+seller's to complete, and it no longer takes the valid child down with it.
 
 ### What is unchanged
 
 - **Adjudication 1.** When parent and child are both live, an unresolved parent
-  conflict still blocks the child.
-- **Adjudication 6.** A certification still holds a live family: a pending or
-  unapproved certificate on any live member holds the parent and every live
-  variant.
+  conflict still blocks the child. The four fixtures the decision record names
+  pass identically on v2.3 and v2.4.
+- **Adjudication 6.** A certification still holds a live family: a pending
+  certificate on any live member holds the parent and every live variant.
 
-### Implementation status
+Both proved in `reproductions/ruling3_preserves_adjudications.py`, which reports
+ALL PRESERVED against frozen-v2.3 and frozen-v2.4 alike.
 
-Recorded, not yet implemented. The ruling's operative term is "live", and the
-grader has no such concept today. Which records count as live is an owner
-question that the ruling's text does not settle on its own; it is raised in
-`OPEN_DECISIONS.md` and the repair waits on the answer rather than guessing it.
+### Implemented in `frozen-v2.4`
+
+`supplies(case,values,sku,field)`, consulted at the two places parent-derived
+logic begins: the child branch of `source_ref()`, and the parent-problem
+propagation loop in `expected_issues()`. Full suite unchanged — 3/3, 13/13,
+55/55, 30/30, 31/31 — with the regression set growing 5 → 8 as the new proofs
+joined it. No check changed verdict.
+
+### Still open, and not part of this ruling
+
+A child naming a parent **absent from the submission entirely** is still a
+`SetupError` (`source parent absent`), and a child declaring `inherit_fields`
+for a field its parent lacks is still a `SetupError` (`missing inherited parent
+fact`). Both are fixture-validity rules that predate this ruling and neither
+produces the false `MALFORMED_RECORD` this repair removes. Left untouched
+deliberately; raise them separately if they should change.
 
 ## Accuracy targets
 
