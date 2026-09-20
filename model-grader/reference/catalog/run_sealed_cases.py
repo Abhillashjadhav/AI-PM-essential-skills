@@ -111,22 +111,48 @@ def compare_publication(exp, result):
 
     return checked, mismatches
 
+COMPARABLE = frozenset({'sku', 'field', 'branch',
+                        'must_reference_evidence', 'recommended_value'})
+
+def normalise_guidance(req):
+    """Both accepted shapes, reduced to one.
+
+    Owner ruling 2026-09-20: a plain list is valid. A list IS the `required`
+    list, written without the wrapper - the shape an author reaches for when
+    every entry is an assertion that guidance exists. The object form is the
+    only way to express `must_not_warn`, so both stay.
+
+    This is a shape normalisation, not a reinterpretation: no entry's meaning
+    changes, and keys the schema does not compare are still not compared.
+    """
+    if isinstance(req, list):
+        return {'required': req}
+    if isinstance(req, dict):
+        return req
+    raise CaseSchemaError(
+        'expected_seller_guidance must be a list of required entries, or an '
+        'object with "required" and/or "must_not_warn" lists; got '
+        + type(req).__name__)
+
 def compare_guidance(req, result):
     """expected_seller_guidance is a STRUCTURED REQUIREMENT, never a string match.
 
     Each entry asserts that guidance exists for a named sku+field, and optionally
     that it carries a given branch, references given evidence ids, or recommends
-    a given value. Wording is never compared.
+    a given value. Wording is never compared; prose keys are reported as not
+    compared rather than silently ignored.
     """
-    checked, mismatches = [], []
-    if not isinstance(req, dict):
-        raise CaseSchemaError(
-            'expected_seller_guidance must be an object with "required" and/or '
-            '"must_not_warn" lists; got ' + type(req).__name__)
+    checked, mismatches, not_compared = [], [], []
+    req = normalise_guidance(req)
     warnings = result.get('seller_warnings', [])
     for i, want in enumerate(req.get('required', [])):
         label = f"{want.get('sku')}/{want.get('field')}"
         checked.append(label)
+        # Anything outside COMPARABLE is prose. The schema rule is "meaning,
+        # never wording", so it is not compared - and it is named, so the
+        # guidance denominator never implies coverage it does not have.
+        for key in sorted(set(want) - COMPARABLE):
+            not_compared.append(f'{label}: {key}')
         hit = next((w for w in warnings
                     if w.get('sku') == want.get('sku') and w.get('field') == want.get('field')), None)
         if hit is None:
@@ -147,7 +173,7 @@ def compare_guidance(req, result):
         if any(w.get('sku') == forbidden.get('sku') and w.get('field') == forbidden.get('field')
                for w in warnings):
             mismatches.append(f'{label}: guidance emitted where the case forbids it')
-    return checked, mismatches
+    return checked, mismatches, not_compared
 
 # ---------- execution ----------
 
@@ -167,6 +193,7 @@ def run(folder):
                'review_status': c.get('review_status'),
                'reason': c.get('reason', ''),
                'checked': [], 'mismatches': [], 'schema_errors': [],
+               'guidance_not_compared': [],
                'verdict_scored': False, 'publication_scored': False, 'guidance_scored': False}
 
         ep = c.get('expected_publication')
@@ -263,7 +290,7 @@ def score_expectations(c, result, row):
     g = c.get('expected_seller_guidance')
     if g:
         try:
-            ck, mm = compare_guidance(g, result)
+            ck, mm, nc = compare_guidance(g, result)
         except CaseSchemaError as e:
             row['schema_errors'].append('expected_seller_guidance: ' + str(e))
             row['guidance_note'] = ('expected_seller_guidance not in the published shape - '
@@ -272,6 +299,7 @@ def score_expectations(c, result, row):
             row['guidance_parts_checked'] = ck
             row['checked'] += [f'guid.{p}' for p in ck]
             row['mismatches'] += mm
+            row['guidance_not_compared'] = nc
             if ck:
                 row['guidance_scored'] = True
                 row['guidance_agrees'] = not mm
@@ -307,6 +335,8 @@ def report(rows, load_errors, folder):
               f"{','.join(r['checked']) if r['checked'] else '(nothing)'}")
         for m in r['mismatches']: print(f"{'':<36}  -> {m}")
         for e in r.get('schema_errors', []): print(f"{'':<36}  -> not in the published shape, {e}")
+        for n in r.get('guidance_not_compared', []):
+            print(f"{'':<36}  -> not compared (prose, never matched by wording): {n}")
         if r.get('note'): print(f"{'':<36}  -> {r['note']}")
     print('-' * 120)
 

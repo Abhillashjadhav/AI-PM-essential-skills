@@ -207,6 +207,48 @@ recommends a given value.
 **Wording is never compared.** No string match on prose, ever. Only the required
 meaning and the named SKU/field.
 
+#### Two accepted shapes — a plain list, or the object
+
+Owner ruling 2026-09-20: **a plain list is valid.** A list *is* the `required`
+list written without the wrapper, which is the shape an author reaches for when
+every entry simply asserts that guidance exists.
+
+```json
+"expected_seller_guidance": [
+  { "sku": "P1", "field": "description" },
+  { "sku": "C1", "field": "recommended_browse_nodes", "branch": "eligible_for_publication" }
+]
+```
+
+is compared exactly as
+
+```json
+"expected_seller_guidance": {
+  "required": [
+    { "sku": "P1", "field": "description" },
+    { "sku": "C1", "field": "recommended_browse_nodes", "branch": "eligible_for_publication" }
+  ]
+}
+```
+
+Use the object form when you need `must_not_warn` — a bare list cannot express
+it.
+
+#### Prose keys are reported, not silently dropped
+
+An entry may carry extra keys describing what the warning should mean, for
+example `warning_meaning` or `supplier_action`. They are **not compared** —
+"meaning, never wording" still holds — but they are **named in the report** so
+the guidance denominator never implies coverage it does not have:
+
+```
+-> not compared (prose, never matched by wording): P1/description: supplier_action
+-> not compared (prose, never matched by wording): P1/description: warning_meaning
+```
+
+The keys that *are* compared are `sku`, `field`, `branch`,
+`must_reference_evidence` and `recommended_value`. Everything else is prose.
+
 ## Cases that are not run
 
 | Condition | Treatment |
