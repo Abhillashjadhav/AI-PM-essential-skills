@@ -10,6 +10,10 @@ SHARED = ('brand','subbrand','category','subcategory','design','pattern','materi
 # These are private envelopes at submission/record level, never catalog fields.
 # Arbitrary company metadata belongs under internal_metadata. No consumer in
 # this package executes, interprets, or publishes these values.
+# Every key an evidence entry may carry. 'source_note' is optional and inert:
+# ruling 2 forbids the grader from comparing it or deciding anything with it.
+EVIDENCE_KEYS = frozenset({'sku','field','value','source_note'})
+
 INTERNAL_KEYS = frozenset({'internal_metadata','notes','confidence','_debug','warnings',
                            'created_at','updated_at','processed_at'})
 
@@ -185,8 +189,15 @@ def check_setup(case):
     evidence=case.get('evidence',{})
     source_records={r['sku']:r for r in case['records']}
     for ref,e in evidence.items():
-        if not isinstance(e,dict) or set(e)!={'sku','field','value'} or e['sku'] not in source_records or not isinstance(e['field'],str):
+        # source_note (ruling 2) is an optional human description of where the value
+        # came from. It is never compared and never decides anything; it is carried
+        # only so supplier guidance can name a source the seller recognises instead
+        # of an internal evidence id. Its absence must never change a verdict.
+        if not isinstance(e,dict) or not {'sku','field','value'}<=set(e) or set(e)-EVIDENCE_KEYS \
+           or e['sku'] not in source_records or not isinstance(e['field'],str):
             raise SetupError('invalid evidence entry: '+ref)
+        if 'source_note' in e and not isinstance(e['source_note'],str):
+            raise SetupError('source_note must be a string: '+ref)
         if e['field']=='material': material_key(e['value'])
         if e['field']=='price': number(e['value'])
     for key,a in case.get('authority_registry',{}).items():
@@ -209,7 +220,10 @@ def check_setup(case):
         if r['role']=='child' and records[r['parent_sku']]['role']!='parent': raise SetupError('child must link directly to flagship parent')
         for f,v in r['fields'].items():
             e=evidence.get(f'{sku}.{f}')
-            if not e or e!={'sku':sku,'field':f,'value':v}: raise SetupError('fixture evidence mismatch')
+            # Compared field by field, not as a whole dict: an optional source_note
+            # is descriptive and must not make a matching fixture look mismatched.
+            if not e or e['sku']!=sku or e['field']!=f or e['value']!=v:
+                raise SetupError('fixture evidence mismatch')
         for c in r.get('conflicts',[]):
             refs=c.get('evidence',[])
             if len(refs)<2 or any(ref not in evidence or evidence[ref]['sku']!=sku or evidence[ref]['field']!=c.get('field') for ref in refs):
