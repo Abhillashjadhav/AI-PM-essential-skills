@@ -116,7 +116,7 @@ The file also covers the third case that gets misfiled most often: a malformed f
 
 **This is not the skill's exit test, and the earlier framing of it as one was wrong.** The reviewer was handed a *blank template*, not a contract filled in for a real product. What that measures is slot coverage: whether the template has somewhere to write every decision an implementer needs. It cannot measure buildability, because a blank form is unbuildable by construction — a reader will always have questions about cells nobody has filled.
 
-The exit test as `buildability-test.md` defines it needs a contract completed through a real interview about a real product, handed to an implementer who did not sit through it. That has still never been run.
+The exit test as `buildability-test.md` defines it needs a contract completed through a real interview about a real product, handed to an implementer who did not sit through it. **That has now been run once — see Check 8 — and it failed.**
 
 **Result: 18 questions, of which two were missing slots.** Two decisions had nowhere to be written at all — what the grader is called with and returns, and whether grading is reference-based or rule-based — and those are genuine slot-coverage failures, now closed by A1, A2 and the per-submission expected-output table. The remaining sixteen are questions a filled contract may well answer; they are logged as gaps rather than treated as defects.
 
@@ -280,6 +280,76 @@ approved 3/3 · fault_injection 13/13 · revision 55/55
 Saved candidate replay 30/30 · Internal metadata 31/31 · Regressions 5/5
 exit=0
 ```
+
+## Check 8 · The exit condition, measured once *(EXECUTED — it failed)*
+
+**Method.** A party that had never seen the grader source, the 102 fixtures, the attack
+findings or any execution result was given the written contract, the owner's eight judgments,
+the candidate interface and a data-format guide, and asked to write nine evaluation cases with
+their expected outcomes. This is the blind-author probe in
+`skills/model-grader/references/blind-author-probe.md`, and it is the exit condition Check 5
+could not test.
+
+**Result: zero of nine parsed. All nine were rejected before grading.**
+
+```
+UCA-01 … UCA-09   SETUP_ERROR: material must be object
+CANDIDATE GRADING    denominator 0    agreements 0 / 0
+PUBLICATION          denominator 0    agreements 0 / 0
+SELLER GUIDANCE      denominator 0    agreements 0 / 0
+```
+
+**The cause.** The grader required every evidence value to mirror its field's shape exactly. No
+contract clause said so, no prompt said so, and `SEALED_CASES.md` did not say so. The rule
+existed only in `grader.py` and in the 102 fixtures the same party had written. Full record:
+`reference/catalog/EVALUATION_v2.3.md`.
+
+**What it establishes.** The buildability dry-run passes on slot coverage while missing
+undocumented *input* requirements — a contract can have a slot for every decision and still be
+unbuildable by someone outside the room. Check 5 measured the template and reported two missing
+slots; this measured the contract and found it was not, in the operative sense, a contract.
+
+It also retires a number. The 102 checks that had reported 100% green were never a measurement
+of correctness: they passed because one party wrote both halves. The moment an outsider supplied
+one half, nothing ran.
+
+**What happened next**, recorded because the repair is part of the evidence and not a footnote:
+the format was documented (contract clause 2a, `SEALED_CASES.md`), `source_note` was added so a
+source's own words had somewhere to go, the cases were re-encoded with **every expectation
+frozen and hash-verified across all three encodings**, and the run was repeated. On the third run
+all nine parsed and the grader's verdict was correct on all nine. See Check 9 below and
+`reference/catalog/EVALUATION_v2.6.md`.
+
+**The disclosure that goes with that number**, per the probe's own instruction: the format was
+documented *after* these cases failed against it. Re-encoding an input to match a newly written
+rule is legitimate; changing an expectation would not have been, and none was changed.
+
+This probe was run by a party outside the building session, but its results were interpreted by
+the builder. It is `EXECUTED`; it is not independent adjudication of the fixtures, and it does
+not close Gate 3.
+
+## Check 9 · Nine blind-authored cases, third encoding *(EXECUTED)*
+
+All nine parsed. Full report: `reference/catalog/EVALUATION_v2.6.md`.
+
+| Measurement | Denominator | Agreements | Excluded |
+|---|---|---|---|
+| Candidate grading | 9 | 8 / 9 | 0 |
+| Publication correctness | 9 | 8 / 9 raw · 9 / 9 after the (f) ruling | 0 |
+| Seller guidance | 6 | 6 / 6 | 3 (assert no guidance) |
+
+Incorrect approvals **0**; incorrect rejections **0** after two owner rulings overruled two of
+the author's expectations (UCA-02's verdict, UCA-06's `withheld_fields`). Neither case was
+edited.
+
+**Stated as the arithmetic supports, and not rounded up:** the grader's verdict was correct on
+all nine cases; eight of nine were confirmed by an independent author who never saw the code; on
+the ninth the author's expectation was overruled by owner ruling. Nine cases do not establish the
+production accuracy targets, which remain unmeasured.
+
+**Each overruled case stops being independent evidence.** Two of the nine are now owner-settled
+rather than author-confirmed, and that is why the two numbers are reported separately and never
+merged.
 
 ## Gate 3 status at `frozen-v2.3` — NOT MET (nine sealed cases run, none scored)
 

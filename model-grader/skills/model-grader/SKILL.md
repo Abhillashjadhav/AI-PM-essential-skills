@@ -1,6 +1,6 @@
 ---
 name: model-grader
-description: Use this skill when someone needs to define what correct output means for an AI feature so that a grader can be built from the answers. Triggers on "build a grader", "define good", "what should the eval check", "how do we know the agent got it right", "write the acceptance criteria", "is this spec complete enough to test", "the agent keeps doing X and nobody agreed whether that is wrong", or any handoff where a model will be judged against a description a human wrote. Runs a twenty-six question interview in three parts — output shape, integrity, verdict and judgment — then a buildability test, and emits a contract an implementer can build from plus an explicit list of undecided items. Do NOT use to write grader code, run an eval suite, score model output, or repair an existing grader.
+description: Use this skill when someone needs to define what correct output means for an AI feature so that a grader can be built from the answers. Triggers on "build a grader", "define good", "what should the eval check", "how do we know the agent got it right", "write the acceptance criteria", "is this spec complete enough to test", "the agent keeps doing X and nobody agreed whether that is wrong", or any handoff where a model will be judged against a description a human wrote. Runs a twenty-six question interview in three parts — output shape, integrity, verdict and judgment — then a buildability test, and emits a contract an implementer can build from plus an explicit list of undecided items. Also carries the three-hand protocol and the blind-author probe — how to tell whether a grader's pass rate is a measurement or a mirror. Do NOT use to write grader code, run an eval suite, score model output, or repair an existing grader.
 argument-hint: [path to spec, PRD, or task description — or paste it]
 ---
 
@@ -22,11 +22,12 @@ This skill asks for both, then tests whether the answers are sufficient. It does
 6. **Never expand into building.** No grader code, no eval suite, no fixtures, no scoring. This skill ends at a contract and a list of open decisions.
 7. **Ask at most three questions per turn,** in plain language, with the reason each one matters. This is an interview, not a form.
 8. **Never report a rule complete on three of four gates.** Decision, Examples, Verification and Buildability are independent and none substitutes for another. The usual failure is treating a written example as verification. Read `references/process-discipline.md`.
-9. **Never freeze without the trail.** A contract is trustworthy because of how it was arrived at, not because it reads well. All 26 questions accounted for, four gates shown per rule, no `PROPOSED` decision left in the body, the dry-run run and counted, and at least one review by someone who is not the interviewer. Report which condition fails; never freeze past a failure.
+9. **Never trust a pass rate until a blind author has written the cases.** A suite written by the party that built the system can only catch what that party imagined. Before reporting any number, run the blind-author probe in `references/blind-author-probe.md`. If an outsider working from the contract alone cannot produce even a valid input, the existing pass rate is measuring its author and must not be quoted.
+10. **Never freeze without the trail.** A contract is trustworthy because of how it was arrived at, not because it reads well. All 26 questions accounted for, four gates shown per rule, no `PROPOSED` decision left in the body, the dry-run run and counted, and at least one review by someone who is not the interviewer. Report which condition fails; never freeze past a failure.
 
 ## The flow
 
-`frame → Part A shape → Part B integrity → Part C verdict → buildability test → emit`
+`frame → Part A shape → Part B integrity → Part C verdict → buildability test → emit → prove`
 
 ### 0. Frame the outcome first
 
@@ -68,6 +69,40 @@ Three files from `templates/`. `PROCESS_LEDGER.md` carries the trail. `CONTRACT.
 
 Mark the contract **draft** until the owner approves it. Gaps stay visible in the draft. A contract with four honest open decisions is more usable than one where the interviewer guessed.
 
+### 6. Prove it — after someone builds from the contract
+
+The contract is the skill's output, but a contract is only as good as what gets built from it.
+When a grader exists, two things decide whether its score is evidence:
+
+- **`references/three-hand-protocol.md`** — the owner decides, the builder builds, a blind author
+  writes the cases, and no hand does two of those jobs. Every disagreement escalates to the owner
+  as a ruling, never settled by the builder or the author.
+- **`references/blind-author-probe.md`** — before trusting any number, have someone who has never
+  seen the code write cases from the contract alone. If they cannot produce a valid input, the
+  contract is not a contract and the existing pass rate is measuring its author.
+
+## What a small case count supports
+
+State the result in terms the arithmetic survives:
+
+- Nine cases with zero errors in both directions is consistent with a true error rate around
+  twenty percent. It does not establish a ninety-eight percent accuracy claim.
+- To evidence a wrong-rejection rate below one in two hundred, several hundred cases are needed
+  before a single wrong rejection would even be expected to appear.
+- Report the two error directions separately, each with its own denominator, and never combine
+  them into one accuracy figure. Correct publication and correct grading have different
+  denominators.
+- A pass rate from a handful of cases is a statement about confidence, not accuracy. Say what was
+  measured and how many; let the reader do the rest.
+
+## What this costs
+
+In the source project roughly one fifth of the effort built the grader and four fifths measured
+it — six versions, five defects, three independent reviews, three rounds of case correction.
+
+That ratio is the point, not an overrun. The first version reported one hundred percent green with
+four live defects. Without the four fifths you have a grader that looks finished and is not.
+
 ## What good looks like
 
 An implementer reads the contract and writes the grader without coming back. An independent reviewer reads the same contract and can say whether a given output should pass, without asking what a rule meant. And a third person, looking only at the ledger, can see how the contract was arrived at — what was asked, what changed, who reviewed it, what the dry-run found.
@@ -78,8 +113,8 @@ Not a grader, an eval, a rubric generator, or a repair tool. Its output is their
 
 ## Limitations
 
-- **The exit condition has never been measured on a real contract.** The buildability dry-run has been run against the blank template, which tests slot coverage, not buildability. `VERIFICATION.md` Check 5 records this.
-- **Gate 3 needs a second person.** `INDEPENDENTLY REVIEWED` means someone who did not build the grader adjudicated the expected answers. A solo owner cannot reach it, and the skill reports the gate unmet rather than rounding up.
+- **The exit condition has been measured once, and it failed.** A blind author given the contract could not produce a single valid input — the buildability dry-run passes on slot coverage while missing undocumented input requirements. That is what the probe exists to catch, and it is the strongest evidence the dry-run alone is insufficient.
+- **Gate 3 needs a second person, and owner adjudication does not substitute.** `INDEPENDENTLY REVIEWED` means someone who did not build the grader adjudicated the expected answers. Each case the owner overrules stops being independent evidence and must be reported separately.
 - **The question bank is derived from one domain.** A9 and A10 came from auditing a catalog grader; A1 and A2 from a slot review. A second audit in a different domain is the expected way to find the next gap, and free-text domains are the least tested.
 - **Nothing is mechanically enforced.** The four gates, the freeze conditions and the sequence are documentation. The skill can be talked out of any of them by an owner in a hurry; it will say so, and it cannot stop them.
 - **It ends at a contract.** No grader code, no fixtures, no scoring. Whether the contract was any good is only knowable after someone builds from it.
