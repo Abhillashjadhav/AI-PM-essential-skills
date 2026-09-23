@@ -24,10 +24,10 @@ After adding the two questions this audit produced — numbered A7 and A8 at the
 
 | | Originally recorded | Actual, `grader.py` |
 |---|---|---|
-| Lines | 410 | **427** |
+| Lines | 410 | **427** at the time of the re-run; **507** after the D4/D2 implementation |
 | Version | `revised-v2.1` | `revised-v2.1` (confirmed — `VERSION` on line 7) |
 | Consumed inputs | 47 / 47 | **45 / 45** |
-| Issue codes | 39 / 39 | **43 / 43** |
+| Issue codes | 39 / 39 | **43 / 43** at the re-run; **44 / 44** after D4 added `WITHHELD_FIELD_PUBLISHED` |
 
 The "410 lines" belonged to `baseline_v2.py`, a different version (`revised-v2`). The audit was run against one file and labelled with another's line count. Nothing was repointed to make the old numbers work: `grader.py` is the file the reference calls `revised-v2.1`, so it is the file audited.
 
@@ -38,6 +38,8 @@ The "410 lines" belonged to `baseline_v2.py`, a different version (`revised-v2`)
 - **A1, A2** post-date this grader — they were added by the Check 5 slot review.
 - **A3** (outcome and targets) and **C5**, **C6**, **C8** are contract-level and process-level decisions that do not appear as keys or codes in grader source. Their absence here is not evidence they are unnecessary; it is evidence this audit cannot see them.
 - **C3** (blocker versus warning) *is* implemented — the grader separates `err()` from `warnings` — but the distinction lives in control flow rather than in a key or a code, so the extraction does not catch it. A limitation of the method, not a gap in the bank.
+
+**Kept current.** `coverage_audit.py` runs against `grader.py` as it is, so these numbers move when the grader does. The D4 implementation added one issue code and the audit caught it as untraced until it was mapped to A5 — which is the check working, not a defect.
 
 **Honest limit on the numbers.** Extraction is mechanical and reproducible. The question each input maps to was decided by hand, in the mapping tables inside `coverage_audit.py`. 45/45 means every input has a question someone argued it belongs to — not that the mapping was independently adjudicated.
 
@@ -127,6 +129,296 @@ The 18 are recorded in `OPEN_DECISIONS.md` at this plugin's root, unanswered, pe
 **What this does and does not establish.** It found two real holes in the template and produced sixteen questions worth checking against a filled contract. It establishes nothing about whether the skill's exit condition is met, because it did not test that. Unresolved decision 3 below expected a second domain to add "one or two" questions to the bank; two were added, so that estimate held.
 
 This reviewer was also spawned by the session that made these changes, so Check 4's gate-3 caveat applies here unchanged: `EXECUTED`, not `INDEPENDENTLY REVIEWED`.
+
+## Check 6 · External review — three defects reproduced and repaired *(EXECUTED)*
+
+An external review reported three defects. Each was **reproduced before any code
+changed**, with a minimal fixture under `reference/catalog/reproductions/`. The
+fixtures stay as regression cases: exit 1 while the defect is present, 0 once it
+is gone.
+
+```
+$ python3 reproductions/run_reproductions.py        # before any repair
+Finding 1 - FAMILY_MISMATCH on a withheld optional field   RESULT: DEFECT PRESENT
+Finding 2 - warning branch inconsistent with final status  RESULT: DEFECT PRESENT
+Finding 3 - MISSING_ACTION on permitted issues             RESULT: DEFECT PRESENT
+0 of 3 findings absent
+
+$ python3 reproductions/run_reproductions.py        # after the three repairs
+...                                                        RESULT: DEFECT ABSENT  (x3)
+3 of 3 findings absent
+```
+
+| Finding | Reproduced as | Repair |
+|---|---|---|
+| 1 · `FAMILY_MISMATCH` on a withheld field | `C1 withholding=[SOURCE_CONFLICT subbrand]` and `C1 blocking=[FAMILY_MISMATCH subbrand]` — the same field withheld and blocked at once | The family check skips a field **this record** is withholding. Verified narrow: a sibling not withholding it still gets `FAMILY_MISMATCH`, and a required shared conflict still blocks |
+| 2 · warning branch vs status | `P1 expected_status=BLOCKED`, `payload=['C1']`, warning said *"the rest of this product is published"* | `warning_branch(status, designated)` — three outcomes, status passed in from `grade()`, `branch` emitted on every warning |
+| 3 · `MISSING_ACTION` on permitted | silent PASS, with-action PASS, **without-action FAIL** on identical facts | Permitted issues skip the per-issue checks entirely |
+
+**Finding 2 did not match its description, and that is recorded rather than
+quietly corrected.** The report named three branches. Before the repair only two
+existed, and neither consulted the computed status — both asserted publication
+unconditionally. The defect was real; its shape was not as described.
+
+**Two fixtures were wrong on the first attempt and were fixed, not accepted.**
+Finding 1's first version asserted on `errors`, where the defect does not appear —
+`FAMILY_MISMATCH` is an *expected* issue, so it sets `wanted=BLOCKED` and the
+honest candidate trips `FALSE_READY` instead. Finding 2's first version matched the
+substring `"published"`, which also matches `"not published"`, so it would have
+passed the repaired text and the broken text alike. Both were rewritten to assert
+on the structure that actually carries the defect.
+
+**Repairs 1 and 2 were each verified by re-introducing the defect**, because a test
+that passes either way is not a test:
+
+```
+repair 2, status ignored  ->  mismatches = [('blocked','P1','description',
+                                             'eligible_for_publication','blocked','BLOCKED')]
+repair 2, repaired        ->  mismatches = none
+```
+
+**Suite counts, before and after all three repairs — identical:**
+
+```
+approved 3/3 · fault_injection 13/13 · revision 55/55 · replay 30/30 · metadata 31/31
+```
+
+No check changed its verdict. The repairs removed penalties that no fixture was
+exercising, which is why the counts hold and why the reproductions had to be
+written to see the defects at all.
+
+**Withdrawn.** An earlier revision claimed the seller-warning wording could not be
+checked without an LLM judge. That was wrong. The warning is a three-way template
+choice over a computed status, decided in one function, and asserted directly.
+
+## Check 7 · Adjudication 6 clarified — certification made family-wide *(EXECUTED)*
+
+The owner resolved the mismatch Check 6 disclosed: certification is family-wide.
+Reproduced first, implemented second, verified third.
+
+**Part 1 — current behaviour, before any change (v2.2):**
+
+```
+$ python3 reproductions/finding4_certification_scope.py
+P1 blocking=[('HUMAN_VALIDATION_REQUIRED', 'certification')]  C1 blocking=[]
+publication_payload = ['C1']
+'certification' in SHARED = False
+RESULT: DEFECT PRESENT
+```
+
+**After (v2.3):**
+
+```
+C1 blocking=[('HUMAN_VALIDATION_REQUIRED', 'certification')]
+publication_payload = []
+RESULT: DEFECT ABSENT
+```
+
+Asserted on the payload itself — not a status field, not a substring. The payload
+is what a downstream consumer receives, and the only place "no variant is
+published" can be checked honestly.
+
+**Part 4 — preservation checks.** Expected to pass against both versions; that is
+what a preservation check is for, and they are reported as such rather than as
+before/after evidence.
+
+```
+$ python3 reproductions/preservation_certification.py     # identical on v2.2 and v2.3
+TEST 2 approval lifts the certification hold
+      P1 blocking=[]  C1 blocking=[('SOURCE_CONFLICT', 'price')]
+TEST 2 the unrelated blocker still blocks C1, and P1 publishes
+      publication_payload=['P1']  verdict=PASS
+TEST 3 a family with no certification requirement is unaffected
+      blocking={'P1': [], 'C1': []}  publication_payload=['C1', 'P1']  verdict=PASS
+RESULT: ALL PRESERVED
+```
+
+**Mutation checks — both preservation tests discriminate.** A test that passes
+whatever the code does is not a test:
+
+| Mutation | Result |
+|---|---|
+| approval wrongly clears every other blocking issue | **TEST 2 FAILS** — `the unrelated blocker still blocks C1, and P1 publishes` |
+| certification hold applied to a family with no certification requirement | **TEST 3 FAILS** — `a family with no certification requirement is unaffected` |
+| neither mutation present | ALL PRESERVED |
+
+Both mutations were reverted; `grep -c MUTATION grader.py` returns 0.
+
+**Three existing checks changed verdict, and the checks were wrong, not the
+grader.** `certificate-needs-human-review`,
+`document-alone-is-not-human-approval` and
+`wrong-document-review-cannot-authorize-claim` each encoded the superseded
+per-SKU policy — candidate `P1 BLOCKED, C1 READY`. Under the clarified
+adjudication C1 is held too. Updated to hold the family and renamed; the old
+expectations are in `revision_checks_historical.json`, which now preserves five
+superseded checks.
+
+```
+revision 52 / 55   with the three stale checks
+revision 55 / 55   after updating them
+```
+
+**Part 5 — the reproductions now run inside the standard suite.** Check 6 found
+three live defects while the suite reported 55/55 green, because the only thing
+that could see them was a runner nobody was obliged to invoke. `run_checks.py`
+now executes every reproduction and its exit code covers them. A fixture that
+can no longer reach the state it tests (exit 2) is reported as a failure, not
+counted as a pass.
+
+Verified the wiring catches a live defect, by running the suite against the v2.2
+grader:
+
+```
+$ python3 run_checks.py            # v2.2 grader
+revision: 52 / 55
+Regressions: 4 / 5 reproduced defects still absent
+REGRESSION: finding4_certification_scope -> DEFECT PRESENT
+exit=1
+
+$ python3 run_checks.py            # v2.3 grader
+approved 3/3 · fault_injection 13/13 · revision 55/55
+Saved candidate replay 30/30 · Internal metadata 31/31 · Regressions 5/5
+exit=0
+```
+
+## Gate 3 status at `frozen-v2.3` — NOT MET (nine sealed cases run, none scored)
+
+Gate 3 means: **someone other than the builder has checked that the test
+expectations are correct.** Not that the tests pass. Not that the policy behind
+them was approved. That the expectation encoded in each fixture is the right one,
+checked by someone who did not write it.
+
+Measured at `c31cbd9`. Full map in `reference/catalog/ADJUDICATION_MAP.md`.
+
+### Which fixtures have that evidence
+
+| | Count |
+|---|---|
+| Total fixtures | **102** |
+| An owner judgment governs the expected outcome | 42 |
+| Expected outcome builder-authored and unreviewed | 60 |
+| **Fixtures whose *encoding* an owner signed off** | **3** |
+
+**Three.** `gold/S1.json`, `gold/S2.json`, `gold/S3.json`, each carrying
+`label_status: "owner-approved"`.
+
+The 42 and the 3 measure different things, and only the 3 is Gate 3 evidence. A
+judgment saying "hold the parent and affected children" settles the policy; it
+does not confirm that a particular fixture's records, evidence and expected error
+codes express that policy correctly. That transcription was builder work for 99
+of the 102, and the fixtures say so in their own labels:
+
+```
+gold/S1,S2,S3          "owner-approved"
+revision_checks.json   "development expectation derived from owner rules;
+                        not independent gold"
+gold/faults.json       "builder-derived from approved rules"
+```
+
+So: **3 fixtures have Gate 3 evidence. 99 do not.**
+
+### Independent adjudication is in progress elsewhere
+
+Steps 2 and 3 of the validation plan are being carried out by someone who is not
+the builder. Their results are **not reflected in this file** and nothing here
+anticipates them. When they land, the numbers above change; until then they
+stand as written.
+
+The builder cannot supply this evidence for the builder's own fixtures, and has
+not attempted to.
+
+### Nine sealed cases have been run. Gate 3 is not closed by them.
+
+Nine cases, UCA-01 to UCA-09, were authored by someone who is not the builder
+and who had **no sight of the grader**, and were **owner-approved before
+execution** (`owner_approval: "APPROVED"` on all nine). The builder read them
+only to run them and edited nothing in any case file. The cases are not
+committed to this repository. Full report:
+`reference/catalog/EVALUATION_v2.3.md`.
+
+**What the run showed.** All nine were rejected before grading with
+`SETUP_ERROR: material must be object`. Nothing was scored:
+
+| Measurement | Denominator | Agreements |
+|---|---|---|
+| Candidate grading | **0** | 0 / 0 |
+| Publication correctness | **0** | 0 / 0 |
+| Seller guidance | **0** | 0 / 0 |
+
+**Both error directions:** incorrect approvals **0**, incorrect rejections
+**0**. Both zeros mean *not measured*, not *no errors found*. No case reached
+the verdict stage, so neither direction was exercised at all.
+
+The `checked` column is empty for all nine rows. A `SETUP_ERROR` returns no
+`publication_payload`, so there is nothing to compare on any axis.
+
+The cause is a grader-enforced input format that is written nowhere — recorded
+as open decision (e). One implementation defect was confirmed behind it
+(`MALFORMED_RECORD` attributed to a well-formed candidate record,
+`EVALUATION_v2.3.md` F3), reproduced from a shipped fixture. `frozen-v2.3` was
+preserved unchanged; the defect is reported, not repaired.
+
+**Nine cases do not establish the targets.** The primary outcome (**> 98%** of
+published SKU records correct) and the guardrail (**< 0.5%** of valid
+submissions wrongly rejected) are not measurable from nine cases even had all
+nine run. Zero of nine ran. Nothing here moves either number off "unmeasured".
+
+**Gate 3 remains NOT MET.** 60 of 102 fixtures are still builder-authored with
+no independent adjudication of their expected outcome, and only 3 have an
+owner-signed encoding. Running nine cases against the grader does not review
+those 102 expectations; it is a different check, and it did not complete.
+
+### Scope, recorded so it is not mistaken for a gap
+
+- **Durable storage is outside scope.** No requirement in this contract asks
+  the grader to persist anything between runs.
+- **Grouping a child SKU under a parent is a manual supplier action**, performed
+  after both SKUs exist as independently published SKUs. It is not a grader
+  obligation. Owner scope ruling 2026-09-18; see `DECISIONS.md`, Mismatch A.
+
+### The harness
+
+`reference/catalog/run_sealed_cases.py` and `SEALED_CASES.md` are the harness and
+the format, built before the cases existed so neither side saw the other's work.
+The harness was proved on six self-authored throwaway inputs that were then
+deleted; those carry no validation weight and are labelled as such in
+`SEALED_CASES.md`.
+
+The run exposed one defect in the harness itself: `compare_guidance()` compares
+against `seller_warnings` only, and reports "no seller guidance emitted" for
+guidance the grader does emit through `guided_help`. Recorded as open decision
+(g); not silently changed, because which channel an expectation asserts against
+is not the builder's to decide.
+
+### The accuracy targets remain unmeasured
+
+The primary outcome — **more than 98%** of published SKU records correct — and the
+guardrail — **fewer than 0.5%** of valid submissions wrongly rejected — have never
+been measured. Nothing currently in this repository can measure either.
+
+**Nine cases are an initial independent check, not proof of either target.**
+A clean sealed-case run would say the grader agreed with an independent judgment
+on nine cases. It does not establish a rate. Reporting one from nine cases would
+be the same error as calling 52/52 self-consistency an accuracy score. The run
+that happened was not clean: none of the nine was scored.
+
+The runner reports incorrect approvals and incorrect rejections separately and
+never combines them, because the two targets have different denominators and a
+single figure hides which direction is failing.
+
+### Outside what this grader demonstrates
+
+Two capabilities are not in scope for anything measured here, and no result from
+this grader should be read as evidence about either:
+
+- **Durable storage.** The grader is a pure function over one case. It holds no
+  state between runs and nothing here exercises persistence, recovery or
+  migration.
+- **Later parent linking.** Judgment 2 says the relationship is retained and
+  linked when the parent is ready. What is implemented and tested is the
+  same-run case. Re-linking a child in a **later** run is unimplemented and
+  untested, because nothing carries state between runs — which is the same gap as
+  durable storage seen from the other side.
 
 ---
 

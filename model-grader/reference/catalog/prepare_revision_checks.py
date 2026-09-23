@@ -12,17 +12,22 @@ def source(c,sku,f,v):
 def output(o,sku,f,v,ref=None):
     r=next(r for r in o['records'] if r['sku']==sku)
     r['fields'][f]=copy.deepcopy(v);r['evidence'][f]=ref or sku+'.'+f
-def withhold(o,sku,f,refs):
-    """Owner decision 4: the disputed optional field is withheld, the record still publishes.
+def withhold(o,sku,f,refs=None):
+    """Owner decision 4: the disputed optional field is simply absent.
 
-    The field is absent from the published record, the SKU stays READY, and supplier
-    guidance names the field and the conflicting sources.
+    The candidate omits the field and leaves the SKU READY. It does not emit a
+    `withheld` marker — the grader knows which fields it withheld. Supplier
+    guidance is grader-generated, not candidate-written.
     """
     r=next(r for r in o['records'] if r['sku']==sku)
     r['fields'].pop(f,None); r['evidence'].pop(f,None)
-    r['status']='READY'
-    r.setdefault('withheld',[]).append({'field':f,'reason':'SOURCE_CONFLICT','evidence':refs,
-        'action':'Supplier: resolve '+f+' using confirmed source information. The rest of this product is published.'})
+    r['status']='READY'; r['issues']=[i for i in r['issues'] if i.get('field')!=f]
+
+def report(o,sku,code,f,refs):
+    """The candidate MAY report a withheld conflict. It must not be rejected for it."""
+    r=next(r for r in o['records'] if r['sku']==sku)
+    r['issues'].append({'code':code,'field':f,'evidence':refs,
+                        'action':'Supplier: confirm the correct '+f+'.'})
 
 def block(o,sku,code,f,refs):
     r=next(r for r in o['records'] if r['sku']==sku)
@@ -83,18 +88,32 @@ c,o=fresh();c['records'][0]['fields'].pop('price');c['evidence'].pop('P1.price')
 o['records'][0]['fields'].pop('price');o['records'][0]['evidence'].pop('price');block(o,'P1','MISSING_REQUIRED','price',[])
 add('parent-price-missing-child-ready',c,o,rule='Independent child attributes do not inherit parent defects')
 
-# Owner decision 4: an unresolved conflict on an OPTIONAL field withholds that field
-# and publishes the rest. It does not block the SKU. Superseded expectations that had
-# it blocking are in revision_checks_historical.json.
+# Owner decision 4: an unresolved conflict on an OPTIONAL field withholds that
+# field and publishes the rest. It does not block the SKU. Superseded
+# expectations that had it blocking are in revision_checks_historical.json.
 c,o=fresh();source(c,'P1','description','Slim fit');output(o,'P1','description','Slim fit')
 c['evidence']['P1.description.spec']={'sku':'P1','field':'description','value':'Relaxed fit'}
 refs=['P1.description','P1.description.spec']
-withhold(o,'P1','description',refs)
-add('optional-description-conflict-withholds-field',c,o,
-    rule='Decision 4: optional-field conflict withholds the field, publishes the record')
+# MUST PASS: withheld silently.
+withhold(o,'P1','description')
+add('optional-conflict-withheld-silently',c,o,
+    rule='Decision 4: optional-field conflict withholds the field, record publishes')
+# MUST PASS: withheld AND the conflict reported. Both are correct.
+rep=copy.deepcopy(o);report(rep,'P1','SOURCE_CONFLICT','description',refs)
+add('optional-conflict-withheld-and-reported',c,rep,
+    rule='Decision 4: reporting a withheld conflict is permitted, never spurious')
+# MUST FAIL: blocking the whole SKU is the superseded behaviour.
+bad=copy.deepcopy(o);bad['records'][0]['status']='BLOCKED'
+add('optional-conflict-must-not-block',c,bad,'FAIL','FALSE_BLOCK',
+    'Decision 4: an optional-field conflict may not block the SKU')
+# MUST FAIL: publishing the disputed value instead of withholding it.
+bad=copy.deepcopy(o);output(bad,'P1','description','Slim fit')
+add('optional-conflict-must-not-publish-disputed',c,bad,'FAIL','WITHHELD_FIELD_PUBLISHED',
+    'Decision 4: the disputed value is withheld, not published')
+
 c['authority_registry']={'P1.description':{'evidence_id':'P1.description.spec','source_location':'supplier-master/spec-v2','supplier_approved':True}}
 # An approved authority resolves the conflict, so nothing is withheld any more.
-o['records'][0].update(status='READY',issues=[]);o['records'][0].pop('withheld',None)
+o['records'][0].update(status='READY',issues=[])
 output(o,'P1','description','Relaxed fit','P1.description.spec')
 add('supplier-designated-authority-resolves-description',c,o)
 bad=copy.deepcopy(o);output(bad,'P1','description','Slim fit')
@@ -102,10 +121,10 @@ add('ignored-authoritative-value',c,bad,'FAIL','WRONG_VALUE')
 # Decision 3 still holds: an unapproved designation does not resolve the conflict.
 # Decision 4 changes only what happens next — withhold, do not block.
 c['authority_registry']['P1.description']['supplier_approved']=False
-output(o,'P1','description','Slim fit')
-withhold(o,'P1','description',refs)
+o['records'][0].update(status='READY',issues=[])
+withhold(o,'P1','description')
 add('unapproved-authority-withholds-not-blocks',c,o,
-    rule='Decision 3 + 4: unapproved authority does not resolve; optional field is withheld, not blocking')
+    rule='Decision 3 + 4: unapproved authority does not resolve; the field is withheld, not blocking')
 
 # Explicit edits preserve originals and bind all confirmed family updates.
 c,o=fresh();updated={'components':[{'material':'cotton','percent':'60'},{'material':'polyester','percent':'40'}]}
@@ -141,17 +160,30 @@ bad=copy.deepcopy(o);bad['records'][0]['fields']['material']['components'].pop()
 add('partial-display-is-not-permission-to-drop-source',c,bad,'FAIL','WRONG_VALUE')
 
 # Human validation is tied to the exact claim and document in fixture input.
+# Adjudication 6, clarified: a certification is evaluated at GROUP level, so a
+# pending certificate holds the parent AND every variant. The superseded
+# expectations, which published the child, are in revision_checks_historical.json.
+def hold_family(o,refs):
+    for r in o['records']:
+        r['status']='BLOCKED'
+        r['issues']=[{'code':'HUMAN_VALIDATION_REQUIRED','field':'certification','evidence':refs,
+                      'action':'Supply the supporting document and a human validation record for this claim. Publication remains blocked.'}]
 c,o=fresh();source(c,'P1','certification','Lab certificate X');output(o,'P1','certification','Lab certificate X')
-block(o,'P1','HUMAN_VALIDATION_REQUIRED','certification',['P1.certification'])
-add('certificate-needs-human-review',c,o)
+hold_family(o,['P1.certification'])
+add('certificate-needs-human-review-holds-family',c,o,
+    rule='Adjudication 6: a pending certificate holds the parent and every variant')
 c['records'][0]['claims']=[{'field':'certification','document_ref':'supplier/doc-x'}]
-add('document-alone-is-not-human-approval',c,o)
+add('document-alone-is-not-human-approval-holds-family',c,o,
+    rule='Adjudication 6: a document without approval holds the whole family')
 c['records'][0]['claims'][0]['human_review']={'status':'approved','reviewer':'fixture-human','reviewed_at':'2026-09-18','document_ref':'supplier/doc-x','evidence_id':'P1.certification'}
-o['records'][0].update(status='READY',issues=[])
+# Approval lifts the hold on the WHOLE family, not just the record carrying the
+# claim — hold_family blocked every member, so every member is released.
+for r in o['records']: r.update(status='READY',issues=[])
 add('supplied-human-attestation-allows-claim',c,o,rule='Synthetic attestation, not live document verification')
 c['records'][0]['claims'][0]['human_review']['document_ref']='supplier/different-document'
-block(o,'P1','HUMAN_VALIDATION_REQUIRED','certification',['P1.certification'])
-add('wrong-document-review-cannot-authorize-claim',c,o)
+hold_family(o,['P1.certification'])
+add('wrong-document-review-cannot-authorize-claim-holds-family',c,o,
+    rule='Adjudication 6: a mismatched review authorises nothing and holds the whole family')
 
 # Ambiguous source measurements block the SKU, with supplier action.
 c,o=fresh();c['records'][0]['measurements']=[{'id':'chest','type':'chest','value':'25','evidence_id':'P1.measurement.chest'}]
