@@ -34,9 +34,10 @@ from grader import grade, VERSION            # noqa: E402
 
 class CaseSchemaError(Exception):
     """A case is structurally readable but an expectation block is not in the
-    published shape, so it cannot be compared. This is reported as its own
-    status and excluded from every denominator - never silently skipped, and
-    never crashed on. The runner does not reinterpret a nonconforming block.
+    published shape, so that block cannot be compared. The case has an error
+    status; the block is excluded from its own denominator while other valid
+    measurements remain counted. Never silently skipped, and never crashed on.
+    The runner does not reinterpret a nonconforming block.
     """
 
 REQUIRED_KEYS = ('case_id', 'input', 'candidate', 'expected_verdict',
@@ -48,6 +49,8 @@ def load_case(path):
         raw = json.loads(path.read_text())
     except json.JSONDecodeError as e:
         raise ValueError(f'{path.name}: not valid JSON - {e}')
+    if not isinstance(raw, dict):
+        raise ValueError(f'{path.name}: case must be an object; got {type(raw).__name__}')
     missing = [k for k in REQUIRED_KEYS if k not in raw]
     if missing:
         raise ValueError(f'{path.name}: missing required key(s) {missing}')
@@ -67,13 +70,22 @@ def compare_publication(exp, result):
     if not isinstance(exp, dict):
         raise CaseSchemaError(
             'expected_publication must be an object or null; got ' + type(exp).__name__)
+    if 'parent_links_exhaustive' in exp and not isinstance(exp['parent_links_exhaustive'], bool):
+        raise CaseSchemaError('parent_links_exhaustive must be a boolean')
     if 'sku_ids' in exp and exp['sku_ids'] is not None:
+        if not isinstance(exp['sku_ids'], list) or any(not isinstance(s, str) for s in exp['sku_ids']):
+            raise CaseSchemaError('sku_ids must be a list of strings or null')
         checked.append('sku_ids')
         actual = sorted(r['sku'] for r in payload)
         if sorted(exp['sku_ids']) != actual:
             mismatches.append(f"sku_ids expected {sorted(exp['sku_ids'])} got {actual}")
 
     if 'withheld_fields' in exp and exp['withheld_fields'] is not None:
+        if not isinstance(exp['withheld_fields'], dict):
+            raise CaseSchemaError('withheld_fields must be an object or null')
+        for sku, fields in exp['withheld_fields'].items():
+            if not isinstance(fields, list) or any(not isinstance(f, str) for f in fields):
+                raise CaseSchemaError(f'withheld_fields[{sku!r}] must be a list of strings')
         checked.append('withheld_fields')
         want = {k: sorted(v) for k, v in exp['withheld_fields'].items() if v}
         got = {k: sorted(v) for k, v in result.get('withheld', {}).items() if v}
@@ -89,10 +101,15 @@ def compare_publication(exp, result):
     # on any SKU the map does not name. An author writing {} to mean "no links"
     # must not get a silent pass: a check that cannot fail is worse than none.
     if 'parent_links' in exp and exp['parent_links'] is not None:
+        if not isinstance(exp['parent_links'], dict):
+            raise CaseSchemaError('parent_links must be an object or null')
+        for sku, parent in exp['parent_links'].items():
+            if parent is not None and not isinstance(parent, str):
+                raise CaseSchemaError(f'parent_links[{sku!r}] must be a string or null')
         checked.append('parent_links')
         got = {r['sku']: r.get('parent_sku') for r in payload}
         want = dict(exp['parent_links'])
-        exhaustive = bool(exp.get('parent_links_exhaustive', False))
+        exhaustive = exp.get('parent_links_exhaustive', False)
         if not want:
             # {} is an assertion in its own right, and is exhaustive by meaning.
             offenders = {s: p for s, p in got.items() if p is not None}
@@ -100,7 +117,8 @@ def compare_publication(exp, result):
                 mismatches.append(f'parent_links {{}} asserts no published SKU carries a '
                                   f'parent link, but {offenders} does')
         else:
-            narrowed = {k: got.get(k) for k in want}
+            # A missing SKU is different from a published SKU with no parent.
+            narrowed = {k: got[k] for k in want if k in got}
             if want != narrowed:
                 mismatches.append(f'parent_links expected {want} got {narrowed}')
             if exhaustive:
@@ -126,13 +144,30 @@ def normalise_guidance(req):
     changes, and keys the schema does not compare are still not compared.
     """
     if isinstance(req, list):
-        return {'required': req}
-    if isinstance(req, dict):
-        return req
-    raise CaseSchemaError(
-        'expected_seller_guidance must be a list of required entries, or an '
-        'object with "required" and/or "must_not_warn" lists; got '
-        + type(req).__name__)
+        req = {'required': req}
+    elif not isinstance(req, dict):
+        raise CaseSchemaError(
+            'expected_seller_guidance must be a list of required entries, or an '
+            'object with "required" and/or "must_not_warn" lists; got '
+            + type(req).__name__)
+    for key in ('required', 'must_not_warn'):
+        entries = req.get(key, [])
+        if not isinstance(entries, list):
+            raise CaseSchemaError(f'{key} must be a list of objects; got '
+                                  + type(entries).__name__)
+        for i, entry in enumerate(entries):
+            label = f'{key}[{i}]'
+            if not isinstance(entry, dict):
+                raise CaseSchemaError(f'{label} must be an object; got '
+                                      + type(entry).__name__)
+            for name in ('sku', 'field'):
+                if not isinstance(entry.get(name), str) or not entry[name].strip():
+                    raise CaseSchemaError(f'{label}.{name} must be a non-empty string')
+            if key == 'required' and 'must_reference_evidence' in entry:
+                refs = entry['must_reference_evidence']
+                if not isinstance(refs, list) or any(not isinstance(ref, str) for ref in refs):
+                    raise CaseSchemaError(f'{label}.must_reference_evidence must be a list of strings')
+    return req
 
 def guidance_for(result, sku, field):
     """Every guidance entry for one sku+field, and which channel carried it.
@@ -306,7 +341,7 @@ def run(folder):
         # shape must not suppress the verdict and publication comparisons, which
         # are readable and were asserted. Suppressing them hides real
         # disagreements behind a formatting problem.
-        if row['schema_errors'] and not row['checked']:
+        if row['schema_errors']:
             row['status'] = 'CASE_SCHEMA_ERROR'
         else:
             row['status'] = 'SCORED' if row['checked'] else 'NOTHING TO CHECK'
@@ -339,7 +374,7 @@ def score_expectations(c, result, row):
                 row['publication_note'] = 'expected_publication supplied but named no part - not scored'
 
     g = c.get('expected_seller_guidance')
-    if g:
+    if g is not None:
         try:
             ck, mm, nc = compare_guidance(g, result)
         except CaseSchemaError as e:
@@ -425,11 +460,17 @@ def report(rows, load_errors, folder):
     print('that case - only the columns marked yes/NO were compared. The three')
     print('denominators are separate and are never combined into one number.')
 
-    excluded = unapproved + notexec + malformed + setup_err + schema_err
+    # Schema errors can coexist with valid measurements. Only wholly unscored
+    # cases belong in this section; every schema-error case still fails the run.
+    excluded = unapproved + notexec + malformed + setup_err + [
+        r for r in schema_err
+        if not (r['verdict_scored'] or r['publication_scored'] or r['guidance_scored'])]
     if excluded:
         print()
         print(f'EXCLUDED FROM EVERY DENOMINATOR: {len(excluded)}')
-        for r in excluded: print(f'  - {r["case_id"]:<36} {r["status"]:<18} {r["note"]}')
+        for r in excluded:
+            note = r.get('note') or '; '.join(r.get('schema_errors', []))
+            print(f'  - {r["case_id"]:<36} {r["status"]:<18} {note}')
     if errored:
         print()
         print(f'GRADER ERRORS: {len(errored)}')
@@ -439,8 +480,8 @@ def report(rows, load_errors, folder):
         print(f'CASES THAT COULD NOT BE LOADED: {len(load_errors)}')
         for e in load_errors: print(f'  - {e}')
     print()
-    print(f'{len(rows)} case(s) are an initial independent check. A run this size does')
-    print('not measure the >98% publication-accuracy target or the <0.5%')
+    print(f'{len(rows)} case(s) processed for comparison; independence is not verified by this runner.')
+    print('This run does not establish the >98% publication-accuracy target or the <0.5%')
     print('wrong-rejection target.')
 
     return (len(approvals) + len(rejections) + len(errored) + len(load_errors) + len(malformed) + len(setup_err) + len(schema_err)
