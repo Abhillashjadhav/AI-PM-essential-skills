@@ -1,6 +1,6 @@
 ---
 name: prd-first
-description: Forces a written PRD before any code generation. Use this skill the moment the user says "build", "create app", "make me a", "vibe code", "let's build", "I want an app that", "spin up a", "prototype a", "ship a", or any phrasing that signals they want code generated from a high-level idea. Also use when the user references an existing project but the conversation has no PRD context (no /prds/ file referenced, no clear success metric). The skill blocks code generation until a 5-field PRD exists as a markdown file in the repo. Do NOT use when the user is asking factual questions, debugging existing code, editing a specific file they've named, or working in a repo where a PRD for this feature already exists at /prds/. Skip when user explicitly says "skip the PRD" or "just code it" — but flag the risk once before proceeding.
+description: Forces a written PRD before any code generation. Use this skill when the user says "build", "create app", "make me a", "vibe code", "let's build", "I want an app that", "spin up a", "prototype a", "ship a", or any phrasing that signals they want code generated from a high-level idea. Also use when the user references an existing project but the conversation has no PRD context (no /prds/ file referenced, no clear success metric). The skill blocks code generation until a 5-field PRD exists as a markdown file in the repo. Do NOT use when the user is asking factual questions, debugging existing code, editing a specific file they've named, or working in a repo where a PRD for this feature already exists at /prds/. Skip when user explicitly says "skip the PRD" or "just code it" — but flag the risk once before proceeding.
 ---
 
 # PRD-First Discipline
@@ -97,7 +97,7 @@ When the user approves the PRD, do three things:
 - **User answers vaguely on purpose:** don't fight them. Capture what they said, mark the PRD status as "Draft", proceed. The PRD is a living doc; vague v1 is better than no v1.
 - **Retrofitting a PRD for an existing vibe-coded app:** valid use case. Skip Question 4 (scope is already set) and Question 3 (success metric is "does it currently work" — binary yes). Focus on Q1, Q2, Q5 to recover lost context.
 
-## What this skill is NOT
+## Limitations
 
 - Not a replacement for the user's judgment. The PRD is *their* document — Claude is a scribe, not the author.
 - Not a corporate PRD template with stakeholders, timelines, and OKRs. This is a personal thinking artifact.
