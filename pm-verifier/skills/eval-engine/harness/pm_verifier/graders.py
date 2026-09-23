@@ -500,7 +500,14 @@ def grade_deterministic(
                     else f"pattern condition failed; matches={matches}"
                 )
             elif check == "contains_all":
-                missing = [item for item in params.get("values", []) if item not in actual]
+                if isinstance(actual, list):
+                    missing = [
+                        item
+                        for item in params.get("values", [])
+                        if not any(_json_equal(member, item) for member in actual)
+                    ]
+                else:
+                    missing = [item for item in params.get("values", []) if item not in actual]
                 passed = not missing
                 reason = "all required values are present" if passed else f"missing values: {missing}"
     except (KeyError, TypeError, ValueError, OverflowError) as exc:

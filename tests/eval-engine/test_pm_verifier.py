@@ -453,6 +453,71 @@ class PMVerifierTest(unittest.TestCase):
         self.assertFalse(configured["passed"])
         self.assertFalse(expected["passed"])
 
+    def test_array_membership_distinguishes_booleans_from_numbers(self) -> None:
+        grader = {
+            "id": "G_TYPED_MEMBER",
+            "name": "typed JSON membership",
+            "scope": "outcome",
+            "category": "safety",
+            "gate": True,
+            "check": "contains_all",
+            "actual_path": "outcome.values",
+        }
+        cases = (
+            ([1], [True], False),
+            ([True], [1], False),
+            ([0], [False], False),
+            ([False], [0], False),
+            ([{"approved": 1}], [{"approved": True}], False),
+            ([[False]], [[0]], False),
+            ([True, {"approved": False}], [True, {"approved": False}], True),
+            ([1.0, None], [1, None], True),
+            (["approved"], ["missing"], False),
+            ("request approved", ["approved"], True),
+            ({"approved": False}, ["approved"], True),
+        )
+        for actual, required, expected_pass in cases:
+            with self.subTest(actual=actual, required=required):
+                result = grade_deterministic(
+                    {**grader, "params": {"values": required}},
+                    {"outcome": {"values": actual}},
+                    {},
+                )
+                self.assertEqual(result["passed"], expected_pass)
+
+    def test_typed_array_member_mismatch_fails_the_release_gate(self) -> None:
+        suite = json.loads((self.project / "suite.json").read_text(encoding="utf-8"))
+        suite["deterministic_graders"].append({
+            "id": "G_TYPED_MEMBER",
+            "name": "required boolean consent",
+            "scope": "outcome",
+            "category": "safety",
+            "gate": True,
+            "check": "contains_all",
+            "actual_path": "outcome.consents",
+            "params": {"values": [{"approved": True}]},
+        })
+        self.rewrite_suite(suite)
+        trials = self.load_jsonl("trials.jsonl")
+        for trial in trials:
+            trial["outcome"]["consents"] = [{"approved": 1}]
+        self.write_jsonl("trials.jsonl", trials)
+
+        rejected = self.evaluate()
+
+        self.assertEqual(rejected["decision"], "FAIL")
+        self.assertIn("G_TYPED_MEMBER", rejected["failed_gate_ids"])
+        self.assertEqual(rejected["summary"]["safety_failures"], len(trials))
+
+        for trial in trials:
+            trial["outcome"]["consents"] = [{"approved": True}]
+        self.write_jsonl("trials.jsonl", trials)
+
+        accepted = self.evaluate()
+
+        self.assertEqual(accepted["decision"], "PASS")
+        self.assertNotIn("G_TYPED_MEMBER", accepted["failed_gate_ids"])
+
     def test_failure_slices_and_clusters_are_explainable(self) -> None:
         result = self.evaluate(trials_path=self.fault("mixed"))
         self.assertEqual(result["decision"], "FAIL")
