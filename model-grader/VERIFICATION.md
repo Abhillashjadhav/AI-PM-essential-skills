@@ -503,10 +503,11 @@ which weakens the evidence and is stated in the report rather than softened.
 
 Nine cases measure nothing about the targets.
 
-**Gate 3 remains NOT MET.** 60 of 102 fixtures are still builder-authored with
-no independent adjudication of their expected outcome, and only 3 have an
-owner-signed encoding. Running nine cases against the grader does not review
-those 102 expectations; it is a different check, and it did not complete.
+**Gate 3 remains NOT MET.** The recorded 102-fixture adjudication map has only
+3 owner-signed encodings, leaving 99 without that evidence. Its separate count
+of 60 wholly builder-authored expectations must not be mistaken for evidence
+that the other 42 encodings were independently checked. Running nine cases
+against the grader does not adjudicate those 102 expectations.
 
 ### Scope, recorded so it is not mistaken for a gap
 
@@ -524,11 +525,11 @@ The harness was proved on six self-authored throwaway inputs that were then
 deleted; those carry no validation weight and are labelled as such in
 `SEALED_CASES.md`.
 
-The run exposed one defect in the harness itself: `compare_guidance()` compares
-against `seller_warnings` only, and reports "no seller guidance emitted" for
-guidance the grader does emit through `guided_help`. Recorded as open decision
-(g); not silently changed, because which channel an expectation asserts against
-is not the builder's to decide.
+An earlier run exposed a harness defect: `compare_guidance()` checked only
+`seller_warnings` and missed guidance emitted through `guided_help`. Owner ruling
+(g), now settled, authorized checking both channels. The v2.6 report records the
+corrected guidance result as 6/6. This records that repair; it does not certify
+every other harness path or treat the throwaway cases as independent evidence.
 
 ### The accuracy targets remain unmeasured
 
@@ -539,8 +540,11 @@ been measured. Nothing currently in this repository can measure either.
 **Nine cases are an initial independent check, not proof of either target.**
 A clean sealed-case run would say the grader agreed with an independent judgment
 on nine cases. It does not establish a rate. Reporting one from nine cases would
-be the same error as calling 52/52 self-consistency an accuracy score. The run
-that happened was not clean: none of the nine was scored.
+be the same error as calling 52/52 self-consistency an accuracy score. The first
+v2.3 run scored none of the nine. The later v2.6 report scored all nine and kept
+raw verdict agreement (8/9), raw publication agreement (8/9), and guidance (6/6)
+separate from the two owner-overruled expectations. Neither result establishes
+the production targets.
 
 The runner reports incorrect approvals and incorrect rejections separately and
 never combines them, because the two targets have different denominators and a
@@ -554,16 +558,14 @@ this grader should be read as evidence about either:
 - **Durable storage.** The grader is a pure function over one case. It holds no
   state between runs and nothing here exercises persistence, recovery or
   migration.
-- **Later parent linking.** Judgment 2 says the relationship is retained and
-  linked when the parent is ready. What is implemented and tested is the
-  same-run case. Re-linking a child in a **later** run is unimplemented and
-  untested, because nothing carries state between runs — which is the same gap as
-  durable storage seen from the other side.
+- **Later parent linking.** The owner's 2026-09-18 scope ruling makes grouping
+  a manual supplier action after both SKUs exist. Later-run relinking is outside
+  this grader's contract, rather than an outstanding grader requirement.
 
 ---
 
 ## Evidence limitations
 
-- **No independent adjudication.** Checks 1–3 were authored and run by the party that wrote the skill. Check 4 was run by automated reviewers spawned from that same session and shares its blind spots by construction — it raises the floor on defects found, and moves gate 3 not at all. Nobody outside has adjudicated any of it.
+- **Author-run checks do not close Gate 3.** Checks 1–3 were authored and run by the party that wrote the skill. Check 4 used reviewers from the same session and shares that limitation. The separately recorded blind-author and nine-case work in Checks 8–9 does not independently adjudicate the development fixture encodings.
 - Check 1 is mechanical and reproducible: parse the grader, enumerate its inputs, map them to questions. Checks 2 and 3 are reasoning about a design, and reasoning about a design is not evidence that it works.
-- **The exit test has still never been run.** Check 5 tested the template for slot coverage, not a contract for buildability, and the two are different measurements — an earlier revision of this file conflated them. The exit test requires the full interview run on an unseen spec with a real owner, the resulting contract handed to an implementer who did not see the interview, and their questions counted. Until that happens the exit condition remains a claim this skill makes about itself with no measurement behind it, and the version stays `v0.1.0`.
+- **The exit condition was measured once and failed.** Check 5 measured template slot coverage. Check 8 records the distinct blind-author probe: all nine cases were rejected before grading because required input details were undocumented. Later documentation and re-encoding allowed the reported v2.6 run; they do not reverse the original failed probe or establish that the probe is sufficient in other domains.

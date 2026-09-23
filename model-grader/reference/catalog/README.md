@@ -40,34 +40,45 @@ found-by-audit rather than reasoned.
 
 | Path | What it is |
 |---|---|
-| `grader.py` | the current grader, `frozen-v2.3` — **frozen for independent evaluation** |
+| `grader.py` | the current reference grader, `frozen-v2.6`; earlier frozen versions remain historical artifacts |
 | `baseline_v1.py`, `baseline_v2.py` | earlier versions, kept for comparison |
 | `contract.md` | the contract it implements |
 | `task_prompt.md` | what the candidate model is told |
-| `inputs/`, `candidates/`, `gold/` | 30 development cases, 12 fault injections, 3 owner-approved judgments |
+| `inputs/`, `candidates/`, `gold/` | 30 saved development cases, 13 fault injections, 3 owner-approved judgments |
 | `attacks/` | the five supplied attacks and two alternative probes |
-| `revision_checks.json` | 52 checks, each labelled *development expectation derived from owner rules; not independently adjudicated* |
+| `revision_checks.json` | 55 development checks; these are not independent adjudications |
 | `DECISIONS.md` | the eight owner-approved business judgments, targets, error ranking |
 | `DIVERGENCES.md` | two executed divergences between decisions and implementation |
-| `OPEN_DECISIONS.md` | three questions the owner has not settled, and two unbuilt evidence sets |
+| `OPEN_DECISIONS.md` | unresolved scope decision (b), explicitly deferred defect (k), and remaining evidence work |
+| `SEALED_CASES.md`, `run_sealed_cases.py` | published case format and comparison harness; case inputs are supplied separately |
+| `EVALUATION_v2.3.md`, `EVALUATION_v2.4.md`, `EVALUATION_v2.6.md` | historical reports of three rounds using nine externally authored cases |
 
 ## What it does not establish
 
 Its two accuracy targets — >98% of published records correct, <0.5% of valid
 submissions wrongly blocked — are **not measured, and cannot be** from what is
-here. Both need a population with independent ground truth. There is none: zero
-sealed cases, and every one of the 52 checks was written by the same builder that
-wrote the grader.
+here. Both need a suitable population with independent ground truth. The latest
+recorded nine-case run reports raw verdict agreement 8/9, raw publication
+agreement 8/9, and guidance agreement 6/6. Two expectations were overruled by
+owner rulings; those adjustments are not independent agreements. The input format
+was documented after the cases first failed, and inputs were re-encoded. These
+limitations remain even though the reports record unchanged expectation hashes.
+
+The case files are not committed here, so the historical run cannot be rerun from
+this checkout alone. The development suite is reproducible self-consistency
+evidence, not a production accuracy measurement.
 
 Gate 3 is open. That is the honest state, and leaving it visible is the point.
 
 ## Frozen for independent evaluation
 
-`grader.py` is at **`frozen-v2.3`** and is frozen. No further changes should be
-made to it.
+`grader.py` identifies the current reference artifact as **`frozen-v2.6`**.
+Do not modify a frozen grader in place or present an old evaluation as evidence
+about a later artifact.
 
 `frozen-v2.2` (commit `a792f76`) is preserved unchanged as the historical record.
-`frozen-v2.3` supersedes it and is the version to evaluate.
+`frozen-v2.3` (commit `c31cbd9`) and the later versions are also preserved in
+history. The v2.6 report names the later run; it does not alter the v2.3 record.
 
 Any subsequent fix goes into a new version. Editing this one voids the
 evaluation: a sealed-case run is only evidence about the artifact it was run
@@ -76,5 +87,5 @@ either version.
 
 What is frozen: `grader.py`. What is not: the fixtures, the documents, and the
 reproductions, which may still gain cases — but a change that alters a verdict
-`frozen-v2.3` produces is a change to the grader by another route, and belongs
+the frozen grader produces is a change to the grader by another route, and belongs
 in the next version too.
