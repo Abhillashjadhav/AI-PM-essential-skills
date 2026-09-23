@@ -123,6 +123,18 @@ def _contract_lineage_input_paths(
 
 
 def main(argv: Sequence[str] | None = None) -> int:
+    """Use optional local recording without changing evaluation gates."""
+    try:
+        from workflow_beacon import capture
+    except Exception:
+        return _main(argv)
+    with capture("ai-pm-skills.pm-verifier", project_root=Path.cwd()) as run:
+        result = _main(argv)
+        run.set_result(result)
+        return result
+
+
+def _main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command in {"prepare", "validate", "run"}:
         result = evaluate_project(
