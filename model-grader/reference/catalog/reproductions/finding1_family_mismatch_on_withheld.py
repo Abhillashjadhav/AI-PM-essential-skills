@@ -38,7 +38,7 @@ r = grader.grade(case, cand)
 c1 = next(x for x in r['records'] if x['sku'] == 'C1')
 
 rows = []
-report(rows, 'subbrand is withheld on C1', 
+report(rows, 'subbrand is withheld on C1',
        'subbrand' in withheld,
        f"withholding = {[(i['code'], i['field']) for i in withholding]}", kind='setup')
 report(rows, 'FAMILY_MISMATCH blocks that same withheld field',
