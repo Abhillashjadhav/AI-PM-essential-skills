@@ -81,20 +81,25 @@ with a default. A guessed answer looks decided and nobody revisits it.
   grader obligation. There is no later-run requirement of any kind, so there is
   no gap. See `DECISIONS.md`, Mismatch A.
 - **The eight adjudications.** Complete. Recorded in `DECISIONS.md` with their
-  fixture mapping. Mismatch B is now resolved; mismatch A remains open below.
+  fixture mapping. Mismatch B is resolved; later relinking under mismatch A is
+  outside grader scope by the ruling above. Scope decision (b) remains open.
 
-## Not yet built
+## Remaining evidence work
 
-- **A published input format.** See (e). The format exists in code and in the
-  shape of 102 builder-authored fixtures, and nowhere a case author can read.
-  This is the single finding of the nine-case run.
+- **The input format is now published.** Decision (e), contract clause 2a and
+  `SEALED_CASES.md` document machine-valued evidence and optional `source_note`.
+  This repairs the documentation gap exposed by the first run; it does not make
+  that original blind-author probe pass retroactively.
 
-- **Sealed cases that the grader can read.** Nine were authored, owner-signed
-  and run; all nine were rejected before grading (`EVALUATION_v2.3.md`). There is
-  no tenth case and none is outstanding. **Until cases exist that both parties
-  can produce and consume, no accuracy claim is possible.**
+- **Independent validation remains incomplete.** The v2.3 run rejected all nine
+  cases before grading. After input re-encoding, the v2.6 report records all nine
+  reaching the grader: raw verdict 8/9, raw publication 8/9, guidance 6/6.
+  Two expectations were overruled by owner rulings and must remain separate from
+  independent agreement. The cases are held outside this repository, so a fresh
+  rerun requires those inputs. No tenth case is outstanding. Gate 3 remains unmet.
 - **The accuracy targets are unmeasured.** The primary outcome (**> 98%** of
   published SKU records correct) and the guardrail (**< 0.5%** of valid
   submissions wrongly rejected) have never been measured, and nothing currently
-  in the repository can measure them. Every number the suite reports is
-  self-consistency against builder-authored expectations.
+  in the repository can establish them. Development-suite pass counts measure
+  self-consistency; the separately reported nine-case exercise is too small and
+  qualified to establish either production rate.
