@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import subprocess
 import sys
@@ -27,25 +28,28 @@ PUBLIC_GENERATED_PATHS = {
 }
 
 
-def git(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
+def git(
+    *args: str, check: bool = True, text: bool = True
+) -> subprocess.CompletedProcess[str] | subprocess.CompletedProcess[bytes]:
     return subprocess.run(
         ["git", *args],
         check=check,
         capture_output=True,
-        text=True,
+        text=text,
     )
 
 
 def changed_paths(base: str, head: str) -> list[str]:
-    result = git("diff", "--name-only", f"{base}...{head}")
-    return [line for line in result.stdout.splitlines() if line]
+    result = git("diff", "--name-only", "-z", f"{base}...{head}", text=False)
+    return [os.fsdecode(path) for path in result.stdout.split(b"\0") if path]
 
 
 def existing_skill_roots(base: str) -> set[str]:
-    result = git("ls-tree", "-r", "--name-only", base)
+    result = git("ls-tree", "-r", "--name-only", "-z", base, text=False)
+    paths = (os.fsdecode(path) for path in result.stdout.split(b"\0"))
     return {
         str(Path(path).parent)
-        for path in result.stdout.splitlines()
+        for path in paths
         if path == "SKILL.md" or path.endswith("/SKILL.md")
     }
 
