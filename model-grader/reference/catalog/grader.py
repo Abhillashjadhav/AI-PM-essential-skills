@@ -4,9 +4,13 @@ import copy
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
-VERSION = 'frozen-v2.3'
+VERSION = 'frozen-v2.6'
 REQUIRED = ('brand','category','subcategory','design','pattern','material','color','size','price')
 SHARED = ('brand','subbrand','category','subcategory','design','pattern','material')
+# Every key an evidence entry may carry. 'source_note' is optional and inert:
+# ruling 2 forbids the grader from comparing it or deciding anything with it.
+EVIDENCE_KEYS = frozenset({'sku','field','value','source_note'})
+
 # These are private envelopes at submission/record level, never catalog fields.
 # Arbitrary company metadata belongs under internal_metadata. No consumer in
 # this package executes, interprets, or publishes these values.
@@ -118,6 +122,26 @@ def compatible_partial(child,parent):
     return equivalent({k:v for k,v in child.items() if k!='components'},
                       {k:v for k,v in parent.items() if k!='components'})
 
+def settled(values,sku,field):
+    """Does this record carry a settled VALUE for `field` - something another
+    record can be resolved against?
+
+    Distinct from supplies(), and the distinction is the whole of the repair.
+    A parent whose two sources disagree HAS SUPPLIED material: it blocks the
+    child, which is adjudication 1. It has SETTLED nothing: there is no agreed
+    value to inherit from or compare against. Blocking propagation asks
+    supplies(); value resolution asks settled(). Reading a value after asking
+    only supplies() is what produced the false MALFORMED_RECORD.
+    """
+    v=values.get(sku,{}).get(field)
+    if v is None or v=='': return False
+    # An empty container is not a value either. effective() previously asked this
+    # by truthiness (`cm and pm`), which treated {} and [] as nothing; keep that.
+    # Zero is deliberately NOT excluded: expected_issues counts 0 as present for
+    # MISSING_REQUIRED, and settled() must agree with it about what is there.
+    if isinstance(v,(dict,list,tuple,set)) and not v: return False
+    return True
+
 def effective(case):
     records={r['sku']:r for r in case['records']}
     if len(records)!=len(case['records']): raise SetupError('duplicate source SKU')
@@ -146,9 +170,28 @@ def effective(case):
             if f not in out[r['parent_sku']]: raise SetupError('missing inherited parent fact')
             if f not in out[sku]: out[sku][f]=copy.deepcopy(out[r['parent_sku']][f])
         if r['role']=='child':
-            cm=out[sku].get('material');pm=out[r['parent_sku']].get('material')
-            if cm and pm and compatible_partial(cm,pm): out[sku]['material']=copy.deepcopy(pm)
+            parent=r['parent_sku']
+            if settled(out,sku,'material') and settled(out,parent,'material') \
+               and compatible_partial(out[sku]['material'],out[parent]['material']):
+                out[sku]['material']=copy.deepcopy(out[parent]['material'])
     return records,out
+
+def supplies(case,values,sku,field):
+    """Does this record actually supply `field`?
+
+    Owner ruling 2026-09-20: parent-derived logic for a field runs only where the
+    parent actually supplies that field - a settled value, or a conflict declared
+    on it. Where the parent supplies nothing for that field, the child is
+    evaluated on its own values alone.
+
+    A conflict counts: a parent whose two sources disagree about material has
+    supplied a material, it is simply disputed. That is adjudication 1, and it
+    still blocks the child. A parent that carries no material at all has supplied
+    nothing to disagree about, and there is no parent-derived question to ask.
+    """
+    if settled(values,sku,field): return True
+    r=next((x for x in case['records'] if x['sku']==sku),None)
+    return bool(r) and any(c.get('field')==field for c in r.get('conflicts',[]))
 
 def source_ref(case,sku,field):
     r=next(r for r in case['records'] if r['sku']==sku)
@@ -159,8 +202,20 @@ def source_ref(case,sku,field):
     if r['role']=='child':
         parent=next(x for x in case['records'] if x['sku']==r['parent_sku'])
         _,values=effective(case)
-        if (field in r.get('inherit_fields',[]) and field not in r['fields']) or (
-            field=='material' and r['fields'].get(field) and compatible_partial(r['fields'][field],values[parent['sku']][field])):
+        # Two different questions, asked in order.
+        #   supplies() - has the parent supplied this field at all? A declared
+        #                conflict counts; that is what blocks the child.
+        #   settled()  - is there an agreed value to resolve against? A
+        #                conflict-only parent has none, so the composition
+        #                comparison below is not a question that can be asked
+        #                of it, and is never reached.
+        # The comparison reads values[parent][field]; settled() establishes that
+        # it exists before the branch that needs it. No try/except.
+        if supplies(case,values,parent['sku'],field) and (
+            (field in r.get('inherit_fields',[]) and field not in r['fields']) or (
+             field=='material' and r['fields'].get(field)
+             and settled(values,parent['sku'],field)
+             and compatible_partial(r['fields'][field],values[parent['sku']][field]))):
             return source_ref(case,parent['sku'],field)
     return authority(case,sku,field) or f'{sku}.{field}'
 
@@ -185,8 +240,15 @@ def check_setup(case):
     evidence=case.get('evidence',{})
     source_records={r['sku']:r for r in case['records']}
     for ref,e in evidence.items():
-        if not isinstance(e,dict) or set(e)!={'sku','field','value'} or e['sku'] not in source_records or not isinstance(e['field'],str):
+        # source_note (ruling 2) is an optional human description of where the value
+        # came from. It is never compared and never decides anything; it is carried
+        # only so supplier guidance can name a source the seller recognises instead
+        # of an internal evidence id. Its absence must never change a verdict.
+        if not isinstance(e,dict) or not {'sku','field','value'}<=set(e) or set(e)-EVIDENCE_KEYS \
+           or e['sku'] not in source_records or not isinstance(e['field'],str):
             raise SetupError('invalid evidence entry: '+ref)
+        if 'source_note' in e and not isinstance(e['source_note'],str):
+            raise SetupError('source_note must be a string: '+ref)
         if e['field']=='material': material_key(e['value'])
         if e['field']=='price': number(e['value'])
     for key,a in case.get('authority_registry',{}).items():
@@ -209,7 +271,10 @@ def check_setup(case):
         if r['role']=='child' and records[r['parent_sku']]['role']!='parent': raise SetupError('child must link directly to flagship parent')
         for f,v in r['fields'].items():
             e=evidence.get(f'{sku}.{f}')
-            if not e or e!={'sku':sku,'field':f,'value':v}: raise SetupError('fixture evidence mismatch')
+            # Compared field by field, not as a whole dict: an optional source_note
+            # is descriptive and must not make a matching fixture look mismatched.
+            if not e or e['sku']!=sku or e['field']!=f or e['value']!=v:
+                raise SetupError('fixture evidence mismatch')
         for c in r.get('conflicts',[]):
             refs=c.get('evidence',[])
             if len(refs)<2 or any(ref not in evidence or evidence[ref]['sku']!=sku or evidence[ref]['field']!=c.get('field') for ref in refs):
@@ -339,13 +404,36 @@ def expected_issues(case,records,values,sku):
             if f in withheld_here: continue
             if f in fs and f in values[parent] and not same(f,canonical(f,fs[f],p),canonical(f,values[parent][f],p)):
                 add('FAMILY_MISMATCH',f,[source_ref(case,sku,f),source_ref(case,parent,f)])
+        # Group the parent's problems by field before emitting anything.
+        #
+        # Ruling 2026-09-20: a child's PARENT_UNRESOLVED carries the evidence of
+        # EVERY parent problem on that field, not the first one encountered. One
+        # field can trip several problems at once - a required field whose sources
+        # disagree carries both MISSING_REQUIRED (no evidence) and SOURCE_CONFLICT
+        # (the disagreeing sources) - and taking the first one found discarded the
+        # sources. A candidate citing them was then failed with ISSUE_EVIDENCE for
+        # supplying exactly what the seller needs.
+        parent_problems={}
         for problem in expected_issues(case,records,values,parent):
-            if problem['field'] in SHARED and not any(i['field']==problem['field'] for i in issues):
-                # Decision 4: an optional-field conflict blocks nothing else, and a child
-                # is something else. A parent problem that only withholds propagates as a
-                # withholding conflict on the child's inherited copy, not as a blocker.
-                if withholds(problem,p): add('SOURCE_CONFLICT',problem['field'],problem['evidence'])
-                else: add('PARENT_UNRESOLVED',problem['field'],problem['evidence'])
+            f=problem['field']
+            # Ruling 2026-09-20: nothing propagates from a field the parent does
+            # not supply. A parent missing a shared field is a partial submission
+            # and is the seller's to complete; it never holds back a valid child.
+            if f not in SHARED or not supplies(case,values,parent,f): continue
+            parent_problems.setdefault(f,[]).append(problem)
+        for f,problems in parent_problems.items():
+            if any(i['field']==f for i in issues): continue
+            refs=[]
+            for problem in problems:
+                for ref in problem['evidence']:
+                    if ref not in refs: refs.append(ref)
+            # Decision 4: an optional-field conflict blocks nothing else, and a child
+            # is something else. A parent problem that only withholds propagates as a
+            # withholding conflict on the child's inherited copy, not as a blocker.
+            # One blocking problem on the field is enough to block; withholding is
+            # the weaker outcome and cannot override it.
+            if all(withholds(problem,p) for problem in problems): add('SOURCE_CONFLICT',f,refs)
+            else: add('PARENT_UNRESOLVED',f,refs)
     # A supplied conflict is resolved only by the selected authority or explicit approved edit.
     for f,refs in conflicts_here.items():
         if not any(x['code']=='SOURCE_CONFLICT' and x['field']==f for x in issues): add('SOURCE_CONFLICT',f,refs)
@@ -534,6 +622,30 @@ def warning_branch(status,designated):
     if status!='READY': return 'blocked'
     return 'awaiting_approval' if designated else 'eligible_for_publication'
 
+def source_phrase(case,ref):
+    """How to name one evidence entry to a seller: its source_note when it has
+    one, otherwise nothing. Ruling 2 - never the internal evidence id."""
+    note=case.get('evidence',{}).get(ref,{}).get('source_note')
+    return note if isinstance(note,str) and note.strip() else None
+
+def attributed_values(case,refs):
+    """"the spec sheet A says X, the supplier invoice says Y", or None.
+
+    Returns None unless EVERY cited entry carries a source_note. A half-attributed
+    sentence would name one source and leave the other anonymous, which reads as
+    though the unnamed one did not exist. Falling back whole keeps the two
+    wordings clean and keeps absence from changing anything a seller can act on
+    beyond losing the names.
+    """
+    parts=[]
+    for ref in refs:
+        note=source_phrase(case,ref)
+        if not note: return None
+        e=case['evidence'][ref]
+        parts.append(f"{note} says {e['value']!r}")
+    if len(parts)<2: return None
+    return ', '.join(parts[:-1])+' and '+parts[-1]
+
 def seller_warnings(case,records,values,status_by_sku):
     """Deterministic seller guidance for every withheld field. Owner decision 4.
 
@@ -553,26 +665,43 @@ def seller_warnings(case,records,values,status_by_sku):
         _,withholding=partition_issues(expected_issues(case,records,values,sku),p)
         for i in withholding:
             f=i['field']
-            conflicting=[{'evidence_id':ref,'value':case['evidence'][ref]['value']}
-                         for ref in i['evidence'] if ref in case['evidence']]
+            conflicting=[]
+            for ref in i['evidence']:
+                if ref not in case['evidence']: continue
+                entry={'evidence_id':ref,'value':case['evidence'][ref]['value']}
+                note=source_phrase(case,ref)
+                if note: entry['source_note']=note
+                conflicting.append(entry)
             designated=designated_but_unapproved(case,sku,f)
             has_designation=bool(designated and designated in case['evidence'])
             status=status_by_sku.get(sku,'BLOCKED')
             branch=warning_branch(status,has_designation)
             w={'sku':sku,'field':f,'branch':branch,'conflicting_values':conflicting}
+            # Ruling 2: name the sources the seller recognises when every cited
+            # entry carries a source_note; otherwise say exactly what v2.3 said.
+            # The branch, the withholding and the verdict are already decided
+            # above and none of them can see this.
+            attributed=attributed_values(case,[x['evidence_id'] for x in conflicting])
+            disagree=('On '+f+', '+attributed+'.') if attributed else ('Sources disagree on '+f+'.')
             if branch=='blocked':
-                w['action']=('Sources disagree on '+f+', so it is withheld. This product is '
+                # Without notes this must read exactly as v2.3 did, comma and all:
+                # the ruling says fall back to today's behaviour, not to a rewording.
+                lead=(('On '+f+', '+attributed+'. It is withheld.') if attributed
+                      else ('Sources disagree on '+f+', so it is withheld.'))
+                w['action']=(lead+' This product is '
                              'not published for other reasons; resolve those first, then '
                              'confirm the correct '+f+'.')
             elif branch=='awaiting_approval':
                 w['recommended_value']=case['evidence'][designated]['value']
                 w['recommended_from']=designated
-                w['action']=('Sources disagree on '+f+'. The designated source gives '
+                named=source_phrase(case,designated)
+                w['action']=(disagree+' The designated source'
+                             +(' ('+named+')' if named else '')+' gives '
                              +repr(case['evidence'][designated]['value'])+', but it is not '
                              'supplier-approved, so '+f+' stays withheld while the rest of this '
                              'product is published. Approve that source to publish '+f+'.')
             else:
-                w['action']=('Sources disagree on '+f+'. It is withheld and the rest of this '
+                w['action']=(disagree+' It is withheld and the rest of this '
                              'product is published. Confirm the correct value to publish '+f+'.')
             out.append(w)
     return out

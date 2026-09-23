@@ -17,6 +17,84 @@ python3 run_sealed_cases.py /path/to/cases --json results.json
 The directory is an argument. Nothing is committed. The grader is imported
 unmodified; the runner never retries and never adjusts an expected outcome.
 
+## `input.evidence` — values are machine values, not prose
+
+**This is the rule that rejected all nine cases in the first round, and it was
+written nowhere. It is written here now.**
+
+An evidence entry is `{sku, field, value}` plus an optional `source_note`. Its
+`value` is the **exact machine value of the field it evidences — the same shape
+the record carries**. The grader compares `evidence["P1.material"].value` to
+`records[P1].fields.material` directly. A different shape is a mismatched
+fixture, and the case is rejected before grading with `SETUP_ERROR`.
+
+### Worked example — a scalar field
+
+```json
+"records": [ { "sku": "P1", "fields": { "color": "Navy", "price": "649.00" } } ],
+"evidence": {
+  "P1.color": { "sku": "P1", "field": "color", "value": "Navy"   },
+  "P1.price": { "sku": "P1", "field": "price", "value": "649.00" }
+}
+```
+
+The evidence `value` is the same `"Navy"` the record carries. Not `"navy per
+the colour card"`, not `"Navy (spec sheet A)"`.
+
+### Worked example — `material`
+
+`material` is an object, so its evidence value is that whole object.
+
+```json
+"records": [ { "sku": "P1", "fields": {
+  "material": { "components": [ { "material": "cotton",    "percent": "60" },
+                                { "material": "polyester", "percent": "40" } ] } } } ],
+"evidence": {
+  "P1.material": { "sku": "P1", "field": "material",
+    "value": { "components": [ { "material": "cotton",    "percent": "60" },
+                               { "material": "polyester", "percent": "40" } ] } }
+}
+```
+
+A bare string is refused:
+
+```
+"value": "60% cotton / 40% polyester"            SETUP_ERROR: material must be object
+"value": "60% cotton / 40% polyester (spec A)"   SETUP_ERROR: material must be object
+```
+
+The simple form `{"label": "cotton blend"}` is equally valid where that is what
+the record carries. What must match is the record.
+
+### Where the source's own words go — `source_note`
+
+A human description of where the value came from is an optional `source_note` on
+the entry. Use it for exactly the text that used to get written into `value`:
+
+```json
+"P1.material.a": { "sku": "P1", "field": "material",
+  "value": { "components": [ { "material": "cotton",    "percent": "60" },
+                             { "material": "polyester", "percent": "40" } ] },
+  "source_note": "spec sheet A, page 4" },
+"P1.material.b": { "sku": "P1", "field": "material",
+  "value": { "components": [ { "material": "cotton",    "percent": "80" },
+                             { "material": "polyester", "percent": "20" } ] },
+  "source_note": "supplier invoice, 12 Aug" }
+```
+
+**`source_note` is never compared and never decides anything.** It is quoted
+back in supplier guidance, so a conflict reads
+
+> On material, spec sheet A, page 4 says {...} and supplier invoice, 12 Aug says {...}.
+
+instead of naming internal evidence ids. A case with notes and the same case
+without produce an identical verdict, an identical error list and an identical
+publication payload — only the guidance wording differs. Proved by
+`reproductions/ruling2_source_note_inert.py`.
+
+Attribution is all-or-nothing per conflict: name every cited source or none, so
+no sentence names one source and silently drops the other.
+
 ## One case = one JSON object, one file
 
 ```json
@@ -128,6 +206,48 @@ recommends a given value.
 
 **Wording is never compared.** No string match on prose, ever. Only the required
 meaning and the named SKU/field.
+
+#### Two accepted shapes — a plain list, or the object
+
+Owner ruling 2026-09-20: **a plain list is valid.** A list *is* the `required`
+list written without the wrapper, which is the shape an author reaches for when
+every entry simply asserts that guidance exists.
+
+```json
+"expected_seller_guidance": [
+  { "sku": "P1", "field": "description" },
+  { "sku": "C1", "field": "recommended_browse_nodes", "branch": "eligible_for_publication" }
+]
+```
+
+is compared exactly as
+
+```json
+"expected_seller_guidance": {
+  "required": [
+    { "sku": "P1", "field": "description" },
+    { "sku": "C1", "field": "recommended_browse_nodes", "branch": "eligible_for_publication" }
+  ]
+}
+```
+
+Use the object form when you need `must_not_warn` — a bare list cannot express
+it.
+
+#### Prose keys are reported, not silently dropped
+
+An entry may carry extra keys describing what the warning should mean, for
+example `warning_meaning` or `supplier_action`. They are **not compared** —
+"meaning, never wording" still holds — but they are **named in the report** so
+the guidance denominator never implies coverage it does not have:
+
+```
+-> not compared (prose, never matched by wording): P1/description: supplier_action
+-> not compared (prose, never matched by wording): P1/description: warning_meaning
+```
+
+The keys that *are* compared are `sku`, `field`, `branch`,
+`must_reference_evidence` and `recommended_value`. Everything else is prose.
 
 ## Cases that are not run
 

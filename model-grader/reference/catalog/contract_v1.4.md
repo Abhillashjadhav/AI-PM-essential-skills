@@ -9,6 +9,42 @@
 
 **2. Inputs and outputs.** Each case supplies product facts, evidence of identity/family relationships, mandatory `record_status: existing | proposed` on every record, and a fixed destination profile containing applicable field requirements, allowed values, aliases, and units. The candidate returns structured catalog records, customer-facing composition text, per-SKU READY/BLOCKED decisions, actionable reasons, and evidence/transformation references. Account for every assigned SKU; never invent combinations or drop difficult records.
 
+**2a. What an evidence entry is.** An evidence entry is `{sku, field, value}`
+plus an optional `source_note`. Its **`value` is the exact machine value of the
+field it evidences — the same shape the record carries for that field**, not
+prose about the source. For a scalar field that is the scalar; for `material`
+it is the full material object. The grader compares `evidence[f"{sku}.{field}"].value`
+to the record's field value directly, so any difference in shape is a mismatched
+fixture, not a looser match.
+
+```json
+"P1.color":    { "sku": "P1", "field": "color",    "value": "Navy" }
+"P1.price":    { "sku": "P1", "field": "price",    "value": "649.00" }
+
+"P1.material": { "sku": "P1", "field": "material",
+                 "value": { "components": [ { "material": "cotton",    "percent": "60" },
+                                            { "material": "polyester", "percent": "40" } ] } }
+```
+
+Not `"value": "60% cotton / 40% polyester (spec sheet A)"`. That sentence is a
+description of a source, and it belongs in `source_note`:
+
+```json
+"P1.material.a": { "sku": "P1", "field": "material",
+                   "value": { "components": [ { "material": "cotton",    "percent": "60" },
+                                              { "material": "polyester", "percent": "40" } ] },
+                   "source_note": "spec sheet A, page 4" }
+"P1.material.b": { "sku": "P1", "field": "material",
+                   "value": { "components": [ { "material": "cotton",    "percent": "80" },
+                                              { "material": "polyester", "percent": "20" } ] },
+                   "source_note": "supplier invoice, 12 Aug" }
+```
+
+`source_note` is optional and inert. The grader never compares it and never
+decides anything with it; it is quoted back in supplier guidance so a seller
+reads "the spec sheet says one thing, the invoice says another" instead of an
+internal evidence id. Its absence never changes a verdict.
+
 **3. Accuracy and correctness.** Abhillash approves synthetic facts and expected judgments. Accuracy checks factual agreement with the approved evidence; correctness additionally checks identity, grouping, inheritance, transformations, completeness, and readiness. Real-world source verification is outside this lab. The grader evaluates the submitted candidate; it does not repair it or trust its claimed success.
 
 **4. Platform requirements.** For this bounded lab, Appendix A defines `LAB-TS-0.1`, using verified field names from the Amazon UK January 2021 guide where available. Its required/conditional/optional flags are lab requirements, NOT verified Amazon requirements. The companion field map and Appendix A together distinguish documented names from lab choices. This versioned profile is the sole requirement source for lab grading. Optional absence does not block. India-template retrieval moves to Later and does not block lab review, implementation, or lab completeness grading. Neither lab READY nor this historical mapping certifies current UK/India platform completeness or live Amazon acceptance. The previous `LAB-AMZ-IN-0.1` was also a lab proposal, not an Amazon schema.

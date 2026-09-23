@@ -6,13 +6,64 @@ with a default. A guessed answer looks decided and nobody revisits it.
 | # | Question | What it costs to leave open | Who can decide |
 |---|---|---|---|
 | b | **Adjudication 5's "seller supplies the missing percentage later; validate and update affected records" — grader scope or workflow scope?** No mechanism exists today. | Either an unbuilt requirement sits in the contract, or a real workflow step has no owner. | Owner |
-| e | **What shape is an input `evidence` value?** The grader requires a `material` evidence value to be an object (`material_key`: `material must be object`) and requires `evidence[f'{sku}.{field}'].value` to equal the record's field value exactly. No contract, prompt or `SEALED_CASES.md` clause says so. The nine sealed-case authors wrote source prose (`"60% cotton / 40% polyester (spec sheet A)"`), modelling evidence as what a source says and `fields` as the value derived from it. | All nine cases were rejected before grading. Until this is written down and published, no one outside the builder can author a case the grader will read. | Owner |
-| f | **Is `expected_publication.withheld_fields` scoped to what published?** A SKU that fails and does not publish still appears in the grader's `withheld` map. UCA-06's author expected `{}` — nothing published, so nothing withheld. `SEALED_CASES.md` does not say, and the runner's choice to compare against `result['withheld']` rather than a payload-scoped map was a builder decision. | A publication check that means two things measures neither. | Owner |
-| g | **Which channel does `expected_seller_guidance` assert against?** `seller_warnings()` covers withheld optional fields only (Decision 4); blocking issues are carried by `guided_help()`. Of the 8 sku+field pairs the authors asserted, 8 are in `guided_help` and 2 in `seller_warnings`. | The harness currently reports "no seller guidance emitted" for guidance that exists. Left open, the guidance denominator is meaningless. | Owner |
-| h | **Is the list form of `expected_seller_guidance` accepted, and is prose ever compared?** The cases supply `[{sku, field, warning_meaning, supplier_action}]`; the published schema is `{required, must_not_warn}` and forbids wording comparison. `sku` + `field` maps over cleanly; the two prose keys cannot be compared under the current rule. | Six cases score no guidance at all. Either the schema accepts the list form or case authors must be told otherwise before the next round. | Owner |
-| i | **A required field whose sources conflict and which therefore carries no value: one issue or two?** The grader expects both `MISSING_REQUIRED` and `SOURCE_CONFLICT`, and `ISSUE_COVERAGE` fails if either is missing. UCA-02's candidate reported the conflict alone and its author judged that a PASS. Reproduced on shipped `inputs/D01.json`. | A candidate that diagnoses the problem correctly is marked wrong for not also reporting its consequence. Drives a wrong rejection. | Owner |
+| k | **`text_parts` raises `ValueError` for candidate text outside the grammar, and the catch-all reports it as `MALFORMED_RECORD`.** The surrounding code's intent is plainly `DISPLAY_VALUE` — it writes `if text_parts(...) != ek: err('DISPLAY_VALUE',...)` — but the parser raises instead of returning, so the comparison never happens. **Deferred by owner 2026-09-20, explicitly not as cosmetic.** | **The verdict is correct** — the candidate's text really is outside the grammar, so `FAIL` is right — but `MALFORMED_RECORD` is raised from the catch-all wrapping the whole per-record block, so **every remaining check on that record is abandoned**. That is the same silent hole as F3: a real defect later in the record is never examined, and it can hide errors in both directions. A right verdict reached with the rest of the record unchecked is not a safe verdict. | Owner |
 
 ## Settled since the last revision
+
+- **(h) Is the list form of `expected_seller_guidance` accepted, and is prose
+  ever compared.** Settled by owner ruling 2026-09-20: **the plain list is
+  valid**, and prose is never compared — "meaning, never wording" still holds,
+  so `warning_meaning` and `supplier_action` are named in the report as not
+  compared rather than silently ignored. Implemented in `normalise_guidance()`
+  and documented in `SEALED_CASES.md`. *Recorded late: the ruling was given and
+  implemented before this entry was moved out of the open table.*
+
+- **(f) Is `expected_publication.withheld_fields` scoped to what published.**
+  Settled by owner ruling 2026-09-20: **no — the report names the field that
+  caused the failure.** "The seller needs to know which field sank it; an empty
+  list tells them nothing." Existing grader behaviour; no grader change.
+  `UCA-06-WITHHELD-FIELD-PUBLISHED`'s `withheld_fields: {}` is overruled by the
+  ruling and the case was not edited.
+
+- **(g) Which channel `expected_seller_guidance` asserts against.** Settled by
+  owner ruling 2026-09-20: **both.** "Seller guidance must tell the seller why
+  the record is blocked AND what to do about it. Only together is it
+  actionable." Fixed in the harness, not the grader; each pair now names the
+  channel that carried it. The guidance figure on the nine cases moved 2/6 to
+  6/6.
+
+- **(l) What a child's `PARENT_UNRESOLVED` carries.** Settled by owner ruling
+  2026-09-20: **the evidence of every parent problem on that field**, not the
+  first one encountered. "A candidate that cites the conflicting sources is
+  doing what the seller needs, and must never be failed for it." Repaired in
+  `frozen-v2.6` by grouping the parent's problems per field and carrying the
+  union of their evidence; regression case
+  `reproductions/ruling_parent_unresolved_evidence.py`. See `DECISIONS.md`.
+
+- **(i) A required field whose sources conflict: one issue or two.** Settled by
+  owner ruling 2026-09-20: **two**. "A record reports every blocking problem
+  present on it, not the first one found... When both are true of the same
+  record, both are reported." `ISSUE_COVERAGE` demanding both `MISSING_REQUIRED`
+  and `SOURCE_CONFLICT` is correct; no grader change was made. The contrary
+  expectation in `UCA-02-PARENT-CONFLICT-BLOCK` is overruled by the ruling, and
+  its expectation was not edited. See `DECISIONS.md`.
+
+- **(e) What shape an input `evidence` value is.** Settled by owner ruling
+  2026-09-20: an evidence entry's `value` is the exact machine value of the field
+  it evidences — the same shape the record carries. For `material` that is the
+  full object, not prose about the source. Documented as clause 2a in
+  `contract.md` and `contract_v1.4.md`, and in `SEALED_CASES.md` with a worked
+  scalar example and a worked `material` example. The source's own words now have
+  a home: the optional, inert `source_note` on the entry.
+
+- **(j) What makes a parent "live".** Settled by owner ruling 2026-09-20:
+  **field-scoped**. Parent-derived logic for a field runs only where the parent
+  actually supplies that field — a settled value or a declared conflict on it.
+  Where the parent supplies nothing for that field, the child is evaluated on its
+  own values alone. The earlier record-scoped phrase "a parent that is not live"
+  was imprecise rather than a separate rule; both forms are recorded side by side
+  in `DECISIONS.md`. Implemented in `frozen-v2.4` as `supplies()`. Adjudications
+  1 and 6 are unaffected and proved so against both versions.
 
 - **(a) Certification scope.** Settled by owner decision 2026-09-18:
   **family-wide**. A certification applies to a group, not an individual SKU, so

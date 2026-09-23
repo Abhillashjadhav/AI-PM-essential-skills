@@ -111,43 +111,120 @@ def compare_publication(exp, result):
 
     return checked, mismatches
 
+COMPARABLE = frozenset({'sku', 'field', 'branch',
+                        'must_reference_evidence', 'recommended_value'})
+
+def normalise_guidance(req):
+    """Both accepted shapes, reduced to one.
+
+    Owner ruling 2026-09-20: a plain list is valid. A list IS the `required`
+    list, written without the wrapper - the shape an author reaches for when
+    every entry is an assertion that guidance exists. The object form is the
+    only way to express `must_not_warn`, so both stay.
+
+    This is a shape normalisation, not a reinterpretation: no entry's meaning
+    changes, and keys the schema does not compare are still not compared.
+    """
+    if isinstance(req, list):
+        return {'required': req}
+    if isinstance(req, dict):
+        return req
+    raise CaseSchemaError(
+        'expected_seller_guidance must be a list of required entries, or an '
+        'object with "required" and/or "must_not_warn" lists; got '
+        + type(req).__name__)
+
+def guidance_for(result, sku, field):
+    """Every guidance entry for one sku+field, and which channel carried it.
+
+    Owner ruling 2026-09-20: seller guidance must tell the seller WHY the record
+    is blocked and WHAT TO DO about it, and only together is it actionable. The
+    two live in different channels - seller_warnings covers withheld optional
+    fields per Decision 4, guided_help covers blocking issues - so the harness
+    reads both and names which one carried each pair, keeping "this blocks you"
+    and "here is what to do" distinguishable.
+
+    Returns (channels, warnings, evidence_ids).
+    """
+    channels, hits, refs = [], [], set()
+    for w in result.get('seller_warnings', []):
+        if w.get('sku') == sku and w.get('field') == field:
+            if 'seller_warnings' not in channels: channels.append('seller_warnings')
+            hits.append(w)
+            refs |= {e['evidence_id'] for e in w.get('conflicting_values', [])
+                     if e.get('evidence_id')}
+    for g in result.get('guided_help', []):
+        if g.get('sku') == sku and g.get('field') == field:
+            if 'guided_help' not in channels: channels.append('guided_help')
+            refs |= {x for x in g.get('evidence', []) if x}
+    return channels, hits, refs
+
 def compare_guidance(req, result):
     """expected_seller_guidance is a STRUCTURED REQUIREMENT, never a string match.
 
     Each entry asserts that guidance exists for a named sku+field, and optionally
     that it carries a given branch, references given evidence ids, or recommends
-    a given value. Wording is never compared.
+    a given value. Wording is never compared; prose keys are reported as not
+    compared rather than silently ignored.
+
+    Existence is satisfied by EITHER channel (owner ruling 2026-09-20). The
+    optional assertions - branch, recommended_value - describe a seller_warnings
+    entry specifically and can only be satisfied there; must_reference_evidence
+    is satisfied by evidence cited in either.
     """
-    checked, mismatches = [], []
-    if not isinstance(req, dict):
-        raise CaseSchemaError(
-            'expected_seller_guidance must be an object with "required" and/or '
-            '"must_not_warn" lists; got ' + type(req).__name__)
-    warnings = result.get('seller_warnings', [])
+    checked, mismatches, not_compared = [], [], []
+    req = normalise_guidance(req)
     for i, want in enumerate(req.get('required', [])):
-        label = f"{want.get('sku')}/{want.get('field')}"
+        sku, field = want.get('sku'), want.get('field')
+        channels, hits, refs = guidance_for(result, sku, field)
+        # The label names the channel that carried it, so the report never
+        # implies guidance came from somewhere it did not.
+        label = f"{sku}/{field}" + (f" [{'+'.join(channels)}]" if channels else " [none]")
         checked.append(label)
-        hit = next((w for w in warnings
-                    if w.get('sku') == want.get('sku') and w.get('field') == want.get('field')), None)
-        if hit is None:
-            mismatches.append(f'{label}: no seller guidance emitted'); continue
-        if 'branch' in want and hit.get('branch') != want['branch']:
-            mismatches.append(f"{label}: branch expected {want['branch']!r} got {hit.get('branch')!r}")
+        # Anything outside COMPARABLE is prose. The schema rule is "meaning,
+        # never wording", so it is not compared - and it is named, so the
+        # guidance denominator never implies coverage it does not have.
+        for key in sorted(set(want) - COMPARABLE):
+            not_compared.append(f'{label}: {key}')
+        if not channels:
+            mismatches.append(f'{label}: no seller guidance emitted in either channel'); continue
+        # Not hits[0]. The grader emits at most one seller_warnings entry per
+        # sku+field, but that is an invariant of the grader, not of this harness,
+        # and "take the first one found" is the exact pattern the rulings of
+        # 2026-09-20 condemned twice. If it is ever violated, say so instead of
+        # silently choosing.
+        if len(hits) > 1:
+            mismatches.append(f'{label}: {len(hits)} seller_warnings entries for one '
+                              f'sku+field; the harness will not pick one')
+            hit = None
+        else:
+            hit = hits[0] if hits else None
+        if 'branch' in want:
+            if hit is None:
+                mismatches.append(f"{label}: branch {want['branch']!r} asserted, but only "
+                                  f"{'+'.join(channels)} carried this pair and a branch is a "
+                                  f"seller_warnings property")
+            elif hit.get('branch') != want['branch']:
+                mismatches.append(f"{label}: branch expected {want['branch']!r} got {hit.get('branch')!r}")
         if 'must_reference_evidence' in want:
-            got_ev = {e.get('evidence_id') for e in hit.get('conflicting_values', [])}
-            missing = set(want['must_reference_evidence']) - got_ev
+            missing = set(want['must_reference_evidence']) - refs
             if missing:
                 mismatches.append(f'{label}: guidance does not reference evidence {sorted(missing)}')
-        if 'recommended_value' in want and hit.get('recommended_value') != want['recommended_value']:
-            mismatches.append(f"{label}: recommended_value expected {want['recommended_value']!r} "
-                              f"got {hit.get('recommended_value')!r}")
+        if 'recommended_value' in want:
+            if hit is None:
+                mismatches.append(f"{label}: recommended_value asserted, but only "
+                                  f"{'+'.join(channels)} carried this pair")
+            elif hit.get('recommended_value') != want['recommended_value']:
+                mismatches.append(f"{label}: recommended_value expected {want['recommended_value']!r} "
+                                  f"got {hit.get('recommended_value')!r}")
     for forbidden in req.get('must_not_warn', []):
-        label = f"{forbidden.get('sku')}/{forbidden.get('field')}"
-        checked.append(f'!{label}')
-        if any(w.get('sku') == forbidden.get('sku') and w.get('field') == forbidden.get('field')
-               for w in warnings):
-            mismatches.append(f'{label}: guidance emitted where the case forbids it')
-    return checked, mismatches
+        sku, field = forbidden.get('sku'), forbidden.get('field')
+        channels, _, _ = guidance_for(result, sku, field)
+        checked.append(f'!{sku}/{field}')
+        if channels:
+            mismatches.append(f"{sku}/{field}: guidance emitted in "
+                              f"{'+'.join(channels)} where the case forbids it")
+    return checked, mismatches, not_compared
 
 # ---------- execution ----------
 
@@ -166,7 +243,8 @@ def run(folder):
                'owner_approval': c.get('owner_approval'),
                'review_status': c.get('review_status'),
                'reason': c.get('reason', ''),
-               'checked': [], 'mismatches': [],
+               'checked': [], 'mismatches': [], 'schema_errors': [],
+               'guidance_not_compared': [],
                'verdict_scored': False, 'publication_scored': False, 'guidance_scored': False}
 
         ep = c.get('expected_publication')
@@ -220,45 +298,62 @@ def run(folder):
                                 else 'incorrect_rejection' if c['expected_verdict'] == 'PASS' and result['verdict'] == 'FAIL'
                                 else 'agreement')
 
-        try:
-            score_expectations(c, result, row)
-        except CaseSchemaError as e:
-            row['status'] = 'CASE_SCHEMA_ERROR'
-            row['checked'] = []
-            row['verdict_scored'] = row['publication_scored'] = row['guidance_scored'] = False
-            row['note'] = ('case not in the published expectation shape: ' + str(e)
-                           + ' - nothing scored')
-            rows.append(row); continue
+        score_expectations(c, result, row)
 
-        row['status'] = 'SCORED' if row['checked'] else 'NOTHING TO CHECK'
+        # A nonconforming expectation block costs its OWN measurement and nothing
+        # else. The three are separate subsets by design - "the three are compared
+        # separately and reported separately" - so a guidance block in the wrong
+        # shape must not suppress the verdict and publication comparisons, which
+        # are readable and were asserted. Suppressing them hides real
+        # disagreements behind a formatting problem.
+        if row['schema_errors'] and not row['checked']:
+            row['status'] = 'CASE_SCHEMA_ERROR'
+        else:
+            row['status'] = 'SCORED' if row['checked'] else 'NOTHING TO CHECK'
         rows.append(row)
     return rows, load_errors
 
 def score_expectations(c, result, row):
-    """Fill row's verdict/publication/guidance scoring. Raises CaseSchemaError
-    when an expectation block is not in the published shape."""
+    """Fill row's publication and guidance scoring.
+
+    A CaseSchemaError is caught per block, not per case: it removes that one
+    measurement from its own denominator and leaves the other two alone.
+    """
     if c['expected_publication'] is None:
         row['publication_note'] = 'expected_publication null - contract does not determine it, not scored'
     else:
-        ck, mm = compare_publication(c['expected_publication'], result)
-        row['publication_parts_checked'] = ck
-        row['checked'] += [f'pub.{p}' for p in ck]
-        row['mismatches'] += mm
-        if ck:
-            row['publication_scored'] = True
-            row['publication_agrees'] = not mm
+        try:
+            ck, mm = compare_publication(c['expected_publication'], result)
+        except CaseSchemaError as e:
+            row['schema_errors'].append('expected_publication: ' + str(e))
+            row['publication_note'] = ('expected_publication not in the published shape - '
+                                       'not scored, and out of the publication denominator')
         else:
-            row['publication_note'] = 'expected_publication supplied but named no part - not scored'
+            row['publication_parts_checked'] = ck
+            row['checked'] += [f'pub.{p}' for p in ck]
+            row['mismatches'] += mm
+            if ck:
+                row['publication_scored'] = True
+                row['publication_agrees'] = not mm
+            else:
+                row['publication_note'] = 'expected_publication supplied but named no part - not scored'
 
     g = c.get('expected_seller_guidance')
     if g:
-        ck, mm = compare_guidance(g, result)
-        row['guidance_parts_checked'] = ck
-        row['checked'] += [f'guid.{p}' for p in ck]
-        row['mismatches'] += mm
-        if ck:
-            row['guidance_scored'] = True
-            row['guidance_agrees'] = not mm
+        try:
+            ck, mm, nc = compare_guidance(g, result)
+        except CaseSchemaError as e:
+            row['schema_errors'].append('expected_seller_guidance: ' + str(e))
+            row['guidance_note'] = ('expected_seller_guidance not in the published shape - '
+                                    'not scored, and out of the guidance denominator')
+        else:
+            row['guidance_parts_checked'] = ck
+            row['checked'] += [f'guid.{p}' for p in ck]
+            row['mismatches'] += mm
+            row['guidance_not_compared'] = nc
+            if ck:
+                row['guidance_scored'] = True
+                row['guidance_agrees'] = not mm
 
 
 def report(rows, load_errors, folder):
@@ -290,6 +385,9 @@ def report(rows, load_errors, folder):
               f"{mark(r['guidance_scored'],'guidance_agrees'):<6}"
               f"{','.join(r['checked']) if r['checked'] else '(nothing)'}")
         for m in r['mismatches']: print(f"{'':<36}  -> {m}")
+        for e in r.get('schema_errors', []): print(f"{'':<36}  -> not in the published shape, {e}")
+        for n in r.get('guidance_not_compared', []):
+            print(f"{'':<36}  -> not compared (prose, never matched by wording): {n}")
         if r.get('note'): print(f"{'':<36}  -> {r['note']}")
     print('-' * 120)
 
@@ -302,8 +400,15 @@ def report(rows, load_errors, folder):
     if p_scored:
         parts = sorted({p for r in p_scored for p in r.get('publication_parts_checked', [])})
         print(f'  parts compared     : {parts}   (only the parts each case supplied)')
+    blocked_blocks = [(r['case_id'], e) for r in rows for e in r.get('schema_errors', [])]
     print(f'SELLER GUIDANCE      denominator {len(g_scored)} case(s) carrying expected_seller_guidance')
     print(f'  agreements         : {sum(1 for r in g_scored if r.get("guidance_agrees"))} / {len(g_scored)}')
+    if blocked_blocks:
+        print()
+        print(f'EXPECTATION BLOCKS NOT IN THE PUBLISHED SHAPE: {len(blocked_blocks)}')
+        print('  Each costs its own measurement only. The other two subsets for that')
+        print('  case are still compared and still counted.')
+        for cid, e in blocked_blocks: print(f'  - {cid:<36} {e}')
     print()
     print(f'INCORRECT APPROVALS  : {len(approvals)}   '
           f'{[r["case_id"] for r in approvals] if approvals else "none"}')

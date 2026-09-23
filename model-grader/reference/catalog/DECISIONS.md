@@ -137,6 +137,292 @@ adjudicated.**
 (The suite is now 55 revision checks, not 52; the three added by the D4 work are
 builder-authored like the rest.)
 
+## Publishing and grouping are separate acts — **OWNER RULING 2026-09-20**
+
+### The rule, as it is implemented
+
+> Parent-derived logic for a field runs only where the parent actually supplies
+> that field — a settled value or a declared conflict on it. Where the parent
+> supplies nothing for that field, the child is evaluated on its own values
+> alone.
+
+**This is field-scoped.** It is the operative form of the ruling and the one the
+grader implements, in `supplies()`.
+
+### The ruling as first stated, and why the wording changed
+
+The owner's original wording was record-scoped:
+
+> Publishing and grouping are separate acts. A SKU is evaluated and published on
+> its own values alone. A parent-child relationship may be declared by the seller
+> at submission or after both SKUs are already live — either is valid. A record
+> naming a parent that is not live has no parent for grading purposes: no
+> inheritance, no family comparison, no parent-derived blocking. It publishes if
+> its own values are valid. A parent that is missing or wrong is a partial
+> submission and is the seller's to complete; it never holds back a valid child.
+> Family rules — shared-field conflicts, certification holds — apply only among
+> SKUs that are live together.
+
+The intent of that paragraph stands unchanged. Its phrase **"a parent that is not
+live" was imprecise, not a separate rule** — owner clarification 2026-09-20. Read
+record-scoped it could not be implemented: measured on the shipped fixtures, the
+parents in the adjudication 1 fixtures and the parent in the adjudication 2
+fixture are *all* `record_status: existing` and *all* invalid on their own
+values, so no record-level test of "live" separates them. What separates them,
+and always has, is the field:
+
+```
+adjudication 1  P1 parent existing  SOURCE_CONFLICT material   C1 PARENT_UNRESOLVED
+adjudication 2  P1 parent existing  MISSING_REQUIRED price     C1 blocking=[]
+```
+
+`material` is in `SHARED` and propagates; `price` is not and never did. The
+field-scoped rule above states that directly.
+
+### What the two forms agree on
+
+- A partial parent never holds back a valid child. The child publishes on its
+  own values.
+- A parent that is missing or wrong is the seller's to complete.
+- Publishing and grouping stay separate acts; the relationship may be declared
+  at submission or after both SKUs are live.
+
+### The boundary the rule creates
+
+A parent that carries **no settled value but declares a conflict** on the field
+*has* supplied it — the value is disputed, not absent — so it still blocks the
+child. Only a parent that supplies nothing at all makes the child standalone.
+Proved both ways in `reproductions/ruling3_preserves_adjudications.py`
+(ADJ 1b and its discriminator).
+
+### What this supersedes
+
+It supersedes the F3 finding in `EVALUATION_v2.3.md`. F3 reported that
+`source_ref` reads `values[parent['sku']]['material']` and raises `KeyError`
+when the parent has no material, and that the catch-all in `grade()` reports
+that as `MALFORMED_RECORD` against a well-formed candidate record.
+
+F3 was **not a missing guard**. The lookup should never happen, and it no longer
+can: `supplies()` is asked before resolution enters the parent branch at all, so
+the branch is unreachable for a field the parent does not supply. No `try`/`except`
+was added — that would have preserved the wrong question and hidden the error.
+
+Reproduced from a shipped fixture (`inputs/D01.json` with the parent's material
+removed), before and after:
+
+```
+frozen-v2.3                                    frozen-v2.4
+MALFORMED_RECORD C1 detail "'material'"        no MALFORMED_RECORD against C1
+C1 blocking [('PARENT_UNRESOLVED','material')] C1 blocking []
+published []                                   published ['C1']
+later checks abandoned:                        later checks run:
+  wrong composition text gives                   wrong composition text gives
+  [FALSE_READY, MALFORMED_RECORD]                 [DISPLAY_VALUE, 'material']
+P1 blocking [('MISSING_REQUIRED','material')]  P1 blocking [('MISSING_REQUIRED','material')]
+```
+
+The last line is the point of the ruling: the partial parent is still the
+seller's to complete, and it no longer takes the valid child down with it.
+
+### What is unchanged
+
+- **Adjudication 1.** When parent and child are both live, an unresolved parent
+  conflict still blocks the child. The four fixtures the decision record names
+  pass identically on v2.3 and v2.4.
+- **Adjudication 6.** A certification still holds a live family: a pending
+  certificate on any live member holds the parent and every live variant.
+
+Both proved in `reproductions/ruling3_preserves_adjudications.py`, which reports
+ALL PRESERVED against frozen-v2.3 and frozen-v2.4 alike.
+
+### Implemented in `frozen-v2.4`
+
+`supplies(case,values,sku,field)`, consulted at the two places parent-derived
+logic begins: the child branch of `source_ref()`, and the parent-problem
+propagation loop in `expected_issues()`. Full suite unchanged — 3/3, 13/13,
+55/55, 30/30, 31/31 — with the regression set growing 5 → 8 as the new proofs
+joined it. No check changed verdict.
+
+### Still open, and not part of this ruling
+
+A child naming a parent **absent from the submission entirely** is still a
+`SetupError` (`source parent absent`), and a child declaring `inherit_fields`
+for a field its parent lacks is still a `SetupError` (`missing inherited parent
+fact`). Both are fixture-validity rules that predate this ruling and neither
+produces the false `MALFORMED_RECORD` this repair removes. Left untouched
+deliberately; raise them separately if they should change.
+
+## A record reports every blocking problem present on it — **OWNER RULING 2026-09-20**
+
+Recorded verbatim.
+
+> A record reports every blocking problem present on it, not the first one
+> found. A missing required field is rejected and the seller is asked for the
+> data. Conflicting sources are reported to the seller showing where the
+> conflict is. When both are true of the same record, both are reported.
+> Capabilities are evaluated atomically, but one record may trip several at
+> once; each capability reports whenever it applies. No separate
+> combined-capability case is needed.
+
+### What this settles
+
+`ISSUE_COVERAGE` demanding **both** `MISSING_REQUIRED` and `SOURCE_CONFLICT` on
+a required field whose sources disagree is **correct**. Open decision (i) is
+closed in favour of the existing behaviour. **No grader change was made for this
+ruling.**
+
+A required field whose sources disagree carries no settled value, so both are
+true of that record at once:
+
+```
+KL-RN-NVY-M-010  blocking=[('MISSING_REQUIRED','material'), ('SOURCE_CONFLICT','material')]
+```
+
+Each says something the seller needs and neither substitutes for the other: the
+first says the data is not usable as submitted, the second says where the
+disagreement is.
+
+### Whose expectation this overrules, and where
+
+**`UCA-02-PARENT-CONFLICT-BLOCK`.** Its independently authored candidate reports
+the conflict alone:
+
+```
+KL-RN-NVY-M-010  status=BLOCKED  issues=[('SOURCE_CONFLICT','material')]
+```
+
+and its author judged that `PASS`. Under this ruling that candidate is
+incomplete and `ISSUE_COVERAGE` is right to fail it, so **the case's
+`expected_verdict: "PASS"` is overruled by owner ruling.** The expectation is
+not edited — it stands as the author wrote it, and this record is where the
+disagreement is resolved.
+
+`UCA-03-PARENT-CONFLICT-CHILD-LEAK` carries the same `ISSUE_COVERAGE` on its
+parent. Its `expected_verdict` is `FAIL` and the grader returns `FAIL`, so the
+ruling changes nothing about that case's outcome.
+
+This was the sole POLICY AMBIGUITY behind the one incorrect rejection recorded
+in `EVALUATION_v2.4.md`; with the D1 crash repaired and this ruling applied,
+UCA-02's disagreement is settled against the case rather than against the
+grader.
+
+## A child's `PARENT_UNRESOLVED` carries every parent problem's evidence — **OWNER RULING 2026-09-20**
+
+Recorded verbatim.
+
+> A child's PARENT_UNRESOLVED carries the evidence of every parent problem on
+> that field, not the first one encountered. This is the same principle as the
+> ruling on reporting every blocking problem present: a candidate that cites the
+> conflicting sources is doing what the seller needs, and must never be failed
+> for it.
+
+### What was wrong
+
+A required shared field whose sources disagree trips two problems on the parent,
+and `expected_issues` builds them in this order because the required-field loop
+runs before conflicts are appended:
+
+```
+MISSING_REQUIRED  material  evidence []
+SOURCE_CONFLICT   material  evidence ['P1.material.a', 'P1.material.b']
+```
+
+The propagation loop took the **first** problem for the field and skipped the
+rest, so the child's `PARENT_UNRESOLVED` inherited the empty evidence and the
+disagreeing sources were discarded. `ISSUE_EVIDENCE` compares in both directions,
+so a candidate that cited them was failed:
+
+```
+child's PARENT_UNRESOLVED expected evidence: []
+candidate cites:                             ['P1.material.a', 'P1.material.b']
+-> ISSUE_EVIDENCE  C1  material
+```
+
+### The repair, in `frozen-v2.6`
+
+The parent's problems are grouped by field before anything is emitted, and one
+issue per field carries the **union** of every problem's evidence, in stable
+order, deduplicated. Not the first one found, and not a special case for
+`MISSING_REQUIRED` — any number of problems on a field contribute.
+
+Decision 4's withhold/block split is preserved explicitly: a field propagates as
+`SOURCE_CONFLICT` only when **all** of the parent's problems on it withhold. One
+blocking problem is enough to block; withholding is the weaker outcome and
+cannot override it.
+
+Regression case: `reproductions/ruling_parent_unresolved_evidence.py`, which
+reports `DEFECT PRESENT` on `frozen-v2.5` and `DEFECT ABSENT` on `frozen-v2.6`,
+and asserts both that the evidence is complete and that the propagation still
+fires.
+
+### Why this is the same principle
+
+The ruling above on reporting every blocking problem says a record reports every
+problem present on it, not the first one found. This says the same thing about
+what a propagated issue carries. In both cases the failure mode was the grader
+stopping at the first thing it found and penalising a candidate for being more
+complete than it was.
+
+## The report names the field that caused the failure — **OWNER RULING 2026-09-20**
+
+> When a SKU fails and does not publish, `withheld_fields` still names the field
+> that was at issue. The seller needs to know which field sank it; an empty list
+> tells them nothing.
+
+This is existing grader behaviour and **no grader change was made**. `withheld`
+is built for every record regardless of publication, so a SKU that fails still
+reports the field that was withheld.
+
+**Whose expectation this overrules, and where.**
+`UCA-06-WITHHELD-FIELD-PUBLISHED` expects `withheld_fields: {}` on the reasoning
+that nothing published, so nothing was withheld. The grader returns:
+
+```
+expected_publication: {"sku_ids": [], "withheld_fields": {}, "parent_links": {}}
+actual sku_ids      : []                      <- agrees
+actual withheld     : {"HF-TK-OLV-M-050": ["recommended_browse_nodes"]}
+```
+
+Under this ruling the grader is right and **the case's `withheld_fields: {}` is
+overruled by owner ruling.** The case is not edited. Open decision (f) is
+closed.
+
+## Seller guidance must say why and what to do — **OWNER RULING 2026-09-20**
+
+Recorded verbatim.
+
+> Seller guidance must tell the seller why the record is blocked AND what to do
+> about it. Only together is it actionable. The harness therefore reads both
+> seller_warnings and guided_help, and names which channel carried each pair, so
+> that "this blocks you" and "here is what to do" stay distinguishable.
+
+Fixed in the harness, not the grader: `compare_guidance` read `seller_warnings`
+alone and reported "no seller guidance emitted" for guidance the grader does
+emit through `guided_help`. On the nine sealed cases that cost four of six:
+
+```
+before   SELLER GUIDANCE  denominator 6   agreements 2 / 6
+after    SELLER GUIDANCE  denominator 6   agreements 6 / 6
+```
+
+Each pair now names its channel, so the two halves stay distinguishable:
+
+```
+guid.KL-RN-NVY-M-010/material [guided_help]
+guid.BR-VN-RED-M-041/recommended_browse_nodes [seller_warnings+guided_help]
+```
+
+Open decision (g) is closed.
+
+## Rendering guidance for a seller is downstream — **OWNER NOTE 2026-09-20**
+
+The grader emits **structured** guidance: `seller_warnings` carries the SKU, the
+field, the branch, the conflicting values with their evidence ids and any
+`source_note`, and the required action. Rendering that conversationally for a
+seller-facing chat is a downstream concern and is not this grader's job. Nothing
+in the grader should be shaped by how the text will eventually read to a seller
+beyond being complete, deterministic and attributable.
+
 ## Accuracy targets
 
 **Primary outcome:** correct published SKU records ÷ all published SKU records **> 98%**
