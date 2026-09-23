@@ -78,4 +78,3 @@ What is frozen: `grader.py`. What is not: the fixtures, the documents, and the
 reproductions, which may still gain cases — but a change that alters a verdict
 `frozen-v2.3` produces is a change to the grader by another route, and belongs
 in the next version too.
-
