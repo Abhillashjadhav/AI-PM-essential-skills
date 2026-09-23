@@ -1,3893 +1,4244 @@
 [
-  {
-    "name": "wrong-SKU copy",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+ {
+  "name": "wrong-SKU copy",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "polyester",
+         "percent": "20"
         }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "WRONG_EVIDENCE",
-    "label_status": "builder-derived from approved rules"
-  },
-  {
-    "name": "invented value",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "1234"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        }
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "WRONG_VALUE",
-    "label_status": "builder-derived from approved rules"
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
   },
-  {
-    "name": "forbidden transform",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
+         "material": "polyester",
+         "percent": "20"
         }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "label": "cotton blend"
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "polyester",
+         "percent": "20"
         }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "WRONG_EVIDENCE",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "invented value",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "WRONG_VALUE",
-    "label_status": "builder-derived from approved rules"
-  },
-  {
-    "name": "wrong conversion",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "measurements": [
-            {
-              "id": "chest",
-              "type": "chest",
-              "value": "25",
-              "unit": "in",
-              "evidence_id": "P1.measurement.chest"
-            }
-          ]
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": [
-            {
-              "id": "chest",
-              "source_sku": "P1",
-              "source_ref": "P1.measurement.chest",
-              "measurement_type": "chest",
-              "source_value": "25",
-              "source_unit": "in",
-              "value": "60.0",
-              "unit": "cm"
-            }
-          ]
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        }
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "CONVERSION_ERROR",
-    "label_status": "builder-derived from approved rules"
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
   },
-  {
-    "name": "split siblings",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
+         "material": "polyester",
+         "percent": "20"
         }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "polyester",
+         "percent": "20"
         }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "1234"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "WRONG_VALUE",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "forbidden transform",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "FAMILY_LINK",
-    "label_status": "builder-derived from approved rules"
-  },
-  {
-    "name": "merged strangers",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1",
-        "P2"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        },
-        {
-          "sku": "P2",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "OtherBrand",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        },
-        "P2.brand": {
-          "sku": "P2",
-          "field": "brand",
-          "value": "OtherBrand"
-        },
-        "P2.subbrand": {
-          "sku": "P2",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P2.category": {
-          "sku": "P2",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P2.subcategory": {
-          "sku": "P2",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P2.design": {
-          "sku": "P2",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P2.pattern": {
-          "sku": "P2",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P2.material": {
-          "sku": "P2",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P2.color": {
-          "sku": "P2",
-          "field": "color",
-          "value": "Red"
-        },
-        "P2.size": {
-          "sku": "P2",
-          "field": "size",
-          "value": "L"
-        },
-        "P2.price": {
-          "sku": "P2",
-          "field": "price",
-          "value": "1490"
-        }
-      }
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        },
-        {
-          "sku": "P2",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "OtherBrand",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P2.brand",
-            "subbrand": "P2.subbrand",
-            "category": "P2.category",
-            "subcategory": "P2.subcategory",
-            "design": "P2.design",
-            "pattern": "P2.pattern",
-            "material": "P2.material",
-            "color": "P2.color",
-            "size": "P2.size",
-            "price": "P2.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        }
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "FAMILY_LINK",
-    "label_status": "builder-derived from approved rules"
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
   },
-  {
-    "name": "dropped field",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
+         "material": "polyester",
+         "percent": "20"
         }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "label": "cotton blend"
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "WRONG_VALUE",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "wrong conversion",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "polyester",
+         "percent": "20"
         }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "measurements": [
+      {
+       "id": "chest",
+       "type": "chest",
+       "value": "25",
+       "unit": "in",
+       "evidence_id": "P1.measurement.chest"
+      }
+     ]
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "OMITTED_FACT",
-    "label_status": "builder-derived from approved rules"
-  },
-  {
-    "name": "wrong conflict resolution",
-    "input": {
-      "case_id": "D02",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "60"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "40"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "60"
-              },
-              {
-                "material": "polyester",
-                "percent": "40"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
     },
-    "candidate": {
-      "case_id": "D02",
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "60"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "40"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "60% cotton, 40% polyester"
-          },
-          "measurements": []
-        }
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "FALSE_READY",
-    "label_status": "builder-derived from approved rules"
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
   },
-  {
-    "name": "silent default",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M"
-          }
+         "material": "polyester",
+         "percent": "20"
         }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": [
+      {
+       "id": "chest",
+       "source_sku": "P1",
+       "source_ref": "P1.measurement.chest",
+       "measurement_type": "chest",
+       "source_value": "25",
+       "source_unit": "in",
+       "value": "60.0",
+       "unit": "cm"
       }
+     ]
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
         {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "cotton",
+         "percent": "80"
         },
         {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
+         "material": "polyester",
+         "percent": "20"
         }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "CONVERSION_ERROR",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "split siblings",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "UNSUPPORTED_VALUE",
-    "label_status": "builder-derived from approved rules"
-  },
-  {
-    "name": "empty output",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": []
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
     },
-    "expected": "FAIL",
-    "required_error": "OMITTED_SKU",
-    "label_status": "builder-derived from approved rules"
-  },
-  {
-    "name": "refusal",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
     },
-    "candidate": {
-      "message": "Cannot help"
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
     },
-    "expected": "FAIL",
-    "required_error": "EMPTY_OR_REFUSAL",
-    "label_status": "builder-derived from approved rules"
-  },
-  {
-    "name": "extra unsupported factual field",
-    "input": {
-      "case_id": "D01",
-      "contract_version": "1.4",
-      "catalog": {
-        "country": "IN",
-        "currency": "INR"
-      },
-      "profile": {
-        "subbrand_applicable": true,
-        "aliases": {
-          "size": {
-            "Medium": "M",
-            "Large": "L"
-          }
-        },
-        "allowed": {
-          "size": [
-            "S",
-            "M",
-            "L",
-            "XL"
-          ],
-          "color": [
-            "Red",
-            "Black",
-            "Blue"
-          ],
-          "subcategory": [
-            "crew neck",
-            "polo"
-          ],
-          "pattern": [
-            "plain",
-            "striped"
-          ]
-        }
-      },
-      "flagship_skus": [
-        "P1"
-      ],
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "record_status": "existing",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          }
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "record_status": "proposed",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990"
-          }
-        }
-      ],
-      "evidence": {
-        "P1.brand": {
-          "sku": "P1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "P1.subbrand": {
-          "sku": "P1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "P1.category": {
-          "sku": "P1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "P1.subcategory": {
-          "sku": "P1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "P1.design": {
-          "sku": "P1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "P1.pattern": {
-          "sku": "P1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "P1.material": {
-          "sku": "P1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "P1.color": {
-          "sku": "P1",
-          "field": "color",
-          "value": "Red"
-        },
-        "P1.size": {
-          "sku": "P1",
-          "field": "size",
-          "value": "L"
-        },
-        "P1.price": {
-          "sku": "P1",
-          "field": "price",
-          "value": "1490"
-        },
-        "C1.brand": {
-          "sku": "C1",
-          "field": "brand",
-          "value": "Acme"
-        },
-        "C1.subbrand": {
-          "sku": "C1",
-          "field": "subbrand",
-          "value": "Core"
-        },
-        "C1.category": {
-          "sku": "C1",
-          "field": "category",
-          "value": "T-shirt"
-        },
-        "C1.subcategory": {
-          "sku": "C1",
-          "field": "subcategory",
-          "value": "crew neck"
-        },
-        "C1.design": {
-          "sku": "C1",
-          "field": "design",
-          "value": "plain-no-print"
-        },
-        "C1.pattern": {
-          "sku": "C1",
-          "field": "pattern",
-          "value": "plain"
-        },
-        "C1.material": {
-          "sku": "C1",
-          "field": "material",
-          "value": {
-            "components": [
-              {
-                "material": "cotton",
-                "percent": "80"
-              },
-              {
-                "material": "polyester",
-                "percent": "20"
-              }
-            ]
-          }
-        },
-        "C1.color": {
-          "sku": "C1",
-          "field": "color",
-          "value": "Black"
-        },
-        "C1.size": {
-          "sku": "C1",
-          "field": "size",
-          "value": "M"
-        },
-        "C1.price": {
-          "sku": "C1",
-          "field": "price",
-          "value": "990"
-        }
-      }
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
     },
-    "candidate": {
-      "case_id": "D01",
-      "records": [
-        {
-          "sku": "P1",
-          "role": "parent",
-          "parent_sku": null,
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Red",
-            "size": "L",
-            "price": "1490"
-          },
-          "evidence": {
-            "brand": "P1.brand",
-            "subbrand": "P1.subbrand",
-            "category": "P1.category",
-            "subcategory": "P1.subcategory",
-            "design": "P1.design",
-            "pattern": "P1.pattern",
-            "material": "P1.material",
-            "color": "P1.color",
-            "size": "P1.size",
-            "price": "P1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        },
-        {
-          "sku": "C1",
-          "role": "child",
-          "parent_sku": "P1",
-          "fields": {
-            "brand": "Acme",
-            "subbrand": "Core",
-            "category": "T-shirt",
-            "subcategory": "crew neck",
-            "design": "plain-no-print",
-            "pattern": "plain",
-            "material": {
-              "components": [
-                {
-                  "material": "cotton",
-                  "percent": "80"
-                },
-                {
-                  "material": "polyester",
-                  "percent": "20"
-                }
-              ]
-            },
-            "color": "Black",
-            "size": "M",
-            "price": "990",
-            "organic_certified": true
-          },
-          "evidence": {
-            "brand": "C1.brand",
-            "subbrand": "C1.subbrand",
-            "category": "C1.category",
-            "subcategory": "C1.subcategory",
-            "design": "C1.design",
-            "pattern": "C1.pattern",
-            "material": "C1.material",
-            "color": "C1.color",
-            "size": "C1.size",
-            "price": "C1.price"
-          },
-          "status": "READY",
-          "issues": [],
-          "display": {
-            "text": "80% cotton, 20% polyester"
-          },
-          "measurements": []
-        }
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
       ]
+     }
     },
-    "expected": "FAIL",
-    "required_error": "UNSUPPORTED_VALUE",
-    "label_status": "builder-derived from approved rules"
-  }
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "FAMILY_LINK",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "merged strangers",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1",
+    "P2"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    },
+    {
+     "sku": "P2",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "OtherBrand",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    },
+    "P2.brand": {
+     "sku": "P2",
+     "field": "brand",
+     "value": "OtherBrand"
+    },
+    "P2.subbrand": {
+     "sku": "P2",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P2.category": {
+     "sku": "P2",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P2.subcategory": {
+     "sku": "P2",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P2.design": {
+     "sku": "P2",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P2.pattern": {
+     "sku": "P2",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P2.material": {
+     "sku": "P2",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P2.color": {
+     "sku": "P2",
+     "field": "color",
+     "value": "Red"
+    },
+    "P2.size": {
+     "sku": "P2",
+     "field": "size",
+     "value": "L"
+    },
+    "P2.price": {
+     "sku": "P2",
+     "field": "price",
+     "value": "1490"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "P2",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "OtherBrand",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P2.brand",
+      "subbrand": "P2.subbrand",
+      "category": "P2.category",
+      "subcategory": "P2.subcategory",
+      "design": "P2.design",
+      "pattern": "P2.pattern",
+      "material": "P2.material",
+      "color": "P2.color",
+      "size": "P2.size",
+      "price": "P2.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "FAMILY_LINK",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "dropped field",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "OMITTED_FACT",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "wrong conflict resolution",
+  "input": {
+   "case_id": "D02",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "60"
+        },
+        {
+         "material": "polyester",
+         "percent": "40"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "60"
+       },
+       {
+        "material": "polyester",
+        "percent": "40"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D02",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "60"
+        },
+        {
+         "material": "polyester",
+         "percent": "40"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "60% cotton, 40% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "FALSE_READY",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "silent default",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "UNSUPPORTED_VALUE",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "empty output",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D01",
+   "records": []
+  },
+  "expected": "FAIL",
+  "required_error": "OMITTED_SKU",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "refusal",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
+  },
+  "candidate": {
+   "message": "Cannot help"
+  },
+  "expected": "FAIL",
+  "required_error": "EMPTY_OR_REFUSAL",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "extra unsupported factual field",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     }
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "subbrand": "P1.subbrand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990",
+      "organic_certified": true
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "UNSUPPORTED_VALUE",
+  "label_status": "builder-derived from approved rules"
+ },
+ {
+  "name": "subbrand-conflict-must-still-block",
+  "input": {
+   "case_id": "D01",
+   "contract_version": "1.4",
+   "catalog": {
+    "country": "IN",
+    "currency": "INR"
+   },
+   "profile": {
+    "subbrand_applicable": true,
+    "aliases": {
+     "size": {
+      "Medium": "M",
+      "Large": "L"
+     }
+    },
+    "allowed": {
+     "size": [
+      "S",
+      "M",
+      "L",
+      "XL"
+     ],
+     "color": [
+      "Red",
+      "Black",
+      "Blue"
+     ],
+     "subcategory": [
+      "crew neck",
+      "polo"
+     ],
+     "pattern": [
+      "plain",
+      "striped"
+     ]
+    }
+   },
+   "flagship_skus": [
+    "P1"
+   ],
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "record_status": "existing",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "conflicts": [
+      {
+       "field": "subbrand",
+       "evidence": [
+        "P1.subbrand",
+        "P1.subbrand.alt"
+       ]
+      }
+     ]
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "record_status": "proposed",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     }
+    }
+   ],
+   "evidence": {
+    "P1.brand": {
+     "sku": "P1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "P1.subbrand": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "P1.category": {
+     "sku": "P1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "P1.subcategory": {
+     "sku": "P1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "P1.design": {
+     "sku": "P1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "P1.pattern": {
+     "sku": "P1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "P1.material": {
+     "sku": "P1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "P1.color": {
+     "sku": "P1",
+     "field": "color",
+     "value": "Red"
+    },
+    "P1.size": {
+     "sku": "P1",
+     "field": "size",
+     "value": "L"
+    },
+    "P1.price": {
+     "sku": "P1",
+     "field": "price",
+     "value": "1490"
+    },
+    "C1.brand": {
+     "sku": "C1",
+     "field": "brand",
+     "value": "Acme"
+    },
+    "C1.subbrand": {
+     "sku": "C1",
+     "field": "subbrand",
+     "value": "Core"
+    },
+    "C1.category": {
+     "sku": "C1",
+     "field": "category",
+     "value": "T-shirt"
+    },
+    "C1.subcategory": {
+     "sku": "C1",
+     "field": "subcategory",
+     "value": "crew neck"
+    },
+    "C1.design": {
+     "sku": "C1",
+     "field": "design",
+     "value": "plain-no-print"
+    },
+    "C1.pattern": {
+     "sku": "C1",
+     "field": "pattern",
+     "value": "plain"
+    },
+    "C1.material": {
+     "sku": "C1",
+     "field": "material",
+     "value": {
+      "components": [
+       {
+        "material": "cotton",
+        "percent": "80"
+       },
+       {
+        "material": "polyester",
+        "percent": "20"
+       }
+      ]
+     }
+    },
+    "C1.color": {
+     "sku": "C1",
+     "field": "color",
+     "value": "Black"
+    },
+    "C1.size": {
+     "sku": "C1",
+     "field": "size",
+     "value": "M"
+    },
+    "C1.price": {
+     "sku": "C1",
+     "field": "price",
+     "value": "990"
+    },
+    "P1.subbrand.alt": {
+     "sku": "P1",
+     "field": "subbrand",
+     "value": "Premium"
+    }
+   }
+  },
+  "candidate": {
+   "case_id": "D01",
+   "records": [
+    {
+     "sku": "P1",
+     "role": "parent",
+     "parent_sku": null,
+     "fields": {
+      "brand": "Acme",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Red",
+      "size": "L",
+      "price": "1490"
+     },
+     "evidence": {
+      "brand": "P1.brand",
+      "category": "P1.category",
+      "subcategory": "P1.subcategory",
+      "design": "P1.design",
+      "pattern": "P1.pattern",
+      "material": "P1.material",
+      "color": "P1.color",
+      "size": "P1.size",
+      "price": "P1.price"
+     },
+     "status": "READY",
+     "issues": [],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    },
+    {
+     "sku": "C1",
+     "role": "child",
+     "parent_sku": "P1",
+     "fields": {
+      "brand": "Acme",
+      "subbrand": "Core",
+      "category": "T-shirt",
+      "subcategory": "crew neck",
+      "design": "plain-no-print",
+      "pattern": "plain",
+      "material": {
+       "components": [
+        {
+         "material": "cotton",
+         "percent": "80"
+        },
+        {
+         "material": "polyester",
+         "percent": "20"
+        }
+       ]
+      },
+      "color": "Black",
+      "size": "M",
+      "price": "990"
+     },
+     "evidence": {
+      "brand": "C1.brand",
+      "subbrand": "C1.subbrand",
+      "category": "C1.category",
+      "subcategory": "C1.subcategory",
+      "design": "C1.design",
+      "pattern": "C1.pattern",
+      "material": "C1.material",
+      "color": "C1.color",
+      "size": "C1.size",
+      "price": "C1.price"
+     },
+     "status": "BLOCKED",
+     "issues": [
+      {
+       "code": "PARENT_UNRESOLVED",
+       "field": "subbrand",
+       "evidence": [
+        "P1.subbrand",
+        "P1.subbrand.alt"
+       ],
+       "action": "Resolve the parent subbrand conflict before publishing this child."
+      }
+     ],
+     "display": {
+      "text": "80% cotton, 20% polyester"
+     },
+     "measurements": []
+    }
+   ]
+  },
+  "expected": "FAIL",
+  "required_error": "FALSE_READY",
+  "rule": "subbrand is required when subbrand_applicable; a conflict on it blocks and is never withheld",
+  "label_status": "development expectation derived from owner rules; not independent gold"
+ }
 ]

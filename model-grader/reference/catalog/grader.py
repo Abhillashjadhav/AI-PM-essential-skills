@@ -4,9 +4,13 @@ import copy
 from decimal import Decimal, InvalidOperation, ROUND_HALF_UP
 from pathlib import Path
 
-VERSION = 'revised-v2.1'
+VERSION = 'frozen-v2.6'
 REQUIRED = ('brand','category','subcategory','design','pattern','material','color','size','price')
 SHARED = ('brand','subbrand','category','subcategory','design','pattern','material')
+# Every key an evidence entry may carry. 'source_note' is optional and inert:
+# ruling 2 forbids the grader from comparing it or deciding anything with it.
+EVIDENCE_KEYS = frozenset({'sku','field','value','source_note'})
+
 # These are private envelopes at submission/record level, never catalog fields.
 # Arbitrary company metadata belongs under internal_metadata. No consumer in
 # this package executes, interprets, or publishes these values.
@@ -118,6 +122,26 @@ def compatible_partial(child,parent):
     return equivalent({k:v for k,v in child.items() if k!='components'},
                       {k:v for k,v in parent.items() if k!='components'})
 
+def settled(values,sku,field):
+    """Does this record carry a settled VALUE for `field` - something another
+    record can be resolved against?
+
+    Distinct from supplies(), and the distinction is the whole of the repair.
+    A parent whose two sources disagree HAS SUPPLIED material: it blocks the
+    child, which is adjudication 1. It has SETTLED nothing: there is no agreed
+    value to inherit from or compare against. Blocking propagation asks
+    supplies(); value resolution asks settled(). Reading a value after asking
+    only supplies() is what produced the false MALFORMED_RECORD.
+    """
+    v=values.get(sku,{}).get(field)
+    if v is None or v=='': return False
+    # An empty container is not a value either. effective() previously asked this
+    # by truthiness (`cm and pm`), which treated {} and [] as nothing; keep that.
+    # Zero is deliberately NOT excluded: expected_issues counts 0 as present for
+    # MISSING_REQUIRED, and settled() must agree with it about what is there.
+    if isinstance(v,(dict,list,tuple,set)) and not v: return False
+    return True
+
 def effective(case):
     records={r['sku']:r for r in case['records']}
     if len(records)!=len(case['records']): raise SetupError('duplicate source SKU')
@@ -146,9 +170,28 @@ def effective(case):
             if f not in out[r['parent_sku']]: raise SetupError('missing inherited parent fact')
             if f not in out[sku]: out[sku][f]=copy.deepcopy(out[r['parent_sku']][f])
         if r['role']=='child':
-            cm=out[sku].get('material');pm=out[r['parent_sku']].get('material')
-            if cm and pm and compatible_partial(cm,pm): out[sku]['material']=copy.deepcopy(pm)
+            parent=r['parent_sku']
+            if settled(out,sku,'material') and settled(out,parent,'material') \
+               and compatible_partial(out[sku]['material'],out[parent]['material']):
+                out[sku]['material']=copy.deepcopy(out[parent]['material'])
     return records,out
+
+def supplies(case,values,sku,field):
+    """Does this record actually supply `field`?
+
+    Owner ruling 2026-09-20: parent-derived logic for a field runs only where the
+    parent actually supplies that field - a settled value, or a conflict declared
+    on it. Where the parent supplies nothing for that field, the child is
+    evaluated on its own values alone.
+
+    A conflict counts: a parent whose two sources disagree about material has
+    supplied a material, it is simply disputed. That is adjudication 1, and it
+    still blocks the child. A parent that carries no material at all has supplied
+    nothing to disagree about, and there is no parent-derived question to ask.
+    """
+    if settled(values,sku,field): return True
+    r=next((x for x in case['records'] if x['sku']==sku),None)
+    return bool(r) and any(c.get('field')==field for c in r.get('conflicts',[]))
 
 def source_ref(case,sku,field):
     r=next(r for r in case['records'] if r['sku']==sku)
@@ -159,8 +202,20 @@ def source_ref(case,sku,field):
     if r['role']=='child':
         parent=next(x for x in case['records'] if x['sku']==r['parent_sku'])
         _,values=effective(case)
-        if (field in r.get('inherit_fields',[]) and field not in r['fields']) or (
-            field=='material' and r['fields'].get(field) and compatible_partial(r['fields'][field],values[parent['sku']][field])):
+        # Two different questions, asked in order.
+        #   supplies() - has the parent supplied this field at all? A declared
+        #                conflict counts; that is what blocks the child.
+        #   settled()  - is there an agreed value to resolve against? A
+        #                conflict-only parent has none, so the composition
+        #                comparison below is not a question that can be asked
+        #                of it, and is never reached.
+        # The comparison reads values[parent][field]; settled() establishes that
+        # it exists before the branch that needs it. No try/except.
+        if supplies(case,values,parent['sku'],field) and (
+            (field in r.get('inherit_fields',[]) and field not in r['fields']) or (
+             field=='material' and r['fields'].get(field)
+             and settled(values,parent['sku'],field)
+             and compatible_partial(r['fields'][field],values[parent['sku']][field]))):
             return source_ref(case,parent['sku'],field)
     return authority(case,sku,field) or f'{sku}.{field}'
 
@@ -185,8 +240,15 @@ def check_setup(case):
     evidence=case.get('evidence',{})
     source_records={r['sku']:r for r in case['records']}
     for ref,e in evidence.items():
-        if not isinstance(e,dict) or set(e)!={'sku','field','value'} or e['sku'] not in source_records or not isinstance(e['field'],str):
+        # source_note (ruling 2) is an optional human description of where the value
+        # came from. It is never compared and never decides anything; it is carried
+        # only so supplier guidance can name a source the seller recognises instead
+        # of an internal evidence id. Its absence must never change a verdict.
+        if not isinstance(e,dict) or not {'sku','field','value'}<=set(e) or set(e)-EVIDENCE_KEYS \
+           or e['sku'] not in source_records or not isinstance(e['field'],str):
             raise SetupError('invalid evidence entry: '+ref)
+        if 'source_note' in e and not isinstance(e['source_note'],str):
+            raise SetupError('source_note must be a string: '+ref)
         if e['field']=='material': material_key(e['value'])
         if e['field']=='price': number(e['value'])
     for key,a in case.get('authority_registry',{}).items():
@@ -209,7 +271,10 @@ def check_setup(case):
         if r['role']=='child' and records[r['parent_sku']]['role']!='parent': raise SetupError('child must link directly to flagship parent')
         for f,v in r['fields'].items():
             e=evidence.get(f'{sku}.{f}')
-            if not e or e!={'sku':sku,'field':f,'value':v}: raise SetupError('fixture evidence mismatch')
+            # Compared field by field, not as a whole dict: an optional source_note
+            # is descriptive and must not make a matching fixture look mismatched.
+            if not e or e['sku']!=sku or e['field']!=f or e['value']!=v:
+                raise SetupError('fixture evidence mismatch')
         for c in r.get('conflicts',[]):
             refs=c.get('evidence',[])
             if len(refs)<2 or any(ref not in evidence or evidence[ref]['sku']!=sku or evidence[ref]['field']!=c.get('field') for ref in refs):
@@ -219,10 +284,104 @@ def check_setup(case):
         if 'material' in values[sku]: material_key(values[sku]['material'])
     return records,values
 
+def required_fields(p):
+    """The COMPUTED required set, not the static REQUIRED tuple.
+
+    subbrand is required only when the profile says it applies. Partitioning
+    blocking from withholding against the static tuple would treat a subbrand
+    conflict as optional and publish a record that must block — a false accept.
+    """
+    return list(REQUIRED)+(['subbrand'] if p.get('subbrand_applicable',True) else [])
+
+def withholds(issue,p):
+    """Owner decision 4: an unresolved conflict on a non-required field withholds
+    that field instead of blocking the SKU."""
+    return issue['code']=='SOURCE_CONFLICT' and issue['field'] not in required_fields(p)
+
+def partition_issues(issues,p):
+    """(blocking, withholding). Blocking decides status; withholding decides fields."""
+    return [i for i in issues if not withholds(i,p)],[i for i in issues if withholds(i,p)]
+
+def conflict_resolved(case,sku,field):
+    """A conflict is resolved only by a supplier-approved authority or an approved edit."""
+    return bool(authority(case,sku,field)) or any(
+        e.get('approved') is True and e['sku']==sku and e['field']==field
+        for e in case.get('supplier_edits',[]))
+
+def unresolved_conflicts(case,fs,r,sku):
+    """{field: evidence refs} for every field on THIS record whose sources disagree.
+
+    Two ways a conflict arrives: declared in the record, or implied by two
+    evidence entries for the same field holding different values. Both feed the
+    SOURCE_CONFLICT issues, and both must be visible to the family check so it
+    can tell a withheld field from a real family disagreement.
+    """
+    out={}
+    for c in r.get('conflicts',[]):
+        if not conflict_resolved(case,sku,c['field']): out.setdefault(c['field'],c['evidence'])
+    for f in fs:
+        refs=[key for key,e in case['evidence'].items() if e['sku']==sku and e['field']==f]
+        if len(refs)>1 and any(not same(f,case['evidence'][refs[0]]['value'],case['evidence'][x]['value']) for x in refs[1:]):
+            if not conflict_resolved(case,sku,f): out.setdefault(f,refs)
+    return out
+
+REVIEW_FIELDS=('certification','certificate','compliance','safety_claim','organic_certified')
+
+def family_root(records,sku):
+    """The flagship parent that defines this SKU's family. A parent roots its own."""
+    r=records[sku]
+    return r['parent_sku'] if r['role']=='child' else sku
+
+def family_members(records,root):
+    """Every SKU in the family, parent included, in stable order."""
+    return [s for s in records if family_root(records,s)==root]
+
+def certification_holds(case,fs,r,sku,p):
+    """Certification-style claims on ONE record that lack an approved review.
+
+    Returns [(field, evidence_refs)]. Deliberately does not call expected_issues:
+    the family scan below runs this over every member, and recursion through
+    expected_issues would not terminate.
+    """
+    out=[]
+    for requirement in r.get('claims',[]):
+        f=requirement['field']; review=requirement.get('human_review',{})
+        if (not requirement.get('document_ref') or review.get('status')!='approved' or not review.get('reviewer') or not review.get('reviewed_at')
+            or review.get('document_ref')!=requirement['document_ref']
+            or not evidence_matches(case,review.get('evidence_id'),source_ref(case,sku,f))):
+            out.append((f,[source_ref(case,sku,f)] if f in fs else []))
+    review_fields=set(REVIEW_FIELDS)|set(p.get('human_review_fields',[]))
+    declared={x['field'] for x in r.get('claims',[])}
+    for f in sorted(fs.keys() & review_fields - declared):
+        out.append((f,[source_ref(case,sku,f)]))
+    return out
+
+def family_certification_holds(case,records,values,sku,p):
+    """Owner adjudication 6: a certification is evaluated at GROUP level.
+
+    A certification applies to a group, not to an individual SKU — it does not
+    come individually. So a pending or unapproved certificate on ANY member holds
+    the parent and every variant, whichever member carries the claim.
+
+    This is a hold, not a pass. It adds a blocking issue; it removes none. After
+    approval the hold lifts and each SKU still faces every other check.
+    """
+    root=family_root(records,sku)
+    out=[]
+    for member in family_members(records,root):
+        for f,refs in certification_holds(case,values[member],records[member],member,p):
+            out.append((f,refs,member))
+    return out
+
 def expected_issues(case,records,values,sku):
     r=records[sku]; fs=values[sku]; p=case['profile']; issues=[]
     def add(code,f,refs): issues.append({'code':code,'field':f,'evidence':refs})
-    required=list(REQUIRED)+(['subbrand'] if p.get('subbrand_applicable',True) else [])
+    required=required_fields(p)
+    # Fields THIS record withholds: an unresolved conflict on a non-required field.
+    # Scoped to this SKU only — a sibling that is not withholding the same field is
+    # unaffected, and required fields are never in here.
+    conflicts_here=unresolved_conflicts(case,fs,r,sku)
+    withheld_here={f for f in conflicts_here if f not in required}
     for f in required:
         if f not in fs or fs[f] is None or fs[f]=='': add('MISSING_REQUIRED',f,[])
     for f,allowed in p.get('allowed',{}).items():
@@ -238,20 +397,46 @@ def expected_issues(case,records,values,sku):
     if r['role']=='child':
         parent=r['parent_sku']
         for f in SHARED:
+            # A field this record is withholding has no settled value to compare, so a
+            # family difference on it is not established. Narrow on purpose: only this
+            # field, only on this SKU, and never a required one — withheld_here cannot
+            # contain a required field.
+            if f in withheld_here: continue
             if f in fs and f in values[parent] and not same(f,canonical(f,fs[f],p),canonical(f,values[parent][f],p)):
                 add('FAMILY_MISMATCH',f,[source_ref(case,sku,f),source_ref(case,parent,f)])
+        # Group the parent's problems by field before emitting anything.
+        #
+        # Ruling 2026-09-20: a child's PARENT_UNRESOLVED carries the evidence of
+        # EVERY parent problem on that field, not the first one encountered. One
+        # field can trip several problems at once - a required field whose sources
+        # disagree carries both MISSING_REQUIRED (no evidence) and SOURCE_CONFLICT
+        # (the disagreeing sources) - and taking the first one found discarded the
+        # sources. A candidate citing them was then failed with ISSUE_EVIDENCE for
+        # supplying exactly what the seller needs.
+        parent_problems={}
         for problem in expected_issues(case,records,values,parent):
-            if problem['field'] in SHARED and not any(i['field']==problem['field'] for i in issues):
-                add('PARENT_UNRESOLVED',problem['field'],problem['evidence'])
+            f=problem['field']
+            # Ruling 2026-09-20: nothing propagates from a field the parent does
+            # not supply. A parent missing a shared field is a partial submission
+            # and is the seller's to complete; it never holds back a valid child.
+            if f not in SHARED or not supplies(case,values,parent,f): continue
+            parent_problems.setdefault(f,[]).append(problem)
+        for f,problems in parent_problems.items():
+            if any(i['field']==f for i in issues): continue
+            refs=[]
+            for problem in problems:
+                for ref in problem['evidence']:
+                    if ref not in refs: refs.append(ref)
+            # Decision 4: an optional-field conflict blocks nothing else, and a child
+            # is something else. A parent problem that only withholds propagates as a
+            # withholding conflict on the child's inherited copy, not as a blocker.
+            # One blocking problem on the field is enough to block; withholding is
+            # the weaker outcome and cannot override it.
+            if all(withholds(problem,p) for problem in problems): add('SOURCE_CONFLICT',f,refs)
+            else: add('PARENT_UNRESOLVED',f,refs)
     # A supplied conflict is resolved only by the selected authority or explicit approved edit.
-    for c in r.get('conflicts',[]):
-        resolved=authority(case,sku,c['field']) or any(e.get('approved') is True and e['sku']==sku and e['field']==c['field'] for e in case.get('supplier_edits',[]))
-        if not resolved: add('SOURCE_CONFLICT',c['field'],c['evidence'])
-    for f in fs:
-        refs=[key for key,e in case['evidence'].items() if e['sku']==sku and e['field']==f]
-        if len(refs)>1 and any(not same(f,case['evidence'][refs[0]]['value'],case['evidence'][x]['value']) for x in refs[1:]):
-            resolved=authority(case,sku,f) or any(e.get('approved') is True and e['sku']==sku and e['field']==f for e in case.get('supplier_edits',[]))
-            if not resolved and not any(x['code']=='SOURCE_CONFLICT' and x['field']==f for x in issues): add('SOURCE_CONFLICT',f,refs)
+    for f,refs in conflicts_here.items():
+        if not any(x['code']=='SOURCE_CONFLICT' and x['field']==f for x in issues): add('SOURCE_CONFLICT',f,refs)
     for correction in r.get('proposed_corrections',[]):
         f=correction['field']
         if not any(e.get('approved') is True and e['sku']==sku and e['field']==f for e in case.get('supplier_edits',[])):
@@ -262,16 +447,12 @@ def expected_issues(case,records,values,sku):
         if isinstance(current,str) and any(norm(current)==norm(k) for k in mappings):
             add('SUPPLIER_APPROVAL_REQUIRED',f,[source_ref(case,sku,f)])
     # These are input attestations in this offline lab, not document authentication.
-    for requirement in r.get('claims',[]):
-        f=requirement['field']; review=requirement.get('human_review',{})
-        if (not requirement.get('document_ref') or review.get('status')!='approved' or not review.get('reviewer') or not review.get('reviewed_at')
-            or review.get('document_ref')!=requirement['document_ref']
-            or not evidence_matches(case,review.get('evidence_id'),source_ref(case,sku,f))):
-            add('HUMAN_VALIDATION_REQUIRED',f,[source_ref(case,sku,f)] if f in fs else [])
-    review_fields={'certification','certificate','compliance','safety_claim','organic_certified'} | set(p.get('human_review_fields',[]))
-    declared={x['field'] for x in r.get('claims',[])}
-    for f in fs.keys() & review_fields - declared:
-        add('HUMAN_VALIDATION_REQUIRED',f,[source_ref(case,sku,f)])
+    # Adjudication 6: certification is family-wide. A pending certificate on ANY
+    # member holds this SKU, whichever member carries the claim. Only certification
+    # -style fields are scoped this way; SHARED is unchanged.
+    for f,refs,origin in family_certification_holds(case,records,values,sku,p):
+        if any(i['code']=='HUMAN_VALIDATION_REQUIRED' and i['field']==f for i in issues): continue
+        add('HUMAN_VALIDATION_REQUIRED',f,refs)
     for m in r.get('measurements',[]):
         if m.get('unit') not in ('in','cm'):
             add('MEASUREMENT_INPUT','measurement:'+m.get('id','unknown'),[])
@@ -312,12 +493,15 @@ def grade(case,candidate):
         out[sku]=row
     for sku in out.keys()-records.keys(): err('INVENTED_SKU',sku)
     for sku in records.keys()-out.keys(): err('OMITTED_SKU',sku)
+    withheld_fields={}
     for sku,r in records.items():
         if sku not in out: continue
         o=out[sku]; fs=values[sku]; before=len(errors)
         try:
             expected=expected_issues(case,records,values,sku)
-            wanted='BLOCKED' if expected else 'READY'
+            blocking,withholding=partition_issues(expected,case['profile'])
+            withheld_fields[sku]={i['field'] for i in withholding}
+            wanted='BLOCKED' if blocking else 'READY'
             if o.get('status')!=wanted: err('FALSE_BLOCK' if wanted=='READY' else 'FALSE_READY',sku,detail=f'Expected {wanted}')
             if o.get('role')!=r['role'] or o.get('parent_sku')!=r.get('parent_sku'): err('FAMILY_LINK',sku)
             for key in o.keys()-{'sku','role','parent_sku','fields','evidence','status','issues','display','measurements','record_status'}-INTERNAL_KEYS:
@@ -326,6 +510,13 @@ def grade(case,candidate):
             supplied=o.get('fields',{})
             if not isinstance(supplied,dict): raise ValueError('fields must be object')
             for f,v in fs.items():
+                if f in withheld_fields[sku]:
+                    # Decision 4: the field is withheld, so its absence is required and
+                    # its presence is a defect. Publishing a value whose sources disagree
+                    # is the failure withholding exists to prevent.
+                    if f in supplied: err('WITHHELD_FIELD_PUBLISHED',sku,f,
+                        detail='Sources disagree on this field; it is withheld, not published.')
+                    continue
                 if f not in supplied: err('OMITTED_FACT',sku,f); continue
                 if not same(f,canonical(f,v,case['profile']),supplied[f]): err('WRONG_VALUE',sku,f)
                 ref=o.get('evidence',{}).get(f)
@@ -333,17 +524,24 @@ def grade(case,candidate):
             for f in supplied.keys()-fs.keys(): err('UNSUPPORTED_VALUE',sku,f)
             oi=o.get('issues',[])
             if not isinstance(oi,list): raise ValueError('issues must be list')
-            expected_keys={(x['code'],x['field']):x for x in expected}
+            expected_keys={(x['code'],x['field']):x for x in blocking}
+            permitted_keys={(x['code'],x['field']):x for x in withholding}
+            known=dict(expected_keys); known.update(permitted_keys)
             actual_keys=set()
             for i in oi:
                 key=(i['code'],i['field']); actual_keys.add(key)
-                if key not in expected_keys: err('SPURIOUS_ISSUE',sku,i['field']); continue
-                actual_refs=i.get('evidence',[]);expected_refs=expected_keys[key]['evidence']
+                if key not in known: err('SPURIOUS_ISSUE',sku,i['field']); continue
+                # A permitted issue is optional in BOTH directions: the candidate may
+                # report it or stay silent, and neither is penalised. Reporting one can
+                # therefore never be worse than saying nothing, so no check below applies
+                # to it. Expected issues are still held to evidence and action.
+                if key in permitted_keys and key not in expected_keys: continue
+                actual_refs=i.get('evidence',[]);expected_refs=known[key]['evidence']
                 if not (all(any(evidence_matches(case,a,b) for b in expected_refs) for a in actual_refs)
                         and all(any(evidence_matches(case,a,b) for a in actual_refs) for b in expected_refs)):
                     err('ISSUE_EVIDENCE',sku,i['field'])
                 if not isinstance(i.get('action'),str) or not i['action'].strip(): err('MISSING_ACTION',sku,i['field'])
-            if actual_keys!=set(expected_keys): err('ISSUE_COVERAGE',sku)
+            if not set(expected_keys)<=actual_keys: err('ISSUE_COVERAGE',sku)
             if 'material' in fs:
                 exp,label=display_expected(fs['material']); d=o.get('display',{})
                 for key in d.keys()-{'text','derived_remainder'}: err('UNSUPPORTED_OUTPUT_FIELD',sku,'display.'+key)
@@ -383,6 +581,8 @@ def grade(case,candidate):
             per.append({'sku':sku,'expected_status':wanted,'candidate_status':o.get('status'),'handling':'PASS' if before==len(errors) else 'FAIL'})
         except (KeyError,TypeError,ValueError,InvalidOperation,AttributeError) as e: err('MALFORMED_RECORD',sku,detail=str(e))
     guided=guided_help(case,records,values)
+    status_by_sku={x['sku']:x['expected_status'] for x in per}
+    warnings_for_seller=seller_warnings(case,records,values,status_by_sku)
     # Global identity/context errors invalidate the batch; do not advertise publishable SKUs.
     global_error=any(not x.get('sku') for x in errors)
     ready={x['sku'] for x in per if x['handling']=='PASS' and x['expected_status']=='READY'} if not global_error else set()
@@ -392,12 +592,119 @@ def grade(case,candidate):
     for sku in records:
         if sku in ready:
             row=out[sku]
+            parent=records[sku].get('parent_sku')
+            # D2: never point a published record at a parent absent from this payload.
+            # The relationship stays in `records`; link it when the parent is ready.
+            published_parent=parent if parent in ready else None
+            fields={k:v for k,v in row['fields'].items() if k not in withheld_fields.get(sku,set())}
             payload['records'].append({
-                'sku':sku,'role':records[sku]['role'],'parent_sku':records[sku].get('parent_sku'),
-                'fields':copy.deepcopy(row['fields']), 'display':copy.deepcopy(row['display']),
+                'sku':sku,'role':records[sku]['role'],'parent_sku':published_parent,
+                'fields':copy.deepcopy(fields), 'display':copy.deepcopy(row['display']),
                 'measurements':[{'id':m['id'],'measurement_type':m['measurement_type'],
                                  'value':m['value'],'unit':m['unit']} for m in row.get('measurements',[])]})
-    return {'verdict':'FAIL' if errors else 'PASS','errors':errors,'warnings':warnings,'records':per,'guided_help':guided,'publication_payload':payload,'correctly_handled':sum(x['handling']=='PASS' for x in per) if not global_error else 0,'publishable':sum(x['handling']=='PASS' and x['expected_status']=='READY' for x in per) if not global_error else 0,'incomplete':sum(x['handling']=='PASS' and x['expected_status']=='BLOCKED' for x in per)}
+    return {'verdict':'FAIL' if errors else 'PASS','errors':errors,'warnings':warnings,'records':per,'guided_help':guided,'seller_warnings':warnings_for_seller,'withheld':{k:sorted(v) for k,v in withheld_fields.items() if v},'publication_payload':payload,'correctly_handled':sum(x['handling']=='PASS' for x in per) if not global_error else 0,'publishable':sum(x['handling']=='PASS' and x['expected_status']=='READY' for x in per) if not global_error else 0,'incomplete':sum(x['handling']=='PASS' and x['expected_status']=='BLOCKED' for x in per)}
+
+def designated_but_unapproved(case,sku,field):
+    """A designation is not an approval (decision 3).
+
+    Returns the designated evidence id when a registry entry names one for this
+    field but the supplier has not approved it. authority() returns None in that
+    case, so the conflict is still unresolved and the field stays withheld — but
+    the seller can be told which value the designation points at.
+    """
+    entry=case.get('authority_registry',{}).get(f'{sku}.{field}')
+    if entry and entry.get('supplier_approved') is not True: return entry.get('evidence_id')
+    return None
+
+def warning_branch(status,designated):
+    """The one place a warning's outcome is decided. Three branches, from the
+    status the grader already computed — never re-derived here."""
+    if status!='READY': return 'blocked'
+    return 'awaiting_approval' if designated else 'eligible_for_publication'
+
+def source_phrase(case,ref):
+    """How to name one evidence entry to a seller: its source_note when it has
+    one, otherwise nothing. Ruling 2 - never the internal evidence id."""
+    note=case.get('evidence',{}).get(ref,{}).get('source_note')
+    return note if isinstance(note,str) and note.strip() else None
+
+def attributed_values(case,refs):
+    """"the spec sheet A says X, the supplier invoice says Y", or None.
+
+    Returns None unless EVERY cited entry carries a source_note. A half-attributed
+    sentence would name one source and leave the other anonymous, which reads as
+    though the unnamed one did not exist. Falling back whole keeps the two
+    wordings clean and keeps absence from changing anything a seller can act on
+    beyond losing the names.
+    """
+    parts=[]
+    for ref in refs:
+        note=source_phrase(case,ref)
+        if not note: return None
+        e=case['evidence'][ref]
+        parts.append(f"{note} says {e['value']!r}")
+    if len(parts)<2: return None
+    return ', '.join(parts[:-1])+' and '+parts[-1]
+
+def seller_warnings(case,records,values,status_by_sku):
+    """Deterministic seller guidance for every withheld field. Owner decision 4.
+
+    Generated by the grader from the detected conflict, never written by the
+    candidate. Each warning carries the SKU, the field, the conflicting source
+    values, the branch, and the required action.
+
+    `branch` is a pure function of the SKU's computed status and whether a
+    designated-but-unapproved source exists. status_by_sku is passed in from
+    grade() so the wording cannot drift from the verdict: there is one status,
+    computed once, and the template follows it.
+
+    Fully deterministic and fully checkable. No judge is involved.
+    """
+    p=case['profile']; out=[]
+    for sku in records:
+        _,withholding=partition_issues(expected_issues(case,records,values,sku),p)
+        for i in withholding:
+            f=i['field']
+            conflicting=[]
+            for ref in i['evidence']:
+                if ref not in case['evidence']: continue
+                entry={'evidence_id':ref,'value':case['evidence'][ref]['value']}
+                note=source_phrase(case,ref)
+                if note: entry['source_note']=note
+                conflicting.append(entry)
+            designated=designated_but_unapproved(case,sku,f)
+            has_designation=bool(designated and designated in case['evidence'])
+            status=status_by_sku.get(sku,'BLOCKED')
+            branch=warning_branch(status,has_designation)
+            w={'sku':sku,'field':f,'branch':branch,'conflicting_values':conflicting}
+            # Ruling 2: name the sources the seller recognises when every cited
+            # entry carries a source_note; otherwise say exactly what v2.3 said.
+            # The branch, the withholding and the verdict are already decided
+            # above and none of them can see this.
+            attributed=attributed_values(case,[x['evidence_id'] for x in conflicting])
+            disagree=('On '+f+', '+attributed+'.') if attributed else ('Sources disagree on '+f+'.')
+            if branch=='blocked':
+                # Without notes this must read exactly as v2.3 did, comma and all:
+                # the ruling says fall back to today's behaviour, not to a rewording.
+                lead=(('On '+f+', '+attributed+'. It is withheld.') if attributed
+                      else ('Sources disagree on '+f+', so it is withheld.'))
+                w['action']=(lead+' This product is '
+                             'not published for other reasons; resolve those first, then '
+                             'confirm the correct '+f+'.')
+            elif branch=='awaiting_approval':
+                w['recommended_value']=case['evidence'][designated]['value']
+                w['recommended_from']=designated
+                named=source_phrase(case,designated)
+                w['action']=(disagree+' The designated source'
+                             +(' ('+named+')' if named else '')+' gives '
+                             +repr(case['evidence'][designated]['value'])+', but it is not '
+                             'supplier-approved, so '+f+' stays withheld while the rest of this '
+                             'product is published. Approve that source to publish '+f+'.')
+            else:
+                w['action']=(disagree+' It is withheld and the rest of this '
+                             'product is published. Confirm the correct value to publish '+f+'.')
+            out.append(w)
+    return out
 
 def guided_help(case,records=None,values=None):
     if records is None: records,values=check_setup(case)

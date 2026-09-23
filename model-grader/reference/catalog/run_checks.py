@@ -1,8 +1,27 @@
 """Run development verification and preserve an execution receipt. No model calls."""
+import subprocess
 import argparse,datetime,hashlib,json,platform,sys,importlib.util
 from pathlib import Path
 from grader import grade,read_json,VERSION,check_setup,guided_help
 D=Path(__file__).resolve().parent
+
+def run_regressions():
+    """Every fixture under reproductions/ that reproduced a real defect.
+
+    Each exits 0 when its defect is absent, 1 when present, 2 when the fixture no
+    longer reaches the state it tests. A fixture that stops being able to see its
+    defect is reported as a failure, not silently counted as a pass.
+    """
+    folder=D/'reproductions'
+    if not folder.is_dir(): return []
+    rows=[]
+    for f in sorted(list(folder.glob('finding*.py'))+list(folder.glob('preservation*.py'))+list(folder.glob('ruling*.py'))):
+        r=subprocess.run([sys.executable,str(f)],cwd=folder,capture_output=True,text=True)
+        detail={0:'defect absent',1:'DEFECT PRESENT',2:'FIXTURE BROKEN'}.get(r.returncode,
+                 'exit '+str(r.returncode))
+        rows.append({'case':f.stem,'matched':r.returncode==0,'detail':detail,
+                     'expected':'the reproduced defect stays absent'})
+    return rows
 
 def main():
     p=argparse.ArgumentParser()
@@ -50,6 +69,12 @@ def main():
             'fresh_model_calls':False,'independent_holdout':False,
             'grader_sha256':hashlib.sha256((D/'grader.py').read_bytes()).hexdigest(),
             'results':results,'saved_candidate_replay':replay,'metadata_checks':metadata_checks}
+    # Regression reproductions run as part of the standard suite, not only via a
+    # separate runner. Last pass this suite reported 55/55 green while three real
+    # defects were live, because the only thing that could see them was a script
+    # nobody was obliged to run.
+    regressions=run_regressions()
+    report['regressions']=regressions
     folder=D/'reports';folder.mkdir(exist_ok=True)
     target=folder/('checks_'+datetime.datetime.now(datetime.timezone.utc).strftime('%Y%m%dT%H%M%S%fZ')+'.json')
     target.write_text(json.dumps(report,indent=2))
@@ -62,7 +87,11 @@ def main():
     print('Internal metadata:',sum(x['matched'] for x in metadata_checks),'/',len(metadata_checks),'boundary checks matched')
     for row in metadata_checks:
         if not row['matched']:print('METADATA MISMATCH:',row)
+    print('Regressions:',sum(x['matched'] for x in regressions),'/',len(regressions),
+          'reproduced defects still absent')
+    for row in regressions:
+        if not row['matched']:print('REGRESSION:',row['case'],'->',row['detail'])
     print('Report:',target)
-    return 0 if all(x['matched'] for x in results+metadata_checks) else 1
+    return 0 if all(x['matched'] for x in results+metadata_checks+regressions) else 1
 
 if __name__=='__main__':sys.exit(main())
