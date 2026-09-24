@@ -1,0 +1,7 @@
+{
+  "command": "python -m unittest discover -s tests/eval-engine -p test_repository_pilot.py -v",
+  "expected_exit": 1,
+  "raw_sha256": "30102c5e9a11731fcc986601a0516c0723de41fe53eceaa0c15eab4c9a83a831",
+  "retained_log": "red.log",
+  "normalization": "Only trailing spaces/tabs removed; every line retained."
+}

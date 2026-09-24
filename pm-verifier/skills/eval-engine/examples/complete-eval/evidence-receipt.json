@@ -3,9 +3,9 @@
   "evidence_status": "SEALED",
   "product_id": "synthetic-support-agent",
   "run_id": "synthetic-support-agent-ee1f7f3d56a7",
-  "run_sha256": "cd7a78e4a1ba502bbcd30ab2c69ff5b2056437aeed954ca1f94d4e04595161f5",
+  "run_sha256": "8d64efc50c3290d08f0785105358564c7ccac5e852400171cc45ecf90f351c40",
   "schema_version": "1.0",
   "trial_count": 4,
   "trials_path": "trials.jsonl",
-  "trials_sha256": "d9550b56d003062229c4611e8145d7867a49c72e5f94d2548bdcbe7d2889f952"
+  "trials_sha256": "40b8b42e9b1a7be5832637ccf1c0a6837853cada4c8ad880d80d7406c61173e6"
 }

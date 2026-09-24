@@ -1,0 +1,65 @@
+{
+  "findings": [
+    "F-C5-1",
+    "F-C5-2",
+    "F-C5-3"
+  ],
+  "tested_local_source_commit": "90dfdcaf94947ce72713c0f574b8a7a8f935964f",
+  "tested_source_tree": "7d3546ab6b21307085e54113517074a3d1360b01",
+  "identity_scope": "Local test source; coordinator must publish the corresponding tree mapping.",
+  "runtime_commit": "e508e77fc47aa8b4c705eba380e9f05cb34f089a",
+  "tool_sha256": "c545f3a5693014ef773951fcd4e45b7a63757319c4739f3b888c6625b7441b0f",
+  "skill_sha256": "f60be483db4d5ab83aea2d5d3bda167f5ee0dc2d2bfbe24b431f67fca4a02538",
+  "commands": [
+    {
+      "command": "python -m unittest discover -s tests/eval-engine -p test_repository_pilot.py -v",
+      "stage": "RED",
+      "exit": 1,
+      "tests": 31,
+      "failing_subcases": 11
+    },
+    {
+      "command": "python -m unittest discover -s tests/eval-engine -p test_repository_pilot.py -v",
+      "stage": "GREEN",
+      "exit": 0,
+      "tests": 31
+    },
+    {
+      "command": "python -m unittest discover -s tests/eval-engine -p 'test_*.py' -v",
+      "stage": "GREEN",
+      "exit": 0,
+      "tests": 108
+    },
+    {
+      "command": "python tests/lint_skill.py pm-verifier/skills/eval-engine/SKILL.md",
+      "exit": 0
+    },
+    {
+      "command": "python scripts/check_repository_integrity.py",
+      "exit": 0
+    },
+    {
+      "command": "python pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py verify --project pm-verifier/skills/eval-engine/examples/complete-eval",
+      "exit": 0
+    },
+    {
+      "command": "git diff --check 1ab1ab34d7803ca22c19b2f9bc2200898b5fa223 HEAD",
+      "exit": 0
+    },
+    {
+      "command": "git diff --exit-code 1ab1ab34d7803ca22c19b2f9bc2200898b5fa223 HEAD -- model-grader/reference/catalog",
+      "exit": 0
+    }
+  ],
+  "frozen_catalog_tree": "b6b4a23c9ccf749c3f1fa07224a0502c77e85ff1",
+  "fresh_synthetic_trials": 4,
+  "repair_attempts_after_failed_green_gate": 0,
+  "approval_verified": false,
+  "paid_or_model_calls": 0,
+  "limitations": [
+    "Approval and upstream source provenance remain unauthenticated.",
+    "VERIFIED describes pilot evidence integrity only.",
+    "Synthetic trials do not prove live-product quality or fresh approved delivery.",
+    "No publication, merge, deployment, or independent root approval is claimed."
+  ]
+}

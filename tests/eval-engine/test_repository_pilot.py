@@ -580,6 +580,62 @@ class RepositoryPilotTest(unittest.TestCase):
             False,
         )
 
+    def test_top_level_approval_is_unverified_in_packages_and_pilot_reports(self) -> None:
+        created = self.root / "created-with-approval-qualifier"
+        reports = {
+            "legacy bind": pilot.bind_pilot(self.project),
+            "legacy verify": pilot.verify_pilot(self.project),
+            "legacy create": pilot.create_pilot(created),
+        }
+        packages = {"legacy": self._load("product-package.json")}
+        self._use_support_pdc()
+        reports["PDC pending bind"] = pilot.bind_pilot(self.project)
+        self.assertEqual(reports["PDC pending bind"]["status"], "BOUND")
+        self.assertEqual(execute_trials(
+            self.project, [sys.executable, str(self.project / "reference_adapter.py")],
+            self.project / "trials.jsonl", timeout_seconds=5,
+        ), [])
+        reports["PDC sealed bind"] = pilot.bind_pilot(self.project)
+        reports["PDC verify"] = pilot.verify_pilot(self.project)
+        packages["PDC"] = self._load("product-package.json")
+        for label, report in {**reports, **packages}.items():
+            with self.subTest(report=label):
+                self.assertIs(report.get("approval_verified"), False)
+                self.assertIs(report["source_contract"]["approval_verified"], False)
+                self.assertEqual(report["decision"], "APPROVED" if label.startswith("PDC") else "GO")
+
+    def test_sealed_receipt_rejects_float_trial_count_alias(self) -> None:
+        self.assertEqual(pilot.verify_pilot(self.project)["status"], "VERIFIED")
+        receipt = self._load("evidence-receipt.json")
+        original_count = receipt["trial_count"]
+        self.assertIs(type(original_count), int)
+        receipt["trial_count"] = float(original_count)
+        self._write("evidence-receipt.json", receipt)
+        with self.assertRaisesRegex(pilot.PilotError, "exact trial contents"):
+            pilot.verify_pilot(self.project)
+        receipt["trial_count"] = original_count
+        self._write("evidence-receipt.json", receipt)
+        self.assertEqual(pilot.verify_pilot(self.project)["status"], "VERIFIED")
+
+    def test_pending_receipt_rejects_float_and_boolean_zero_aliases(self) -> None:
+        self._use_support_pdc()
+        self.assertEqual(pilot.bind_pilot(self.project)["status"], "BOUND")
+        receipt = self._load("evidence-receipt.json")
+        self.assertIs(type(receipt["trial_count"]), int)
+        self.assertEqual(receipt["trial_count"], 0)
+        for count in (0.0, False):
+            with self.subTest(trial_count=count):
+                receipt["trial_count"] = count
+                self._write("evidence-receipt.json", receipt)
+                with self.assertRaisesRegex(pilot.PilotError, "pending evidence receipt"):
+                    pilot._verify_pilot(self.project, None, require_trials=False)
+        receipt["trial_count"] = 0
+        self._write("evidence-receipt.json", receipt)
+        self.assertEqual(
+            pilot._verify_pilot(self.project, None, require_trials=False)["status"],
+            "BOUND",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
