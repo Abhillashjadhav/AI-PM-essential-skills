@@ -4,6 +4,17 @@ Implementation reviewed: `ef46230b9756cc37d7b5ec06c06054336cdfaed4`, tree
 `3deac48c45bce2dff8d443fd28db38b848b8f836`. The source is unchanged in this
 evidence commit. Root reviewed the separate implementation agent's work.
 
+Publication mapping added for F-R3-07: the historical local implementation
+commit above was published as
+[`7e06135d8a2175e10034b01f10f6c0ec5ffc20bc`](https://github.com/Abhillashjadhav/AI-PM-essential-skills/commit/7e06135d8a2175e10034b01f10f6c0ec5ffc20bc),
+with the same tree `3deac48c45bce2dff8d443fd28db38b848b8f836`. A remote clone
+need not contain the original local commit object. This mapping preserves the
+identity of the source originally reviewed; it does not replace that historical
+review with a later one. The extracted
+[local-to-published mapping](r3-pdc-provenance-20260924/publication-map.json)
+also records the published PR 64 evidence and PR 65 documentation commits and
+identifies the source publication receipt by path and SHA-256.
+
 LINT: N/A — no SKILL.md changed. SPEC COMPLIANCE, NOVELTY, HARD RULES,
 TESTABILITY and BLOAT: PASS. VERDICT: APPROVE for the bounded adapter repair;
 no blocking findings. This does not provide owner merge approval.

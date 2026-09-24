@@ -1,0 +1,40 @@
+{
+  "source_repository": "Abhillashjadhav/production-engineering-os",
+  "source_path": "docs/evidence/integration-review-20260924/publication-receipt.json",
+  "source_receipt_sha256": "74e17726d71a403422c87bcf35919cdbe9ae63547a088fa94f898d7955748523",
+  "source_as_of": "2026-09-24T06:42:37.742Z",
+  "commit_mappings": {
+    "aipm_runtime": [
+      {
+        "local": "bb2d33e5b97af512533cbc6f3a77f31e343fc0e1",
+        "remote": "0f93d89f9f42e62ea0abeae3af0a596258a7340f",
+        "tree": "dcf1b16d599fb2f69ea93df023139a363c14b315",
+        "files": 1
+      },
+      {
+        "local": "ba7e8683c7257253eb2a0e88f29d464acdb1be7d",
+        "remote": "fa2086b93897e506c1251f0fd8843e1ce89e114b",
+        "tree": "e6bbf679f8d81b6a186033bc18b1f0f769084bc5",
+        "files": 2
+      },
+      {
+        "local": "ef46230b9756cc37d7b5ec06c06054336cdfaed4",
+        "remote": "7e06135d8a2175e10034b01f10f6c0ec5ffc20bc",
+        "tree": "3deac48c45bce2dff8d443fd28db38b848b8f836",
+        "files": 5
+      },
+      {
+        "local": "58dbb0a5c511cacdebe3560f55358b81351da889",
+        "remote": "155bc180a33b5917808f472718484a23beafac63",
+        "tree": "166e242dd98f78a0076712a060b7987e037c2924",
+        "files": 7
+      }
+    ],
+    "aipm_docs": {
+      "local": "f32a1beb15d53802c884c830a2989332b5efae51",
+      "remote": "e17a6c3e060120cc5fe92db7d95ef5de24f8fb8c",
+      "tree": "eb96efd4d4e42cc2ebf82e8387df54ba9b5ab1ee",
+      "files": 2
+    }
+  }
+}

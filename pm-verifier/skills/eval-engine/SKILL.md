@@ -24,7 +24,7 @@ Read the spec or existing suite. State the decision the evaluation must support:
 
 Ask for missing product facts. Never invent policies, expected fields, thresholds, reference answers, or safety boundaries.
 
-Classify each approved claim against four surfaces:
+Classify each supplied product claim against four surfaces:
 
 - **Outcome:** the final user/environment state.
 - **Trajectory:** the risk-critical path, tools, policies, and decisions.
@@ -59,14 +59,18 @@ Install the bundled package from `pm-verifier/` for CI use. Keep the
 compatibility wrappers only for existing suites. Do not add provider SDKs or
 hidden network calls.
 
-When an approved PMOS package must be carried into an implementation
+When a PMOS package carrying an approval declaration must enter an implementation
 repository, read `references/repository-pilot.md` and use the guided
 customer-support pilot. Keep `create`, `bind`, and `verify` as skill-owned
 onboarding operations; do not add another public CLI or infer missing product
-facts. Bind only after the accountable approver has selected `GO` and every
-unresolved question is closed. A real first bind returns `BOUND`; execute the
+facts. Require the source's `APPROVED` declaration for PDC v1 (`GO` for the
+legacy synthetic dialect) and resolution of every product-critical question;
+the legacy dialect requires an empty unresolved-question list. The binder checks
+structure and integrity, and carries approval declarations without authenticating
+them. A real first bind returns `BOUND`; execute the
 adapter, bind again to seal the full trial file, and require read-only
-`VERIFIED` evidence before interpreting a release decision.
+`VERIFIED` evidence before interpreting a release decision. `VERIFIED` describes
+evidence integrity; package and pilot reports retain `approval_verified=false`.
 
 ## 4. Run trials and grade
 
@@ -157,7 +161,7 @@ The compatibility wrappers `prepare.py`, `run.py`, and `report.py` run the same 
 - Keep harness-owned suite, dataset, cases, and run filenames fixed.
 - Invalidate stale synthetic evidence; never rewrite its provenance to fit a new run.
 - Require a canonical receipt that seals the complete trial file before returning `VERIFIED`.
-- Never create or bind an engineering handoff from `HOLD`, `NO-GO`, or unresolved PMOS intent.
+- Require the source's approval declaration and no blocking product questions; never treat `VERIFIED` as authenticated approval.
 - Treat safety and privacy defaults as zero tolerated failures unless the approved suite says otherwise.
 - Version and hash datasets, rubrics, prompts, tools, harnesses, and configurations.
 - Keep capability and regression thresholds separate; a capability failure is data, while a regression failure usually blocks release.

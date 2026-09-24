@@ -1,0 +1,16 @@
+...ERROR: fault output must not overwrite evaluation inputs
+.ERROR: fault output must not overwrite evaluation inputs
+ERROR: fault output must not overwrite evaluation inputs
+ERROR: fault output must not overwrite evaluation inputs
+ERROR: fault output must not overwrite evaluation inputs
+ERROR: fault output must not overwrite evaluation inputs
+ERROR: fault output must use a trials*.jsonl filename
+.ERROR: fault output must not be a symbolic link
+ERROR: fault output must stay within the evaluation project
+.......................................................................................................
+----------------------------------------------------------------------
+Ran 108 tests in 4.073s
+
+OK
+fault: system-identity-fail -> /tmp/tmpebb_jxa6/complete-eval/trials-fault-cli.jsonl
+fault: system-identity-fail -> /tmp/tmpebb_jxa6/complete-eval/trials-fault-cli.jsonl

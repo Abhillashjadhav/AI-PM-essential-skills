@@ -1,0 +1,9 @@
+PASS  frontmatter_parses
+PASS  has_name
+PASS  name_kebab_case
+PASS  has_description
+PASS  desc_under_1024_chars
+PASS  desc_has_trigger_phrases
+PASS  desc_has_negative_trigger
+PASS  body_under_500_lines
+PASS  has_limitations_section

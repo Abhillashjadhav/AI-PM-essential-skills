@@ -9,11 +9,27 @@ The package proves the handoff and verifier mechanics. It does not prove the
 quality of an untested repository. It contains no real customer or personal
 data, and its reference adapter makes no model or network call.
 
+The checked-in source contract uses the `legacy-synthetic-pilot-v1` example
+dialect. The repository-pilot tool also accepts PMOS ProductDecisionContract v1
+documents carrying an approval declaration (`contract_version=1`,
+`contract_status="APPROVED"`, `functional_requirements`, and AC `requirement`
+links). It records the source dialect and identity separately from the
+configured candidate product ID and preserves the whole source document.
+PDC binding is an integrity/traceability check; PEOS owns executable release
+gates and PMOS owns approval receipts.
+
+Packages, pilot reports, and source identities expose `approval_verified=false`:
+`BOUND`/`VERIFIED` describe binding/evidence integrity, and approval status is a
+publisher declaration, not authenticated authority. For PDCs, `source_digest`
+is carried, not verified; only its `sha256:` plus 64 lowercase hex characters
+format is checked (`source_digest_verification="FORMAT_ONLY"`). It is separate
+from the computed raw contract-file SHA-256 bound in `contracts.pmos.sha256`.
+
 ## What is bound
 
 | Artifact | Authority |
 |---|---|
-| `contracts/pmos-contract.json` | Approved problem, scope, guardrails, `FR-*`, and `AC-*` intent |
+| `contracts/pmos-contract.json` | Carried problem, scope, guardrails, `FR-*`/`AC-*` intent, and publisher approval declaration |
 | `contracts/eval-contract.json` | Exact suite, dataset, cases, graders, and FR/AC traceability |
 | `contracts/engineering-contract.json` | Exact PMOS/eval digests, checkpoints, and required evidence |
 | `product-package.json` | Product identity, all three contracts, candidate tree, adapter, pilot config, CI, and verifier tool |
@@ -24,7 +40,7 @@ data, and its reference adapter makes no model or network call.
 changing the stable public `pm-verifier` CLI:
 
 - `create` copies this one canonical template and refuses an existing target;
-- `bind` validates approved intent, rejects path aliases before writing, and
+- `bind` checks declared intent structure/integrity, rejects path aliases before writing, and
   writes the digest chain plus a pending or sealed evidence receipt without
   rewriting old trial provenance;
 - `verify` is read-only and rejects stale, ambiguous, escaped, relationally
@@ -44,7 +60,8 @@ pm-verifier inspect --results results.json \
   --trials trials.executed.jsonl --trial SUPPORT-100-t1
 ```
 
-The canonical summary is `GO`, 3 requirements, 3 acceptance criteria, 2
+The canonical summary carries declared `GO` with `approval_verified=false`,
+3 requirements, 3 acceptance criteria, 2
 representative cases, 24 deterministic graders, and 4 checked-in trials. The
 known-good evidence has a `SEALED` full-file receipt and returns `PASS`.
 

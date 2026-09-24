@@ -9,17 +9,52 @@ template only.
 
 | Owner | Supplies | Must not silently change |
 |---|---|---|
-| PMOS | Product identity, `GO` decision, approver, problem, scope, metrics, guardrails, stable `FR-*` and `AC-*` intent | Policies, thresholds, expected answers, unresolved questions |
+| PMOS | PDC identity/version, `APPROVED` status, approver, problem, scope, metrics, guardrails, requirement and acceptance IDs | Policies, thresholds, expected answers, unresolved questions |
 | AI Evals for PMs | Eval contract, representative cases, outcome/trajectory/system/memory graders, release rules, FR/AC traceability | Product intent or engineering behavior |
 | Engineering AgentOS | Candidate implementation, checkpoints, evidence adapter, state semantics | Approved requirements or eval gates |
 | Runtime evidence | Actual outcomes, traces, checkpoints, memory events, metrics, fingerprints, isolation IDs | Expected answers or contract digests |
 
-The binder accepts only `decision="GO"`, an accountable approver, no unresolved
-questions, unique stable IDs, relationally correct FR/AC/case/grader
-traceability, distinct safe paths, and matching product identities. A candidate
-file may not alias a contract, adapter, tool, run, or evidence output, including
-through a hard link. `HOLD`, `NO-GO`, ambiguity, or a digest mismatch stops the
-handoff before any file is rewritten.
+The binder accepts the actual ProductDecisionContract v1 shape:
+`contract_version=1`, `contract_status="APPROVED"`, named `approved_by` and
+`approved_at`, `functional_requirements[].id`, and
+`acceptance_criteria[].{id,requirement,criterion}`. It validates required field
+shapes, unique IDs, exact AC-to-FR links, and coverage of every requirement.
+Unresolved product-critical questions block binding. The source document is
+never rewritten, and its entire byte digest is bound through the evidence chain.
+
+The configured `pilot.product.id` identifies the engineering candidate; it is
+separate from the source's `product_name` and `contract_id`. The package and
+summary expose `source_contract` with the source dialect, native contract
+version, approval status, and upstream source digest. Existing run provenance
+retains string versions, so native PDC version `1` is represented there as `"1"`.
+
+`source_digest` is carried, not verified. The adapter requires exactly `sha256:`
+followed by 64 lowercase hexadecimal characters and reports
+`source_digest_verification="FORMAT_ONLY"`. It does not recompute this upstream
+metadata from source material or authenticate its provenance. This field is
+distinct from `contracts.pmos.sha256` in `product-package.json`, which the
+binder computes over the complete raw contract file and checks during `verify`.
+The two digests identify different inputs and must not be equated.
+
+`approval_status` is publisher-declared. Both PDC and legacy source identities
+report `approval_verified=false`; `APPROVED` or `GO` does not authenticate an
+approver or approval receipt. `BOUND` and `VERIFIED` describe contract/evidence
+binding, not authenticated product approval. A well-formed, self-declared digest
+and approval therefore remain explicitly unverified after a successful bind.
+
+The bundled support example retains the explicitly labeled
+`legacy-synthetic-pilot-v1` dialect (`schema_version="1.0"`, `decision="GO"`,
+`requirements`, and AC `requirement_ids`). Its original approval and product-ID
+checks remain enforced. Mixed dialects, unsupported PDC versions, duplicate JSON
+keys, malformed shapes, and incorrect FR/AC/case/grader relationships fail closed.
+A candidate file may not alias a contract, adapter, tool, run, or evidence output,
+including through a hard link.
+
+Optional gate `acceptance_criterion_refs` must be a nonempty unique list of known
+AC IDs. Binding a PDC does not compile or execute its release gates, interpret
+gate descriptions, verify a PMOS approval receipt, or grant release authority.
+PEOS owns executable acceptance and release-gate enforcement. The standalone
+`pm-verifier` CLI continues to accept projects without a PMOS contract.
 
 ## 1. Create a working copy
 
@@ -37,10 +72,10 @@ pilot; `product-package.json` binds its exact bytes.
 
 Edit the copy in this order:
 
-1. `contracts/pmos-contract.json`: enter approved facts, assign one product ID,
-   keep stable `FR-*` and `AC-*` IDs, record the approver, and leave
-   `unresolved_questions` empty only when genuinely resolved.
-2. `pilot.json`: use the same product ID/version, set `synthetic_fixture` to
+1. `contracts/pmos-contract.json`: copy the approved PDC unchanged. Preserve its
+   contract identity, requirement IDs, acceptance IDs, and approval metadata.
+   Product-intent changes must go through the upstream approval workflow.
+2. `pilot.json`: assign the candidate product ID/version, set `synthetic_fixture` to
    `false`, list implementation files relative to the selected repository root,
    and choose the final evidence and receipt filenames in `paths.trials` and
    `paths.evidence_receipt` before binding. Every `paths` value must resolve to
@@ -130,7 +165,8 @@ actions.
 Before release, the accountable reviewer should be able to answer yes to all
 of these:
 
-- The PMOS decision is still `GO`, and the approver and product identity are correct.
+- The PDC is still `APPROVED`, and its approver and source identity are correct
+  (the legacy synthetic example instead retains its explicit `GO` decision).
 - Every `FR-*` and `AC-*` is represented in cases and deterministic or calibrated grading.
 - The engineering contract implements the exact PMOS and eval digests.
 - Candidate files are separate from managed artifacts, and the candidate and
