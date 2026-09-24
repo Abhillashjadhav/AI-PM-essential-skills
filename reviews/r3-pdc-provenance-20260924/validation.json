@@ -13,5 +13,10 @@
   "frozen_catalog_unchanged": true,
   "approval_authenticated": false,
   "source_digest_validation": "FORMAT_ONLY",
-  "reexecuted_synthetic_trials": 4
+  "reexecuted_synthetic_trials": 4,
+  "retained_log_normalization": {
+    "red.log": "Trailing spaces/tabs stripped from complete original lines only; no lines removed.",
+    "original_red_log_sha256": "e5956d9ccc286c31fe04fb594230cbcb6065d9745180db752efa14f21e37a3af",
+    "original_red_log_commit": "ccd46fa92788d1b1f92fca842ef8b36bede29e81"
+  }
 }
