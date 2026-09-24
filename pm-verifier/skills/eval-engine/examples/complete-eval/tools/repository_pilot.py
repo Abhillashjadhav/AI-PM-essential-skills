@@ -49,6 +49,15 @@ def _reject_constant(value: str) -> None:
     raise PilotError(f"non-standard JSON constant is not allowed: {value}")
 
 
+def _strict_object(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
+    result: dict[str, Any] = {}
+    for key, value in pairs:
+        if key in result:
+            raise PilotError(f"duplicate JSON object key is not allowed: {key}")
+        result[key] = value
+    return result
+
+
 def _canonical_json(payload: Any) -> str:
     return json.dumps(payload, indent=2, ensure_ascii=False, sort_keys=True) + "\n"
 
@@ -56,7 +65,7 @@ def _canonical_json(payload: Any) -> str:
 def _load_json(path: Path, label: str) -> dict[str, Any]:
     try:
         payload = json.loads(
-            path.read_text(encoding="utf-8"), parse_constant=_reject_constant
+            path.read_text(encoding="utf-8"), parse_constant=_reject_constant, object_pairs_hook=_strict_object
         )
     except PilotError:
         raise
@@ -77,7 +86,7 @@ def _load_jsonl(path: Path, label: str) -> list[dict[str, Any]]:
         if not line.strip():
             raise PilotError(f"{label} line {number} must not be blank")
         try:
-            row = json.loads(line, parse_constant=_reject_constant)
+            row = json.loads(line, parse_constant=_reject_constant, object_pairs_hook=_strict_object)
         except PilotError:
             raise
         except json.JSONDecodeError as exc:
@@ -342,7 +351,7 @@ def _ids(rows: Any, pattern: re.Pattern[str], label: str) -> tuple[str, ...]:
     return tuple(values)
 
 
-def _validate_pmos(
+def _validate_legacy_pilot(
     pmos: dict[str, Any], product_id: str
 ) -> tuple[tuple[str, ...], tuple[str, ...], dict[str, frozenset[str]]]:
     if pmos.get("schema_version") != "1.0":
@@ -392,6 +401,138 @@ def _validate_pmos(
         if not isinstance(pmos.get(field), dict):
             raise PilotError(f"PMOS {field} must be an object")
     return requirement_ids, acceptance_ids, acceptance_links
+
+
+def _validate_pdc(
+    pdc: dict[str, Any],
+) -> tuple[tuple[str, ...], tuple[str, ...], dict[str, frozenset[str]]]:
+    """Validate the supported PDC v1 boundary without interpreting product prose.
+
+    These field shapes mirror the upstream product_decision_contract schema.
+    Extensions remain byte-bound; executable semantics belong to PEOS.
+    """
+    if type(pdc.get("contract_version")) is not int or pdc["contract_version"] != 1:
+        raise PilotError("PDC contract_version must be integer 1")
+    if pdc.get("contract_status") != "APPROVED":
+        raise PilotError("PDC contract_status must be APPROVED")
+    for field in (
+        "contract_id", "approved_at", "approved_by", "source_digest", "product_name",
+        "problem", "target_user", "desired_outcome", "north_star_metric",
+    ):
+        _non_empty(pdc.get(field), f"PDC {field}")
+    if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", pdc["contract_id"]) is None:
+        raise PilotError("PDC contract_id is unsafe or unbounded")
+    if len(pdc["problem"]) < 10:
+        raise PilotError("PDC problem must contain at least 10 characters")
+    for field in (
+        "scope", "out_of_scope", "golden_cases", "leading_metrics", "guardrails",
+    ):
+        value = pdc.get(field)
+        if not isinstance(value, list) or not all(isinstance(item, str) for item in value):
+            raise PilotError(f"PDC {field} must be a string list")
+        if field == "scope" and not value:
+            raise PilotError("PDC scope must be non-empty")
+        if field in ("scope", "out_of_scope"):
+            for index, item in enumerate(value):
+                _non_empty(item, f"PDC {field}[{index}]")
+
+    collections = {
+        "functional_requirements": (("id", "title"), ("description", "capability", "entity")),
+        "acceptance_criteria": (("id", "requirement", "criterion"), ()),
+        "binary_release_gates": (("id", "description"), ()),
+        "scored_eval_rubric": (("id", "criterion"), ("scale",)),
+        "non_functional_requirements": (("id", "category", "requirement"), ()),
+        "known_risks": (("description",), ("level",)),
+        "approved_product_decisions": (("id", "decision"), ()),
+        "unresolved_questions": (("id", "question"), ("resolution",)),
+        "required_approvals": (("role", "for"), ()),
+    }
+    for field, (required, optional) in collections.items():
+        rows = pdc.get(field)
+        if not isinstance(rows, list):
+            raise PilotError(f"PDC {field} must be a list")
+        if field in ("functional_requirements", "acceptance_criteria", "binary_release_gates") and not rows:
+            raise PilotError(f"PDC {field} must be non-empty")
+        ids: set[str] = set()
+        for index, row in enumerate(rows):
+            label = f"PDC {field}[{index}]"
+            if not isinstance(row, dict):
+                raise PilotError(f"{label} must be an object")
+            for key in required:
+                _non_empty(row.get(key), f"{label}.{key}")
+            for key in optional:
+                if key in row and not isinstance(row[key], str):
+                    raise PilotError(f"{label}.{key} must be a string")
+            if "id" in required:
+                if row["id"] in ids:
+                    raise PilotError(f"PDC {field} contains duplicate stable identifiers")
+                ids.add(row["id"])
+            if field == "known_risks" and "level" in row and row["level"] not in ("low", "medium", "high"):
+                raise PilotError(f"{label}.level must be low, medium, or high")
+            if field == "unresolved_questions":
+                if type(row.get("product_critical")) is not bool:
+                    raise PilotError(f"{label}.product_critical must be boolean")
+                if row["product_critical"] and not row.get("resolution", "").strip():
+                    raise PilotError(f"{label} is an unresolved product-critical question")
+
+    requirements = tuple(row["id"] for row in pdc["functional_requirements"])
+    acceptance = tuple(row["id"] for row in pdc["acceptance_criteria"])
+    links: dict[str, frozenset[str]] = {}
+    for row in pdc["acceptance_criteria"]:
+        if row["requirement"] not in requirements:
+            raise PilotError(f"PDC acceptance criterion {row['id']} references an unknown requirement")
+        links[row["id"]] = frozenset((row["requirement"],))
+    if set().union(*links.values()) != set(requirements):
+        raise PilotError("PDC acceptance criteria do not link every requirement")
+    for row in pdc["binary_release_gates"]:
+        if "acceptance_criterion_refs" not in row:
+            continue
+        refs = row["acceptance_criterion_refs"]
+        if (
+            not isinstance(refs, list)
+            or not refs
+            or not all(isinstance(ref, str) for ref in refs)
+            or len(refs) != len(set(refs))
+            or not set(refs) <= set(acceptance)
+        ):
+            raise PilotError(f"PDC release gate {row['id']} has invalid acceptance_criterion_refs")
+    return requirements, acceptance, links
+
+
+def _validate_pmos(
+    pmos: dict[str, Any], product_id: str
+) -> tuple[tuple[str, ...], tuple[str, ...], dict[str, frozenset[str]]]:
+    pdc_fields = {"contract_version", "contract_status", "functional_requirements"}
+    legacy_fields = {"schema_version", "decision", "requirements", "accountable_approver"}
+    if pdc_fields.intersection(pmos):
+        if legacy_fields.intersection(pmos):
+            raise PilotError("source contract mixes PDC and legacy synthetic pilot dialects")
+        return _validate_pdc(pmos)
+    return _validate_legacy_pilot(pmos, product_id)
+
+
+def _source_identity(pmos: dict[str, Any]) -> dict[str, Any]:
+    """Keep source identity distinct from the configured engineering product ID."""
+    if "contract_version" in pmos:
+        return {
+            "dialect": "product-decision-contract-v1",
+            "contract_id": pmos["contract_id"],
+            "contract_version": pmos["contract_version"],
+            "approval_status": pmos["contract_status"],
+            "source_digest": pmos["source_digest"],
+        }
+    return {
+        "dialect": "legacy-synthetic-pilot-v1",
+        "contract_id": pmos["contract_id"],
+        "contract_version": pmos["version"],
+        "approval_status": pmos["decision"],
+    }
+
+
+def _source_version(pmos: dict[str, Any]) -> str:
+    # The verifier's run provenance schema uses string versions; source_identity
+    # retains the native integer contract_version for PDCs.
+    return str(_source_identity(pmos)["contract_version"])
 
 
 def _validate_traceability(
@@ -574,10 +715,11 @@ def _expected_package(
                 "id": pmos["contract_id"],
                 "path": path_values["pmos_contract"],
                 "sha256": _sha256(paths["pmos_contract"]),
-                "version": pmos["version"],
+                "version": _source_version(pmos),
             },
         },
-        "decision": pmos["decision"],
+        "decision": _source_identity(pmos)["approval_status"],
+        "source_contract": _source_identity(pmos),
         "package_id": f"{product['id']}-portable-package",
         "pilot_config": {
             "path": "pilot.json",
@@ -832,7 +974,7 @@ def bind_pilot(
             "path": config["paths"]["pmos_contract"],
             "role": "pmos",
             "sha256": _sha256(paths["pmos_contract"]),
-            "version": pmos["version"],
+            "version": _source_version(pmos),
         },
         {
             "id": engineering["contract_id"],
@@ -850,7 +992,7 @@ def bind_pilot(
     run["prompt"] = {
         "id": pmos["contract_id"],
         "sha256": _sha256(paths["pmos_contract"]),
-        "version": pmos["version"],
+        "version": _source_version(pmos),
     }
     run["run_id"] = f"{product_id}-{candidate_sha[:12]}"
     run["tools"] = [
@@ -992,7 +1134,7 @@ def _verify_pilot(
             "path": config["paths"]["pmos_contract"],
             "role": "pmos",
             "sha256": _sha256(paths["pmos_contract"]),
-            "version": pmos["version"],
+            "version": _source_version(pmos),
         },
         {
             "id": engineering["contract_id"],
@@ -1007,7 +1149,7 @@ def _verify_pilot(
     expected_prompt = {
         "id": pmos["contract_id"],
         "sha256": _sha256(paths["pmos_contract"]),
-        "version": pmos["version"],
+        "version": _source_version(pmos),
     }
     if run.get("prompt") != expected_prompt:
         raise PilotError("run prompt binding does not match PMOS")
@@ -1077,7 +1219,8 @@ def _verify_pilot(
     return {
         **counts,
         "candidate_sha256": candidate_sha,
-        "decision": pmos["decision"],
+        "decision": _source_identity(pmos)["approval_status"],
+        "source_contract": _source_identity(pmos),
         "product_id": config["product"]["id"],
         "status": "VERIFIED" if verified else "BOUND",
         "template_id": config["template_id"],

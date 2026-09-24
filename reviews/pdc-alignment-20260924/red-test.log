@@ -1,0 +1,96 @@
+test_bind_invalidates_stale_synthetic_evidence_without_relabeling (test_repository_pilot.RepositoryPilotTest.test_bind_invalidates_stale_synthetic_evidence_without_relabeling) ... ok
+test_bind_is_idempotent_and_produces_a_valid_runtime_project (test_repository_pilot.RepositoryPilotTest.test_bind_is_idempotent_and_produces_a_valid_runtime_project) ... ok
+test_bind_rejects_a_managed_path_that_aliases_pilot_config (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_a_managed_path_that_aliases_pilot_config) ... ok
+test_bind_rejects_a_referenced_case_without_its_fr_ac_relationship (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_a_referenced_case_without_its_fr_ac_relationship) ... ok
+test_bind_rejects_candidate_aliases_before_writing (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_candidate_aliases_before_writing) ... ok
+test_bind_rejects_hardlinked_managed_paths_before_writing (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_hardlinked_managed_paths_before_writing) ... ok
+test_bind_rejects_managed_path_aliases_before_writing (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_managed_path_aliases_before_writing) ... ok
+test_bind_rejects_swapped_acceptance_relationships (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_swapped_acceptance_relationships) ... ok
+test_bind_rejects_unapproved_or_ambiguous_product_intent (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_unapproved_or_ambiguous_product_intent) ... ok
+test_candidate_and_adapter_can_live_in_different_repository_paths (test_repository_pilot.RepositoryPilotTest.test_candidate_and_adapter_can_live_in_different_repository_paths) ... ok
+test_candidate_paths_must_stay_inside_the_selected_repository (test_repository_pilot.RepositoryPilotTest.test_candidate_paths_must_stay_inside_the_selected_repository) ... ok
+test_ci_example_runs_chain_verification_before_execution (test_repository_pilot.RepositoryPilotTest.test_ci_example_runs_chain_verification_before_execution) ... ok
+test_create_copies_only_the_customer_support_pilot_and_never_overwrites (test_repository_pilot.RepositoryPilotTest.test_create_copies_only_the_customer_support_pilot_and_never_overwrites) ... ok
+test_harness_owned_paths_cannot_be_reconfigured (test_repository_pilot.RepositoryPilotTest.test_harness_owned_paths_cannot_be_reconfigured) ... ok
+test_pdc_approved_intent_tampering_invalidates_bound_evidence (test_repository_pilot.RepositoryPilotTest.test_pdc_approved_intent_tampering_invalidates_bound_evidence) ... ERROR
+test_pdc_bad_shape_fails_before_any_binding_write (test_repository_pilot.RepositoryPilotTest.test_pdc_bad_shape_fails_before_any_binding_write) ... ok
+test_pdc_bind_preserves_source_identity_and_standalone_evaluation (test_repository_pilot.RepositoryPilotTest.test_pdc_bind_preserves_source_identity_and_standalone_evaluation) ... ERROR
+test_pdc_gate_refs_are_optional_but_must_name_existing_criteria (test_repository_pilot.RepositoryPilotTest.test_pdc_gate_refs_are_optional_but_must_name_existing_criteria) ... ERROR
+test_pdc_loader_rejects_duplicate_approval_keys (test_repository_pilot.RepositoryPilotTest.test_pdc_loader_rejects_duplicate_approval_keys) ... FAIL
+test_pdc_rejects_missing_required_fields_and_malformed_shapes (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_missing_required_fields_and_malformed_shapes) ... ok
+test_real_pmos_pdc_v1_maps_exact_source_ids (test_repository_pilot.RepositoryPilotTest.test_real_pmos_pdc_v1_maps_exact_source_ids) ... ERROR
+test_verify_rejects_semantic_trial_tampering_with_preserved_run_ids (test_repository_pilot.RepositoryPilotTest.test_verify_rejects_semantic_trial_tampering_with_preserved_run_ids) ... ok
+test_verify_rejects_tampering_at_every_bound_boundary (test_repository_pilot.RepositoryPilotTest.test_verify_rejects_tampering_at_every_bound_boundary) ... ok
+test_verify_requires_complete_case_and_grader_traceability (test_repository_pilot.RepositoryPilotTest.test_verify_requires_complete_case_and_grader_traceability) ... ok
+
+======================================================================
+ERROR: test_pdc_approved_intent_tampering_invalidates_bound_evidence (test_repository_pilot.RepositoryPilotTest.test_pdc_approved_intent_tampering_invalidates_bound_evidence)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/tests/eval-engine/test_repository_pilot.py", line 491, in test_pdc_approved_intent_tampering_invalidates_bound_evidence
+    pilot.bind_pilot(self.project)
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 759, in bind_pilot
+    ) = _load_context(
+        ^^^^^^^^^^^^^^
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 628, in _load_context
+    requirements, acceptance, acceptance_links = _validate_pmos(pmos, product_id)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 349, in _validate_pmos
+    raise PilotError("PMOS contract schema_version must be '1.0'")
+repository_pilot.PilotError: PMOS contract schema_version must be '1.0'
+
+======================================================================
+ERROR: test_pdc_bind_preserves_source_identity_and_standalone_evaluation (test_repository_pilot.RepositoryPilotTest.test_pdc_bind_preserves_source_identity_and_standalone_evaluation)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/tests/eval-engine/test_repository_pilot.py", line 409, in test_pdc_bind_preserves_source_identity_and_standalone_evaluation
+    summary = pilot.bind_pilot(self.project)
+              ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 759, in bind_pilot
+    ) = _load_context(
+        ^^^^^^^^^^^^^^
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 628, in _load_context
+    requirements, acceptance, acceptance_links = _validate_pmos(pmos, product_id)
+                                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 349, in _validate_pmos
+    raise PilotError("PMOS contract schema_version must be '1.0'")
+repository_pilot.PilotError: PMOS contract schema_version must be '1.0'
+
+======================================================================
+ERROR: test_pdc_gate_refs_are_optional_but_must_name_existing_criteria (test_repository_pilot.RepositoryPilotTest.test_pdc_gate_refs_are_optional_but_must_name_existing_criteria)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/tests/eval-engine/test_repository_pilot.py", line 470, in test_pdc_gate_refs_are_optional_but_must_name_existing_criteria
+    pilot._validate_pmos(pdc, "runtime-product")
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 349, in _validate_pmos
+    raise PilotError("PMOS contract schema_version must be '1.0'")
+repository_pilot.PilotError: PMOS contract schema_version must be '1.0'
+
+======================================================================
+ERROR: test_real_pmos_pdc_v1_maps_exact_source_ids (test_repository_pilot.RepositoryPilotTest.test_real_pmos_pdc_v1_maps_exact_source_ids)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/tests/eval-engine/test_repository_pilot.py", line 401, in test_real_pmos_pdc_v1_maps_exact_source_ids
+    pilot._validate_pmos(contract, "a-separate-runtime-product-id"),
+    ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/pm-verifier/skills/eval-engine/examples/complete-eval/tools/repository_pilot.py", line 349, in _validate_pmos
+    raise PilotError("PMOS contract schema_version must be '1.0'")
+repository_pilot.PilotError: PMOS contract schema_version must be '1.0'
+
+======================================================================
+FAIL: test_pdc_loader_rejects_duplicate_approval_keys (test_repository_pilot.RepositoryPilotTest.test_pdc_loader_rejects_duplicate_approval_keys)
+----------------------------------------------------------------------
+repository_pilot.PilotError: PMOS contract schema_version must be '1.0'
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/integration-20260924/aipm-contract/tests/eval-engine/test_repository_pilot.py", line 512, in test_pdc_loader_rejects_duplicate_approval_keys
+    with self.assertRaisesRegex(pilot.PilotError, "duplicate JSON object key"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: "duplicate JSON object key" does not match "PMOS contract schema_version must be '1.0'"
+
+----------------------------------------------------------------------
+Ran 24 tests in 0.481s
+
+FAILED (failures=1, errors=4)

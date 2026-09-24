@@ -1,0 +1,100 @@
+{
+  "acceptance_criteria": [
+    {
+      "criterion": "Given a running service, the health action returns status ok.",
+      "given": [
+        {
+          "operator": "eq",
+          "path": "service.running",
+          "value": true
+        }
+      ],
+      "id": "AC-001",
+      "requirement": "FR-001",
+      "then": [
+        {
+          "operator": "eq",
+          "path": "result.status",
+          "value": "ok"
+        }
+      ],
+      "when": {
+        "action": "health",
+        "arguments": {}
+      }
+    }
+  ],
+  "approved_at": "2026-08-23T00:00:00Z",
+  "approved_by": "fixture-human",
+  "approved_product_decisions": [
+    {
+      "decision": "The first proof is connector-free and local.",
+      "id": "APD-001"
+    }
+  ],
+  "binary_release_gates": [
+    {
+      "description": "All executable acceptance criteria pass.",
+      "id": "GATE-001"
+    }
+  ],
+  "contract_id": "PMOS-E1-HEALTH",
+  "contract_status": "APPROVED",
+  "contract_version": 1,
+  "desired_outcome": "An operator can verify that the service is alive with one call.",
+  "functional_requirements": [
+    {
+      "capability": "health.check",
+      "description": "The local service reports an OK health status.",
+      "id": "FR-001",
+      "title": "Report service health"
+    }
+  ],
+  "golden_cases": [
+    "A running service returns status ok."
+  ],
+  "guardrails": [
+    "No network or deployment action occurs during contract authoring."
+  ],
+  "known_risks": [
+    {
+      "description": "A process health check does not prove external dependency health.",
+      "level": "low"
+    }
+  ],
+  "leading_metrics": [
+    "First-pass contract acceptance rate"
+  ],
+  "non_functional_requirements": [
+    {
+      "category": "reliability",
+      "id": "NFR-001",
+      "requirement": "The local health result is deterministic."
+    }
+  ],
+  "north_star_metric": "Percentage of service checks that correctly identify availability.",
+  "out_of_scope": [
+    "Cloud deployment"
+  ],
+  "problem": "Operators need a deterministic heartbeat before relying on a service.",
+  "product_name": "Pinger",
+  "required_approvals": [
+    {
+      "for": "release",
+      "role": "product-owner"
+    }
+  ],
+  "scope": [
+    "Local health behavior"
+  ],
+  "scored_eval_rubric": [
+    {
+      "criterion": "The result is unambiguous.",
+      "id": "RUB-001",
+      "scale": "1-5"
+    }
+  ],
+  "source_digest": "sha256:37eb8f219a2f090be578d1289ae5ef82ea5ad124754d6fcfca4aa5289e82c23d",
+  "target_user": "Operators monitoring small self-hosted services.",
+  "unresolved_questions": []
+}
