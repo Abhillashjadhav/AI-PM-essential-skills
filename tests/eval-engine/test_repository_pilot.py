@@ -358,6 +358,160 @@ class RepositoryPilotTest(unittest.TestCase):
         self.assertIn("1511156a38d14c162ee7c0e92b14d16e43144f47", workflow)
         self.assertIn("actions/upload-artifact@", workflow)
 
+    def _real_pdc(self) -> dict:
+        return json.loads(
+            (ROOT / "tests/eval-engine/fixtures/pmos-pdc-v1.json").read_text(encoding="utf-8")
+        )
+
+    def _use_support_pdc(self) -> dict:
+        # The unmodified cross-repo health fixture is tested separately. This
+        # synthetic PDC maps the existing support intent without changing it.
+        legacy = self._load("contracts/pmos-contract.json")
+        pdc = self._real_pdc()
+        pdc.update({
+            "contract_id": "synthetic-support-pdc",
+            "product_name": "Synthetic support agent",
+            "problem": legacy["customer_problem"],
+            "target_user": legacy["target_user"],
+            "desired_outcome": legacy["expected_ai_outcome"],
+            "scope": legacy["scope"]["v1"],
+            "out_of_scope": legacy["scope"]["out_of_scope"],
+            "functional_requirements": [
+                {"id": row["id"], "title": row["intent"]}
+                for row in legacy["requirements"]
+            ],
+            "acceptance_criteria": [
+                {"id": row["id"], "criterion": row["intent"], "requirement": row["requirement_ids"][0]}
+                for row in legacy["acceptance_criteria"]
+            ],
+        })
+        self._write("contracts/pmos-contract.json", pdc)
+        return pdc
+
+    def test_real_pmos_pdc_v1_maps_exact_source_ids(self) -> None:
+        fixture = ROOT / "tests/eval-engine/fixtures/pmos-pdc-v1.json"
+        import hashlib
+        self.assertEqual(
+            hashlib.sha256(fixture.read_bytes()).hexdigest(),
+            "0339adbc2c54acf58646ecbdd2e76d53e659e4c0999a19706ed81506ca4797d7",
+        )
+        contract = self._real_pdc()
+        before = json.dumps(contract, sort_keys=True)
+        self.assertEqual(
+            pilot._validate_pmos(contract, "a-separate-runtime-product-id"),
+            (("FR-001",), ("AC-001",), {"AC-001": frozenset({"FR-001"})}),
+        )
+        self.assertEqual(json.dumps(contract, sort_keys=True), before)
+
+    def test_pdc_bind_preserves_source_identity_and_standalone_evaluation(self) -> None:
+        pdc = self._use_support_pdc()
+        before = (self.project / "contracts/pmos-contract.json").read_bytes()
+        summary = pilot.bind_pilot(self.project)
+        self.assertEqual(summary["status"], "BOUND")
+        self.assertEqual(summary["decision"], "APPROVED")
+        identity = summary["source_contract"]
+        self.assertEqual(identity["dialect"], "product-decision-contract-v1")
+        self.assertEqual(identity["contract_id"], pdc["contract_id"])
+        self.assertEqual(identity["contract_version"], 1)
+        self.assertNotEqual(summary["product_id"], pdc["product_name"])
+        self.assertEqual(self._load("product-package.json")["source_contract"], identity)
+        self.assertEqual(self._load("run.json")["contract_lineage"][0]["version"], "1")
+        self.assertEqual(
+            (self.project / "contracts/pmos-contract.json").read_bytes(), before
+        )
+        self.assertEqual(execute_trials(
+            self.project, [sys.executable, str(self.project / "reference_adapter.py")],
+            self.project / "trials.jsonl", timeout_seconds=5,
+        ), [])
+        self.assertEqual(pilot.bind_pilot(self.project)["status"], "VERIFIED")
+        self.assertEqual(pilot.verify_pilot(self.project)["status"], "VERIFIED")
+        self.assertEqual(evaluate_project(self.project)["decision"], "PASS")
+
+    def test_pdc_rejects_missing_required_fields_and_malformed_shapes(self) -> None:
+        pdc = self._real_pdc()
+        for field in pdc:
+            with self.subTest(missing=field):
+                value = json.loads(json.dumps(pdc))
+                del value[field]
+                with self.assertRaises(pilot.PilotError):
+                    pilot._validate_pmos(value, "runtime-product")
+        mutations = (
+            lambda p: p.update(contract_version=True),
+            lambda p: p.update(contract_version=1.0),
+            lambda p: p.update(contract_version=2),
+            lambda p: p.update(contract_status="DRAFT"),
+            lambda p: p.update(approved_by=" "),
+            lambda p: p.update(approved_at=""),
+            lambda p: p.update(guardrails={}),
+            lambda p: p.update(functional_requirements=[]),
+            lambda p: p["functional_requirements"].append(p["functional_requirements"][0]),
+            lambda p: p["acceptance_criteria"].append(p["acceptance_criteria"][0]),
+            lambda p: p["acceptance_criteria"][0].update(requirement="FR-UNKNOWN"),
+            lambda p: p["acceptance_criteria"][0].update(criterion=[]),
+            lambda p: p["functional_requirements"][0].update(capability=1),
+            lambda p: p["known_risks"][0].update(level="unknown"),
+            lambda p: p.update(schema_version="1.0", decision="GO"),
+            lambda p: p.update(unresolved_questions=[{
+                "id": "Q-001", "question": "Which policy?", "product_critical": True,
+            }]),
+            lambda p: p.update(unresolved_questions=[{
+                "id": "Q-001", "question": "Which policy?", "product_critical": 1,
+            }]),
+        )
+        for mutate in mutations:
+            with self.subTest(line=mutate.__code__.co_firstlineno):
+                value = json.loads(json.dumps(pdc))
+                mutate(value)
+                with self.assertRaises(pilot.PilotError):
+                    pilot._validate_pmos(value, "runtime-product")
+
+    def test_pdc_gate_refs_are_optional_but_must_name_existing_criteria(self) -> None:
+        pdc = self._real_pdc()
+        pilot._validate_pmos(pdc, "runtime-product")
+        pdc["binary_release_gates"][0]["acceptance_criterion_refs"] = ["AC-001"]
+        pilot._validate_pmos(pdc, "runtime-product")
+        for refs in ([], ["AC-UNKNOWN"], ["AC-001", "AC-001"], "AC-001", [True], [{}]):
+            with self.subTest(refs=refs):
+                pdc["binary_release_gates"][0]["acceptance_criterion_refs"] = refs
+                with self.assertRaises(pilot.PilotError):
+                    pilot._validate_pmos(pdc, "runtime-product")
+
+    def test_pdc_bad_shape_fails_before_any_binding_write(self) -> None:
+        self._use_support_pdc()
+        pdc = self._load("contracts/pmos-contract.json")
+        pdc["acceptance_criteria"][0]["requirement"] = "FR-UNKNOWN"
+        self._write("contracts/pmos-contract.json", pdc)
+        before = self._snapshot()
+        with self.assertRaises(pilot.PilotError):
+            pilot.bind_pilot(self.project)
+        self.assertEqual(self._snapshot(), before)
+
+    def test_pdc_approved_intent_tampering_invalidates_bound_evidence(self) -> None:
+        original = self._use_support_pdc()
+        pilot.bind_pilot(self.project)
+        mutations = (
+            lambda p: p["functional_requirements"][0].update(title="Unapproved replacement intent"),
+            lambda p: p["acceptance_criteria"][0].update(criterion="Unapproved acceptance"),
+            lambda p: p["binary_release_gates"][0].update(description="Unapproved release gate"),
+            lambda p: p.update(approved_by="different-approver"),
+            lambda p: p.update(source_digest="sha256:" + "0" * 64),
+        )
+        for mutate in mutations:
+            with self.subTest(line=mutate.__code__.co_firstlineno):
+                pdc = json.loads(json.dumps(original))
+                mutate(pdc)
+                self._write("contracts/pmos-contract.json", pdc)
+                with self.assertRaisesRegex(pilot.PilotError, "binding does not match its artifact"):
+                    pilot.verify_pilot(self.project)
+        self._write("contracts/pmos-contract.json", original)
+        self.assertEqual(pilot.bind_pilot(self.project)["status"], "BOUND")
+
+    def test_pdc_loader_rejects_duplicate_approval_keys(self) -> None:
+        path = self.project / "contracts/pmos-contract.json"
+        path.write_text('{"contract_status":"APPROVED","contract_status":"DRAFT"}')
+        with self.assertRaisesRegex(pilot.PilotError, "duplicate JSON object key"):
+            pilot.bind_pilot(self.project)
+
 
 if __name__ == "__main__":
     unittest.main()
