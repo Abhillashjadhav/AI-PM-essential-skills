@@ -1,0 +1,141 @@
+test_bind_invalidates_stale_synthetic_evidence_without_relabeling (test_repository_pilot.RepositoryPilotTest.test_bind_invalidates_stale_synthetic_evidence_without_relabeling) ... ok
+test_bind_is_idempotent_and_produces_a_valid_runtime_project (test_repository_pilot.RepositoryPilotTest.test_bind_is_idempotent_and_produces_a_valid_runtime_project) ... ok
+test_bind_rejects_a_managed_path_that_aliases_pilot_config (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_a_managed_path_that_aliases_pilot_config) ... ok
+test_bind_rejects_a_referenced_case_without_its_fr_ac_relationship (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_a_referenced_case_without_its_fr_ac_relationship) ... ok
+test_bind_rejects_candidate_aliases_before_writing (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_candidate_aliases_before_writing) ... ok
+test_bind_rejects_hardlinked_managed_paths_before_writing (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_hardlinked_managed_paths_before_writing) ... ok
+test_bind_rejects_managed_path_aliases_before_writing (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_managed_path_aliases_before_writing) ... ok
+test_bind_rejects_swapped_acceptance_relationships (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_swapped_acceptance_relationships) ... ok
+test_bind_rejects_unapproved_or_ambiguous_product_intent (test_repository_pilot.RepositoryPilotTest.test_bind_rejects_unapproved_or_ambiguous_product_intent) ... ok
+test_candidate_and_adapter_can_live_in_different_repository_paths (test_repository_pilot.RepositoryPilotTest.test_candidate_and_adapter_can_live_in_different_repository_paths) ... ok
+test_candidate_paths_must_stay_inside_the_selected_repository (test_repository_pilot.RepositoryPilotTest.test_candidate_paths_must_stay_inside_the_selected_repository) ... ok
+test_ci_example_runs_chain_verification_before_execution (test_repository_pilot.RepositoryPilotTest.test_ci_example_runs_chain_verification_before_execution) ... ok
+test_create_copies_only_the_customer_support_pilot_and_never_overwrites (test_repository_pilot.RepositoryPilotTest.test_create_copies_only_the_customer_support_pilot_and_never_overwrites) ... ok
+test_harness_owned_paths_cannot_be_reconfigured (test_repository_pilot.RepositoryPilotTest.test_harness_owned_paths_cannot_be_reconfigured) ... ok
+test_legacy_approval_is_also_explicitly_unverified (test_repository_pilot.RepositoryPilotTest.test_legacy_approval_is_also_explicitly_unverified) ... ERROR
+test_pdc_approved_intent_tampering_invalidates_bound_evidence (test_repository_pilot.RepositoryPilotTest.test_pdc_approved_intent_tampering_invalidates_bound_evidence) ... ok
+test_pdc_bad_shape_fails_before_any_binding_write (test_repository_pilot.RepositoryPilotTest.test_pdc_bad_shape_fails_before_any_binding_write) ... ok
+test_pdc_bind_preserves_source_identity_and_standalone_evaluation (test_repository_pilot.RepositoryPilotTest.test_pdc_bind_preserves_source_identity_and_standalone_evaluation) ... ok
+test_pdc_gate_refs_are_optional_but_must_name_existing_criteria (test_repository_pilot.RepositoryPilotTest.test_pdc_gate_refs_are_optional_but_must_name_existing_criteria) ... ok
+test_pdc_loader_rejects_duplicate_approval_keys (test_repository_pilot.RepositoryPilotTest.test_pdc_loader_rejects_duplicate_approval_keys) ... ok
+test_pdc_provenance_is_explicitly_unverified_even_for_fabricated_claims (test_repository_pilot.RepositoryPilotTest.test_pdc_provenance_is_explicitly_unverified_even_for_fabricated_claims) ... ERROR
+test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) ... 
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='unverified-provenance') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:no') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='SHA256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n') ... FAIL
+  test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest=' sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa') ... FAIL
+test_pdc_rejects_missing_required_fields_and_malformed_shapes (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_missing_required_fields_and_malformed_shapes) ... ok
+test_pdc_verification_labels_cannot_be_promoted_or_type_aliased (test_repository_pilot.RepositoryPilotTest.test_pdc_verification_labels_cannot_be_promoted_or_type_aliased) ... ok
+test_real_pmos_pdc_v1_maps_exact_source_ids (test_repository_pilot.RepositoryPilotTest.test_real_pmos_pdc_v1_maps_exact_source_ids) ... ok
+test_verify_rejects_semantic_trial_tampering_with_preserved_run_ids (test_repository_pilot.RepositoryPilotTest.test_verify_rejects_semantic_trial_tampering_with_preserved_run_ids) ... ok
+test_verify_rejects_tampering_at_every_bound_boundary (test_repository_pilot.RepositoryPilotTest.test_verify_rejects_tampering_at_every_bound_boundary) ... ok
+test_verify_requires_complete_case_and_grader_traceability (test_repository_pilot.RepositoryPilotTest.test_verify_requires_complete_case_and_grader_traceability) ... ok
+
+======================================================================
+ERROR: test_legacy_approval_is_also_explicitly_unverified (test_repository_pilot.RepositoryPilotTest.test_legacy_approval_is_also_explicitly_unverified)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 577, in test_legacy_approval_is_also_explicitly_unverified
+    self.assertIs(result["source_contract"]["approval_verified"], False)
+                  ~~~~~~~~~~~~~~~~~~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'approval_verified'
+
+======================================================================
+ERROR: test_pdc_provenance_is_explicitly_unverified_even_for_fabricated_claims (test_repository_pilot.RepositoryPilotTest.test_pdc_provenance_is_explicitly_unverified_even_for_fabricated_claims)
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 548, in test_pdc_provenance_is_explicitly_unverified_even_for_fabricated_claims
+    self.assertIs(identity["approval_verified"], False)
+                  ~~~~~~~~^^^^^^^^^^^^^^^^^^^^^
+KeyError: 'approval_verified'
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='unverified-provenance')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:no')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='SHA256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:gggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggggg')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest='sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa\n')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+======================================================================
+FAIL: test_pdc_rejects_malformed_source_digest_before_any_write (test_repository_pilot.RepositoryPilotTest.test_pdc_rejects_malformed_source_digest_before_any_write) (digest=' sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa')
+----------------------------------------------------------------------
+Traceback (most recent call last):
+  File "/workspace/scratch/f9ac546f3a50/r3-20260924/aipm/tests/eval-engine/test_repository_pilot.py", line 528, in test_pdc_rejects_malformed_source_digest_before_any_write
+    with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+AssertionError: PilotError not raised
+
+----------------------------------------------------------------------
+Ran 28 tests in 0.756s
+
+FAILED (failures=9, errors=2)

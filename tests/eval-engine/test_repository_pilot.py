@@ -512,6 +512,74 @@ class RepositoryPilotTest(unittest.TestCase):
         with self.assertRaisesRegex(pilot.PilotError, "duplicate JSON object key"):
             pilot.bind_pilot(self.project)
 
+    def test_pdc_rejects_malformed_source_digest_before_any_write(self) -> None:
+        contract = self._use_support_pdc()
+        invalid = (
+            "unverified-provenance", "sha256:no", "SHA256:" + "a" * 64,
+            "sha256:" + "A" * 64, "sha256:" + "a" * 63,
+            "sha256:" + "a" * 65, "sha256:" + "g" * 64,
+            "sha256:" + "a" * 64 + "\n", " sha256:" + "a" * 64,
+        )
+        for digest in invalid:
+            with self.subTest(digest=digest):
+                contract["source_digest"] = digest
+                self._write("contracts/pmos-contract.json", contract)
+                before = self._snapshot()
+                with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+                    pilot.bind_pilot(self.project)
+                self.assertEqual(self._snapshot(), before)
+
+    def test_pdc_provenance_is_explicitly_unverified_even_for_fabricated_claims(self) -> None:
+        import hashlib
+
+        contract = self._use_support_pdc()
+        contract.update({
+            "approved_by": "self-declared-approver",
+            "source_digest": "sha256:" + "0" * 64,
+            "approval_verified": True,
+            "source_digest_verification": "VERIFIED",
+        })
+        self._write("contracts/pmos-contract.json", contract)
+        source_bytes = (self.project / "contracts/pmos-contract.json").read_bytes()
+        result = pilot.bind_pilot(self.project)
+        identity = result["source_contract"]
+        self.assertEqual(result["status"], "BOUND")
+        self.assertEqual(identity["approval_status"], "APPROVED")
+        self.assertIs(identity["approval_verified"], False)
+        self.assertEqual(identity["source_digest_verification"], "FORMAT_ONLY")
+        self.assertEqual(identity["source_digest"], contract["source_digest"])
+        package = self._load("product-package.json")
+        self.assertEqual(package["source_contract"], identity)
+        raw_sha = package["contracts"]["pmos"]["sha256"]
+        self.assertEqual(raw_sha, hashlib.sha256(source_bytes).hexdigest())
+        self.assertNotEqual("sha256:" + raw_sha, identity["source_digest"])
+        self.assertEqual((self.project / "contracts/pmos-contract.json").read_bytes(), source_bytes)
+
+    def test_pdc_verification_labels_cannot_be_promoted_or_type_aliased(self) -> None:
+        self._use_support_pdc()
+        pilot.bind_pilot(self.project)
+        original = self._load("product-package.json")
+        for field, value in (
+            ("approval_verified", True), ("approval_verified", 0),
+            ("source_digest_verification", "VERIFIED"),
+        ):
+            with self.subTest(field=field, value=value):
+                package = json.loads(json.dumps(original))
+                package["source_contract"][field] = value
+                self._write("product-package.json", package)
+                with self.assertRaisesRegex(pilot.PilotError, "portable product package"):
+                    pilot.verify_pilot(self.project)
+
+    def test_legacy_approval_is_also_explicitly_unverified(self) -> None:
+        result = pilot.bind_pilot(self.project)
+        self.assertEqual(result["status"], "VERIFIED")
+        self.assertEqual(result["source_contract"]["approval_status"], "GO")
+        self.assertIs(result["source_contract"]["approval_verified"], False)
+        self.assertIs(
+            self._load("product-package.json")["source_contract"]["approval_verified"],
+            False,
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
