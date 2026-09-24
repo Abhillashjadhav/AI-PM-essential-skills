@@ -724,6 +724,7 @@ def _expected_package(
             },
         },
         "decision": _source_identity(pmos)["approval_status"],
+        "approval_verified": False,
         "source_contract": _source_identity(pmos),
         "package_id": f"{product['id']}-portable-package",
         "pilot_config": {
@@ -1200,7 +1201,7 @@ def _verify_pilot(
             trials_sha=_sha256(paths["trials"]),
             trial_count=len(trials),
         )
-        if receipt != expected_receipt:
+        if _canonical_json(receipt) != _canonical_json(expected_receipt):
             raise PilotError("evidence receipt does not seal the exact trial contents")
         verified = True
     elif status == "PENDING":
@@ -1212,7 +1213,7 @@ def _verify_pilot(
             trials_sha=None,
             trial_count=0,
         )
-        if receipt != expected_receipt:
+        if _canonical_json(receipt) != _canonical_json(expected_receipt):
             raise PilotError("pending evidence receipt does not match the exact run")
         if require_trials:
             raise PilotError(
@@ -1225,6 +1226,7 @@ def _verify_pilot(
         **counts,
         "candidate_sha256": candidate_sha,
         "decision": _source_identity(pmos)["approval_status"],
+        "approval_verified": False,
         "source_contract": _source_identity(pmos),
         "product_id": config["product"]["id"],
         "status": "VERIFIED" if verified else "BOUND",
