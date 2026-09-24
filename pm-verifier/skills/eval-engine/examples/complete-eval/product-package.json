@@ -3,6 +3,7 @@
     "path": "reference_adapter.py",
     "sha256": "0ba77dda08d396e01d8e46643e0fa05b592b3b4c1f17c24fd81041d41b49e290"
   },
+  "approval_verified": false,
   "automation": {
     "path": "ci/github-actions.yml",
     "sha256": "e0ac2366a056540af5e72d8f11510217882c2cc4a2f860b694ea9e8e8c42b872"
@@ -44,6 +45,7 @@
   "schema_version": "1.0",
   "source_contract": {
     "approval_status": "GO",
+    "approval_verified": false,
     "contract_id": "synthetic-support-decision",
     "contract_version": "1.0.0",
     "dialect": "legacy-synthetic-pilot-v1"
@@ -52,7 +54,7 @@
   "template_id": "customer-support-agent",
   "tooling": {
     "path": "tools/repository_pilot.py",
-    "sha256": "cd509e5d6e27bccb74cc2e4f7580fee6e5ab9adda077b64a44ad6a4f7305eac5"
+    "sha256": "c545f3a5693014ef773951fcd4e45b7a63757319c4739f3b888c6625b7441b0f"
   },
   "version": "1.0.0"
 }

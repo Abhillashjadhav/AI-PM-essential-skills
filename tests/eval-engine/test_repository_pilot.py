@@ -512,6 +512,130 @@ class RepositoryPilotTest(unittest.TestCase):
         with self.assertRaisesRegex(pilot.PilotError, "duplicate JSON object key"):
             pilot.bind_pilot(self.project)
 
+    def test_pdc_rejects_malformed_source_digest_before_any_write(self) -> None:
+        contract = self._use_support_pdc()
+        invalid = (
+            "unverified-provenance", "sha256:no", "SHA256:" + "a" * 64,
+            "sha256:" + "A" * 64, "sha256:" + "a" * 63,
+            "sha256:" + "a" * 65, "sha256:" + "g" * 64,
+            "sha256:" + "a" * 64 + "\n", " sha256:" + "a" * 64,
+        )
+        for digest in invalid:
+            with self.subTest(digest=digest):
+                contract["source_digest"] = digest
+                self._write("contracts/pmos-contract.json", contract)
+                before = self._snapshot()
+                with self.assertRaisesRegex(pilot.PilotError, "source_digest"):
+                    pilot.bind_pilot(self.project)
+                self.assertEqual(self._snapshot(), before)
+
+    def test_pdc_provenance_is_explicitly_unverified_even_for_fabricated_claims(self) -> None:
+        import hashlib
+
+        contract = self._use_support_pdc()
+        contract.update({
+            "approved_by": "self-declared-approver",
+            "source_digest": "sha256:" + "0" * 64,
+            "approval_verified": True,
+            "source_digest_verification": "VERIFIED",
+        })
+        self._write("contracts/pmos-contract.json", contract)
+        source_bytes = (self.project / "contracts/pmos-contract.json").read_bytes()
+        result = pilot.bind_pilot(self.project)
+        identity = result["source_contract"]
+        self.assertEqual(result["status"], "BOUND")
+        self.assertEqual(identity["approval_status"], "APPROVED")
+        self.assertIs(identity["approval_verified"], False)
+        self.assertEqual(identity["source_digest_verification"], "FORMAT_ONLY")
+        self.assertEqual(identity["source_digest"], contract["source_digest"])
+        package = self._load("product-package.json")
+        self.assertEqual(package["source_contract"], identity)
+        raw_sha = package["contracts"]["pmos"]["sha256"]
+        self.assertEqual(raw_sha, hashlib.sha256(source_bytes).hexdigest())
+        self.assertNotEqual("sha256:" + raw_sha, identity["source_digest"])
+        self.assertEqual((self.project / "contracts/pmos-contract.json").read_bytes(), source_bytes)
+
+    def test_pdc_verification_labels_cannot_be_promoted_or_type_aliased(self) -> None:
+        self._use_support_pdc()
+        pilot.bind_pilot(self.project)
+        original = self._load("product-package.json")
+        for field, value in (
+            ("approval_verified", True), ("approval_verified", 0),
+            ("source_digest_verification", "VERIFIED"),
+        ):
+            with self.subTest(field=field, value=value):
+                package = json.loads(json.dumps(original))
+                package["source_contract"][field] = value
+                self._write("product-package.json", package)
+                with self.assertRaisesRegex(pilot.PilotError, "portable product package"):
+                    pilot.verify_pilot(self.project)
+
+    def test_legacy_approval_is_also_explicitly_unverified(self) -> None:
+        result = pilot.bind_pilot(self.project)
+        self.assertEqual(result["status"], "VERIFIED")
+        self.assertEqual(result["source_contract"]["approval_status"], "GO")
+        self.assertIs(result["source_contract"]["approval_verified"], False)
+        self.assertIs(
+            self._load("product-package.json")["source_contract"]["approval_verified"],
+            False,
+        )
+
+    def test_top_level_approval_is_unverified_in_packages_and_pilot_reports(self) -> None:
+        created = self.root / "created-with-approval-qualifier"
+        reports = {
+            "legacy bind": pilot.bind_pilot(self.project),
+            "legacy verify": pilot.verify_pilot(self.project),
+            "legacy create": pilot.create_pilot(created),
+        }
+        packages = {"legacy": self._load("product-package.json")}
+        self._use_support_pdc()
+        reports["PDC pending bind"] = pilot.bind_pilot(self.project)
+        self.assertEqual(reports["PDC pending bind"]["status"], "BOUND")
+        self.assertEqual(execute_trials(
+            self.project, [sys.executable, str(self.project / "reference_adapter.py")],
+            self.project / "trials.jsonl", timeout_seconds=5,
+        ), [])
+        reports["PDC sealed bind"] = pilot.bind_pilot(self.project)
+        reports["PDC verify"] = pilot.verify_pilot(self.project)
+        packages["PDC"] = self._load("product-package.json")
+        for label, report in {**reports, **packages}.items():
+            with self.subTest(report=label):
+                self.assertIs(report.get("approval_verified"), False)
+                self.assertIs(report["source_contract"]["approval_verified"], False)
+                self.assertEqual(report["decision"], "APPROVED" if label.startswith("PDC") else "GO")
+
+    def test_sealed_receipt_rejects_float_trial_count_alias(self) -> None:
+        self.assertEqual(pilot.verify_pilot(self.project)["status"], "VERIFIED")
+        receipt = self._load("evidence-receipt.json")
+        original_count = receipt["trial_count"]
+        self.assertIs(type(original_count), int)
+        receipt["trial_count"] = float(original_count)
+        self._write("evidence-receipt.json", receipt)
+        with self.assertRaisesRegex(pilot.PilotError, "exact trial contents"):
+            pilot.verify_pilot(self.project)
+        receipt["trial_count"] = original_count
+        self._write("evidence-receipt.json", receipt)
+        self.assertEqual(pilot.verify_pilot(self.project)["status"], "VERIFIED")
+
+    def test_pending_receipt_rejects_float_and_boolean_zero_aliases(self) -> None:
+        self._use_support_pdc()
+        self.assertEqual(pilot.bind_pilot(self.project)["status"], "BOUND")
+        receipt = self._load("evidence-receipt.json")
+        self.assertIs(type(receipt["trial_count"]), int)
+        self.assertEqual(receipt["trial_count"], 0)
+        for count in (0.0, False):
+            with self.subTest(trial_count=count):
+                receipt["trial_count"] = count
+                self._write("evidence-receipt.json", receipt)
+                with self.assertRaisesRegex(pilot.PilotError, "pending evidence receipt"):
+                    pilot._verify_pilot(self.project, None, require_trials=False)
+        receipt["trial_count"] = 0
+        self._write("evidence-receipt.json", receipt)
+        self.assertEqual(
+            pilot._verify_pilot(self.project, None, require_trials=False)["status"],
+            "BOUND",
+        )
+
 
 if __name__ == "__main__":
     unittest.main()

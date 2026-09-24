@@ -1,0 +1,22 @@
+{
+  "finding": "F-R3-04",
+  "tested_implementation_commit": "566dea1107bb76e983e68f9cbcac013ce6b3d401",
+  "tested_implementation_tree": "3c705aa0ee98b352acd8cf69c5c993de41f61f01",
+  "tool_sha256": "b359c8299f068b78b3b0c878d61b28217dcee0d1db4c1028ec3374afcb8d59e3",
+  "pilot_tests": 28,
+  "full_verifier_tests": 105,
+  "all_tests_passed": true,
+  "repository_integrity": "PASS",
+  "skill_lint": "PASS",
+  "whitespace": "PASS",
+  "frozen_catalog_tree": "b6b4a23c9ccf749c3f1fa07224a0502c77e85ff1",
+  "frozen_catalog_unchanged": true,
+  "approval_authenticated": false,
+  "source_digest_validation": "FORMAT_ONLY",
+  "reexecuted_synthetic_trials": 4,
+  "retained_log_normalization": {
+    "red.log": "Trailing spaces/tabs stripped from complete original lines only; no lines removed.",
+    "original_red_log_sha256": "e5956d9ccc286c31fe04fb594230cbcb6065d9745180db752efa14f21e37a3af",
+    "original_red_log_commit": "ccd46fa92788d1b1f92fca842ef8b36bede29e81"
+  }
+}

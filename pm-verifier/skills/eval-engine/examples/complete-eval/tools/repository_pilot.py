@@ -420,6 +420,8 @@ def _validate_pdc(
         "problem", "target_user", "desired_outcome", "north_star_metric",
     ):
         _non_empty(pdc.get(field), f"PDC {field}")
+    if re.fullmatch(r"sha256:[0-9a-f]{64}", pdc["source_digest"]) is None:
+        raise PilotError("PDC source_digest must be sha256: followed by 64 lowercase hex characters")
     if re.fullmatch(r"[A-Za-z0-9][A-Za-z0-9._:-]{0,127}", pdc["contract_id"]) is None:
         raise PilotError("PDC contract_id is unsafe or unbounded")
     if len(pdc["problem"]) < 10:
@@ -519,13 +521,16 @@ def _source_identity(pmos: dict[str, Any]) -> dict[str, Any]:
             "contract_id": pmos["contract_id"],
             "contract_version": pmos["contract_version"],
             "approval_status": pmos["contract_status"],
+            "approval_verified": False,
             "source_digest": pmos["source_digest"],
+            "source_digest_verification": "FORMAT_ONLY",
         }
     return {
         "dialect": "legacy-synthetic-pilot-v1",
         "contract_id": pmos["contract_id"],
         "contract_version": pmos["version"],
         "approval_status": pmos["decision"],
+        "approval_verified": False,
     }
 
 
@@ -719,6 +724,7 @@ def _expected_package(
             },
         },
         "decision": _source_identity(pmos)["approval_status"],
+        "approval_verified": False,
         "source_contract": _source_identity(pmos),
         "package_id": f"{product['id']}-portable-package",
         "pilot_config": {
@@ -1105,7 +1111,7 @@ def _verify_pilot(
         project, config, paths, pmos, eval_contract, engineering, candidate_sha
     )
     package = _load_json(paths["portable_package"], "portable product package")
-    if package != expected_package:
+    if _canonical_json(package) != _canonical_json(expected_package):
         raise PilotError("portable product package does not match the bound artifacts")
 
     run = _load_json(paths["run"], "run")
@@ -1195,7 +1201,7 @@ def _verify_pilot(
             trials_sha=_sha256(paths["trials"]),
             trial_count=len(trials),
         )
-        if receipt != expected_receipt:
+        if _canonical_json(receipt) != _canonical_json(expected_receipt):
             raise PilotError("evidence receipt does not seal the exact trial contents")
         verified = True
     elif status == "PENDING":
@@ -1207,7 +1213,7 @@ def _verify_pilot(
             trials_sha=None,
             trial_count=0,
         )
-        if receipt != expected_receipt:
+        if _canonical_json(receipt) != _canonical_json(expected_receipt):
             raise PilotError("pending evidence receipt does not match the exact run")
         if require_trials:
             raise PilotError(
@@ -1220,6 +1226,7 @@ def _verify_pilot(
         **counts,
         "candidate_sha256": candidate_sha,
         "decision": _source_identity(pmos)["approval_status"],
+        "approval_verified": False,
         "source_contract": _source_identity(pmos),
         "product_id": config["product"]["id"],
         "status": "VERIFIED" if verified else "BOUND",
