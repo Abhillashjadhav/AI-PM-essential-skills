@@ -1,0 +1,7 @@
+# Authorized task: F-02 repository-pilot PDC alignment
+
+Repair the repository pilot's incompatibility with the real approved ProductDecisionContract v1 emitted by PMOS. Reproduce rejection of the unmodified PMOS health fixture before repair. Preserve standalone pm-verifier behavior and the legacy synthetic pilot dialect, with an explicit dialect label. Accept only supported, well-formed approved PDCs; bind actual requirement and acceptance IDs and their relationships. Bind the full source document and retain its actual contract identity without equating product_name with the separately configured product.id. Validate optional acceptance_criterion_refs on binary release gates without claiming that binding executes gates or authorizes release.
+
+Do not alter frozen PMOS contracts or gold, the catalog grader, approved product decisions, or paid/model execution. No production dependencies. Keep all work local for independent root review before any GitHub publication. Preserve repository-pilot anti-tampering, stale-evidence, and standalone verifier checks. Evidence must include the real cross-repository fixture positive, malformed/unapproved/unsupported source negatives, and approved-intent mutation rejection after binding.
+
+Source baseline: PR 57 head 3d5fb2b5ea200b93cccc7695e4d0258691fa5ac5, tree 3e9cdc2d01dd28d8022d13380b7d4209c335d587. Scope is engineering compatibility; no new product policy. Maximum two repair attempts per concrete failed gate.
