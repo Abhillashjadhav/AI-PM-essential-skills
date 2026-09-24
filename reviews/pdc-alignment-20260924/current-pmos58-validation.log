@@ -1,0 +1,3 @@
+CURRENT PMOS58: valid PDC accepted: 6 requirements, 14 criteria, 5 gate descriptions bound only.
+sha256: 41f93f23ca57cef11201fe685b18d66be882c122e5a3c7192e37e9018de0f0e2
+identity: {'dialect': 'product-decision-contract-v1', 'contract_id': 'PMOS-TASK-TRACKER-001', 'contract_version': 1, 'approval_status': 'APPROVED', 'source_digest': 'sha256:80446afd29bec2cfa984dd7a2564a74d57b39d257d9f2f093c27446854f22f75'}

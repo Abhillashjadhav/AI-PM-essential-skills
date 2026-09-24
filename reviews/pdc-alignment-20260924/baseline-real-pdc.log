@@ -1,0 +1,3 @@
+BASELINE FAILURE: PilotError: PMOS contract schema_version must be '1.0'
+fixture_sha256: 0339adbc2c54acf58646ecbdd2e76d53e659e4c0999a19706ed81506ca4797d7
+source_blob: 5658be245e5538a6147a3fc8c064fbeeaa4db06e
