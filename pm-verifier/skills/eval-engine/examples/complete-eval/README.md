@@ -9,6 +9,15 @@ The package proves the handoff and verifier mechanics. It does not prove the
 quality of an untested repository. It contains no real customer or personal
 data, and its reference adapter makes no model or network call.
 
+The checked-in source contract uses the `legacy-synthetic-pilot-v1` example
+dialect. The repository-pilot tool also accepts actual approved PMOS
+ProductDecisionContract v1 documents (`contract_version=1`,
+`contract_status="APPROVED"`, `functional_requirements`, and AC `requirement`
+links). It records the source dialect and identity separately from the
+configured candidate product ID and preserves the whole source document.
+PDC binding is an integrity/traceability check; PEOS owns executable release
+gates and PMOS owns approval receipts.
+
 ## What is bound
 
 | Artifact | Authority |
