@@ -42,11 +42,17 @@
   },
   "product_id": "synthetic-support-agent",
   "schema_version": "1.0",
+  "source_contract": {
+    "approval_status": "GO",
+    "contract_id": "synthetic-support-decision",
+    "contract_version": "1.0.0",
+    "dialect": "legacy-synthetic-pilot-v1"
+  },
   "synthetic_fixture": true,
   "template_id": "customer-support-agent",
   "tooling": {
     "path": "tools/repository_pilot.py",
-    "sha256": "77b6c24a1f789a5d2b89ecca892e3aea2b4f478a249a850fb905cdf94b76e5a6"
+    "sha256": "cd509e5d6e27bccb74cc2e4f7580fee6e5ab9adda077b64a44ad6a4f7305eac5"
   },
   "version": "1.0.0"
 }
