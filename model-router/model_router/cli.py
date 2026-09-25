@@ -90,6 +90,11 @@ def build(args: argparse.Namespace, *, ui: RouterUI | None = None) -> tuple[Coor
                         codex_home=Path(args.codex_home) if getattr(args, "codex_home", None) else None)
         )
         coordinator = Coordinator(store, adapter, live=True, ui=ui or TerminalUI())
+    from .plugin_classifier import combined_classifier, load_plugin
+
+    plugin = load_plugin()
+    if plugin is not None:  # optional; the deterministic rules remain the default
+        coordinator.classifier = combined_classifier(plugin)
     return coordinator, store
 
 
@@ -330,6 +335,32 @@ def cmd_serve(args: argparse.Namespace) -> int:
     finally:
         resumer.stop()
     return 0
+
+
+def cmd_setup(args: argparse.Namespace) -> int:
+    from .onboard import Setup
+
+    data_dir = Path(args.data_dir).expanduser() if args.data_dir else default_data_dir()
+    print("Model router setup: checks this machine, pins Codex, signs in (Codex's own ChatGPT login), approves models,")
+    print("and checks the zero-added-spend boundary. It sends no model turn.\n")
+    report = Setup(data_dir, codex_path=args.codex_path, codex_home=Path(args.codex_home) if args.codex_home else None).run()
+    return 0 if report.get("ready") else 3
+
+
+def cmd_pilot(args: argparse.Namespace) -> int:
+    from .onboard import PILOT_TURN_BUDGET, run_pilot
+
+    coordinator, store = build(args)
+    report = run_pilot(coordinator, project_dir=store.data_dir / "pilot-project", allow_simulated=args.simulate)
+    if report.get("blocked"):
+        print(f"Router: pilot not started — {report['blocked']}")
+        print(f"Saved: {report['saved_to']}")
+        return 3
+    for name, scenario in report["scenarios"].items():
+        print(f"{'PASS' if scenario.get('pass') else 'FAIL'}  {name}: " + json.dumps({k: v for k, v in scenario.items() if k != 'pass'}, default=str))
+    print(f"Turns sent: {report['turns_sent']} (budget {PILOT_TURN_BUDGET}). "
+          f"{'SIMULATED' if not report['live'] else 'LIVE'}. Saved: {report['saved_to']}")
+    return 0 if report.get("all_passed") else 1
 
 
 def cmd_outcome(args: argparse.Namespace) -> int:
@@ -593,6 +624,12 @@ def parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("status", parents=[common], help="show queued/blocked work and memory use")
     p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("setup", parents=[common], help="one guided setup: pin Codex, ChatGPT sign-in, approve models, check spend")
+    p.set_defaults(func=cmd_setup)
+
+    p = sub.add_parser("pilot", parents=[common], help="bounded live pilot (only when the spend boundary is verified)")
+    p.set_defaults(func=cmd_pilot)
 
     p = sub.add_parser("serve", parents=[common], help="keep queued work resuming automatically while this window is open")
     p.set_defaults(func=cmd_serve)
