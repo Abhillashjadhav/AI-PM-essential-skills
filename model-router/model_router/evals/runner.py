@@ -31,6 +31,37 @@ from .graders import GRADER_VERSION, SEEDED_CASES, check_judge, grade_assertions
 FIXTURES = Path(__file__).resolve().parents[2] / "fixtures"
 ROUTING_CASES = FIXTURES / "routing-cases.json"
 IMPLEMENTATION_CASES = FIXTURES / "implementation-cases.json"
+# Realistic prompt sets written by independent agents blind to the classifier.
+SUITABILITY_SETS = tuple(sorted(FIXTURES.glob("routing-*-set-*.json")))
+ROLE_RANK = {"lowest": 0, "middle": 1, "highest": 2}
+
+
+def suitability(path: Path) -> dict[str, Any]:
+    """Exact / under-routed / over-routed rates on one labelled prompt set."""
+    data = load_cases(path)
+    exact = under = over = 0
+    misses = []
+    for case in data["cases"]:
+        role = required_role(classify(ClassifierInput(text=case["prompt"]))).role.value
+        expected = case["expected_role"]
+        if role == expected:
+            exact += 1
+            continue
+        kind = "under" if ROLE_RANK[role] < ROLE_RANK[expected] else "over"
+        under += kind == "under"
+        over += kind == "over"
+        misses.append({"id": case["id"], "expected": expected, "observed": role, "direction": kind})
+    n = len(data["cases"])
+    return {
+        "dataset": data["dataset_version"],
+        "role_in_repo": data.get("role_in_repo", "test"),
+        "cases": n,
+        "exact": exact,
+        "exact_rate": round(exact / n, 4),
+        "under_routed": under,
+        "over_routed": over,
+        "misses": misses,
+    }
 
 
 def load_cases(path: Path) -> dict[str, Any]:
@@ -145,6 +176,7 @@ def run_offline(store: Store, *, routing_path: Path = ROUTING_CASES, implementat
         )
         store.event("evaluation.graded", {"run_id": run_id, "case_id": result["case_id"], "status": result["status"]})
     failed = [r for r in results if r["status"] != GradeStatus.PASS.value]
+    realistic = [suitability(path) for path in SUITABILITY_SETS]
     status = "PASSED" if not failed and judge.usable else "FAILED"
     store.execute("UPDATE eval_runs SET status=?, finished_at=? WHERE id=?", (status, utc_now(), run_id))
     return {
@@ -154,6 +186,7 @@ def run_offline(store: Store, *, routing_path: Path = ROUTING_CASES, implementat
         "passed": len(results) - len(failed),
         "failed": [{"case_id": r["case_id"], "checks": [c for c in r["checks"] if not c["ok"]]} for r in failed],
         "judge_self_check": judge.to_dict(),
+        "realistic_prompt_sets": realistic,
         "note": "offline routing-policy evidence only; says nothing about answer quality on real prompts",
     }
 

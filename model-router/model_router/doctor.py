@@ -144,6 +144,15 @@ def _live_read_only(config: CodexConfig) -> list[Gate]:
             )
         )
         if account.auth_mode != "chatgpt":
+            try:
+                catalogue = adapter.list_models()
+                gates.append(Gate("model catalogue", GateStatus.VERIFIED if catalogue.models else GateStatus.BLOCKED,
+                                  f"{len(catalogue.models)} model(s) in the CLI catalogue (not yet confirmed for your account)",
+                                  {"models": [m.model_id for m in catalogue.models]}))
+            except Exception as exc:  # report, do not crash
+                gates.append(Gate("model catalogue", GateStatus.BLOCKED, f"model/list unavailable before sign-in: {exc}"))
+            gates.append(Gate("spend boundary", GateStatus.BLOCKED,
+                              "needs ChatGPT sign-in; then decided per request from live provider signals (spend.py)"))
             return gates
         catalogue = adapter.list_models()
         gates.append(

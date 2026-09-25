@@ -49,6 +49,7 @@ from .contracts import (
     Override,
     Role,
     RouteDecision,
+    SpendStatus,
     TaskAssessment,
     TaskKind,
     ThreadKind,
@@ -177,6 +178,7 @@ class Coordinator:
         self._startup_ms = 0.0
         self._loaded_provider_threads: set[str] = set()
         self._loaded_generation = 0
+        self._turn_lock = threading.RLock()
         self._route_pool = concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="route")
 
     # ------------------------------------------------------------------ setup
@@ -977,8 +979,21 @@ class Coordinator:
 
     # ------------------------------------------------------------- execution
 
-    def run(self, job_id: str) -> JobState:
-        """Drive one job through eligibility, dispatch and streaming."""
+    def run(self, job_id: str, *, blocking: bool = True) -> JobState:
+        """Drive one job through eligibility, dispatch and streaming.
+
+        One model turn at a time per process (``_turn_lock``) and across
+        processes (the dispatch lease). ``blocking=False`` is used by the
+        background resumer: if a foreground turn is running it defers."""
+        if not self._turn_lock.acquire(blocking=blocking):
+            self.store.event("job.deferred_busy", {"reason": "another turn is running in this process"}, job_id=job_id)
+            return JobState(self.store.job(job_id)["state"])
+        try:
+            return self._run(job_id)
+        finally:
+            self._turn_lock.release()
+
+    def _run(self, job_id: str) -> JobState:
         job = self.store.job(job_id)
         state = JobState(job["state"])
         if job["cancelled"] or state in {JobState.SUCCEEDED, JobState.FAILED, JobState.CANCELLED}:
@@ -1233,6 +1248,7 @@ class Coordinator:
         fatal: list[str] = []
         usage_exhausted = False
         rerouted: tuple[str, str] | None = None
+        spend_stop: str | None = None
         final_status: TurnStatus | None = None
         tool_results: list[dict[str, Any]] = []
         last_renewal = time.monotonic()
@@ -1292,6 +1308,16 @@ class Coordinator:
             elif event.kind in {"usage_changed", "account_changed"}:
                 self.gate.invalidate(f"provider notification: {event.kind}")
                 self.store.event("usage.changed" if event.kind == "usage_changed" else "account.changed", event.data, thread_id=thread_id, job_id=job_id)
+                if spend_stop is None:
+                    spend_stop = self._spend_recheck_mid_turn()
+                    if spend_stop is not None:
+                        self.store.event("turn.spend_stop", {"dispatch_id": dispatch_id, "reason": spend_stop}, thread_id=thread_id, job_id=job_id)
+                        self.ui.notify(f"Router: Stopping this turn — {spend_stop}. The partial answer is kept; the chat keeps its model.")
+                        if provider_turn_id:
+                            try:
+                                self.adapter.interrupt_turn(provider_thread_id, provider_turn_id)
+                            except AdapterError as exc:
+                                self.store.event("turn.interrupt_failed", {"error": str(exc)}, thread_id=thread_id, job_id=job_id)
             elif event.kind == "approval":
                 self.store.event("approval.decided", event.data | {"summary": event.text}, thread_id=thread_id, job_id=job_id)
             elif event.kind == "item" and event.item:
@@ -1325,6 +1351,10 @@ class Coordinator:
                 "UPDATE messages SET complete=?, kind=? WHERE id=?",
                 (0 if partial else 1, "partial" if partial else "answer", answer_id),
             )
+        if spend_stop is not None and not usage_exhausted:
+            self._checkpoint(job_id, thread_id, dispatch_id, provider_turn_id, answer_id, tool_results, f"spend boundary changed mid-turn: {spend_stop}")
+            self.store.transition_job(job_id, JobState.PAUSED, blocker=f"stopped mid-turn: {spend_stop}", extra={"dispatch_id": dispatch_id})
+            return JobState.PAUSED
         if usage_exhausted:
             self._checkpoint(job_id, thread_id, dispatch_id, provider_turn_id, answer_id, tool_results, "included usage ran out mid-turn")
             self.store.transition_job(job_id, JobState.PAUSED, blocker="included usage ran out; work saved", extra={"dispatch_id": dispatch_id})
@@ -1349,6 +1379,21 @@ class Coordinator:
         self.store.transition_job(job_id, JobState.SUCCEEDED)
         self.store.event("turn.completed", {"dispatch_id": dispatch_id, "provider_turn_id": provider_turn_id}, thread_id=thread_id, job_id=job_id)
         return JobState.SUCCEEDED
+
+    def _spend_recheck_mid_turn(self) -> str | None:
+        """Re-read account, usage and the spend decision after a provider limit or
+        credit notification. Returns a reason to stop, or None to continue."""
+        try:
+            account = self.adapter.read_account()
+            usage = self.adapter.read_usage()
+            decision = self.adapter.check_spend_boundary(account, usage)
+        except AdapterError as exc:
+            return f"spend boundary could not be re-checked ({exc})"
+        if self.live and decision.synthetic:
+            return "simulated spend evidence cannot cover a live turn"
+        if decision.status is not SpendStatus.ALLOWED_INCLUDED_ONLY:
+            return f"spend boundary is now {decision.status.value}: " + "; ".join(decision.reasons + decision.missing)
+        return None
 
     def _apply_pending_override(self, thread_id: str, dispatch_id: str) -> None:
         self.store.execute(
@@ -1442,8 +1487,28 @@ class Coordinator:
 
     # ----------------------------------------------------- queue and recovery
 
-    def wake(self, *, now: str | None = None) -> list[tuple[str, JobState]]:
+    def waiting_jobs(self) -> list[dict[str, Any]]:
+        """Jobs the owner asked to run that are queued, blocked or awaiting reconciliation."""
+        states = tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED, JobState.RECOVERY_REQUIRED))
+        return [
+            dict(r)
+            for r in self.store.all(
+                f"SELECT id, thread_id, state, blocker, next_check_at FROM jobs WHERE cancelled=0 AND user_requested=1 "
+                f"AND state IN ({','.join('?' * len(states))}) ORDER BY created_at",
+                states,
+            )
+        ]
+
+    def wake(self, *, now: str | None = None, blocking: bool = True) -> list[tuple[str, JobState]]:
         """Re-check queued jobs the owner asked to run (fresh eligibility each)."""
+        if not self._turn_lock.acquire(blocking=blocking):
+            return []
+        try:
+            return self._wake(blocking=blocking)
+        finally:
+            self._turn_lock.release()
+
+    def _wake(self, *, blocking: bool) -> list[tuple[str, JobState]]:
         results = []
         for row in self.store.all("SELECT id FROM jobs WHERE state='RECOVERY_REQUIRED' AND cancelled=0"):
             final = self.reconcile(row["id"])  # reads only; never sends
@@ -1456,7 +1521,7 @@ class Coordinator:
         )
         for row in rows:
             self.store.event("job.woken", {"from": row["state"]}, thread_id=row["thread_id"], job_id=row["id"])
-            results.append((row["id"], self.run(row["id"])))
+            results.append((row["id"], self.run(row["id"], blocking=blocking)))
         return results
 
     def cancel(self, job_id: str) -> JobState:
@@ -1484,13 +1549,14 @@ class Coordinator:
 
         Takes the dispatch lease, so it never touches a turn another live
         process is dispatching right now."""
-        if not self.store.acquire_lease(DISPATCH_LEASE, self.lease_owner, DISPATCH_LEASE_TTL):
-            self.store.event("recovery.skipped", {"reason": "another live process holds the dispatch lease"})
-            return []
-        try:
-            return self._recover()
-        finally:
-            self.store.release_lease(DISPATCH_LEASE, self.lease_owner)
+        with self._turn_lock:  # never while this process has a turn in flight
+            if not self.store.acquire_lease(DISPATCH_LEASE, self.lease_owner, DISPATCH_LEASE_TTL):
+                self.store.event("recovery.skipped", {"reason": "another live process holds the dispatch lease"})
+                return []
+            try:
+                return self._recover()
+            finally:
+                self.store.release_lease(DISPATCH_LEASE, self.lease_owner)
 
     def _recover(self) -> list[dict[str, Any]]:
         report: list[dict[str, Any]] = []

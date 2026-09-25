@@ -15,9 +15,7 @@ from model_router.adapters.base import AdapterError, DispatchUncertain
 from model_router.adapters.codex_stdio import (
     CodexConfig,
     CodexStdioAdapter,
-    PinManifest,
     check_schema_compat,
-    decide_spend,
     inspect_installation,
     pin_status,
     translate_notification,
@@ -228,58 +226,6 @@ class Pinning(FakeServerCase):
         state, reasons = pin_status(None, None)
         self.assertEqual(state, "unpinned")
         self.assertTrue(reasons)
-
-
-class SpendDecision(FakeServerCase):
-    def setUp(self):
-        super().setUp()
-        adapter = self.adapter()
-        self.account = adapter.read_account()
-        self.usage = adapter.read_usage()
-        self.manifest = PinManifest(str(self.wrapper), "v", "s" * 64, "d" * 64, {}, [], [], "owner", utc_now())
-
-    def record(self, **overrides):
-        base = {
-            "control_type": "hypothetical-included-only-control",
-            "source": "live",
-            "status": "enforced",
-            "documentation": "https://example.invalid/doc",
-            "pin_digest": self.manifest.digest,
-            "account_scope": self.account.account_scope,
-            "expires_at": "2999-01-01T00:00:00Z",
-            "requires": {"ordinaryUsageAllowed": True, "credits.hasCredits": False},
-        }
-        return base | overrides
-
-    def decide(self, *records, pin_state="valid"):
-        self.manifest.enforcement = list(records)
-        return decide_spend(self.account, self.usage, pin_state=pin_state, manifest=self.manifest)
-
-    def test_B02_no_enforcement_is_unknown(self):
-        decision = self.decide()
-        self.assertEqual(decision.status, SpendStatus.UNKNOWN)
-        self.assertIn("purchased-credit", decision.missing[0])
-
-    def test_B08_fixture_or_foreign_evidence_rejected(self):
-        for bad in (self.record(source="fixture"), self.record(source="owner_attestation"), self.record(status="supporting"),
-                    self.record(account_scope="acct_other"), self.record(pin_digest="x"), self.record(expires_at="2000-01-01T00:00:00Z"),
-                    self.record(documentation=None), self.record(requires={})):
-            self.assertEqual(self.decide(bad).status, SpendStatus.UNKNOWN, bad)
-
-    def test_conditions_rechecked_per_dispatch(self):
-        self.assertEqual(self.decide(self.record()).status, SpendStatus.ALLOWED_INCLUDED_ONLY)
-        self.usage.credits.has_credits = True
-        self.assertEqual(self.decide(self.record()).status, SpendStatus.UNKNOWN)
-
-    def test_exhausted_or_spend_control_blocks(self):
-        self.usage.ordinary_usage_allowed = False
-        self.assertEqual(self.decide(self.record()).status, SpendStatus.BLOCKED)
-        self.usage.ordinary_usage_allowed = True
-        self.usage.spend_control_reached = True
-        self.assertEqual(self.decide(self.record()).status, SpendStatus.BLOCKED)
-
-    def test_invalid_pin_never_allows(self):
-        self.assertEqual(self.decide(self.record(), pin_state="drift").status, SpendStatus.UNKNOWN)
 
 
 class CoordinatorOverStdio(FakeServerCase):

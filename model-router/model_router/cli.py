@@ -11,13 +11,14 @@ import argparse
 import json
 import shlex
 import sys
+import time
 from pathlib import Path
 from typing import Any
 
 from .adapters.base import ApprovalRequest
 from .adapters.codex_stdio import CodexConfig, CodexStdioAdapter
 from .adapters.fake import FakeAdapter
-from .contracts import AcceptanceEvidence, ContractError, JobState, Role, utc_now
+from .contracts import WAITING_JOB_STATES, AcceptanceEvidence, ContractError, JobState, Role, utc_now
 from .coordinator import Coordinator, OverrideRefused, RouterUI
 from .registry import mapping_hash_for
 from .store import Store, default_data_dir
@@ -89,6 +90,11 @@ def build(args: argparse.Namespace, *, ui: RouterUI | None = None) -> tuple[Coor
                         codex_home=Path(args.codex_home) if getattr(args, "codex_home", None) else None)
         )
         coordinator = Coordinator(store, adapter, live=True, ui=ui or TerminalUI())
+    from .plugin_classifier import combined_classifier, load_plugin
+
+    plugin = load_plugin()
+    if plugin is not None:  # optional; the deterministic rules remain the default
+        coordinator.classifier = combined_classifier(plugin)
     return coordinator, store
 
 
@@ -213,8 +219,10 @@ def cmd_model_set(args: argparse.Namespace) -> int:
 
 
 def cmd_status(args: argparse.Namespace) -> int:
-    coordinator, _ = build(args)
+    coordinator, store = build(args)
     status = coordinator.status()
+    auto = store.one("SELECT value FROM meta WHERE key='auto_resume'")
+    status["auto_resume"] = json.loads(auto["value"]) if auto else "not running (starts with chat or serve)"
     from .doctor import peak_rss_mib
 
     status["process_peak_rss_mib"] = peak_rss_mib()
@@ -261,6 +269,9 @@ def cmd_eval(args: argparse.Namespace) -> int:
                   f"(model calls: {result['plan']['model_calls']}). Judge self-check usable: {result['judge_self_check']['usable']}")
             for failure in result["failed"]:
                 print(f"  FAIL {failure['case_id']}: {failure['checks']}")
+            for item in result.get("realistic_prompt_sets", []):
+                print(f"  {item['dataset']} ({item['role_in_repo'].split(':')[0]}): {item['exact']}/{item['cases']} exact, "
+                      f"{item['under_routed']} under-routed, {item['over_routed']} over-routed")
             print(result["note"])
         return 0 if result["status"] == "PASSED" else 1
     if args.eval_action == "report":
@@ -303,6 +314,55 @@ def cmd_adapter_pin(args: argparse.Namespace) -> int:
     return 0
 
 
+def cmd_serve(args: argparse.Namespace) -> int:
+    """Keep queued work moving while this window is open. Not a background service."""
+    from .scheduler import AutoResumer
+
+    coordinator, _ = build(args)
+    coordinator.start()
+    report = coordinator.recover()
+    if report:
+        print(f"Router: reconciled {len(report)} item(s) after the last run.")
+    resumer = AutoResumer(coordinator)
+    resumer.start()
+    print(f"Router: watching {len(coordinator.waiting_jobs())} queued item(s). Checks run only while this window stays open; "
+          "Ctrl-C to stop.")
+    try:
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        print()
+    finally:
+        resumer.stop()
+    return 0
+
+
+def cmd_setup(args: argparse.Namespace) -> int:
+    from .onboard import Setup
+
+    data_dir = Path(args.data_dir).expanduser() if args.data_dir else default_data_dir()
+    print("Model router setup: checks this machine, pins Codex, signs in (Codex's own ChatGPT login), approves models,")
+    print("and checks the zero-added-spend boundary. It sends no model turn.\n")
+    report = Setup(data_dir, codex_path=args.codex_path, codex_home=Path(args.codex_home) if args.codex_home else None).run()
+    return 0 if report.get("ready") else 3
+
+
+def cmd_pilot(args: argparse.Namespace) -> int:
+    from .onboard import PILOT_TURN_BUDGET, run_pilot
+
+    coordinator, store = build(args)
+    report = run_pilot(coordinator, project_dir=store.data_dir / "pilot-project", allow_simulated=args.simulate)
+    if report.get("blocked"):
+        print(f"Router: pilot not started — {report['blocked']}")
+        print(f"Saved: {report['saved_to']}")
+        return 3
+    for name, scenario in report["scenarios"].items():
+        print(f"{'PASS' if scenario.get('pass') else 'FAIL'}  {name}: " + json.dumps({k: v for k, v in scenario.items() if k != 'pass'}, default=str))
+    print(f"Turns sent: {report['turns_sent']} (budget {PILOT_TURN_BUDGET}). "
+          f"{'SIMULATED' if not report['live'] else 'LIVE'}. Saved: {report['saved_to']}")
+    return 0 if report.get("all_passed") else 1
+
+
 def cmd_outcome(args: argparse.Namespace) -> int:
     coordinator, _ = build(args)
     record = coordinator.record_outcome(args.thread_id, args.outcome, satisfaction=args.satisfaction, note=args.note)
@@ -314,9 +374,20 @@ def cmd_outcome(args: argparse.Namespace) -> int:
 
 
 def cmd_chat(args: argparse.Namespace, *, thread_id: str | None = None) -> int:
+    from .scheduler import AutoResumer
+
     coordinator, store = build(args)
     coordinator.start()
     coordinator.recover()
+    resumer = AutoResumer(coordinator)
+    resumer.start()
+    try:
+        return _chat_loop(args, coordinator, store, resumer, thread_id)
+    finally:
+        resumer.stop()
+
+
+def _chat_loop(args: argparse.Namespace, coordinator: Coordinator, store: Store, resumer, thread_id: str | None) -> int:
     if thread_id:
         thread = store.thread(thread_id)
         project = store.project(thread["project_id"])["name"]
@@ -330,7 +401,7 @@ def cmd_chat(args: argparse.Namespace, *, thread_id: str | None = None) -> int:
     if thread_id:
         print(f"Router: continuing chat {thread_id} on {store.thread(thread_id)['pinned_model']}.")
         for job in store.all("SELECT id FROM jobs WHERE thread_id=? AND state NOT IN ('SUCCEEDED','FAILED','CANCELLED')", (thread_id,)):
-            _drive(coordinator, job["id"], ui)
+            _drive(coordinator, job["id"], ui, resumer)
     pending_attachments: list[str] = []
     while True:
         try:
@@ -342,7 +413,7 @@ def cmd_chat(args: argparse.Namespace, *, thread_id: str | None = None) -> int:
         if not text:
             continue
         if text.startswith("/"):
-            thread_id, stop = _chat_command(coordinator, text, thread_id, pending_attachments, args)
+            thread_id, stop = _chat_command(coordinator, text, thread_id, pending_attachments, args, resumer)
             if stop:
                 return 0
             continue
@@ -353,7 +424,7 @@ def cmd_chat(args: argparse.Namespace, *, thread_id: str | None = None) -> int:
             continue
         pending_attachments.clear()
         if result.handoff is not None:
-            _report_handoff(coordinator, result.handoff, ui)
+            _report_handoff(coordinator, result.handoff, ui, resumer)
             continue
         if thread_id is None:
             thread_id = result.thread_id
@@ -366,10 +437,16 @@ def cmd_chat(args: argparse.Namespace, *, thread_id: str | None = None) -> int:
         if result.state is JobState.AWAITING_MANUAL_MODEL:
             ui.notify("Router: choose a model with /choose <model-id> (see: router.py models)")
             continue
-        _drive(coordinator, result.job_id, ui)
+        _drive(coordinator, result.job_id, ui, resumer)
 
 
-def _drive(coordinator: Coordinator, job_id: str, ui: RouterUI) -> None:
+WAITING_NOTICE = (
+    "Router: I'll keep checking automatically while this window is open (fresh sign-in, spend and usage checks, "
+    "same model). Nothing runs while the router is closed or the Mac is asleep."
+)
+
+
+def _drive(coordinator: Coordinator, job_id: str, ui: RouterUI, resumer=None) -> None:
     try:
         state = coordinator.run(job_id)
     except KeyboardInterrupt:
@@ -380,9 +457,12 @@ def _drive(coordinator: Coordinator, job_id: str, ui: RouterUI) -> None:
         ui._end()
     if state in {JobState.SELECTED, JobState.READY}:
         ui.notify("Router: queued behind another running turn.")
+    if resumer is not None and state in WAITING_JOB_STATES | {JobState.SELECTED, JobState.READY}:
+        resumer.reset_backoff()
+        ui.notify(WAITING_NOTICE)
 
 
-def _report_handoff(coordinator: Coordinator, handoff, ui: RouterUI) -> None:
+def _report_handoff(coordinator: Coordinator, handoff, ui: RouterUI, resumer=None) -> None:
     if handoff.status in {"CREATED", "EXISTING"}:
         ui.notify("Router: Architecture saved. Opening implementation in this project.")
         if handoff.role is Role.LOWEST:
@@ -392,12 +472,12 @@ def _report_handoff(coordinator: Coordinator, handoff, ui: RouterUI) -> None:
         ui.notify(f"Router: implementation chat {handoff.target_thread_id} (model {handoff.model_id}); "
                   f"continue it later with: router.py resume {handoff.target_thread_id}")
         if handoff.status == "CREATED" and handoff.job_id:
-            _drive(coordinator, handoff.job_id, ui)
+            _drive(coordinator, handoff.job_id, ui, resumer)
     else:
         ui.notify(f"Router: Architecture not handed off ({handoff.status}): " + "; ".join(handoff.reasons))
 
 
-def _chat_command(coordinator: Coordinator, text: str, thread_id: str | None, pending: list[str], args) -> tuple[str | None, bool]:
+def _chat_command(coordinator: Coordinator, text: str, thread_id: str | None, pending: list[str], args, resumer=None) -> tuple[str | None, bool]:
     ui = coordinator.ui
     parts = shlex.split(text)
     command, rest = parts[0].lower(), parts[1:]
@@ -441,7 +521,7 @@ def _chat_command(coordinator: Coordinator, text: str, thread_id: str | None, pe
         else:
             try:
                 coordinator.choose_manual_model(job["id"], rest[0])
-                _drive(coordinator, job["id"], ui)
+                _drive(coordinator, job["id"], ui, resumer)
             except ContractError as exc:
                 ui.notify(f"Router: {exc}")
     elif command == "/done" and rest and thread_id:
@@ -459,7 +539,7 @@ def _chat_command(coordinator: Coordinator, text: str, thread_id: str | None, pe
         handoff = coordinator.finalise_architecture(
             thread_id, acceptance=AcceptanceEvidence(source="finalise_command", reference=f"cli:{utc_now()}", text=text), record_payload=record
         )
-        _report_handoff(coordinator, handoff, ui)
+        _report_handoff(coordinator, handoff, ui, resumer)
     elif command == "/threads":
         for row in coordinator.threads():
             print(f"{row['id']}  {row['kind']:<14} {row['pinned_model'] or '-':<18} {row['title'] or ''}")
@@ -468,6 +548,8 @@ def _chat_command(coordinator: Coordinator, text: str, thread_id: str | None, pe
     elif command == "/wake":
         for job_id, state in coordinator.wake():
             ui.notify(f"Router: {job_id} → {state.value}")
+        if resumer is not None:
+            resumer.reset_backoff()
     elif command == "/recover" and len(rest) == 2:
         try:
             ui.notify(f"Router: {rest[0]} → {coordinator.resolve_recovery(rest[0], rest[1]).value}")
@@ -542,6 +624,15 @@ def parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("status", parents=[common], help="show queued/blocked work and memory use")
     p.set_defaults(func=cmd_status)
+
+    p = sub.add_parser("setup", parents=[common], help="one guided setup: pin Codex, ChatGPT sign-in, approve models, check spend")
+    p.set_defaults(func=cmd_setup)
+
+    p = sub.add_parser("pilot", parents=[common], help="bounded live pilot (only when the spend boundary is verified)")
+    p.set_defaults(func=cmd_pilot)
+
+    p = sub.add_parser("serve", parents=[common], help="keep queued work resuming automatically while this window is open")
+    p.set_defaults(func=cmd_serve)
 
     p = sub.add_parser("wake", parents=[common], help="recover after restart and re-check queued work")
     p.set_defaults(func=cmd_wake)

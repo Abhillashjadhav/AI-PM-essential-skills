@@ -32,7 +32,7 @@ class Cli(unittest.TestCase):
     def test_help(self):
         result = run("--help")
         self.assertEqual(result.returncode, 0)
-        for command in ("doctor", "demo", "chat", "threads", "resume", "models", "eval", "status"):
+        for command in ("doctor", "demo", "chat", "threads", "resume", "models", "eval", "status", "serve"):
             self.assertIn(command, result.stdout)
 
     def test_demo(self):
@@ -86,6 +86,7 @@ class Cli(unittest.TestCase):
         self.assertIn("Offline evaluation PASSED", offline.stdout)
         status = run("status", *base)
         self.assertIn('"live": false', status.stdout)
+        self.assertIn("runs only while a router process is open", status.stdout, "chat ran the auto-resumer")
 
 
 if __name__ == "__main__":

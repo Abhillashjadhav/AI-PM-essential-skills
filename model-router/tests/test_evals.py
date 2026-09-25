@@ -100,6 +100,18 @@ class Metrics(RouterTestCase):
         self.assertTrue(all("withheld" in m["content"] for m in drill["messages"]))
 
 
+class RealisticPromptSets(unittest.TestCase):
+    def test_no_under_routing_on_development_sets(self):
+        from model_router.evals.runner import SUITABILITY_SETS, suitability
+
+        self.assertGreaterEqual(len(SUITABILITY_SETS), 2)
+        for path in SUITABILITY_SETS:
+            if "dev" not in path.name:
+                continue
+            result = suitability(path)
+            self.assertEqual(result["under_routed"], 0, (path.name, [m for m in result["misses"] if m["direction"] == "under"]))
+
+
 class Graders(unittest.TestCase):
     def test_missing_evidence_is_never_pass(self):
         self.assertEqual(grade_assertions(None, {"required": ["x"]}).status, GradeStatus.BLOCKED)

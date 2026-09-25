@@ -13,8 +13,7 @@
     "compat_notes",
     "approved_by",
     "approved_at",
-    "adapter_version",
-    "enforcement"
+    "adapter_version"
   ],
   "properties": {
     "executable": {
@@ -28,36 +27,7 @@
     "schema_digest": {
       "type": "string",
       "pattern": "^[0-9a-f]{64}$"
-    },
-    "enforcement": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "required": [
-          "control_type",
-          "source",
-          "status",
-          "documentation",
-          "pin_digest",
-          "account_scope",
-          "expires_at",
-          "requires"
-        ],
-        "properties": {
-          "source": {
-            "type": "string",
-            "enum": [
-              "live"
-            ]
-          },
-          "status": {
-            "type": "string",
-            "enum": [
-              "enforced"
-            ]
-          }
-        }
-      }
     }
-  }
+  },
+  "description": "Measured Codex installation pinned by the owner. It carries no spend-enforcement claims: enforcement is only ever decided from live provider signals by code-defined mechanisms."
 }
