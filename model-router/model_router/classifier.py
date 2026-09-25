@@ -347,7 +347,77 @@ EXTRA_PATTERNS: dict[str, tuple[str, ...]] = {
 for _name, _extra in EXTRA_PATTERNS.items():
     PATTERNS[_name] = PATTERNS.get(_name, ()) + _extra
 
-RULES_VERSION = "rules-2026-09-25.4"
+# Rules revision 5: general failure categories found by analysing every miss on
+# the three examined sets (see docs/capability-evidence.md, "Routing").
+REVISION_5_PATTERNS: dict[str, tuple[str, ...]] = {
+    "security": (
+        # sessions and account access
+        r"jwts?", r"sessions? (?:tokens?|cookies?|ids?|expir\w*|timeouts?|handling|management|fixation|hijack\w*)",
+        r"(?:token|session) refresh(?:es|ing)?", r"refresh(?:ing)? (?:the |my )?tokens?", r"logged (?:in|into|out)",
+        r"log(?:s|ging)? (?:me|users?|people|everyone) out", r"logouts?", r"sign(?:s|ed|ing)? (?:me |users? )?out",
+        r"(?:auth|session|httponly|secure|same-?site|refresh|access) cookies?",
+        # machine access and privileges
+        r"sudo(?:ers)?", r"passwordless", r"root (?:access|user|login|password)", r"privileges?", r"privilege escalation",
+        r"chmod", r"ssh", r"rls", r"row[- ]level security", r"service[_ ]role", r"anon key", r"rate[- ]limit(?:s|ing|er)?",
+        r"cve-\d{4}-\d+", r"open ports?",
+    ),
+    "incident": (
+        r"hacked", r"hackers? (?:got|have|accessed|stole|broke|took|are)", r"hacking attempts?", r"compromised", r"breach(?:ed|es)?", r"phishing", r"malware", r"ransomware",
+        r"unauthori[sz]ed (?:access|logins?|charges?|transactions?|payments?|debits?)",
+        r"suspicious (?:logins?|sign-?ins?|activity|emails?|links?|access|charges?|transactions?|messages?)",
+        r"(?:someone|somebody|a stranger) (?:logged|signed) in(?:to)?", r"new device", r"scam(?:med)?", r"fraud(?:ulent)?",
+        r"identity theft", r"sim swap", r"stolen (?:card|phone|laptop|passwords?|credentials|keys?)",
+        r"leaked (?:passwords?|keys?|credentials|tokens?|data)",
+    ),
+    "money_movement": (
+        r"(?:bank|card|upi|payment|money|financial) transactions?", r"transfers? between (?:my |our )?(?:own )?accounts",
+    ),
+    "privacy": (r"cookies? (?:banner|consent|policy|tracking)", r"tracking cookies?"),
+    "architecture": (
+        r"schema for", r"(?:data model|db design|database design|table design) for",
+        r"(?:design|model) (?:the |my |our |a )?(?:schema|tables|data|database|db)",
+        r"how (?:should|do|would|can) (?:i|we) (?:model|structure|design|architect|represent) (?:the |my |our |a )?(?:[\w-]+ ){0,3}"
+        r"(?:data|schema|tables?|database|db|app|api|service|system|backend|state|models?|transfers?|accounts?|permissions?|roles?|pipeline|repo|codebase|project)",
+    ),
+    "assessment": (
+        r"safe to \w+", r"is (?:it|this|that) (?:risky|dangerous|a bad idea)", r"what could go wrong",
+        r"will (?:this|it) (?:break|lose|delete|wipe|affect|corrupt)", r"(?:any|what are the) risks",
+    ),
+    "production": (
+        r"live (?:app|site|website|server|db|database|users?|system|environment|traffic|data)", r"real users",
+        r"\d[\d,]{0,12} (?:daily |monthly |active |paying )?(?:users|customers)", r"no staging",
+    ),
+    "destructive": (
+        r"(?:clean(?:ing)? ?up|clear(?:ing)? out|purg\w+|get rid of|nuke|remove all|delete all) (?:(?:the|all|old|unused|stale|my|our) )*"
+        r"(?:[\w-]+ ){0,3}(?:in|from|on) (?:my |the |our )?(?:[\w-]+ ){0,2}(?:project|database|db|bucket|tables?|server|prod(?:uction)?|"
+        r"supabase|firebase|firestore|s3|vps|droplet|cluster)",
+        r"(?:delete|drop|remove|purge|wipe) (?:(?:all|old|unused|stale|the|inactive) )+(?:users|rows|records|tables|buckets|accounts|backups|volumes|databases)",
+    ),
+    "coding": (
+        r"console", r"devtools", r"(?:empty|loading|error) states?", r"buttons?", r"modals?", r"dropdowns?", r"navbar", r"sidebar",
+        r"tooltips?", r"toasts?", r"forms? (?:validation|submit\w*|fields?)", r"input fields?", r"onclick", r"re-?renders?", r"props",
+        r"state management", r"click(?:s|ed|ing)?", r"nothing happens", r"bs4", r"beautifulsoup", r"selenium", r"playwright", r"puppeteer",
+        r"is not assignable", r"(?:type|reference|syntax|value|key|attribute|import|index|name)error", r"modulenotfounderror",
+        r"cannot read propert(?:y|ies)", r"is not defined", r"is not a function", r"unexpected token", r"segmentation fault",
+        r"exit code \d+", r"hydration (?:error|mismatch)", r"cors error", r"build (?:fails?|failed|error)", r"compile (?:error|fails?)",
+        r"npm err!?", r"stack ?trace",
+    ),
+    "routine": (
+        # arithmetic and unit/format conversion
+        r"just (?:do )?the (?:math|maths|arithmetic|calculation)", r"multiply", r"divide", r"convert [₹$€£]?\d[\d,.]{0,15}",
+        r"(?:add|total|sum) up", r"sum of", r"per (?:gb|kg|unit|litre|liter|month|day|hour|person|head)",
+        r"(?:json|yaml|yml|csv|tsv|xml|toml|markdown|md|html|plain text|txt) (?:to|into|->|→) "
+        r"(?:json|yaml|yml|csv|tsv|xml|toml|markdown|md|html|a table|table|bullets|plain text|txt)",
+        # low-stakes personal writing and planning (a hypothesis: see decisions D28)
+        r"poems?", r"haikus?", r"limericks?", r"jokes?", r"puns?", r"birthday wish(?:es)?", r"shayari",
+        r"itinerar(?:y|ies)", r"packing list", r"meal plan", r"workout plan",
+        r"plan (?:a|my|our) (?:\d+[- ]day )?(?:trip|vacation|holiday|weekend|getaway)",
+    ),
+}
+for _name, _extra in REVISION_5_PATTERNS.items():
+    PATTERNS[_name] = PATTERNS.get(_name, ()) + _extra
+
+RULES_VERSION = "rules-2026-09-25.5"
 _ARTIFACT_REQUEST = re.compile(
     r"^(?:(?:a|an|quick|simple|small|just|pls|please|need)\s+){0,3}(?:bash|python|shell|node|react|sql|typescript|ts|js|go)?\s*"
     r"(?:script|component|function|query|endpoint|regex|makefile|cli|hook|class|unit tests?|tests?|workflow|dockerfile)s?\b",
@@ -359,7 +429,48 @@ _CODING_ACTION = re.compile(
     r"\b(?:fix(?:es|ed|ing)?|implement\w*|write|add|build|refactor\w*|migrat\w*|swap|debug\w*|wire|rename|convert|port|"
     r"create|make|set ?up|update|change|remove|delete|upgrade|optimi[sz]e|speed up|help|why|what am i missing|doesn'?t|"
     r"encrypt|generate|clean|center|overlap\w*|breaks?|overflow\w*|goes through|pulls?|reads?|"
-    r"does not|isn'?t working|not working|fails?|failing|broken|error|crash\w*|wrong|misses|skips|shows|returns)\b",
+    r"does not|isn'?t working|not working|fails?|failing|broken|error|crash\w*|wrong|misses|skips|shows|returns|"
+    r"handle|show|display|render|hide|disable|enable|validate|sync|scrape|parse|nothing happens|throws?|hangs?|freez\w*|"
+    r"times? out|blank (?:page|screen)|won'?t (?:load|work|build|start|compile|run)|can'?t (?:load|connect|import|find|build))\b",
+    re.IGNORECASE,
+)
+# The medium names the task as code: "sql: count ...", "python + bs4", "in pandas".
+_CODING_MEDIUM = re.compile(
+    r"^[ \t]*(?:sql|python|py|pandas|regex|bash|shell|js|javascript|typescript|ts|jq|awk|sed)[ \t]*[:\-–]"
+    r"|\b(?:in|using|with|via) (?:sql|python|pandas|polars|bs4|beautifulsoup|regex|bash|javascript|typescript|node|jq|awk|sed)\b"
+    r"|\b(?:python|bash|node|js|pandas|bs4|sql)[ \t]*\+[ \t]*\w",
+    re.IGNORECASE,
+)
+_BUILD_INTO = re.compile(
+    r"\b(?:turn|convert|port|make) (?:[\w-]+ ){0,6}into (?:an? |the )?(?:[\w-]+ ){0,2}"
+    r"(?:app|script|cli|api|bot|extension|dashboard|website|site|function|component|package|library|endpoint|service|tool)\b",
+    re.IGNORECASE,
+)
+# A call such as getJob(params.id) or user.save(): camelCase, dotted or snake_case names only,
+# so prose like "resume(s)" is not code. Case-sensitive on purpose.
+_CODE_CALL = re.compile(  # bounded and possessive: linear time on any input
+    r"\b[a-z_][a-z0-9]{0,40}+(?:[._][a-z0-9]{1,40}+|[A-Z][A-Za-z0-9]{0,40}+){1,6}+\([^()\n]{0,60}\)"
+)
+# Scope statements such as "(local-only, no auth)" exclude a concern; they do not ask for it.
+_SCOPE_EXCLUSION = re.compile(
+    r"\b(?:no|without|doesn'?t (?:need|have|use)|not using|skip(?:ping)?|no need for) (?:any |an? )?"
+    r"(?:auth(?:entication)?|login|log-in|sign[- ]?in|user accounts?|payments?|billing)\b",
+    re.IGNORECASE,
+)
+# The pasted material is input data for new code ("groups these log lines"), not the code or spec being changed.
+_INPUT_DATA_REF = re.compile(
+    r"\b(?:these|this|the following|below|attached|sample) (?:[\w-]+ ){0,2}"
+    r"(?:log lines|logs?|lines|rows|records|entries|csv|json|data|strings|values|numbers|items|emails|events|urls|links|words|names)\b",
+    re.IGNORECASE,
+)
+# "should i send the invite?" is message logistics, not a judgement call.
+_LOGISTICS_SHOULD = re.compile(
+    r"(?<!what )(?<!how )\bshould i (?:also )?(?:send|reply|cc|bcc|ping|attach|mention|include|invite|text|call|remind|forward)\b",
+    re.IGNORECASE,
+)
+_COMMENT_LINE = re.compile(r"(?m)^[ \t]*(?:#|//|--|/\*|\*).*$")
+_SUMMARY_OP = re.compile(
+    r"\b(?:summari[sz]e|summary|tl;?dr|reformat|format|translate|bullets?|proofread|fix (?:the )?(?:typos|spelling|grammar))\b",
     re.IGNORECASE,
 )
 _CHOICE_QUESTION = re.compile(
@@ -381,22 +492,28 @@ _CODE_MARKERS = re.compile(
     r"|Traceback \(most recent call last\)|^[ \t]+File \"[^\n]{0,300}\", line \d+|=>|\);|\{[ \t]*$",
 )
 _DATA_REFERENCE = re.compile(
-    r"\b(?:this|these|below|following|attached|pasted|here'?s|here is|the text|the notes|the email|the log|the code)\b",
+    r"\b(?:this|these|below|following|attached|pasted|here'?s|here is|the text|the notes|the email|the log|the code|"
+    r"my (?:notes?|journal|diary|draft|r[ée]sum[ée]|cv|post|email|list|text|essay|message|bullets|headings|paragraph|logs?|transcript))\b",
     re.IGNORECASE,
 )
 _OPERATION_ON_DATA = re.compile(
     r"\b(?:summari[sz]e|extract|fix|format|reformat|rewrite|translate|convert|reply|respond|review|count|clean|sort|"
     r"list|pull|tidy|explain|check|spell|turn|make|debug|add|improve|polish|shorten|edit|proofread|compare|"
-    r"categori[sz]e|group|parse|analy[sz]e|dedupe|alphabeti[sz]e|number|merge|split|find|give me|tell me)\b",
+    r"categori[sz]e|group|parse|analy[sz]e|dedupe|alphabeti[sz]e|number|merge|split|find|give me|tell me|"
+    r"how many|word count|title case|capitali[sz]e|lower ?case|upper ?case)(?:s|es|d|ed|ing)?\b",
     re.IGNORECASE,
 )
 MAX_CLASSIFIED_CHARS = 60_000
 
+_RISK_GROUPS = frozenset({"money_movement", "security", "privacy", "destructive", "incident"})
 _COMPILED = {
-    name: re.compile(r"(?<![\w-])(?:" + "|".join(patterns) + r")(?![\w-])", re.IGNORECASE)
+    name: re.compile(
+        (r"(?<!\w)(?:" if name in _RISK_GROUPS else r"(?<![\w-])(?:") + "|".join(patterns) + r")(?![\w-])", re.IGNORECASE
+    )
     for name, patterns in PATTERNS.items()
 }
 
+_QUOTED_RUN = re.compile(r"(?:[ \t]*\[quoted\][ \t]*){2,}")
 _QUOTE_PATTERNS = (
     re.compile(r"```.*?```", re.DOTALL),
     re.compile(r"~~~.*?~~~", re.DOTALL),
@@ -411,7 +528,8 @@ _QUOTE_PATTERNS = (
 _ARCH_REFERENCE = re.compile(
     r"(?:(?:agreed|approved|accepted|existing|finali[sz]ed|signed[- ]off)(?: \w+){0,2} architecture"
     r"|(?:per|from|following|according to|matching|in) (?:the|our|this|my) (?:\w+ ){0,2}(?:architecture|design doc|design document|spec|handoff))"
-    r"|architecture(?:'s| is| has been) (?:approved|agreed|final|signed off)",
+    r"|architecture(?:'s| is| has been) (?:approved|agreed|final|signed off)"
+    r"|architecture (?:for |of )?(?:[\w-]+ ){0,3}(?:is|was|has been|'s) (?:now |already )?(?:approved|agreed|final|finali[sz]ed|signed off|locked|settled)",
     re.IGNORECASE,
 )
 
@@ -448,7 +566,7 @@ def split_pasted(text: str) -> tuple[str, str]:
             return head, tail
         return text, ""
     head, sep, tail = text.partition("\n\n")
-    if sep and _CODE_MARKERS.search(tail):
+    if sep and (_CODE_MARKERS.search(tail) or (_DATA_REFERENCE.search(head) and _OPERATION_ON_DATA.search(head))):
         return head, tail
     return text, ""
 
@@ -465,6 +583,8 @@ def split_instruction(text: str) -> tuple[str, list[str]]:
             return " [quoted] "
 
         instruction = pattern.sub(_cut, instruction)
+    # Adjacent placeholders carry no extra meaning; collapsing them keeps scanning linear in the real instruction.
+    instruction = _QUOTED_RUN.sub(" [quoted] ", instruction)
     return instruction, quoted
 
 
@@ -491,7 +611,20 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     lowered = instruction.lower()
     _, pasted = split_pasted(text)
     code_context = bool(pasted and _CODE_MARKERS.search(pasted))
-    hits = {name: _hits(name, lowered) for name in PATTERNS}
+    # Risk words are read after scope exclusions ("local-only, no auth"); message
+    # logistics ("should i send the invite?") are not judgement calls.
+    risk_lowered = _SCOPE_EXCLUSION.sub(" ", lowered)
+    hits = {
+        name: _hits(name, risk_lowered if name in _RISK_GROUPS else lowered)
+        for name in PATTERNS
+    }
+    hits["judgement"] = _hits("judgement", _LOGISTICS_SHOULD.sub(" ", lowered))
+    code_calls = _CODE_CALL.findall(instruction)
+    if code_calls:
+        hits["coding"] = hits["coding"] + code_calls
+    medium = _CODING_MEDIUM.search(instruction)
+    if medium:
+        hits["coding"] = hits["coding"] + [medium.group(0).strip()]
     kinds: list[TaskKind] = []
     flags: list[RiskFlag] = []
     reasons: list[str] = []
@@ -514,11 +647,15 @@ def classify(item: ClassifierInput) -> TaskAssessment:
 
     is_extraction = bool(hits["extraction"])
     has_judgement = bool(hits["judgement"])
-    coding_intent = bool(_CODING_ACTION.search(instruction) or _ARTIFACT_REQUEST.search(instruction.strip()))
+    coding_intent = bool(
+        _CODING_ACTION.search(instruction) or _ARTIFACT_REQUEST.search(instruction.strip()) or medium
+        or _BUILD_INTO.search(instruction) or code_calls
+    )
     is_coding = bool(hits["coding"]) and (coding_intent or not (hits["routine"] or is_extraction)) or code_context
-    if coding_intent and quoted:
+    if coding_intent and quoted and not _INPUT_DATA_REF.search(instruction):
         # Building or changing what was pasted/quoted: its risk is part of the task.
-        material = "\n".join(quoted).lower()
+        # Sample input for new code ("group these log lines") and code comments are not.
+        material = _COMMENT_LINE.sub(" ", "\n".join(quoted)).lower()
         for name in ("money_movement", "security", "privacy", "destructive"):
             extra = _hits(name, material)
             if extra:
@@ -555,7 +692,11 @@ def classify(item: ClassifierInput) -> TaskAssessment:
         flags.append(RiskFlag.HIGH_CREDIBILITY)
     if hits["hc_noun"]:
         hc_verbs = [v for v in hits["hc_verb"] if v not in {"document"}]
-        transformation = [w for w in hits["routine"] if re.match(r"(?:turn|convert|put|shorten|clean up)", w)]
+        # Editing the owner's credibility document is credibility work, however small the edit.
+        transformation = [
+            w for w in hits["routine"]
+            if re.match(r"(?:turn|convert|put|shorten|clean up|fix|format|reformat|tidy|spell|reword|rephrase|tighten|trim|proofread)", w, re.IGNORECASE)
+        ]
         hc_verbs = hc_verbs + transformation
         writing_code = bool(_ARTIFACT_REQUEST.search(instruction.strip()) or re.search(
             r"\bwrite (?:a |an |me a )?(?:python|bash|shell|node|sql)?\s*(?:script|function|program|parser|scraper)", lowered))
@@ -600,6 +741,11 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     elif risky_coding and not is_extraction and not hits["routine"]:
         uncertainty.append("money/security/privacy terms without a clear operation")
         reasons.append("RISK_TERMS_UNCLEAR_OPERATION")
+
+    if hits["incident"] and not _SUMMARY_OP.search(instruction):
+        # A possible account compromise, fraud or leak: what to do next is consequential.
+        flags.append(RiskFlag.SECURITY)
+        add(TaskKind.CONSEQUENTIAL_ASSESSMENT, "SECURITY_INCIDENT", hits["incident"])
 
     if hits["production"] and re.search(r"\b(?:delet\w*|drop\w*|truncat\w*|migrat\w*|wipe\w*|update\w* all|backfill\w*)\b", lowered):
         hits["destructive"] = hits["destructive"] + hits["production"]
