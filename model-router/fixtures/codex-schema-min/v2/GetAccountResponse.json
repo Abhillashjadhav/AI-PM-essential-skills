@@ -1,0 +1,44 @@
+{
+ "definitions": {
+  "Account": {
+   "oneOf": [
+    {
+     "properties": {
+      "type": {
+       "enum": [
+        "apiKey"
+       ]
+      }
+     }
+    },
+    {
+     "properties": {
+      "type": {
+       "enum": [
+        "chatgpt"
+       ]
+      }
+     }
+    },
+    {
+     "properties": {
+      "type": {
+       "enum": [
+        "amazonBedrock"
+       ]
+      }
+     }
+    }
+   ]
+  }
+ },
+ "properties": {
+  "account": {},
+  "requiresOpenaiAuth": {}
+ },
+ "required": [
+  "requiresOpenaiAuth"
+ ],
+ "title": "GetAccountResponse",
+ "type": "object"
+}

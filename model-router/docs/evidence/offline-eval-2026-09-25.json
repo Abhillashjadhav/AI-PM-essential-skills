@@ -1,0 +1,22 @@
+{
+  "failed": [],
+  "judge_self_check": {
+    "misgraded": [],
+    "passed_critical": [],
+    "total": 5,
+    "usable": true
+  },
+  "note": "offline routing-policy evidence only; says nothing about answer quality on real prompts",
+  "passed": 33,
+  "plan": {
+    "cases": 38,
+    "datasets": {
+      "implementation-cases.json": "implementation-cases.2026-09-25.1",
+      "routing-cases.json": "routing-cases.2026-09-25.1"
+    },
+    "grader_version": "graders-2026-09-25.1",
+    "kind": "offline",
+    "model_calls": 0
+  },
+  "status": "PASSED"
+}

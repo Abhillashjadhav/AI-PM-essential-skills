@@ -1,0 +1,27 @@
+{
+ "properties": {
+  "approvalPolicy": {},
+  "approvalsReviewer": {},
+  "clientUserMessageId": {},
+  "cwd": {},
+  "disabledPluginIds": {},
+  "effort": {},
+  "input": {},
+  "model": {},
+  "outputSchema": {},
+  "personality": {},
+  "sandboxPolicy": {},
+  "serviceTier": {},
+  "serviceTierForTurn": {},
+  "summary": {},
+  "threadId": {},
+  "toolOutput": {},
+  "turnTrigger": {}
+ },
+ "required": [
+  "input",
+  "threadId"
+ ],
+ "title": "TurnStartParams",
+ "type": "object"
+}

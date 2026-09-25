@@ -1,0 +1,12 @@
+{
+  "source": "github.com/openai/codex (public, Apache-2.0)",
+  "commit": "bd3d4d1436bb41b94fd38ba9bdd34d74524e7a9f",
+  "commit_date": "2026-09-25T15:03:02Z",
+  "path": "codex-rs/app-server-protocol/schema/json",
+  "schema_bundle_digest": "cd9238d61238dca0566621d17416638307501c5fbf0a90ed2bb882f2f00aa958",
+  "compat_problems": [],
+  "compat_notes": [
+    "other server requests are declined or answered with an error: ['account/chatgptAuthTokens/refresh', 'applyPatchApproval', 'attestation/generate', 'execCommandApproval', 'item/permissions/requestApproval', 'item/tool/call', 'item/tool/requestUserInput', 'mcpServer/elicitation/request']"
+  ],
+  "status": "VERIFIED against upstream source schema only; NOT against the owner's installed binary (BLOCKED: no Codex CLI in the build environment)"
+}

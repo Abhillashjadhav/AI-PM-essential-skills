@@ -2,7 +2,7 @@
 
 Every pull request runs the free, deterministic `Deterministic required checks` job. It performs:
 
-- Repository test discovery, including ContextPort tests when present.
+- Repository test discovery, including ContextPort and model-router tests when present (offline, no credentials or network).
 - Syntax compilation of changed Python files without writing bytecode.
 - `git diff --check` against the pull request base.
 - High-signal credential and private-filename scanning over added content.
