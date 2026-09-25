@@ -12,7 +12,7 @@ Status labels: **VERIFIED**, **FAILED**, **BLOCKED**, **NOT_RUN**. Evidence leve
 
 | Gate | Status | Evidence | Limitation |
 |---|---|---|---|
-| Offline vertical slice (routing, pins, handoff, queue, recovery) | VERIFIED (synthetic) | `python3 -m unittest discover -s model-router/tests -q` → 149 tests OK | Simulator only |
+| Offline vertical slice (routing, pins, handoff, queue, recovery) | VERIFIED (synthetic) | `python3 -m unittest discover -s model-router/tests -q` → 159 tests OK, including 9 regression tests for defects found by an independent code review (each fails on the pre-fix code) | Simulator only |
 | Offline routing-policy evaluation | VERIFIED (synthetic) | [evidence/offline-eval-2026-09-25.json](evidence/offline-eval-2026-09-25.json): 33/33, judge self-check usable | Policy conformance only; says nothing about answer quality on real prompts |
 | Protocol method and field names | VERIFIED (upstream source) | [evidence/upstream-schema-compat-2026-09-25.json](evidence/upstream-schema-compat-2026-09-25.json): no compatibility problems; bundle digest recorded | Not the installed binary. `doctor` must check the pinned install's own schema |
 | Stdio framing (JSON per line, no `jsonrpc` field) | VERIFIED (upstream source) | Upstream test client `test_app_server.rs` writes JSON + `\n`; `JSONRPCRequest` schema has no `jsonrpc` | Not yet observed against an installed binary |
