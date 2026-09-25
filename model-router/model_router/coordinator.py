@@ -176,6 +176,7 @@ class Coordinator:
         self._started = False
         self._startup_ms = 0.0
         self._loaded_provider_threads: set[str] = set()
+        self._loaded_generation = 0
         self._route_pool = concurrent.futures.ThreadPoolExecutor(max_workers=2, thread_name_prefix="route")
 
     # ------------------------------------------------------------------ setup
@@ -275,7 +276,7 @@ class Coordinator:
             conn.execute(
                 "INSERT INTO threads(id, project_id, kind, synthetic, title, status, created_at, updated_at, account_scope) "
                 "VALUES (?,?,?,?,?,?,?,?,?)",
-                (thread_id, project_row["id"], ThreadKind.ORDINARY.value, int(synthetic), text.strip()[:80], "active", now, now, None),
+                (thread_id, project_row["id"], ThreadKind.ORDINARY.value, int(synthetic), text.strip()[:80], "active", now, now, self.account_scope),
             )
             message_id = self.store.add_message(
                 thread_id, "user", "prompt", text, provenance="terminal", conn=conn
@@ -976,7 +977,7 @@ class Coordinator:
 
     # ------------------------------------------------------------- execution
 
-    def run(self, job_id: str, *, confirmed_not_executed: bool = False) -> JobState:
+    def run(self, job_id: str) -> JobState:
         """Drive one job through eligibility, dispatch and streaming."""
         job = self.store.job(job_id)
         state = JobState(job["state"])
@@ -984,7 +985,7 @@ class Coordinator:
             return state
         if state in {JobState.DRAFT, JobState.ROUTING, JobState.AWAITING_MANUAL_MODEL, JobState.DISPATCHING, JobState.RUNNING}:
             return state
-        if state is JobState.RECOVERY_REQUIRED and not confirmed_not_executed:
+        if state is JobState.RECOVERY_REQUIRED:
             return state
         thread = self.store.thread(job["thread_id"])
         binding = Binding(
@@ -1006,8 +1007,7 @@ class Coordinator:
                 return self._block(job_id, state, result)
             if state is not JobState.READY:
                 self.store.transition_job(
-                    job_id, JobState.READY, eligibility_passed=True, owner_confirmed_not_executed=confirmed_not_executed,
-                    extra={"eligibility_ms": round(result.elapsed_ms, 2)},
+                    job_id, JobState.READY, eligibility_passed=True, extra={"eligibility_ms": round(result.elapsed_ms, 2)},
                 )
             if result.notes:
                 for note in result.notes:
@@ -1059,12 +1059,19 @@ class Coordinator:
         try:
             provider_thread_id = self._ensure_provider_thread(thread_id, binding, eligibility)
         except _Hold as hold:
-            self._set_dispatch(dispatch_id, DispatchPhase.NOT_EXECUTED, error=hold.reason)
-            self.store.transition_job(job_id, hold.state, blocker=hold.reason)
-            self.ui.notify(f"Router: Held — {hold.reason}")
-            return hold.state
+            return self._hold_before_send(job_id, dispatch_id, hold.state, hold.reason)
+        except AdapterError as exc:
+            # e.g. thread/resume failed: no turn was sent, so this is safe to retry later.
+            return self._hold_before_send(job_id, dispatch_id, JobState.BLOCKED_CAPABILITY, f"provider thread could not be resumed: {exc}")
+        except Exception as exc:
+            return self._hold_before_send(job_id, dispatch_id, JobState.BLOCKED_CAPABILITY, f"unexpected error before sending: {exc}")
 
-        self._set_dispatch(dispatch_id, DispatchPhase.SENT)
+        try:
+            self._set_dispatch(dispatch_id, DispatchPhase.SENT, expected=[DispatchPhase.PREPARED])
+        except StaleState:
+            # Recovery (another process) already settled this dispatch: never send it.
+            self.store.event("dispatch.abandoned", {"dispatch_id": dispatch_id, "reason": "phase changed before send"}, thread_id=thread_id, job_id=job_id)
+            return JobState(self.store.job(job_id)["state"])
         self.store.event("dispatch.sent", {"dispatch_id": dispatch_id}, thread_id=thread_id, job_id=job_id)
         selected_at = job["selected_at"]
         timings = {"eligibility_ms": round(eligibility.elapsed_ms, 2)}
@@ -1084,6 +1091,9 @@ class Coordinator:
             return self._consume(job_id, thread_id, dispatch_id, provider_thread_id, binding, events)
         except DispatchUncertain as exc:
             return self._uncertain(job_id, thread_id, dispatch_id, str(exc))
+        except KeyboardInterrupt:
+            self._uncertain(job_id, thread_id, dispatch_id, "interrupted by the owner while the turn was in flight")
+            raise
         except AdapterError as exc:
             current = JobState(self.store.job(job_id)["state"])
             if exc.executed == "no" and current is JobState.DISPATCHING:
@@ -1097,6 +1107,15 @@ class Coordinator:
                 self.ui.notify(f"Router: The provider refused the turn: {exc}")
                 return JobState.FAILED
             return self._uncertain(job_id, thread_id, dispatch_id, str(exc))
+        except Exception as exc:  # never leave a sent turn stuck in DISPATCHING/RUNNING
+            self.store.event("dispatch.unexpected_error", {"dispatch_id": dispatch_id, "error": repr(exc)}, thread_id=thread_id, job_id=job_id)
+            return self._uncertain(job_id, thread_id, dispatch_id, f"unexpected error after sending: {exc}")
+
+    def _hold_before_send(self, job_id: str, dispatch_id: str, state: JobState, reason: str) -> JobState:
+        self._set_dispatch(dispatch_id, DispatchPhase.NOT_EXECUTED, error=reason)
+        self.store.transition_job(job_id, state, blocker=reason)
+        self.ui.notify(f"Router: Held — {reason}")
+        return state
 
     def _turn_input(self, job: sqlite3.Row, thread: sqlite3.Row) -> str:
         checkpoint = self.store.one(
@@ -1127,6 +1146,10 @@ class Coordinator:
         workspace, sandbox, instructions = self._execution_profile(thread, project)
         if thread["provider_thread_id"]:
             provider_id = thread["provider_thread_id"]
+            generation = getattr(self.adapter, "connection_generation", 0)
+            if generation != self._loaded_generation:
+                self._loaded_provider_threads.clear()  # a new App Server process has nothing loaded
+                self._loaded_generation = generation
             if provider_id not in self._loaded_provider_threads:
                 resumed = self.adapter.resume_thread(provider_id, binding, workspace=workspace, sandbox=sandbox)
                 if resumed.model_id and resumed.model_id != binding.model_id:
@@ -1166,6 +1189,7 @@ class Coordinator:
             )
             self.store.event("thread.provider_created", {"provider_thread_id": created.provider_thread_id, "model": created.model_id}, thread_id=thread_id, conn=conn)
         self._loaded_provider_threads.add(created.provider_thread_id)
+        self._loaded_generation = getattr(self.adapter, "connection_generation", 0)
         if created.model_id and created.model_id != binding.model_id:
             raise _Hold(JobState.BLOCKED_CAPABILITY, f"provider created the thread on {created.model_id}, not the pinned {binding.model_id}")
         return created.provider_thread_id
@@ -1182,14 +1206,24 @@ class Coordinator:
             return workspace, "read-only", ARCHITECTURE_INSTRUCTIONS
         return workspace, "read-only", WRITING_INSTRUCTIONS
 
-    def _set_dispatch(self, dispatch_id: str, phase: DispatchPhase, **fields: Any) -> None:
+    def _set_dispatch(
+        self, dispatch_id: str, phase: DispatchPhase, *, expected: Iterable[DispatchPhase] | None = None, **fields: Any
+    ) -> None:
+        """Update a dispatch; with ``expected`` it is a compare-and-swap on the phase."""
         assignments = ["phase=?", "updated_at=?"]
         values: list[Any] = [phase.value, utc_now()]
         for key, value in fields.items():
             assignments.append(f"{key}=?")
             values.append(value)
+        sql = f"UPDATE dispatches SET {', '.join(assignments)} WHERE dispatch_id=?"
         values.append(dispatch_id)
-        self.store.execute(f"UPDATE dispatches SET {', '.join(assignments)} WHERE dispatch_id=?", tuple(values))
+        if expected is not None:
+            allowed = [p.value for p in expected]
+            sql += f" AND phase IN ({','.join('?' * len(allowed))})"
+            values.extend(allowed)
+        cursor = self.store.execute(sql, tuple(values))
+        if expected is not None and cursor.rowcount != 1:
+            raise StaleState(f"dispatch {dispatch_id} is no longer in phase {sorted(allowed)}")
 
     def _consume(self, job_id, thread_id, dispatch_id, provider_thread_id, binding: Binding, events: Iterable[TurnEvent]) -> JobState:
         answer_id: str | None = None
@@ -1201,6 +1235,7 @@ class Coordinator:
         rerouted: tuple[str, str] | None = None
         final_status: TurnStatus | None = None
         tool_results: list[dict[str, Any]] = []
+        last_renewal = time.monotonic()
 
         def flush(complete: bool | None = None) -> None:
             nonlocal buffer, last_flush
@@ -1210,9 +1245,12 @@ class Coordinator:
                 last_flush = time.monotonic()
 
         for event in events:
+            if time.monotonic() - last_renewal > DISPATCH_LEASE_TTL / 4:
+                self.store.acquire_lease(DISPATCH_LEASE, self.lease_owner, DISPATCH_LEASE_TTL)  # long turns keep the lease
+                last_renewal = time.monotonic()
             if event.kind == "acknowledged":
                 provider_turn_id = event.provider_turn_id
-                self._set_dispatch(dispatch_id, DispatchPhase.ACKNOWLEDGED, provider_turn_id=provider_turn_id)
+                self._set_dispatch(dispatch_id, DispatchPhase.ACKNOWLEDGED, expected=[DispatchPhase.SENT], provider_turn_id=provider_turn_id)
                 self.store.transition_job(job_id, JobState.RUNNING, expected=JobState.DISPATCHING)
                 self.store.event("dispatch.acknowledged", {"dispatch_id": dispatch_id, "provider_turn_id": provider_turn_id}, thread_id=thread_id, job_id=job_id)
                 answer_id = self.store.add_message(thread_id, "assistant", "answer", "", provenance=f"dispatch:{dispatch_id}", dispatch_id=dispatch_id, complete=False)
@@ -1407,6 +1445,10 @@ class Coordinator:
     def wake(self, *, now: str | None = None) -> list[tuple[str, JobState]]:
         """Re-check queued jobs the owner asked to run (fresh eligibility each)."""
         results = []
+        for row in self.store.all("SELECT id FROM jobs WHERE state='RECOVERY_REQUIRED' AND cancelled=0"):
+            final = self.reconcile(row["id"])  # reads only; never sends
+            if final is not JobState.RECOVERY_REQUIRED:
+                results.append((row["id"], final))
         rows = self.store.all(
             "SELECT * FROM jobs WHERE cancelled=0 AND user_requested=1 AND state IN (?,?,?,?,?,?) ORDER BY priority, "
             "CASE urgency WHEN 'now' THEN 0 WHEN 'normal' THEN 1 WHEN 'later' THEN 2 ELSE 1 END, created_at",
@@ -1438,7 +1480,19 @@ class Coordinator:
         return JobState.CANCELLED
 
     def recover(self) -> list[dict[str, Any]]:
-        """Startup recovery. Never resends; reconciles or asks."""
+        """Startup recovery. Never resends; reconciles or asks.
+
+        Takes the dispatch lease, so it never touches a turn another live
+        process is dispatching right now."""
+        if not self.store.acquire_lease(DISPATCH_LEASE, self.lease_owner, DISPATCH_LEASE_TTL):
+            self.store.event("recovery.skipped", {"reason": "another live process holds the dispatch lease"})
+            return []
+        try:
+            return self._recover()
+        finally:
+            self.store.release_lease(DISPATCH_LEASE, self.lease_owner)
+
+    def _recover(self) -> list[dict[str, Any]]:
         report: list[dict[str, Any]] = []
         for row in self.store.all("SELECT * FROM jobs WHERE state='ROUTING'"):
             # No provider call happens during routing: re-route with a new fence.
@@ -1511,8 +1565,12 @@ class Coordinator:
         self._set_dispatch(dispatch["dispatch_id"], DispatchPhase.ACKNOWLEDGED, provider_turn_id=match.provider_turn_id)
         self.store.event("dispatch.reconciled", {"dispatch_id": dispatch["dispatch_id"], "provider_turn_id": match.provider_turn_id, "status": match.status.value}, thread_id=thread["id"], job_id=job_id)
         if match.status is TurnStatus.IN_PROGRESS:
-            self.store.transition_job(job_id, JobState.RUNNING, blocker="reconciled: provider turn still in progress")
-            return JobState.RUNNING
+            # Nothing in this process is reading that stream; check again on the next wake.
+            self.store.execute(
+                "UPDATE jobs SET blocker=? WHERE id=?",
+                ("the provider turn is still running; `router.py wake` checks it again", job_id),
+            )
+            return JobState.RECOVERY_REQUIRED
         existing = self.store.one("SELECT id FROM messages WHERE dispatch_id=? AND role='assistant'", (dispatch["dispatch_id"],))
         text = match.text or ""
         if existing is None:
@@ -1526,10 +1584,13 @@ class Coordinator:
         return final
 
     def _ask_recovery(self, job_id: str, dispatch_id: str, why: str) -> None:
+        current = self.store.job(job_id)["blocker"]
         question = (
             f"Router: A send may or may not have run ({why}). It will NOT be resent automatically. "
             f"Choose: /recover {job_id} resend (you confirm it did not run) or /recover {job_id} drop."
         )
+        if current == question:
+            return  # already asked; do not repeat on every wake
         self.store.execute("UPDATE jobs SET blocker=? WHERE id=?", (question, job_id))
         self.store.event("recovery.question", {"dispatch_id": dispatch_id, "why": why}, job_id=job_id)
         self.ui.notify(question)
@@ -1548,8 +1609,12 @@ class Coordinator:
         thread = self.store.thread(job["thread_id"])
         if thread["provider_thread_phase"] == "UNCERTAIN":
             self.store.execute("UPDATE threads SET provider_thread_phase='NONE' WHERE id=?", (thread["id"],))
+        self.store.transition_job(
+            job_id, JobState.PAUSED, owner_confirmed_not_executed=True,
+            blocker="owner confirmed the uncertain send did not run; re-checking before sending",
+        )
         self.store.event("recovery.owner_confirmed_not_executed", {}, thread_id=thread["id"], job_id=job_id)
-        return self.run(job_id, confirmed_not_executed=True)
+        return self.run(job_id)
 
     # ------------------------------------------------------------ evaluation
 
@@ -1565,9 +1630,9 @@ class Coordinator:
         with self.store.transaction() as conn:
             conn.execute(
                 "INSERT INTO threads(id, project_id, kind, synthetic, title, pinned_model, pinned_effort, pinned_manual, route_decision_id, status, "
-                "created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                "created_at, updated_at, account_scope) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 (thread_id, project_row["id"], ThreadKind.EVALUATION.value, int(not self.live), f"eval {run_id}", model_id,
-                 reasoning_effort, 1, decision_id, "active", now, now),
+                 reasoning_effort, 1, decision_id, "active", now, now, self.account_scope),
             )
             conn.execute(
                 "INSERT INTO route_decisions(id, request_id, thread_id, route_attempt_id, role, model_id, reasoning_effort, manual, payload, created_at) "
@@ -1577,9 +1642,9 @@ class Coordinator:
             )
             message_id = self.store.add_message(thread_id, "user", "prompt", text, provenance=f"evaluation:{run_id}", conn=conn)
             conn.execute(
-                "INSERT INTO jobs(id, logical_key, thread_id, request_id, kind, state, priority, input_message_id, selected_at, created_at, updated_at) "
-                "VALUES (?,?,?,?,?,?,?,?,?,?,?)",
-                (job_id, f"eval:{run_id}:{thread_id}", thread_id, run_id, "evaluation", JobState.DRAFT.value, 10, message_id, now, now, now),
+                "INSERT INTO jobs(id, logical_key, thread_id, request_id, kind, state, priority, input_message_id, selected_at, user_requested, "
+                "created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
+                (job_id, f"eval:{run_id}:{thread_id}", thread_id, run_id, "evaluation", JobState.DRAFT.value, 10, message_id, now, 0, now, now),
             )
             self.store.transition_job(job_id, JobState.SELECTED, conn=conn)
         return {"thread_id": thread_id, "job_id": job_id}

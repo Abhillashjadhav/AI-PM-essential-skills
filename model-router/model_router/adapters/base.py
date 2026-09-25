@@ -133,6 +133,9 @@ ApprovalHandler = Callable[[ApprovalRequest], str]  # returns "accept" | "declin
 
 class SubscriptionAdapter(abc.ABC):
     name = "abstract"
+    # Incremented whenever a new provider process/connection is started; the
+    # coordinator re-resumes provider threads when it changes.
+    connection_generation = 0
 
     @abc.abstractmethod
     def initialise(self) -> AdapterCapabilities: ...

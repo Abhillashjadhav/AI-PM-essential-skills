@@ -60,9 +60,13 @@ def weekly_report(store: Store, week: str, *, include_synthetic: bool = False, n
     for route in rows("SELECT * FROM route_decisions ORDER BY created_at"):
         if route["thread_id"] in ids and route["thread_id"] not in first_routes:
             first_routes[route["thread_id"]] = route | {"payload": json.loads(route["payload"])}
-    answered = {
-        r["thread_id"]
-        for r in rows("SELECT thread_id FROM messages WHERE role='assistant' AND content IS NOT NULL AND length(content) > 0")
+    # (thread, model) pairs where that model actually produced answer text.
+    answered_by = {
+        (r["thread_id"], r["requested_model"])
+        for r in rows(
+            "SELECT m.thread_id, d.requested_model FROM messages m JOIN dispatches d ON d.dispatch_id = m.dispatch_id "
+            "WHERE m.role='assistant' AND m.content IS NOT NULL AND length(m.content) > 0"
+        )
     }
     overrides = [o for o in rows("SELECT * FROM overrides ORDER BY at") if o["thread_id"] in ids]
     outcomes_all = rows("SELECT * FROM outcomes ORDER BY recorded_at")
@@ -71,7 +75,7 @@ def weekly_report(store: Store, week: str, *, include_synthetic: bool = False, n
     for outcome in outcomes:
         latest_outcome[outcome["thread_id"]] = outcome
 
-    eligible, blocked, timeout_manual, manual_other = [], [], [], []
+    eligible, blocked, timeout_manual, manual_other, missing_binding = [], [], [], [], []
     for thread in threads:
         route = first_routes.get(thread["id"])
         if route is None:
@@ -80,7 +84,10 @@ def weekly_report(store: Store, week: str, *, include_synthetic: bool = False, n
         if route["manual"]:
             (timeout_manual if "timed out" in json.dumps(route["payload"]) or "within" in json.dumps(route["payload"]) else manual_other).append(thread["id"])
             continue
-        if thread["id"] in answered and route["model_id"]:
+        if route["model_id"] is None:
+            missing_binding.append(thread["id"])  # no approved model: a setup gap, not a routing success
+        elif (thread["id"], route["model_id"]) in answered_by:
+            # Eligible only when the *automatically selected* model answered.
             eligible.append(thread["id"])
         else:
             blocked.append(thread["id"])
@@ -179,6 +186,7 @@ def weekly_report(store: Store, week: str, *, include_synthetic: bool = False, n
             "blocked_or_no_answer_threads": len(blocked),
             "manual_after_routing_timeout": len(timeout_manual),
             "manual_other": len(manual_other),
+            "no_approved_binding": len(missing_binding),
             "upward_fallbacks": len(upward),
             "role_mix": dict(role_mix),
             "model_mix": dict(model_mix),

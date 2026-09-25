@@ -360,7 +360,7 @@ def cmd_chat(args: argparse.Namespace, *, thread_id: str | None = None) -> int:
             ui.notify(f"Router: {result.explanation}")
             timing = result.timings_ms.get("submit_to_selection_ms")
             if timing is not None:
-                ui.notify(f"Router: (model chosen in {timing:.0f} ms{' incl. startup' if result.timings_ms.get('cold') else ''})")
+                ui.notify(f"Router: (routing took {timing:.0f} ms{' incl. startup' if result.timings_ms.get('cold') else ''})")
         for notice in result.notices:
             ui.notify(f"Router: {notice}")
         if result.state is JobState.AWAITING_MANUAL_MODEL:
@@ -389,7 +389,8 @@ def _report_handoff(coordinator: Coordinator, handoff, ui: RouterUI) -> None:
             ui.notify("Router: Using the approved lower model for this new coding chat:\nthe steps are clear, the work is low risk, and included usage looks tight.")
         elif handoff.role:
             ui.notify(f"Router: {handoff.role.plain} reasoning — implementation from the agreed architecture.")
-        ui.notify(f"Router: implementation chat {handoff.target_thread_id} (model {handoff.model_id}).")
+        ui.notify(f"Router: implementation chat {handoff.target_thread_id} (model {handoff.model_id}); "
+                  f"continue it later with: router.py resume {handoff.target_thread_id}")
         if handoff.status == "CREATED" and handoff.job_id:
             _drive(coordinator, handoff.job_id, ui)
     else:
@@ -586,5 +587,9 @@ def parser() -> argparse.ArgumentParser:
 
 
 def main(argv: list[str] | None = None) -> int:
+    import signal
+
+    if hasattr(signal, "SIGPIPE"):
+        signal.signal(signal.SIGPIPE, signal.SIG_DFL)  # `router.py models | head` exits quietly
     args = parser().parse_args(argv)
     return int(args.func(args) or 0)

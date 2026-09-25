@@ -95,6 +95,7 @@ class FakeScenario:
     echo_client_id: bool = True
     resume_model: str | None = None  # simulate provider changing model on resume
     create_thread_error: str | None = None
+    resume_error: str | None = None
 
 
 class FakeAdapter(SubscriptionAdapter):
@@ -264,6 +265,8 @@ class FakeAdapter(SubscriptionAdapter):
         thread = self.threads.get(provider_thread_id)
         if thread is None:
             raise AdapterError(f"unknown provider thread {provider_thread_id}", executed="no")
+        if self.scenario.resume_error:
+            raise AdapterError(self.scenario.resume_error, executed="no")
         model = self.scenario.resume_model or expected.model_id
         return ProviderThread(provider_thread_id=provider_thread_id, model_id=model, reasoning_effort=expected.reasoning_effort)
 

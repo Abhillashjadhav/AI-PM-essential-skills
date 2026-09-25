@@ -120,6 +120,9 @@ class EligibilityGate:
         if self.live and account.synthetic:
             checks["account_source"] = "synthetic"
             return blocked(JobState.BLOCKED_SPEND, "simulated account state cannot authorise a live dispatch", account=account)
+        if self.live and binding is not None and not thread_account_scope:
+            checks["account_binding"] = "unbound"
+            return blocked(JobState.BLOCKED_AUTH, "this thread is not bound to a signed-in account, so it will not be sent", account=account)
         if thread_account_scope and account.account_scope != thread_account_scope:
             checks["account_binding"] = "mismatch"
             return blocked(

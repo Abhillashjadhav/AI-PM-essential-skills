@@ -1,6 +1,8 @@
 """Eligibility, zero-added-spend and account gates (B01-B08), queueing and
 cancellation (B05, S07), capability failures (I03)."""
 
+import dataclasses
+
 from helpers import RouterTestCase
 from model_router.contracts import JobState, SpendStatus
 
@@ -132,14 +134,28 @@ class QueueAndResume(RouterTestCase):
         self.assertEqual(self.coordinator.run(result.job_id), JobState.CANCELLED)
         self.assertEqual(self.adapter.model_sends, 0)
 
-    def test_foreground_before_evaluation(self):
+    def test_evaluation_jobs_are_never_woken_as_user_work(self):
         self.scenario.ordinary_usage_allowed = False
         evaluation = self.coordinator.create_evaluation_job("Portfolio", "sim-sol-1", "eval prompt", run_id="evr_x")
         self.coordinator.run(evaluation["job_id"])
         user, _ = self.submit_and_run("Format my notes")
         self.scenario.ordinary_usage_allowed = True
-        order = [job for job, _ in self.coordinator.wake()]
-        self.assertEqual(order, [user.job_id, evaluation["job_id"]])
+        self.assertEqual([job for job, _ in self.coordinator.wake()], [user.job_id])
+        self.assertEqual(self.job_state(evaluation["job_id"]), "WAITING_USAGE")
+        self.assertEqual([t["text"] for t in self.adapter.sent_turns], ["Format my notes"])
+
+
+class LiveAccountBinding(RouterTestCase):
+    def test_unbound_thread_is_not_sent_in_live_mode(self):
+        result = self.coordinator.submit("Portfolio", "Format my notes")
+        self.assertEqual(self.store.thread(result.thread_id)["account_scope"], self.account, "bound at creation")
+        self.store.execute("UPDATE threads SET account_scope=NULL WHERE id=?", (result.thread_id,))
+        original = self.adapter.read_account
+        self.adapter.read_account = lambda: dataclasses.replace(original(), synthetic=False)
+        self.coordinator.gate.live = True
+        self.assertEqual(self.coordinator.run(result.job_id), JobState.BLOCKED_AUTH)
+        self.assertIn("not bound", self.store.job(result.job_id)["blocker"])
+        self.assertEqual(self.adapter.model_sends, 0)
 
 
 class Capabilities(RouterTestCase):

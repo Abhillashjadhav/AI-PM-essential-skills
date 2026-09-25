@@ -249,6 +249,12 @@ def run_live(
         pass
     except KeyboardInterrupt:
         status, reason = "CANCELLED", "cancelled by the owner"
+    # A stopped plan leaves nothing behind to be dispatched later.
+    for leftover in store.all(
+        "SELECT id FROM jobs WHERE kind='evaluation' AND request_id=? AND state NOT IN ('SUCCEEDED','FAILED','CANCELLED','DISPATCHING','RUNNING')",
+        (run_id,),
+    ):
+        coordinator.cancel(leftover["id"])
     store.execute("UPDATE eval_runs SET status=?, finished_at=? WHERE id=?", (status, utc_now(), run_id))
     return {"run_id": run_id, "status": status, "reason": reason, "records": records, "plan": plan.to_dict()}
 

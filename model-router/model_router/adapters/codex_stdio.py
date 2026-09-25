@@ -563,6 +563,8 @@ class CodexStdioAdapter(SubscriptionAdapter):
         self._thread_listeners: dict[str, "queue.Queue[dict[str, Any]]"] = {}
         self._pending_notifications: list[dict[str, Any]] = []
         self._last_usage_raw: dict[str, Any] | None = None
+        self.connection_generation = 0
+        self.send_client_message_id = True
         self.capabilities: AdapterCapabilities | None = None
 
     # -- process ---------------------------------------------------------------
@@ -604,6 +606,7 @@ class CodexStdioAdapter(SubscriptionAdapter):
         if self.rpc is not None and not self.rpc.closed.is_set():
             return self.rpc
         self._reset()  # reap an exited App Server before starting a new one
+        self._verify_binary_unchanged()
         self._ensure_profile()
         env, dropped = minimal_env(self.config.home)
         self.dropped_env = dropped
@@ -611,10 +614,22 @@ class CodexStdioAdapter(SubscriptionAdapter):
         stderr_path.parent.mkdir(parents=True, exist_ok=True)
         os.chmod(stderr_path.parent, 0o700)
         self.rpc = JsonRpcProcess(self._argv(), env, stderr_path)
+        self.connection_generation += 1
         result = self.rpc.request("initialize", {"clientInfo": CLIENT_INFO}, self.config.request_timeout)
         self.rpc.notify("initialized")
         self._init_result = redact(result or {})
         return self.rpc
+
+    def _verify_binary_unchanged(self) -> None:
+        """Every (re)spawn re-checks the executable against the approved pin, so a
+        binary replaced after startup can never inherit a valid pin state."""
+        if not self.config.enforce_pin or self.pin_state != "valid":
+            return
+        saved = PinManifest.load(self.config.pin_path)
+        executable = resolve_executable(self.config.executable)
+        if saved is None or executable is None or str(executable) != saved.executable or sha256_file(executable) != saved.sha256:
+            self.pin_state = "drift"
+            self.pin_problems = ["the Codex executable changed since it was pinned; new sends are blocked until re-validated"]
 
     def _read_request(self, method: str, params: dict[str, Any] | None) -> Any:
         """Idempotent reads: bounded exponential backoff with jitter."""
@@ -649,6 +664,9 @@ class CodexStdioAdapter(SubscriptionAdapter):
 
     def initialise(self) -> AdapterCapabilities:
         self._check_pin()
+        saved = PinManifest.load(self.config.pin_path)
+        if saved is not None and any("clientUserMessageId absent" in note for note in saved.compat_notes):
+            self.send_client_message_id = False  # never send a field the pinned schema lacks
         operations = {
             "read_account": "unverified",
             "list_models": "unverified",
@@ -844,12 +862,14 @@ class CodexStdioAdapter(SubscriptionAdapter):
     ) -> Iterator[TurnEvent]:
         self._require_sendable()
         rpc = self._connect()
+        self._drain_stale(rpc)
         params: dict[str, Any] = {
             "threadId": provider_thread_id,
             "input": [{"type": "text", "text": text}],
             "model": binding.model_id,
-            "clientUserMessageId": dispatch_id,
         }
+        if self.send_client_message_id:
+            params["clientUserMessageId"] = dispatch_id
         if binding.reasoning_effort:
             params["effort"] = binding.reasoning_effort
         result = rpc.request("turn/start", params, self.config.request_timeout, before_send=on_sent) or {}
@@ -858,6 +878,22 @@ class CodexStdioAdapter(SubscriptionAdapter):
         if not turn_id:
             raise DispatchUncertain("turn/start returned no turn id")
         return self._events(rpc, provider_thread_id, turn_id, approval_handler)
+
+    def _drain_stale(self, rpc: JsonRpcProcess) -> int:
+        """Drop notifications left over from earlier or abandoned turns so the
+        bounded inbox never fills; refuse any stale provider request."""
+        dropped = 0
+        while True:
+            try:
+                message = rpc.inbox.get_nowait()
+            except queue.Empty:
+                return dropped
+            if message.get("method") == "__closed__":
+                rpc.inbox.put(message)
+                return dropped
+            if "id" in message:
+                rpc.respond(message["id"], error={"code": -32000, "message": "request belongs to a finished turn"})
+            dropped += 1
 
     def _events(self, rpc: JsonRpcProcess, thread_id: str, turn_id: str, approval_handler: ApprovalHandler) -> Iterator[TurnEvent]:
         yield TurnEvent(kind="acknowledged", provider_turn_id=turn_id)
