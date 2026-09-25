@@ -201,7 +201,7 @@ PATTERNS: dict[str, tuple[str, ...]] = {
     "extraction": (
         r"extract",
         r"pull out",
-        r"list (?:all|the|every)",
+        r"list (?:just |only )?(?:all|the|every)",
         r"collect",
         r"gather",
         r"find (?:these|the|me|all)? ?(?:resources|links|urls|sources|papers|articles)",
@@ -417,7 +417,54 @@ REVISION_5_PATTERNS: dict[str, tuple[str, ...]] = {
 for _name, _extra in REVISION_5_PATTERNS.items():
     PATTERNS[_name] = PATTERNS.get(_name, ()) + _extra
 
-RULES_VERSION = "rules-2026-09-25.5"
+# Rules revision 6: categories from the misses of frozen revision 5 on the first
+# fresh set (which is development data from here on).
+REVISION_6_PATTERNS: dict[str, tuple[str, ...]] = {
+    "privacy": (
+        r"phone numbers?", r"(?:users?|customers?|members?|subscribers?|clients?|leads?)'? (?:emails?|phone numbers?|addresses|contacts?|data|details|pii|dob|birthdays?)",
+        r"e-?mails? (?:and|\+|&) phones?", r"personal (?:details|info(?:rmation)?|data)", r"contact (?:details|info)",
+    ),
+    "tradeoff": (r"can'?t decide", r"cant decide", r"torn between"),
+    "architecture": (r"multi-?tenan(?:t|cy)",),
+    "coding": (
+        r"gh actions?", r"package(?:-lock)?\.json", r"package-lock", r"node_modules", r"[\w-]+\.(?:json|lock|cfg|ini|conf|xml)",
+        r"not firing", r"(?:doesn'?t|does not|won'?t) (?:fire|trigger)", r"nothing comes through", r"selectors?", r"content scripts?",
+    ),
+    "routine": (
+        r"fix (?:only |just )?(?:the |my )?(?:typos?|spelling|grammar|punctuation)", r"typos? only", r"swap [^\n]{1,40} (?:for|with)",
+        r"everywhere in (?:this|the|my)", r"find and replace",
+    ),
+    "arithmetic": (
+        r"just (?:do )?the (?:math|maths|arithmetic|calculation)", r"multiply", r"divide", r"convert [₹$€£]?\d[\d,.]{0,15}",
+        r"(?:add|total|sum) up", r"sum of", r"per (?:gb|kg|unit|litre|liter|month|day|hour|person|head)",
+        r"total (?:how much|up|of|the)", r"how much (?:did )?i spen[dt]",
+    ),
+    "extraction": (
+        r"copy (?:my|the|out|just)", r"pull(?! requests?)", r"(?:get|grab|take) [\w ,+&-]{1,60} from (?:this|these|the|my|below)",
+        r"just (?:the )?names",
+    ),
+    "hc_verb": (
+        r"reword", r"rephrase", r"tweak", r"tighten", r"trim", r"shorten", r"sharpen", r"quantify", r"punch up", r"redo", r"update", r"fix",
+    ),
+    "vague": (
+        r"do the needful", r"sort (?:it|this|that) out", r"(?:the|that) thing (?:we|i|you) (?:discussed|talked about|mentioned)",
+        r"as discussed",
+    ),
+}
+for _name, _extra in REVISION_6_PATTERNS.items():
+    PATTERNS[_name] = PATTERNS.get(_name, ()) + _extra
+PATTERNS["routine"] = PATTERNS["routine"] + PATTERNS["arithmetic"]
+# A bare "secret" is too broad ("secret santa"); keep the security senses.
+PATTERNS["security"] = tuple(p for p in PATTERNS["security"] if p != r"secrets?") + (
+    r"secrets", r"secret (?:keys?|tokens?|managers?|stores?|vaults?|values?|files?)", r"client secrets?",
+)
+# "summarize X into Y" is credibility work only when Y is a credibility document.
+PATTERNS["hc_verb"] = tuple(p for p in PATTERNS["hc_verb"] if p != r"summari[sz]e (?:[\w-]+ ){0,4}into") + (
+    r"summari[sz]e (?:[\w-]+ ){0,4}into (?:a |an |my )?(?:[\w-]+ ){0,2}(?:post|article|bio|headline|about section|cover letter|r[ée]sum[ée]|cv|"
+    r"intro|pitch|blurb|tagline|summary|cold e-?mails?|outreach)",
+)
+
+RULES_VERSION = "rules-2026-09-25.6"
 _ARTIFACT_REQUEST = re.compile(
     r"^(?:(?:a|an|quick|simple|small|just|pls|please|need)\s+){0,3}(?:bash|python|shell|node|react|sql|typescript|ts|js|go)?\s*"
     r"(?:script|component|function|query|endpoint|regex|makefile|cli|hook|class|unit tests?|tests?|workflow|dockerfile)s?\b",
@@ -431,7 +478,8 @@ _CODING_ACTION = re.compile(
     r"encrypt|generate|clean|center|overlap\w*|breaks?|overflow\w*|goes through|pulls?|reads?|"
     r"does not|isn'?t working|not working|fails?|failing|broken|error|crash\w*|wrong|misses|skips|shows|returns|"
     r"handle|show|display|render|hide|disable|enable|validate|sync|scrape|parse|nothing happens|throws?|hangs?|freez\w*|"
-    r"times? out|blank (?:page|screen)|won'?t (?:load|work|build|start|compile|run)|can'?t (?:load|connect|import|find|build))\b",
+    r"times? out|blank (?:page|screen)|won'?t (?:load|work|build|start|compile|run)|can'?t (?:load|connect|import|find|build)|"
+    r"not firing|(?:doesn'?t|does not|won'?t) (?:fire|trigger)|nothing comes through)\b",
     re.IGNORECASE,
 )
 # The medium names the task as code: "sql: count ...", "python + bs4", "in pandas".
@@ -454,7 +502,8 @@ _CODE_CALL = re.compile(  # bounded and possessive: linear time on any input
 # Scope statements such as "(local-only, no auth)" exclude a concern; they do not ask for it.
 _SCOPE_EXCLUSION = re.compile(
     r"\b(?:no|without|doesn'?t (?:need|have|use)|not using|skip(?:ping)?|no need for) (?:any |an? )?"
-    r"(?:auth(?:entication)?|login|log-in|sign[- ]?in|user accounts?|payments?|billing)\b",
+    r"(?:auth(?:entication)?|login|log-in|sign[- ]?in|user accounts?|payments?|billing)\b"
+    r"|\bnot (?:for|about) security\b|\bnot security[- ](?:related|sensitive)\b|\bnothing to do with security\b",
     re.IGNORECASE,
 )
 # The pasted material is input data for new code ("groups these log lines"), not the code or spec being changed.
@@ -469,6 +518,60 @@ _LOGISTICS_SHOULD = re.compile(
     re.IGNORECASE,
 )
 _COMMENT_LINE = re.compile(r"(?m)^[ \t]*(?:#|//|--|/\*|\*).*$")
+_CODING_MEDIUM_START = re.compile(
+    r"^[ \t]*(?:supabase|sqlite|postgres(?:ql)?|mysql|firebase|firestore|next(?:\.?js)?|react|node|flask|django|fastapi|tailwind|"
+    r"css|html|bs4|selenium|gh actions?|github actions?|docker|git)(?:[ \t]+(?:js|ts|query|sql|python))?[ \t]*[:\-–]"
+    r"|\b(?:bs4|python|bash|sql|sqlite|supabase|pandas|node|js|shell|postgres)(?: js)? (?:script|query|queries|function|snippet)\b",
+    re.IGNORECASE,
+)
+_CODE_OBJECT = re.compile(
+    r"\b(?:bug|parser|function|api|endpoint|script|regex|component|css|html|scraper|selectors?|content script|extension|"
+    r"button|database|db|schema|query|code|dom)\b",
+    re.IGNORECASE,
+)
+# Scheduling a call with a recruiter is logistics; persuading one is credibility work.
+_LOGISTICS_CONTENT = re.compile(
+    r"\b(?:works? for|confirm\w*|reschedul\w*|(?:meet|zoom|calendar|teams) (?:link|invite)|available (?:on|at)|see you|"
+    r"\d{1,2}(?::\d\d)? ?(?:am|pm)|slot)\b",
+    re.IGNORECASE,
+)
+_PERSUASION = re.compile(
+    r"\b(?:interest\w*|why (?:i|me)|pitch|impress\w*|negotiat\w*|follow(?:ing)? up after|thank\w*|excit\w*|fit|referr?al|salary|offer)\b",
+    re.IGNORECASE,
+)
+_PERSON_HC_NOUNS = {"recruiter", "recruiters", "hiring manager", "hiring managers", "interviewer", "interviewers", "founder", "founders"}
+# Presentation-only front-end work: a risk word there is a label, not behaviour.
+_COSMETIC = re.compile(
+    r"\b(?:css|tailwind|styl(?:e|es|ing)|layout|misaligned|align\w*|overlap\w*|responsive|breakpoints?|padding|margin|"
+    r"spacing|font|colou?rs?|grid|flex(?:box)?|z-index|dark mode|looks? (?:broken|off|weird)|collaps\w*|wraps?|cent(?:er|re)(?:ed)?|"
+    r"(?:iphone|mobile|tablet) (?:width|safari|view|only))\b",
+    re.IGNORECASE,
+)
+_BEHAVIOUR_ON_RISK = re.compile(
+    r"\b(?:charg\w*|pay(?:s|ing|ment flows?)?|refund\w*|transfer\w*|authenticat\w*|authori[sz]\w*|verif\w*|stor(?:e|es|ing)|"
+    r"hash\w*|encrypt\w*|decrypt\w*|redirect\w*|tokens?|sessions?|cookies?|permissions?|validat\w*|leak\w*|expos\w*)\b",
+    re.IGNORECASE,
+)
+_RESOURCE_REQUEST = re.compile(
+    r"\b(?:(?:official )?(?:doc|docs|documentation) (?:links?|pages?)|links? (?:to|for)|just (?:the )?links|official docs|"
+    r"reading list|(?:\d+|a few|some|top \d+) (?:good |best |nice |cheap |quiet )?(?:cafes?|restaurants?|places|spots|hotels?|"
+    r"books?|movies?|podcasts?|courses?|tutorials?|tools?|apps?|papers?|resources?)\b)",
+    re.IGNORECASE,
+)
+# Constraints ("dont change anything") are not requests to change.
+_CONSTRAINT_NEGATION = re.compile(
+    r"\b(?:don'?t|dont|do not|without|no need to|never) (?:change|improve|edit|rewrite|re-?word|touch|alter|add|remove|fix)"
+    r"(?: or (?:change|improve|edit|rewrite|touch|alter|add|remove|fix))?"
+    r"(?: (?:anything(?: else)?|it|the (?:wording|text|content|tone|meaning)|much|wording|tone|meaning))?",
+    re.IGNORECASE,
+)
+_READ_ONLY = re.compile(r"\bread[- ]only\b", re.IGNORECASE)
+_PARENTHETICAL = re.compile(r"\([^()\n]{0,200}\)")
+_LEADING_SUMMARY = re.compile(
+    r"^\W{0,3}(?:(?:pls|please|can you|could you|quick(?:ly)?|just)\s+){0,2}"
+    r"(?:summari[sz]e|tl;?dr|format|reformat|translate|list|extract|pull|copy|count|convert|turn)\b",
+    re.IGNORECASE,
+)
 _SUMMARY_OP = re.compile(
     r"\b(?:summari[sz]e|summary|tl;?dr|reformat|format|translate|bullets?|proofread|fix (?:the )?(?:typos|spelling|grammar))\b",
     re.IGNORECASE,
@@ -557,6 +660,12 @@ def split_pasted(text: str) -> tuple[str, str]:
     never set risk or task kind.
     """
     match = re.search(r":[ \t]*\n", text)
+    if not match:
+        inline = re.search(r":[ \t]+(?=\S)", text)
+        if inline and inline.start() >= 3 and len(text) - inline.end() >= 10:
+            head = text[: inline.start()]
+            if _DATA_REFERENCE.search(head) and _OPERATION_ON_DATA.search(head):
+                return head, text[inline.end():]
     if match and match.start() >= 3:
         head, tail = text[: match.start()], text[match.end():]
         looks_like_data = bool(_CODE_MARKERS.search(tail)) or tail.lstrip()[:1] in {'"', "'", ">", "|", "{", "["}
@@ -614,15 +723,23 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     # Risk words are read after scope exclusions ("local-only, no auth"); message
     # logistics ("should i send the invite?") are not judgement calls.
     risk_lowered = _SCOPE_EXCLUSION.sub(" ", lowered)
+    # Constraints ("dont change anything") are not requests to change.
+    instruction_ops = _CONSTRAINT_NEGATION.sub(" ", instruction)
+    lowered_ops = instruction_ops.lower()
     hits = {
         name: _hits(name, risk_lowered if name in _RISK_GROUPS else lowered)
         for name in PATTERNS
     }
-    hits["judgement"] = _hits("judgement", _LOGISTICS_SHOULD.sub(" ", lowered))
+    hits["judgement"] = _hits("judgement", _LOGISTICS_SHOULD.sub(" ", lowered_ops))
+    hits["hc_verb"] = _hits("hc_verb", lowered_ops)
+    # "X vs Y" inside a parenthetical describes; it does not ask for a trade-off.
+    hits["tradeoff"] = _hits("tradeoff", _PARENTHETICAL.sub(" ", lowered))
+    if _READ_ONLY.search(instruction):
+        hits["money_movement"] = []  # read-only code cannot move money
     code_calls = _CODE_CALL.findall(instruction)
     if code_calls:
         hits["coding"] = hits["coding"] + code_calls
-    medium = _CODING_MEDIUM.search(instruction)
+    medium = _CODING_MEDIUM.search(instruction) or _CODING_MEDIUM_START.search(instruction)
     if medium:
         hits["coding"] = hits["coding"] + [medium.group(0).strip()]
     kinds: list[TaskKind] = []
@@ -648,11 +765,27 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     is_extraction = bool(hits["extraction"])
     has_judgement = bool(hits["judgement"])
     coding_intent = bool(
-        _CODING_ACTION.search(instruction) or _ARTIFACT_REQUEST.search(instruction.strip()) or medium
-        or _BUILD_INTO.search(instruction) or code_calls
+        _CODING_ACTION.search(instruction_ops) or _ARTIFACT_REQUEST.search(instruction_ops.strip()) or medium
+        or _BUILD_INTO.search(instruction_ops) or code_calls
     )
-    is_coding = bool(hits["coding"]) and (coding_intent or not (hits["routine"] or is_extraction)) or code_context
-    if coding_intent and quoted and not _INPUT_DATA_REF.search(instruction):
+    resource_request = bool(_RESOURCE_REQUEST.search(instruction)) and not coding_intent and not has_judgement
+    if resource_request:
+        hits["extraction"] = hits["extraction"] + [_RESOURCE_REQUEST.search(instruction).group(0)]
+        is_extraction = True
+    # A fenced code block is code material wherever it appears.
+    code_context = code_context or any(q.startswith(("```", "~~~")) for q in quoted)
+    # Pasted code is data when the task is only to extract from it.
+    is_coding = bool(hits["coding"]) and (coding_intent or not (hits["routine"] or is_extraction)) or (
+        code_context and (coding_intent or not is_extraction)
+    )
+    cosmetic_only = is_coding and bool(_COSMETIC.search(instruction)) and not _BEHAVIOUR_ON_RISK.search(instruction)
+    if cosmetic_only:
+        # Styling an element named "payments" or "login" does not touch payments or login.
+        for name in ("money_movement", "security", "privacy"):
+            hits[name] = []
+        reasons.append("PRESENTATION_ONLY")
+    leading_summary = bool(_LEADING_SUMMARY.search(instruction)) and not has_judgement
+    if coding_intent and quoted and not cosmetic_only and not _INPUT_DATA_REF.search(instruction):
         # Building or changing what was pasted/quoted: its risk is part of the task.
         # Sample input for new code ("group these log lines") and code comments are not.
         material = _COMMENT_LINE.sub(" ", "\n".join(quoted)).lower()
@@ -664,6 +797,13 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     if code_context and not hits["coding"]:
         reasons.append("PASTED_CODE_CONTEXT")
 
+    if hits["vague"]:
+        uncertainty.append("the request refers to something not stated in the message")
+        reasons.append("VAGUE_REFERENCE")
+    if leading_summary and (hits["architecture"] or hits["product_decision"]):
+        # "summarise this prd" operates on a design document; it does not make a design decision.
+        reasons.append("DESIGN_DOCUMENT_AS_MATERIAL")
+        hits["architecture"], hits["product_decision"] = [], []
     if hits["architecture"]:
         if is_coding and _ARCH_REFERENCE.search(lowered) and len(_ARCH_REFERENCE.findall(lowered)) >= len(hits["architecture"]):
             # "implement X per the agreed architecture" references a design;
@@ -677,8 +817,11 @@ def classify(item: ClassifierInput) -> TaskAssessment:
         add(TaskKind.UI_DECISION, "UI_DECISION", hits["ui_decision"])
     if hits["tradeoff"]:
         add(TaskKind.TRADEOFF, "TRADEOFF", hits["tradeoff"])
-    elif _CHOICE_QUESTION.search(instruction) and not (hits["routine"] or hits["extraction"]):
-        add(TaskKind.TRADEOFF, "CHOICE_QUESTION", [_CHOICE_QUESTION.search(instruction).group(0)])
+    elif _CHOICE_QUESTION.search(_PARENTHETICAL.sub(" ", instruction)) and not (
+        hits["arithmetic"] or _COMPILED["routine"].search(lowered[:40]) or _COMPILED["extraction"].search(lowered[:40])
+    ):
+        # A routine or extraction word counts against a choice question only when it is the leading operation.
+        add(TaskKind.TRADEOFF, "CHOICE_QUESTION", [_CHOICE_QUESTION.search(_PARENTHETICAL.sub(" ", instruction)).group(0)])
 
     # High-credibility writing: a credibility noun plus a writing/judging verb.
     # Pure extraction from the same document is different (handled below).
@@ -700,7 +843,13 @@ def classify(item: ClassifierInput) -> TaskAssessment:
         hc_verbs = hc_verbs + transformation
         writing_code = bool(_ARTIFACT_REQUEST.search(instruction.strip()) or re.search(
             r"\bwrite (?:a |an |me a )?(?:python|bash|shell|node|sql)?\s*(?:script|function|program|parser|scraper)", lowered))
-        if hc_verbs and not writing_code and not (is_extraction and not has_judgement and not _writes(hits)):
+        # "the apply button on linkedin job pages" is code that mentions LinkedIn.
+        writing_code = writing_code or (is_coding and coding_intent and bool(_CODE_OBJECT.search(instruction)))
+        people_only = all(n.lower() in _PERSON_HC_NOUNS for n in hits["hc_noun"])
+        logistics_only = people_only and bool(_LOGISTICS_CONTENT.search(text)) and not _PERSUASION.search(text)
+        if logistics_only:
+            reasons.append("SCHEDULING_LOGISTICS")
+        if hc_verbs and not writing_code and not logistics_only and not (is_extraction and not has_judgement and not _writes(hits)):
             add(TaskKind.HIGH_CREDIBILITY_WRITING, "HIGH_CREDIBILITY", hits["hc_noun"] + hc_verbs)
             flags.append(RiskFlag.HIGH_CREDIBILITY)
         elif not is_extraction and not hits["routine"] and not writing_code:
@@ -711,7 +860,7 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     security = hits["security"]
     privacy = hits["privacy"]
     risk_action_early = bool(_RISK_ACTION.search(instruction)) and bool(hits["money_movement"] or hits["security"] or hits["privacy"])
-    pure_extraction = (
+    pure_extraction = resource_request or (
         is_extraction and not has_judgement and not _writes(hits) and not (is_coding and coding_intent) and not risk_action_early
     )
     if not pure_extraction:
