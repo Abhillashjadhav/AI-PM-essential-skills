@@ -1,0 +1,49 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "routing-cases.1",
+  "title": "Routing case dataset",
+  "type": "object",
+  "required": [
+    "dataset_version",
+    "synthetic",
+    "cases"
+  ],
+  "properties": {
+    "dataset_version": {
+      "type": "string"
+    },
+    "synthetic": {
+      "type": "boolean",
+      "enum": [
+        true
+      ]
+    },
+    "cases": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "prompt",
+          "expected_role"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "prompt": {
+            "type": "string"
+          },
+          "expected_role": {
+            "type": "string",
+            "enum": [
+              "highest",
+              "middle",
+              "lowest"
+            ]
+          }
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,63 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "adapter-pin.1",
+  "title": "Codex adapter pin manifest",
+  "type": "object",
+  "required": [
+    "executable",
+    "version",
+    "sha256",
+    "schema_digest",
+    "launcher",
+    "compat_problems",
+    "compat_notes",
+    "approved_by",
+    "approved_at",
+    "adapter_version",
+    "enforcement"
+  ],
+  "properties": {
+    "executable": {
+      "type": "string",
+      "pattern": "^/"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "schema_digest": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{64}$"
+    },
+    "enforcement": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "control_type",
+          "source",
+          "status",
+          "documentation",
+          "pin_digest",
+          "account_scope",
+          "expires_at",
+          "requires"
+        ],
+        "properties": {
+          "source": {
+            "type": "string",
+            "enum": [
+              "live"
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "enforced"
+            ]
+          }
+        }
+      }
+    }
+  }
+}
