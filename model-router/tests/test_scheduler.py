@@ -145,3 +145,21 @@ class AutoResume(RouterTestCase):
         self.assertEqual(self.adapter.model_sends, 1)
         status = self.store.one("SELECT value FROM meta WHERE key='auto_resume'")
         self.assertIn("runs only while a router process is open", status["value"])
+
+
+class ProjectScopedResume(RouterTestCase):
+    def test_a_project_scoped_resumer_leaves_other_projects_alone(self):
+        other_dir = self.tmp / "other"
+        other_dir.mkdir()
+        self.coordinator.add_project("Other", str(other_dir))
+        mine = self.coordinator.submit("Portfolio", "Format my notes into bullets")
+        theirs = self.coordinator.submit("Other", "Format my grocery list into bullets")
+        project = self.store.project_by_name("Portfolio")["id"]
+        self.assertEqual([j["id"] for j in self.coordinator.waiting_jobs(project_id=project)], [mine.job_id])
+        clock = FakeClock()
+        resumer = AutoResumer(self.coordinator, min_interval=30, max_interval=900, monotonic=lambda: clock.mono,
+                              wall=lambda: clock.wall, jitter=0.0, project_id=project)
+        tick = resumer.tick()
+        self.assertEqual(tick.resumed, [(mine.job_id, "SUCCEEDED")])
+        self.assertEqual(self.job_state(theirs.job_id), "SELECTED")
+        self.assertEqual(self.adapter.model_sends, 1)

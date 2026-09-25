@@ -1487,37 +1487,46 @@ class Coordinator:
 
     # ----------------------------------------------------- queue and recovery
 
-    def waiting_jobs(self) -> list[dict[str, Any]]:
-        """Jobs the owner asked to run that are queued, blocked or awaiting reconciliation."""
+    @staticmethod
+    def _project_clause(project_id: str | None) -> tuple[str, tuple[Any, ...]]:
+        if project_id is None:
+            return "", ()
+        return " AND thread_id IN (SELECT id FROM threads WHERE project_id=?)", (project_id,)
+
+    def waiting_jobs(self, *, project_id: str | None = None) -> list[dict[str, Any]]:
+        """Jobs the owner asked to run that are queued, blocked or awaiting reconciliation.
+        ``project_id`` limits the view to one router project (used by the pilot)."""
         states = tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED, JobState.READY, JobState.RECOVERY_REQUIRED))
+        clause, extra = self._project_clause(project_id)
         return [
             dict(r)
             for r in self.store.all(
                 f"SELECT id, thread_id, state, blocker, next_check_at FROM jobs WHERE cancelled=0 AND user_requested=1 "
-                f"AND state IN ({','.join('?' * len(states))}) ORDER BY created_at",
-                states,
+                f"AND state IN ({','.join('?' * len(states))}){clause} ORDER BY created_at",
+                states + extra,
             )
         ]
 
-    def wake(self, *, now: str | None = None, blocking: bool = True) -> list[tuple[str, JobState]]:
+    def wake(self, *, now: str | None = None, blocking: bool = True, project_id: str | None = None) -> list[tuple[str, JobState]]:
         """Re-check queued jobs the owner asked to run (fresh eligibility each)."""
         if not self._turn_lock.acquire(blocking=blocking):
             return []
         try:
-            return self._wake(blocking=blocking)
+            return self._wake(blocking=blocking, project_id=project_id)
         finally:
             self._turn_lock.release()
 
-    def _wake(self, *, blocking: bool) -> list[tuple[str, JobState]]:
+    def _wake(self, *, blocking: bool, project_id: str | None = None) -> list[tuple[str, JobState]]:
         results = []
-        for row in self.store.all("SELECT id FROM jobs WHERE state='RECOVERY_REQUIRED' AND cancelled=0"):
+        clause, extra = self._project_clause(project_id)
+        for row in self.store.all(f"SELECT id FROM jobs WHERE state='RECOVERY_REQUIRED' AND cancelled=0{clause}", extra):
             final = self.reconcile(row["id"])  # reads only; never sends
             if final is not JobState.RECOVERY_REQUIRED:
                 results.append((row["id"], final))
         rows = self.store.all(
-            "SELECT * FROM jobs WHERE cancelled=0 AND user_requested=1 AND state IN (?,?,?,?,?,?,?) ORDER BY priority, "
+            f"SELECT * FROM jobs WHERE cancelled=0 AND user_requested=1 AND state IN (?,?,?,?,?,?,?){clause} ORDER BY priority, "
             "CASE urgency WHEN 'now' THEN 0 WHEN 'normal' THEN 1 WHEN 'later' THEN 2 ELSE 1 END, created_at",
-            tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED, JobState.READY)),
+            tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED, JobState.READY)) + extra,
         )
         for row in rows:
             self.store.event("job.woken", {"from": row["state"]}, thread_id=row["thread_id"], job_id=row["id"])
