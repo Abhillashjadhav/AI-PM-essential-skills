@@ -106,7 +106,7 @@ class RealisticPromptSets(unittest.TestCase):
 
         self.assertGreaterEqual(len(SUITABILITY_SETS), 2)
         for path in SUITABILITY_SETS:
-            if "dev" not in path.name:
+            if "dev" not in path.name and "final" not in path.name:  # every set the rules were tuned on
                 continue
             result = suitability(path)
             self.assertEqual(result["under_routed"], 0, (path.name, [m for m in result["misses"] if m["direction"] == "under"]))

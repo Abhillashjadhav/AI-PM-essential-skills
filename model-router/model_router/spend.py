@@ -5,20 +5,25 @@ Three separate questions, never merged:
 1. **Paid API credentials / paid API fallback.** Prevented structurally: the
    adapter refuses API-key auth and provider overrides, strips API-key
    variables, and never calls a paid API.
-2. **Automatic credit purchase or reload.** The router never calls a purchase
-   or reset method. Whether *the account* has automatic reload on is not
-   exposed by the Codex protocol, so the router cannot observe it.
-3. **Can this request consume already-purchased credits?** Only a provider
-   control that stops credit consumption for this account can answer "no".
-   That is decided here, per dispatch, from signals the adapter read live from
-   the provider moments earlier.
+2. **Automatic credit purchase or reload.** The router never calls a purchase,
+   reset or credit method. Whether *the account* has automatic reload on is
+   not exposed by the Codex protocol, so the router cannot observe it.
+3. **Can this request consume purchased credits (or trigger a purchase)?**
+   Only a provider control whose live state the router can read can answer
+   "no". That is decided here, per dispatch and again mid-turn, from signals
+   the adapter read from the provider moments earlier.
 
 ALLOWED_INCLUDED_ONLY comes only from a mechanism in ``MECHANISMS``: code that
 checks live provider signals whose meaning is documented. No file, record,
-flag, owner attestation or usage percentage can add a mechanism or satisfy
-one. Personal ChatGPT plans have no such control today (credits apply
-automatically after included usage; see docs/capability-evidence.md), so on a
-personal plan the decision is UNKNOWN and live sends stay blocked.
+flag, owner attestation, screenshot or usage percentage can add a mechanism or
+satisfy one.
+
+Personal plans (Free/Go/Plus/Pro) have **no verified included-only
+mechanism**. ``assess_personal_plan`` records exactly what can be verified
+live (zero balance, no unlimited credits, ordinary usage allowed) and names the
+guarantee that is missing (the automatic-reload setting is not readable, and
+no documented rule says a zero-balance account stops rather than reloads).
+See docs/capability-evidence.md for the evidence and its sources.
 """
 
 from __future__ import annotations
@@ -36,11 +41,19 @@ from .contracts import (
     utc_now,
 )
 
-PERSONAL_PLAN_GAP = (
-    "OpenAI provides no control that stops purchased credits being applied after included usage on personal "
-    "ChatGPT plans (credits apply automatically; the requested toggle, openai/codex#28382, is still open), and "
-    "the automatic-reload setting is not exposed to Codex clients"
+PERSONAL_PLAN_TYPES = frozenset({"free", "go", "plus", "pro", "prolite", "promax"})
+
+# The guarantees a personal plan would need and that the router cannot verify
+# through the Codex App Server. Kept as data so setup, the pilot and the docs
+# report the same wording.
+PERSONAL_MISSING_GUARANTEES = (
+    "the automatic-reload setting (and any maximum monthly reload spend) is not exposed to Codex clients, so the "
+    "router cannot verify that no credit purchase can be triggered",
+    "no documented provider rule says a personal account with a zero credit balance stops at the included-usage "
+    "limit instead of reloading; a purchase during a task would only be seen after it happened, on the next "
+    "usage read",
 )
+PERSONAL_PLAN_GAP = "no verified included-only mechanism for this personal plan: " + "; ".join(PERSONAL_MISSING_GUARANTEES)
 WORKSPACE_LIMIT_DOC = (
     "OpenAI Help Center, 'Managing credits and spend controls in ChatGPT Business': owners/admins set monthly credit "
     "limits per seat type and per member; when a member reaches the limit, Codex usage pauses. Exposed to clients as "
@@ -62,6 +75,18 @@ class Mechanism:
     description: str
     documentation: str
     verify: Callable[[AccountState, UsageSnapshot], MechanismResult]
+    # "documented_not_observed" until a real account has shown the provider
+    # behaving as documented (recorded by the live pilot); then "observed".
+    verification: str = "documented_not_observed"
+
+
+@dataclass(frozen=True)
+class PersonalPlanAssessment:
+    """What the router verified live for a personal plan, and what it could not."""
+
+    verified: list[str]
+    failed: list[str]
+    missing: list[str]
 
 
 def _decimal(value: str | None) -> Decimal | None:
@@ -118,6 +143,37 @@ def verify_workspace_member_zero_credit_limit(account: AccountState, usage: Usag
     return MechanismResult(True, True, [], evidence)
 
 
+def assess_personal_plan(account: AccountState, usage: UsageSnapshot) -> PersonalPlanAssessment:
+    """Observable facts for a personal plan. Never grants ALLOWED: even when every
+    observable condition holds, the guarantees in PERSONAL_MISSING_GUARANTEES
+    cannot be verified through Codex."""
+    verified: list[str] = []
+    failed: list[str] = []
+    source = "simulated" if (usage.synthetic or account.synthetic) else "live"
+    if not usage.credits.reported:
+        failed.append("the provider did not report a credit balance for this account")
+    else:
+        if usage.credits.unlimited:
+            failed.append("credits are reported as unlimited")
+        balance = _decimal(usage.credits.balance)
+        if balance is None:
+            failed.append(f"credit balance {usage.credits.balance!r} is not a number")
+        elif balance != 0:
+            failed.append(f"purchased credit balance is {usage.credits.balance}: the provider draws purchased credits "
+                          "automatically after included usage")
+        else:
+            verified.append(f"credit balance is 0 ({source}, this read)")
+        if usage.credits.has_credits:
+            failed.append("the provider reports hasCredits=true")
+        elif balance == 0:
+            verified.append(f"hasCredits=false ({source}, this read)")
+    if usage.ordinary_usage_allowed is True:
+        verified.append(f"included usage is allowed right now ({source}, this read)")
+    elif usage.ordinary_usage_allowed is None:
+        failed.append("the provider did not report whether included usage is allowed")
+    return PersonalPlanAssessment(verified, failed, list(PERSONAL_MISSING_GUARANTEES))
+
+
 MECHANISMS: tuple[Mechanism, ...] = (
     Mechanism(
         id="workspace_member_zero_credit_limit",
@@ -169,11 +225,24 @@ def decide_spend(
             reasons.append(f"{mechanism.id}: could not evaluate ({type(exc).__name__})")
             continue
         if result.applies and result.enforced:
-            evidence = supporting + result.evidence + [{"mechanism": mechanism.id, "documentation": mechanism.documentation}]
+            evidence = supporting + result.evidence + [
+                {"mechanism": mechanism.id, "documentation": mechanism.documentation, "verification": mechanism.verification}
+            ]
             return decision(SpendStatus.ALLOWED_INCLUDED_ONLY, [], evidence=evidence, mechanism=mechanism.id)
         reasons.extend(f"{mechanism.id}: {r}" for r in result.reasons)
-    plan = _plan(account.plan_type) or _plan(usage.plan_type) or "unknown"
-    missing = [PERSONAL_PLAN_GAP] if plan not in WORKSPACE_PLAN_TYPES else [
-        "a workspace member credit limit of 0 set by the workspace owner/admin (ChatGPT Business spend controls)"
-    ]
+    account_plan, usage_plan = _plan(account.plan_type), _plan(usage.plan_type)
+    plan = account_plan or usage_plan or "unknown"
+    if plan in PERSONAL_PLAN_TYPES and usage_plan in (None, plan):
+        personal = assess_personal_plan(account, usage)
+        evidence = supporting + [{"personal_plan_verified": personal.verified, "personal_plan_failed": personal.failed,
+                                  "status": "no verified included-only mechanism"}]
+        mechanism_reasons = reasons
+        reasons = [f"personal plan {plan!r}: no verified included-only mechanism"]
+        reasons += [f"verified: {v}" for v in personal.verified] + [f"not satisfied: {f}" for f in personal.failed]
+        reasons += mechanism_reasons
+        return decision(SpendStatus.UNKNOWN, reasons, missing=personal.missing, evidence=evidence)
+    if plan in WORKSPACE_PLAN_TYPES:
+        missing = ["a workspace member credit limit of 0 set by the workspace owner/admin (ChatGPT Business spend controls)"]
+    else:
+        missing = [f"a verified included-only mechanism for plan {plan!r}"]
     return decision(SpendStatus.UNKNOWN, reasons or ["no supported enforcement mechanism applies"], missing=missing)

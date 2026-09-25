@@ -54,7 +54,8 @@ class Mechanisms(unittest.TestCase):
         for credits in ((False, False, "0"), (True, False, "40.00")):
             decision = decide_spend(account(plan="plus"), usage(plan="plus", controls=False, credits=credits), pin_state="valid")
             self.assertEqual(decision.status, SpendStatus.UNKNOWN)
-            self.assertIn("openai/codex#28382", decision.missing[0])
+            self.assertIn("automatic-reload setting", decision.missing[0])
+            self.assertIn("no verified included-only mechanism", decision.reasons[0])
 
     def test_blocking_conditions(self):
         self.assertEqual(decide_spend(account(), usage(reached=True), pin_state="valid").status, SpendStatus.BLOCKED)
@@ -125,3 +126,59 @@ class FabricatedEvidence(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class PersonalPlanFeasibility(unittest.TestCase):
+    """Personal plans: record what is verifiable live, name what is not, never allow."""
+
+    def zero_balance(self, plan="plus", **kw):
+        return usage(plan=plan, controls=False, credits=(False, False, "0"), **kw)
+
+    def test_best_case_personal_account_is_verified_but_still_not_allowed(self):
+        from model_router.spend import PERSONAL_MISSING_GUARANTEES
+
+        decision = decide_spend(account(plan="plus"), self.zero_balance(), pin_state="valid")
+        self.assertEqual(decision.status, SpendStatus.UNKNOWN)
+        self.assertIsNone(decision.mechanism)
+        self.assertEqual(decision.missing, list(PERSONAL_MISSING_GUARANTEES))
+        self.assertIn("personal plan 'plus': no verified included-only mechanism", decision.reasons[0])
+        for fact in ("credit balance is 0 (live", "hasCredits=false (live", "included usage is allowed right now (live"):
+            self.assertTrue(any(fact in r for r in decision.reasons), fact)
+        self.assertFalse(any(r.startswith("not satisfied") for r in decision.reasons))
+        self.assertTrue(any(e.get("status") == "no verified included-only mechanism" for e in decision.evidence))
+        decision.validate()
+
+    def test_every_personal_plan_type_stays_blocked(self):
+        for plan in ("free", "go", "plus", "pro", "prolite", "promax"):
+            with self.subTest(plan=plan):
+                self.assertEqual(decide_spend(account(plan=plan), self.zero_balance(plan=plan), pin_state="valid").status,
+                                 SpendStatus.UNKNOWN)
+
+    def test_a_workspace_style_zero_limit_on_a_personal_plan_is_not_a_mechanism(self):
+        crafted = usage(plan="pro", limit="0")  # individualLimit 0 reported on a personal plan
+        self.assertEqual(decide_spend(account(plan="pro"), crafted, pin_state="valid").status, SpendStatus.UNKNOWN)
+
+    def test_observable_failures_are_named(self):
+        cases = {
+            "purchased credit balance is 12.00": usage(plan="plus", controls=False),
+            "credits are reported as unlimited": usage(plan="plus", controls=False, credits=(True, True, "0")),
+            "hasCredits=true": usage(plan="plus", controls=False, credits=(True, False, "0")),
+            "did not report whether included usage is allowed": self.zero_balance(ordinary=None),
+        }
+        for expected, snapshot in cases.items():
+            with self.subTest(expected=expected):
+                decision = decide_spend(account(plan="plus"), snapshot, pin_state="valid")
+                self.assertEqual(decision.status, SpendStatus.UNKNOWN)
+                self.assertTrue(any(expected in r for r in decision.reasons), decision.reasons)
+
+    def test_missing_credit_report_is_not_zero(self):
+        snapshot = parse_rate_limits({"rateLimitsByLimitId": {"codex": {"limitId": "codex", "planType": "plus"}},
+                                      "ordinaryUsageAllowed": True}, account_scope="acct_1")
+        decision = decide_spend(account(plan="plus"), snapshot, pin_state="valid")
+        self.assertTrue(any("did not report a credit balance" in r for r in decision.reasons))
+        self.assertFalse(any("credit balance is 0" in r for r in decision.reasons))
+
+    def test_workspace_allowance_is_labelled_documented_not_observed(self):
+        decision = decide_spend(account(), usage(), pin_state="valid")
+        self.assertEqual(decision.status, SpendStatus.ALLOWED_INCLUDED_ONLY)
+        self.assertTrue(any(e.get("verification") == "documented_not_observed" for e in decision.evidence))

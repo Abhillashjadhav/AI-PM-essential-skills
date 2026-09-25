@@ -50,7 +50,8 @@ class SetupFlow(unittest.TestCase):
         report = self.setup(["y", "1", "", "1", "", ""])
         self.assertFalse(report["ready"])
         self.assertEqual(report["spend"]["status"], "UNKNOWN")
-        self.assertIn("openai/codex#28382", report["spend"]["missing"][0])
+        self.assertIn("automatic-reload setting", report["spend"]["missing"][0])
+        self.assertIn("no verified included-only mechanism", report["spend"]["reasons"][0])
         self.assertEqual(report["mappings"], {"highest": "fake-astra", "middle": "fake-sol"})
         statuses = {s["step"]: s["status"] for s in report["steps"]}
         self.assertEqual(statuses["adapter pin"], "VERIFIED")
@@ -65,6 +66,8 @@ class SetupFlow(unittest.TestCase):
         report = self.setup(["y", "1", "", "1", "", ""])
         self.assertTrue(report["ready"])
         self.assertEqual(report["spend"]["mechanism"], "workspace_member_zero_credit_limit")
+        self.assertEqual(report["spend"]["verification"], "documented_not_observed")
+        self.assertTrue(any("documented not observed" in line for line in self.said), self.said)
 
     def test_sign_in_is_codex_login_not_a_pasted_credential(self):
         self.scenario(account=None)
@@ -110,6 +113,16 @@ class Pilot(RouterTestCase):
         self.assertLessEqual(report["turns_sent"], 8)
         self.assertEqual(report["scenarios"]["handoff"]["implementation_role"], "middle")
         self.assertTrue(Path(report["saved_to"]).exists())
+        # What a real pilot must record: responses, account signals, latency, memory.
+        self.assertIn("picks a model", report["scenarios"]["normal_answer"]["response"])
+        self.assertEqual(report["scenarios"]["handoff"]["implementation_response"], "implemented")
+        for scenario in ("normal_answer", "override", "restart_resume"):
+            self.assertIsInstance(report["scenarios"][scenario]["turn_seconds"], float)
+        self.assertIn("credits", report["account_signals"]["before"])
+        self.assertIn("ordinary_usage_allowed", report["account_signals"]["after"])
+        self.assertGreater(report["memory"]["router_peak_rss_mb"], 0)
+        self.assertTrue(report["scenarios"]["restart_resume"]["only_pilot_jobs_resumed"])
+        self.assertTrue(report["other_queued_jobs_untouched"])
 
     def test_pilot_refuses_without_verified_spend_boundary(self):
         report = run_pilot(self.coordinator, project_dir=self.tmp / "pilot")  # simulator evidence is synthetic

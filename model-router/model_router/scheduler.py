@@ -50,10 +50,12 @@ class AutoResumer:
         wall: Callable[[], float] = time.time,
         jitter: float = 0.1,
         rng: random.Random | None = None,
+        project_id: str | None = None,
     ) -> None:
         if not 0 < min_interval <= max_interval:
             raise ValueError("need 0 < min_interval <= max_interval")
         self.coordinator = coordinator
+        self.project_id = project_id  # None: all of the owner's queued work
         self.min_interval = min_interval
         self.max_interval = max_interval
         self.sleep_jump = sleep_jump
@@ -121,14 +123,14 @@ class AutoResumer:
             self.coordinator.store.event("scheduler.woke_from_sleep", {})
             self.coordinator.recover()
             result.reconciled_after_sleep = True
-        waiting = self.coordinator.waiting_jobs()
+        waiting = self.coordinator.waiting_jobs(project_id=self.project_id)
         result.waiting = len(waiting)
         if not waiting:
             self._backoff = self.min_interval
             result.next_delay = self.max_interval
             self._record(result)
             return result
-        results = self.coordinator.wake(blocking=False)
+        results = self.coordinator.wake(blocking=False, project_id=self.project_id)
         result.resumed = [(job_id, state.value) for job_id, state in results]
         progressed = any(state in PROGRESS_STATES for _, state in results)
         if progressed:
@@ -146,7 +148,7 @@ class AutoResumer:
     def _soonest_reset(self) -> float | None:
         now = parse_utc(utc_now())
         best = None
-        for job in self.coordinator.waiting_jobs():
+        for job in self.coordinator.waiting_jobs(project_id=self.project_id):
             if not job.get("next_check_at"):
                 continue
             try:

@@ -18,6 +18,7 @@ import os
 import re
 import shutil
 import subprocess
+import sys
 import time
 from pathlib import Path
 from typing import Any, Callable
@@ -151,10 +152,15 @@ class Setup:
             report["spend"] = {"status": decision.status.value, "mechanism": decision.mechanism,
                                "reasons": decision.reasons, "missing": decision.missing}
             if decision.status is SpendStatus.ALLOWED_INCLUDED_ONLY:
-                step("spend boundary", "VERIFIED", f"included-only enforced by {decision.mechanism}")
+                verification = _mechanism_verification(decision.mechanism)
+                report["spend"]["verification"] = verification
+                step("spend boundary", "ALLOWED", f"live signals satisfy {decision.mechanism} ({verification.replace('_', ' ')}; "
+                     "the pilot records whether the provider behaves as documented)")
                 return self._finish(report, "Ready. Run: python3 model-router/router.py pilot", ready=True)
-            step("spend boundary", "BLOCKED", f"{decision.status.value}: " + "; ".join(decision.reasons + decision.missing))
-            return self._finish(report, "Live sends stay blocked: this account has no enforceable included-only control.")
+            step("spend boundary", "BLOCKED", f"{decision.status.value}: " + "; ".join(decision.reasons))
+            for gap in decision.missing:
+                step("missing guarantee", "UNVERIFIABLE", gap)
+            return self._finish(report, "Live sends stay blocked: no verified included-only mechanism for this account.")
         except AdapterError as exc:
             step("app server", "FAILED", str(exc))
             return self._finish(report, "The Codex App Server could not be reached.")
@@ -204,8 +210,55 @@ class Setup:
 # ------------------------------------------------------------------- pilot
 
 
+def _mechanism_verification(mechanism_id: str | None) -> str:
+    from .spend import MECHANISMS
+
+    return next((m.verification for m in MECHANISMS if m.id == mechanism_id), "unknown")
+
+
+RESPONSE_CHARS = 4000
+
+
+def _account_signals(adapter) -> dict[str, Any]:
+    """Provider-reported account signals, read live (no model turn)."""
+    try:
+        account = adapter.read_account()
+        usage = adapter.read_usage()
+        decision = adapter.check_spend_boundary(account, usage)
+    except AdapterError as exc:
+        return {"error": str(exc)}
+    return {
+        "read_at": utc_now(), "plan": account.plan_type, "ordinary_usage_allowed": usage.ordinary_usage_allowed,
+        "credits": usage.credits.describe(), "spend_control_reached": usage.spend_control_reached,
+        "spend_controls": [c.to_dict() for c in usage.spend_controls],
+        "buckets": [b.to_dict() for b in usage.buckets], "spend": decision.status.value, "mechanism": decision.mechanism,
+        "synthetic": usage.synthetic,
+    }
+
+
+def _memory() -> dict[str, Any]:
+    """Peak resident memory of the router process and current RSS of the Codex App Server."""
+    import resource
+
+    peak = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
+    router_peak_mb = peak / (1024 * 1024) if sys.platform == "darwin" else peak / 1024  # bytes on macOS, KiB on Linux
+    return {"router_peak_rss_mb": round(router_peak_mb, 1)}
+
+
+def _app_server_rss_mb(adapter) -> float | None:
+    proc = getattr(getattr(adapter, "rpc", None), "proc", None)
+    if proc is None or proc.poll() is not None:
+        return None
+    try:
+        out = subprocess.run(["ps", "-o", "rss=", "-p", str(proc.pid)], capture_output=True, text=True, timeout=5).stdout
+        return round(int(out.strip()) / 1024, 1)  # ps reports KiB
+    except (ValueError, OSError, subprocess.SubprocessError):
+        return None
+
+
 def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) -> dict[str, Any]:
     from .coordinator import Coordinator
+    from .scheduler import AutoResumer
 
     store = coordinator.store
     report: dict[str, Any] = {"started_at": utc_now(), "live": coordinator.live, "scenarios": {}, "blocked": None}
@@ -217,7 +270,9 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
     except AdapterError as exc:
         report["blocked"] = f"provider unavailable: {exc}"
         return _save_pilot(store, report)
-    report["spend"] = {"status": decision.status.value, "mechanism": decision.mechanism, "synthetic": decision.synthetic}
+    report["spend"] = {"status": decision.status.value, "mechanism": decision.mechanism, "synthetic": decision.synthetic,
+                       "verification": _mechanism_verification(decision.mechanism) if decision.mechanism else None,
+                       "reasons": decision.reasons, "missing": decision.missing}
     if decision.status is not SpendStatus.ALLOWED_INCLUDED_ONLY or (decision.synthetic and not allow_simulated):
         report["blocked"] = "spend boundary is not ALLOWED_INCLUDED_ONLY from a verified mechanism: " + "; ".join(
             decision.reasons + decision.missing
@@ -235,6 +290,19 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
         subprocess.run(["git", "init", "-q"], cwd=project_dir, check=False)
     if store.project_by_name("router-pilot") is None:
         coordinator.add_project("router-pilot", str(project_dir))
+    pilot_project = store.project_by_name("router-pilot")["id"]
+    report["account_signals"] = {"before": _account_signals(coordinator.adapter)}
+    other_jobs_before = {j["id"]: j["state"] for j in coordinator.waiting_jobs() if j["id"] not in
+                         {w["id"] for w in coordinator.waiting_jobs(project_id=pilot_project)}}
+
+    def response(thread_id: str) -> str | None:
+        row = store.one("SELECT content FROM messages WHERE thread_id=? AND role='assistant' ORDER BY created_at DESC LIMIT 1", (thread_id,))
+        return (row["content"] or "")[:RESPONSE_CHARS] if row else None
+
+    def timed_run(job_id: str, runner=None) -> tuple[JobState, float]:
+        started = time.monotonic()
+        state = (runner or coordinator).run(job_id)
+        return state, round(time.monotonic() - started, 2)
 
     def sends() -> int:
         return store.one("SELECT COUNT(*) AS n FROM dispatches WHERE phase IN ('SENT','ACKNOWLEDGED','TERMINAL','UNCERTAIN')")["n"]
@@ -250,12 +318,13 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
 
     # A. Normal answer.
     normal = coordinator.submit("router-pilot", "Summarize in two bullets: the router picks a model per chat and keeps it fixed.")
-    state = coordinator.run(normal.job_id)
-    answer = store.one("SELECT length(content) AS n FROM messages WHERE thread_id=? AND role='assistant' ORDER BY created_at DESC LIMIT 1", (normal.thread_id,))
+    state, seconds = timed_run(normal.job_id)
+    text = response(normal.thread_id)
     report["scenarios"]["normal_answer"] = {
         "role": normal.role.value if normal.role else None, "model": normal.model_id, "state": state.value,
-        "answer_chars": answer["n"] if answer else 0, "selection_ms": normal.timings_ms.get("submit_to_selection_ms"),
-        **dispatch_summary(normal.job_id), "pass": state is JobState.SUCCEEDED and normal.role is Role.LOWEST,
+        "response": text, "selection_ms": normal.timings_ms.get("submit_to_selection_ms"), "turn_seconds": seconds,
+        **dispatch_summary(normal.job_id),
+        "pass": state is JobState.SUCCEEDED and normal.role is Role.LOWEST and bool(text and text.strip()),
     }
 
     # B. Architecture -> implementation handoff.
@@ -265,16 +334,22 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
             "Design a minimal architecture for adding a hello(name) function to hello.py in this project, with one unit test. "
             "Treat it as complete and include the architecture-record block.",
         )
-        arch_state = coordinator.run(arch.job_id)
+        arch_state, arch_seconds = timed_run(arch.job_id)
         accepted = coordinator.submit("router-pilot", "Approved, implement this.", thread_id=arch.thread_id)
         handoff = accepted.handoff
-        impl_state = coordinator.run(handoff.job_id).value if handoff and handoff.job_id and handoff.status == "CREATED" else None
+        impl_state, impl_seconds = (None, None)
+        if handoff and handoff.job_id and handoff.status == "CREATED":
+            ran, impl_seconds = timed_run(handoff.job_id)
+            impl_state = ran.value
         report["scenarios"]["handoff"] = {
             "architecture_role": arch.role.value if arch.role else None, "architecture_model": arch.model_id,
-            "architecture_state": arch_state.value, "handoff_status": handoff.status if handoff else None,
+            "architecture_state": arch_state.value, "architecture_response": response(arch.thread_id),
+            "architecture_turn_seconds": arch_seconds, "handoff_status": handoff.status if handoff else None,
             "handoff_reasons": handoff.reasons if handoff else None,
             "implementation_role": handoff.role.value if handoff and handoff.role else None,
             "implementation_model": handoff.model_id if handoff else None, "implementation_state": impl_state,
+            "implementation_response": response(handoff.target_thread_id) if handoff and handoff.target_thread_id else None,
+            "implementation_turn_seconds": impl_seconds,
             "source_pin_unchanged": store.thread(arch.thread_id)["pinned_model"] == arch.model_id,
             "pass": bool(handoff and handoff.status == "CREATED" and impl_state == "SUCCEEDED"),
         }
@@ -284,30 +359,41 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
         target = mappings[Role.MIDDLE].model_id
         coordinator.override_model(normal.thread_id, target, reason="preference")
         follow = coordinator.submit("router-pilot", "Now make it one bullet.", thread_id=normal.thread_id)
-        follow_state = coordinator.run(follow.job_id)
+        follow_state, seconds = timed_run(follow.job_id)
         summary = dispatch_summary(follow.job_id)
         report["scenarios"]["override"] = {
-            "new_model": target, "state": follow_state.value, **summary,
+            "new_model": target, "state": follow_state.value, "response": response(normal.thread_id),
+            "turn_seconds": seconds, **summary,
             "pass": follow_state is JobState.SUCCEEDED and summary.get("requested_model") == target,
         }
 
-    # D. Pause, restart, automatic resume on the same pin.
+    # D. Queue, restart, then *automatic* resume on the same pin. The resumer is
+    # limited to the pilot's project, so the owner's other queued work is never run.
     if budget_ok():
         queued = coordinator.submit("router-pilot", "Reformat as a numbered list: apples, pears, figs.")
         pinned = store.thread(queued.thread_id)["pinned_model"]
         restarted = Coordinator(store, coordinator.adapter, live=coordinator.live, ui=coordinator.ui)
         restarted.start()
         restarted.recover()
-        # Resume only the pilot's own job (never the owner's other queued work),
-        # through the same path the auto-resumer uses for each job.
-        resumed_state = restarted.run(queued.job_id, blocking=False).value
+        started = time.monotonic()
+        tick = AutoResumer(restarted, min_interval=1, max_interval=5, project_id=pilot_project).tick()
+        seconds = round(time.monotonic() - started, 2)
         final = store.job(queued.job_id)["state"]
+        pilot_jobs = {row["id"] for row in store.all(
+            "SELECT id FROM jobs WHERE thread_id IN (SELECT id FROM threads WHERE project_id=?)", (pilot_project,))}
         report["scenarios"]["restart_resume"] = {
-            "pinned_model": pinned, "resumed": resumed_state, "state": final, **dispatch_summary(queued.job_id),
-            "pass": final == "SUCCEEDED" and dispatch_summary(queued.job_id).get("requested_model") == pinned,
+            "pinned_model": pinned, "resumed": tick.resumed, "state": final, "response": response(queued.thread_id),
+            "turn_seconds": seconds, **dispatch_summary(queued.job_id),
+            "only_pilot_jobs_resumed": all(job_id in pilot_jobs for job_id, _ in tick.resumed),
+            "pass": final == "SUCCEEDED" and dispatch_summary(queued.job_id).get("requested_model") == pinned
+            and all(job_id in pilot_jobs for job_id, _ in tick.resumed),
         }
         restarted.close()
 
+    other_jobs_after = {job_id: store.job(job_id)["state"] for job_id in other_jobs_before}
+    report["other_queued_jobs_untouched"] = other_jobs_after == other_jobs_before
+    report["account_signals"]["after"] = _account_signals(coordinator.adapter)
+    report["memory"] = {**_memory(), "app_server_rss_mb": _app_server_rss_mb(coordinator.adapter)}
     try:
         usage_after = coordinator.adapter.read_usage()
         report["usage"] = {
@@ -317,7 +403,8 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
     except AdapterError as exc:
         report["usage"] = {"error": str(exc)}
     report["turns_sent"] = sends() - start_sends
-    report["all_passed"] = all(s.get("pass") for s in report["scenarios"].values()) and len(report["scenarios"]) == 4
+    report["all_passed"] = (all(s.get("pass") for s in report["scenarios"].values()) and len(report["scenarios"]) == 4
+                            and report["other_queued_jobs_untouched"])
     return _save_pilot(store, report)
 
 
