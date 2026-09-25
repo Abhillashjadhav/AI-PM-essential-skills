@@ -266,8 +266,8 @@ PATTERNS: dict[str, tuple[str, ...]] = {
 # independently written development set (see docs/evidence/routing-heldout-*).
 EXTRA_PATTERNS: dict[str, tuple[str, ...]] = {
     "tradeoff": (
-        r"[\w.+#-]+ vs\.? [\w.+#-]+", r"what would you (?:pick|choose|use|recommend)", r"not sure whether", r"whether to",
-        r"(?:decided|decide|deciding|choose|choosing|pick|picking) (?:between )?[\w.+#-]+ (?:or|vs\.?|versus) [\w.+#-]+",
+        r"[\w.+#-]{1,40} vs\.? [\w.+#-]{1,40}", r"what would you (?:pick|choose|use|recommend)", r"not sure whether", r"whether to",
+        r"(?:decided|decide|deciding|choose|choosing|pick|picking) (?:between )?[\w.+#-]{1,40} (?:or|vs\.?|versus) [\w.+#-]{1,40}",
         r"what should i do",
     ),
     "ui_decision": (
@@ -347,7 +347,7 @@ EXTRA_PATTERNS: dict[str, tuple[str, ...]] = {
 for _name, _extra in EXTRA_PATTERNS.items():
     PATTERNS[_name] = PATTERNS.get(_name, ()) + _extra
 
-RULES_VERSION = "rules-2026-09-25.3"
+RULES_VERSION = "rules-2026-09-25.4"
 _ARTIFACT_REQUEST = re.compile(
     r"^(?:(?:a|an|quick|simple|small|just|pls|please|need)\s+){0,3}(?:bash|python|shell|node|react|sql|typescript|ts|js|go)?\s*"
     r"(?:script|component|function|query|endpoint|regex|makefile|cli|hook|class|unit tests?|tests?|workflow|dockerfile)s?\b",
@@ -364,10 +364,9 @@ _CODING_ACTION = re.compile(
 )
 _CHOICE_QUESTION = re.compile(
     r"(?:\bshould (?:i|we|my|our|the|this) (?:[\w-]+ ){0,4}(?:use|pick|go with|choose|switch to|move to|be)\b|\bwhich (?:is|one is|would be) better\b|\bwhat(?:'s| is) better\b"
-    r"|\b[\w.+#-]+ (?:or|vs\.?|versus) [\w.+#-]+\b[^.!\n]*\?)",
+    r"|\b[\w.+#-]{1,40} (?:or|vs\.?|versus) [\w.+#-]{1,40}\b[^.!\n]*\?)",
     re.IGNORECASE,
 )
-_NEGATION = re.compile(r"(?:\bnot\b|\bisn'?t\b|\bno\b|\bnever\b)[^.;,\n]{0,12}$", re.IGNORECASE)
 _RISK_ACTION = re.compile(
     r"\b(?:audit|handle[sd]?|handling|stor(?:e|es|ing)|encrypt\w*|decrypt\w*|implement\w*|build|automat\w*|script|"
     r"runs? (?:monthly|daily|weekly|nightly)|cron|api|wire|integrat\w*|code|migrat\w*|log(?:s|ging)?|load(?:s|ed|ing)?|"
@@ -375,10 +374,23 @@ _RISK_ACTION = re.compile(
     re.IGNORECASE,
 )
 _CODE_MARKERS = re.compile(
-    r"(?m)^(?:\s*(?:def |class |import |from \S+ import|function |const |let |var |return |if .*:|for .*:|#include|SELECT |UPDATE |INSERT )"
-    r"|Traceback \(most recent call last\)|\s+File \".*\", line \d+|.*(?:=>|\);|\{\s*$|^\s*\})"
-    r"|\s*//\s*\w|\s*[\w.\[\]]+\s*(?:=|\+=|-=)\s*\S|\s*[\w.]+\(.*\)\s*$)",
+    # Linear-time: horizontal whitespace only, bounded identifier lengths.
+    r"(?m)^[ \t]*(?:def |class |import |from \S{1,80} import|function |const |let |var |return |if [^\n]{0,200}:|"
+    r"for [^\n]{0,200}:|#include|SELECT |UPDATE |INSERT |//[ \t]*\w|\}|[\w.\[\]]{1,80}[ \t]*(?:=|\+=|-=)[ \t]*\S|"
+    r"[\w.]{1,80}\([^\n]{0,500}\)[ \t]*$)"
+    r"|Traceback \(most recent call last\)|^[ \t]+File \"[^\n]{0,300}\", line \d+|=>|\);|\{[ \t]*$",
 )
+_DATA_REFERENCE = re.compile(
+    r"\b(?:this|these|below|following|attached|pasted|here'?s|here is|the text|the notes|the email|the log|the code)\b",
+    re.IGNORECASE,
+)
+_OPERATION_ON_DATA = re.compile(
+    r"\b(?:summari[sz]e|extract|fix|format|reformat|rewrite|translate|convert|reply|respond|review|count|clean|sort|"
+    r"list|pull|tidy|explain|check|spell|turn|make|debug|add|improve|polish|shorten|edit|proofread|compare|"
+    r"categori[sz]e|group|parse|analy[sz]e|dedupe|alphabeti[sz]e|number|merge|split|find|give me|tell me)\b",
+    re.IGNORECASE,
+)
+MAX_CLASSIFIED_CHARS = 60_000
 
 _COMPILED = {
     name: re.compile(r"(?<![\w-])(?:" + "|".join(patterns) + r")(?![\w-])", re.IGNORECASE)
@@ -393,7 +405,7 @@ _QUOTE_PATTERNS = (
     re.compile(r"“[^”]{0,2000}”"),
     re.compile(r"‘[^’\n]{12,2000}’"),
     re.compile(r"(?<=[\s:(])'[^'\n]{12,600}'(?=[\s.,;:)!?]|$)"),
-    re.compile(r"(?m)^\s*>.*$"),
+    re.compile(r"(?m)^[ \t]*>.*$"),
 )
 
 _ARCH_REFERENCE = re.compile(
@@ -428,7 +440,13 @@ def split_pasted(text: str) -> tuple[str, str]:
     """
     match = re.search(r":[ \t]*\n", text)
     if match and match.start() >= 3:
-        return text[: match.start()], text[match.end():]
+        head, tail = text[: match.start()], text[match.end():]
+        looks_like_data = bool(_CODE_MARKERS.search(tail)) or tail.lstrip()[:1] in {'"', "'", ">", "|", "{", "["}
+        # Split only when the head is an operation on referenced material;
+        # "Requirements:\n- store passwords..." keeps its tail as instructions.
+        if looks_like_data or (_DATA_REFERENCE.search(head) and _OPERATION_ON_DATA.search(head)):
+            return head, tail
+        return text, ""
     head, sep, tail = text.partition("\n\n")
     if sep and _CODE_MARKERS.search(tail):
         return head, tail
@@ -451,12 +469,9 @@ def split_instruction(text: str) -> tuple[str, list[str]]:
 
 
 def _hits(name: str, text: str) -> list[str]:
-    found = []
-    for match in _COMPILED[name].finditer(text):
-        if name in {"money_movement", "security", "privacy"} and _NEGATION.search(text[max(0, match.start() - 30): match.start()]):
-            continue  # "it's the current directory, not a password"
-        found.append(match.group(0))
-    return found
+    # No negation handling for risk words: "does not leak api keys" is still a
+    # security task. Over-routing is the safe direction.
+    return [match.group(0) for match in _COMPILED[name].finditer(text)]
 
 
 def _snippet(text: str, word: str, width: int = 40) -> str:
@@ -468,9 +483,13 @@ def _snippet(text: str, word: str, width: int = 40) -> str:
 
 
 def classify(item: ClassifierInput) -> TaskAssessment:
-    instruction, quoted = split_instruction(item.text)
+    text = item.text
+    too_long = len(text) > MAX_CLASSIFIED_CHARS
+    if too_long:
+        text = text[:MAX_CLASSIFIED_CHARS]  # classification only; the full text is still what gets sent
+    instruction, quoted = split_instruction(text)
     lowered = instruction.lower()
-    _, pasted = split_pasted(item.text)
+    _, pasted = split_pasted(text)
     code_context = bool(pasted and _CODE_MARKERS.search(pasted))
     hits = {name: _hits(name, lowered) for name in PATTERNS}
     kinds: list[TaskKind] = []
@@ -497,14 +516,14 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     has_judgement = bool(hits["judgement"])
     coding_intent = bool(_CODING_ACTION.search(instruction) or _ARTIFACT_REQUEST.search(instruction.strip()))
     is_coding = bool(hits["coding"]) and (coding_intent or not (hits["routine"] or is_extraction)) or code_context
-    if code_context and coding_intent:
-        # Changing pasted code: risk inside that code is part of the task.
-        pasted_lower = pasted.lower()
+    if coding_intent and quoted:
+        # Building or changing what was pasted/quoted: its risk is part of the task.
+        material = "\n".join(quoted).lower()
         for name in ("money_movement", "security", "privacy", "destructive"):
-            extra = _hits(name, pasted_lower)
+            extra = _hits(name, material)
             if extra:
                 hits[name] = hits[name] + extra
-                reasons.append("RISK_IN_PASTED_CODE_BEING_CHANGED")
+                reasons.append("RISK_IN_MATERIAL_BEING_CHANGED")
     if code_context and not hits["coding"]:
         reasons.append("PASTED_CODE_CONTEXT")
 
@@ -615,6 +634,9 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     if attachment_kinds:
         reasons.append("ATTACHMENTS_TREATED_AS_DATA")
 
+    if too_long:
+        uncertainty.append(f"input longer than {MAX_CLASSIFIED_CHARS} characters; only the start was classified")
+        reasons.append("LONG_INPUT_ROUTED_UP")
     if not kinds:
         kinds.append(TaskKind.UNKNOWN)
         reasons.append("UNRECOGNISED_TASK")

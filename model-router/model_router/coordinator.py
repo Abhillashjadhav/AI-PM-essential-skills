@@ -1387,8 +1387,8 @@ class Coordinator:
             account = self.adapter.read_account()
             usage = self.adapter.read_usage()
             decision = self.adapter.check_spend_boundary(account, usage)
-        except AdapterError as exc:
-            return f"spend boundary could not be re-checked ({exc})"
+        except Exception as exc:  # cannot confirm -> stop the turn safely
+            return f"spend boundary could not be re-checked ({type(exc).__name__}: {exc})"
         if self.live and decision.synthetic:
             return "simulated spend evidence cannot cover a live turn"
         if decision.status is not SpendStatus.ALLOWED_INCLUDED_ONLY:
@@ -1489,7 +1489,7 @@ class Coordinator:
 
     def waiting_jobs(self) -> list[dict[str, Any]]:
         """Jobs the owner asked to run that are queued, blocked or awaiting reconciliation."""
-        states = tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED, JobState.RECOVERY_REQUIRED))
+        states = tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED, JobState.READY, JobState.RECOVERY_REQUIRED))
         return [
             dict(r)
             for r in self.store.all(
@@ -1515,9 +1515,9 @@ class Coordinator:
             if final is not JobState.RECOVERY_REQUIRED:
                 results.append((row["id"], final))
         rows = self.store.all(
-            "SELECT * FROM jobs WHERE cancelled=0 AND user_requested=1 AND state IN (?,?,?,?,?,?) ORDER BY priority, "
+            "SELECT * FROM jobs WHERE cancelled=0 AND user_requested=1 AND state IN (?,?,?,?,?,?,?) ORDER BY priority, "
             "CASE urgency WHEN 'now' THEN 0 WHEN 'normal' THEN 1 WHEN 'later' THEN 2 ELSE 1 END, created_at",
-            tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED)),
+            tuple(s.value for s in (*WAITING_JOB_STATES, JobState.SELECTED, JobState.READY)),
         )
         for row in rows:
             self.store.event("job.woken", {"from": row["state"]}, thread_id=row["thread_id"], job_id=row["id"])

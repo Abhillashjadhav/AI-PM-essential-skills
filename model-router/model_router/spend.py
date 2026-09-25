@@ -68,17 +68,29 @@ def _decimal(value: str | None) -> Decimal | None:
     if value is None:
         return None
     try:
-        return Decimal(str(value).strip())
-    except (InvalidOperation, ValueError):
+        number = Decimal(str(value).strip())
+        if not number.is_finite():
+            return None
+        return number
+    except Exception:  # InvalidOperation, ValueError, signalling NaN, odd types
         return None
+
+
+def _plan(value) -> str | None:
+    return value.strip().lower() if isinstance(value, str) and value.strip() else None
 
 
 def verify_workspace_member_zero_credit_limit(account: AccountState, usage: UsageSnapshot) -> MechanismResult:
     """A Business/Enterprise/Edu member whose provider-enforced monthly credit
     limit is zero cannot consume credits: Codex pauses at the limit."""
-    plan = (usage.plan_type or account.plan_type or "").lower()
-    if plan not in WORKSPACE_PLAN_TYPES:
-        return MechanismResult(False, False, [f"plan {plan or 'unknown'!r} has no provider spend controls"], [])
+    account_plan, usage_plan = _plan(account.plan_type), _plan(usage.plan_type)
+    if account_plan is None or usage_plan is None:
+        return MechanismResult(bool(account_plan in WORKSPACE_PLAN_TYPES or usage_plan in WORKSPACE_PLAN_TYPES), False,
+                               ["both the account and the usage signals must report the plan"], [])
+    if account_plan != usage_plan:
+        return MechanismResult(True, False, [f"account plan {account_plan!r} and usage plan {usage_plan!r} disagree"], [])
+    if account_plan not in WORKSPACE_PLAN_TYPES:
+        return MechanismResult(False, False, [f"plan {account_plan!r} has no provider spend controls"], [])
     if usage.synthetic or account.synthetic:
         return MechanismResult(True, False, ["simulated signals cannot prove enforcement"], [])
     if usage.credits.reported and usage.credits.unlimited:
@@ -86,8 +98,9 @@ def verify_workspace_member_zero_credit_limit(account: AccountState, usage: Usag
     controls = {c.limit_id: c for c in usage.spend_controls}
     if not controls:
         return MechanismResult(True, False, ["no spend control reported for this member"], [])
-    # Every snapshot where credits can apply must carry a zero member limit.
-    covered = set(usage.credit_limit_ids) | set(controls)
+    # Every reported limit must carry a zero member limit: a snapshot that
+    # omits credit or spend-control fields is unknown, never safe.
+    covered = set(usage.credit_limit_ids) | set(controls) | {b.limit_id.split(":", 1)[0] for b in usage.buckets}
     evidence: list[dict] = []
     for limit_id in sorted(covered):
         control = controls.get(limit_id)
@@ -150,12 +163,16 @@ def decide_spend(
                         missing=["a valid adapter pin"])
     reasons: list[str] = []
     for mechanism in mechanisms:
-        result = mechanism.verify(account, usage)
+        try:
+            result = mechanism.verify(account, usage)
+        except Exception as exc:  # malformed signals are never evidence
+            reasons.append(f"{mechanism.id}: could not evaluate ({type(exc).__name__})")
+            continue
         if result.applies and result.enforced:
             evidence = supporting + result.evidence + [{"mechanism": mechanism.id, "documentation": mechanism.documentation}]
             return decision(SpendStatus.ALLOWED_INCLUDED_ONLY, [], evidence=evidence, mechanism=mechanism.id)
         reasons.extend(f"{mechanism.id}: {r}" for r in result.reasons)
-    plan = (usage.plan_type or account.plan_type or "unknown").lower()
+    plan = _plan(account.plan_type) or _plan(usage.plan_type) or "unknown"
     missing = [PERSONAL_PLAN_GAP] if plan not in WORKSPACE_PLAN_TYPES else [
         "a workspace member credit limit of 0 set by the workspace owner/admin (ChatGPT Business spend controls)"
     ]

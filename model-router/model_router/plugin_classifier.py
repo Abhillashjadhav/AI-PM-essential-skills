@@ -54,7 +54,11 @@ def combined_classifier(plugin: Callable[[str], Any]) -> Callable[[ClassifierInp
             return rules  # never lower a hard floor
         rules_role = ROLE_FLOORS[rules.task_kind][0]
         plugin_role = ROLE_FLOORS[kind][0]
-        if rules.task_kind is TaskKind.UNKNOWN or plugin_role.rank > rules_role.rank:
+        has_data = any(code.endswith("TREATED_AS_DATA") or code.startswith("PASTED") for code in rules.reason_codes)
+        # Resolving an unknown task may not drop it to the lowest role when the
+        # prompt carries pasted/quoted material the rules did not interpret.
+        may_resolve_unknown = rules.task_kind is TaskKind.UNKNOWN and (plugin_role.rank >= 1 or not has_data)
+        if may_resolve_unknown or plugin_role.rank > rules_role.rank:
             rules.secondary_kinds = [k for k in [rules.task_kind, *rules.secondary_kinds] if k is not kind]
             rules.task_kind = kind
             rules.reason_codes.append("PLUGIN_CLASSIFICATION_USED")

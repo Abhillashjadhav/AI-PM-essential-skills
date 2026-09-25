@@ -567,6 +567,7 @@ class CodexStdioAdapter(SubscriptionAdapter):
         self._last_usage_raw: dict[str, Any] | None = None
         self.connection_generation = 0
         self.send_client_message_id = True
+        self._turn_active = False
         self.capabilities: AdapterCapabilities | None = None
 
     # -- process ---------------------------------------------------------------
@@ -634,7 +635,15 @@ class CodexStdioAdapter(SubscriptionAdapter):
             self.pin_problems = ["the Codex executable changed since it was pinned; new sends are blocked until re-validated"]
 
     def _read_request(self, method: str, params: dict[str, Any] | None) -> Any:
-        """Idempotent reads: bounded exponential backoff with jitter."""
+        """Idempotent reads: bounded exponential backoff with jitter.
+
+        While a turn is streaming, a failed read never restarts the App Server
+        (that would kill the turn): it fails fast and the caller stops safely."""
+        if self._turn_active:
+            try:
+                return self._connect().request(method, params, self.config.request_timeout)
+            except AdapterError as exc:
+                raise AdapterError(f"{method} failed during an active turn: {exc}", executed="no") from exc
         delay = 0.2
         last: Exception | None = None
         for attempt in range(3):
@@ -901,6 +910,13 @@ class CodexStdioAdapter(SubscriptionAdapter):
 
     def _events(self, rpc: JsonRpcProcess, thread_id: str, turn_id: str, approval_handler: ApprovalHandler) -> Iterator[TurnEvent]:
         yield TurnEvent(kind="acknowledged", provider_turn_id=turn_id)
+        self._turn_active = True
+        try:
+            yield from self._event_loop(rpc, thread_id, turn_id, approval_handler)
+        finally:
+            self._turn_active = False
+
+    def _event_loop(self, rpc: JsonRpcProcess, thread_id: str, turn_id: str, approval_handler: ApprovalHandler) -> Iterator[TurnEvent]:
         deadline = time.monotonic() + self.config.turn_idle_timeout
         while True:
             try:
@@ -1038,8 +1054,7 @@ def parse_rate_limits(result: dict[str, Any], *, account_scope: str | None) -> U
     for limit_id, snapshot in snapshots.items():
         plan = plan or snapshot.get("planType")
         credits_raw = credits_raw or snapshot.get("credits")
-        if isinstance(snapshot.get("credits"), dict):
-            credit_limit_ids.append(limit_id)
+        credit_limit_ids.append(limit_id)  # credits may apply to every reported limit
         if snapshot.get("spendControlReached") is not None:
             spend_control = bool(spend_control) or bool(snapshot.get("spendControlReached"))
         individual = snapshot.get("individualLimit")

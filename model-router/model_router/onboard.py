@@ -206,7 +206,6 @@ class Setup:
 
 def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) -> dict[str, Any]:
     from .coordinator import Coordinator
-    from .scheduler import AutoResumer
 
     store = coordinator.store
     report: dict[str, Any] = {"started_at": utc_now(), "live": coordinator.live, "scenarios": {}, "blocked": None}
@@ -299,10 +298,12 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
         restarted = Coordinator(store, coordinator.adapter, live=coordinator.live, ui=coordinator.ui)
         restarted.start()
         restarted.recover()
-        tick = AutoResumer(restarted, min_interval=1, max_interval=5).tick()
+        # Resume only the pilot's own job (never the owner's other queued work),
+        # through the same path the auto-resumer uses for each job.
+        resumed_state = restarted.run(queued.job_id, blocking=False).value
         final = store.job(queued.job_id)["state"]
         report["scenarios"]["restart_resume"] = {
-            "pinned_model": pinned, "resumed": tick.resumed, "state": final, **dispatch_summary(queued.job_id),
+            "pinned_model": pinned, "resumed": resumed_state, "state": final, **dispatch_summary(queued.job_id),
             "pass": final == "SUCCEEDED" and dispatch_summary(queued.job_id).get("requested_model") == pinned,
         }
         restarted.close()
