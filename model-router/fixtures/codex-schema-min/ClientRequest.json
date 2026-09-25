@@ -1,0 +1,171 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "oneOf": [
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "initialize"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "InitializeRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "thread/start"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Thread/startRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "thread/resume"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Thread/resumeRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "thread/read"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Thread/readRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "turn/start"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Turn/startRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "turn/interrupt"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Turn/interruptRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "model/list"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Model/listRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "account/rateLimits/read"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Account/rateLimits/readRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "account/rateLimitResetCredit/consume"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Account/rateLimitResetCredit/consumeRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "config/read"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Config/readRequest",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "account/read"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Account/readRequest",
+   "type": "object"
+  }
+ ],
+ "title": "ClientRequest"
+}

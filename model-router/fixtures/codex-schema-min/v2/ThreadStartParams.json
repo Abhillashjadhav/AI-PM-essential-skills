@@ -1,0 +1,22 @@
+{
+ "properties": {
+  "approvalPolicy": {},
+  "approvalsReviewer": {},
+  "baseInstructions": {},
+  "config": {},
+  "cwd": {},
+  "developerInstructions": {},
+  "ephemeral": {},
+  "model": {},
+  "modelProvider": {},
+  "personality": {},
+  "sandbox": {},
+  "serviceName": {},
+  "serviceTier": {},
+  "sessionStartSource": {},
+  "threadSource": {}
+ },
+ "required": [],
+ "title": "ThreadStartParams",
+ "type": "object"
+}

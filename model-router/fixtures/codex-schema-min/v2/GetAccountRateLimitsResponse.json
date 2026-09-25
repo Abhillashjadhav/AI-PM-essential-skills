@@ -1,0 +1,15 @@
+{
+ "properties": {
+  "accountId": {},
+  "ordinaryUsageAllowed": {},
+  "rateLimitResetCredits": {},
+  "rateLimitUpsell": {},
+  "rateLimits": {},
+  "rateLimitsByLimitId": {}
+ },
+ "required": [
+  "rateLimits"
+ ],
+ "title": "GetAccountRateLimitsResponse",
+ "type": "object"
+}
