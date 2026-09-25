@@ -676,7 +676,8 @@ class UsageSnapshot(Record):
     source: str
     synthetic: bool
     spend_controls: list[SpendControlObservation] = dataclasses.field(default_factory=list)
-    # limit ids whose snapshot carried a credits object (credits can apply there)
+    # Every limit id the provider reported. Credits may apply to any of them:
+    # a snapshot without credit fields is unknown, never "credits cannot apply".
     credit_limit_ids: list[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self) -> None:
