@@ -58,6 +58,9 @@ class TransitionGuards(unittest.TestCase):
         with self.assertRaises(InvalidTransition):
             check_transition(JobState.RECOVERY_REQUIRED, JobState.READY, eligibility_passed=True)
         check_transition(JobState.RECOVERY_REQUIRED, JobState.READY, eligibility_passed=True, owner_confirmed_not_executed=True)
+        with self.assertRaises(InvalidTransition):
+            check_transition(JobState.RECOVERY_REQUIRED, JobState.PAUSED)
+        check_transition(JobState.RECOVERY_REQUIRED, JobState.PAUSED, owner_confirmed_not_executed=True)
 
     def test_terminal_states_never_dispatch_again(self):
         for terminal in (JobState.SUCCEEDED, JobState.FAILED, JobState.CANCELLED):

@@ -321,8 +321,12 @@ def check_transition(
         raise InvalidTransition("only an explicit manual model choice can leave AWAITING_MANUAL_MODEL")
     if target is JobState.READY and not eligibility_passed:
         raise InvalidTransition(f"{current.value} -> READY requires a passing eligibility check")
-    if current is JobState.RECOVERY_REQUIRED and target is JobState.READY and not owner_confirmed_not_executed:
-        raise InvalidTransition("RECOVERY_REQUIRED -> READY requires owner confirmation that nothing executed")
+    if (
+        current is JobState.RECOVERY_REQUIRED
+        and target in {JobState.READY, JobState.PAUSED}
+        and not owner_confirmed_not_executed
+    ):
+        raise InvalidTransition(f"RECOVERY_REQUIRED -> {target.value} requires owner confirmation that nothing executed")
 
 
 class DispatchPhase(str, enum.Enum):
