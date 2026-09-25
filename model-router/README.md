@@ -2,7 +2,9 @@
 
 A local terminal tool that picks a suitable model tier for each new chat and keeps that choice fixed for the whole chat. When you accept an architecture, it opens a separate implementation chat for you. It never adds spend.
 
-> **Status: V1. Complete and tested offline; live sends are blocked by a provider limitation.** The router, automatic resume, one-command setup and the bounded pilot are built and tested (205 offline tests). The Codex adapter was verified against the real Codex CLI 0.157.0 up to sign-in. **No real model turn has been run.** On personal ChatGPT plans, OpenAI applies purchased credits automatically after included usage and offers no switch to stop it ([openai/codex#28382](https://github.com/openai/codex/issues/28382)), so the ₹0 rule keeps live sends blocked. The only enforceable path today is a ChatGPT workspace with your member credit limit set to 0. Details: [docs/capability-evidence.md](docs/capability-evidence.md). Routing works **only in this terminal client**.
+> **Status: not complete. Built and tested offline; live sends are blocked because no verified included-only mechanism exists for personal ChatGPT plans.** The router, automatic resume, one-command setup and the bounded pilot are built and tested offline (TESTS_PLACEHOLDER offline tests). The Codex adapter was verified against the real Codex CLI 0.157.0 up to sign-in. **No real model turn has been run.**
+>
+> On a personal plan the router can verify a zero credit balance live. It cannot verify that automatic reload is off, and it cannot guarantee that no purchase happens during a task, so the ₹0 rule keeps live sends blocked. That is a missing provider guarantee, not proof that personal plans can never work. A workspace member credit limit of 0 is a documented control, but it is **unverified** until a real account shows it working. Routing quality on unseen synthetic prompts: ROUTING_PLACEHOLDER. The 95% real-use goal needs real use. Details: [docs/capability-evidence.md](docs/capability-evidence.md). Routing works **only in this terminal client**.
 
 ## Try it (no account needed)
 
@@ -34,7 +36,7 @@ python3 model-router/router.py setup    # pin Codex, ChatGPT sign-in, approve mo
 python3 model-router/router.py pilot    # bounded live check; refuses unless the spend boundary is verified
 ```
 
-Or hand the rest to Claude Code in one step: [docs/local-pilot.md](docs/local-pilot.md).
+Or hand the rest to Codex on your Mac with one prompt: [docs/local-pilot.md](docs/local-pilot.md).
 
 ## Prerequisites
 

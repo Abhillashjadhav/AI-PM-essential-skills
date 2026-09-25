@@ -24,9 +24,9 @@ The router core never sees Codex wire formats. It only uses the typed contracts 
 | `policy.py` | Minimum role per task type, the upward fallback, and the section 5.3 implementation-role rule |
 | `registry.py` | Discovered candidates, approved role mappings bound to hashes, atomic revisions |
 | `capacity.py` | SUFFICIENT, TIGHT or UNKNOWN from a validated calibration artifact. UNKNOWN by default |
-| `spend.py` | Zero-added-spend decision from code-defined mechanisms that check live provider signals |
-| `scheduler.py` | Automatic resume while the router is open: bounded backoff, sleep detection, reconcile before continuing |
-| `onboard.py` | One-command `setup` and the bounded live `pilot` |
+| `spend.py` | Zero-added-spend decision from code-defined mechanisms that check live provider signals; for personal plans it records the verifiable facts and the missing guarantee, and never allows |
+| `scheduler.py` | Automatic resume while the router is open: bounded backoff, sleep detection, reconcile before continuing; can be limited to one project (the pilot uses this) |
+| `onboard.py` | One-command `setup` and the bounded live `pilot`, which records responses, latency, account signals and memory |
 | `eligibility.py` | Fresh auth, account, usage, spend, model and tool checks before every dispatch |
 | `handoff.py` | Architecture record, owner-acceptance detection, clarity and risk evidence, hashed package, context budget |
 | `coordinator.py` | Routing with a timeout fence, pins, overrides, outbox dispatch, streaming, checkpoints, queue, recovery, handoff |
