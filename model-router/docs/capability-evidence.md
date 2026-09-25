@@ -12,13 +12,13 @@ Evidence levels:
 
 | Area | Implemented | Tested with simulation | Tested against the real Codex binary | Tested with real models | Blocked on |
 |---|---|---|---|---|---|
-| Routing, pins, overrides, handoff, queue, recovery | yes | yes (205 tests) | — | no | the spend boundary |
+| Routing, pins, overrides, handoff, queue, recovery | yes | yes (222 tests) | — | no | the spend boundary |
 | Automatic resume while running (`chat`, `serve`) | yes | yes | — | no | the spend boundary |
 | Codex App Server adapter (stdio, pin, profile) | yes | yes (fake subprocess) | **yes**: initialize, account/read, config/read, model/list, schema compatibility, pin | no | sign-in (owner) |
 | Spend boundary (`spend.py`) | yes | yes, including fabricated-evidence and personal-plan tests | partly: before sign-in it correctly stays BLOCKED | no | **provider capability**: no verified included-only mechanism for personal plans (see below) |
 | Guided setup (`setup`) | yes | yes | yes, up to the sign-in step | — | sign-in (owner) |
 | Bounded live pilot (`pilot`) | yes | yes (all 4 scenarios) | — | **no** | the spend boundary |
-| Routing suitability (95% goal) | rules rev. 3 | yes, on 420 synthetic prompts | — | no | real prompts (owner) |
+| Routing quality | rules rev 7 | yes: 820 labelled synthetic prompts; held-out 81.5% (rev 5) and 78.5% (rev 6) | — | no | real use for the 95% goal |
 
 ## 1. Zero added spend: what can and cannot be verified
 
@@ -103,27 +103,34 @@ This does not mean personal plans are inherently unusable. It means there is **n
 - **Not verified:** turns on the real binary, `clientUserMessageId` echo, per-turn model attestation, and macOS behaviour. The upstream schema check from the first round still holds ([evidence/upstream-schema-compat-2026-09-25.json](evidence/upstream-schema-compat-2026-09-25.json)).
 - **Blocked sites:** `learn.chatgpt.com`, `developers.openai.com` and `help.openai.com` are blocked by this container's network proxy. Help-centre wording above comes from search-result excerpts.
 
-## 3. Routing suitability (the 95% goal)
+## 3. Routing quality on unseen prompts (not the 95% goal)
 
-[evidence/routing-suitability-2026-09-25.json](evidence/routing-suitability-2026-09-25.json). Independent agents wrote realistic prompt sets without seeing the classifier:
+[evidence/routing-suitability-2026-09-25.json](evidence/routing-suitability-2026-09-25.json). The method: freeze a rules revision in a commit, then score it **once** on 200 new prompts. Two independent agents write each set, blind to the classifier and to every earlier set. A separate agent re-labels the set from the prompts alone. After scoring, the set becomes development data for the next revision.
 
-| Rules | Set | Exact | Under-routed | Over-routed | Use |
+| Frozen rules | Unseen set | Exact (95% interval) | Under-routed | Over-routed | Same set, older rules |
 |---|---|---|---|---|---|
-| rev 1 | dev set 1 (120) | 61.7% | 9 | 37 | first measurement |
-| rev 1 | dev set 2 (150) | 49.3% | 10 | 66 | baseline |
-| rev 2 | dev set 2 (150) | 77.3% | 16 | 18 | held-out, then used for tuning |
-| rev 3 | dev sets 1 + 2 | 99.2% / 98.7% | 0 / 0 | 1 / 2 | fitted: says little |
-| **rev 3** | **final test (150)** | **86.0%** | **14 (9.3%)** | 7 (4.7%) | **scored once, never tuned on: the only held-out number** |
-| rev 4 | dev sets 1 + 2 | 98.3% / 96.0% | 0 / 0 | 2 / 6 | review fixes, not tuning: more conservative |
-| rev 4 | final test (150) | 86.0% | 13 (8.7%) | 8 (5.3%) | post-review rescore of an already-seen set |
+| rev 3 | final set (150) | 86.0% | 9.3% | 4.7% | — |
+| rev 5 (`f50fa23`) | fresh set 1 (200) | **81.5%** (75.5–86.3%) | **6.0%** | 12.5% | rev 4: 78.5%, 9.0% under |
+| rev 6 (`12e0d73`) | fresh set 2 (200) | **78.5%** (72.3–83.6%) | **9.0%** | 12.5% | rev 4: 71.5%; rev 5: 76.0% |
+| rev 7 (`e7a7e1d`) | fresh set 3 (200) | not yet scored | | | |
 
-**The 95% goal is not met on synthetic prompts, and it has not been measured on your real prompts.** The final-set misses are listed in the evidence file. Under-routed examples include a JWT middleware fix and a "safe to upgrade on Friday with no staging?" question. The weekly report measures the real override rate once live use starts. Revision 4 came from a code review, not from the final-set misses: it makes every pattern linear-time, routes risk hidden inside pasted or quoted material that is being changed to the highest role, stops negation from hiding risk ("make sure it does not leak api keys" is security work), and classifies very long inputs on their start, one step up. An optional external classifier can be plugged in, but it cannot lower hard floors, and it doesn't change subscription access.
+Model distribution on fresh set 2 (expected → observed with rev 6): highest 78 → 93, middle 59 → 50, lowest 63 → 57. Over-routing leans toward the highest tier, but the router does not send everything there. Label agreement between the authors and the independent re-labeller was 200/200 and 199/200. That shows the labels follow the written policy consistently. It does not show that you would label them the same way, because all the labellers are AI agents.
+
+**What this means.** Each revision improves the same unseen prompts: fresh set 2 went 71.5% → 76.0% → 78.5% across revisions 4 to 6. But each new, differently written set exposes new phrasings, so held-out accuracy sits around 78–82%, with 6–9% under-routed. The common under-routed categories were:
+- security bugs described without security words ("change the id in the url and you see someone else's data");
+- decisions written as lettered options;
+- personal-data exports;
+- money code where a rule mistook the task for styling (a revision 6 defect, fixed in revision 7).
+
+Development-set scores are close to 100% and are fitted, so they say little.
+
+**The 95% goal is a different measure.** It asks that 95% of your real chat threads stay on the model the router chose. Synthetic label matching can't show that. It needs real use and the weekly override report, and it is not claimed. Kev (an optional local classifier plugin) remains optional and is not installed, and no paid classifier is used.
 
 ## 4. Other gates
 
 | Gate | Status | Evidence |
 |---|---|---|
-| Offline tests | VERIFIED (synthetic) | `python3 -m unittest discover -s model-router/tests -q` → 205 tests OK |
+| Offline tests | VERIFIED (synthetic) | `python3 -m unittest discover -s model-router/tests -q` → 222 tests OK |
 | Offline routing-policy evaluation | VERIFIED (synthetic) | 33/33 fixture cases; judge self-check usable ([evidence/offline-eval-2026-09-25.json](evidence/offline-eval-2026-09-25.json)) |
 | Routing latency | VERIFIED (build container, simulator) | rules rev 6: warm p50 1.7 ms (p99 9.9 ms), cold p50 3.0 ms; worst adversarial 60,000-character input 0.52 s ([evidence/latency-build-container-2026-09-25.json](evidence/latency-build-container-2026-09-25.json)); not measured on your Mac |
 | Automatic resume | VERIFIED (synthetic) | `tests/test_scheduler.py`: bounded backoff (30 s → 15 min), reset times only move the next check earlier, cancellation, the foreground turn wins, sleep is detected and reconciled, two routers produce one send |
