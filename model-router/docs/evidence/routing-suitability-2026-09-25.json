@@ -260,7 +260,7 @@
       ]
     }
   ],
-  "claim": "Held-out results on prompts each frozen revision had never seen: revision 5 81.5% exact (6.0% under-routed) on fresh set 1; revision 6 78.5% exact (9.0% under-routed, 12.5% over-routed) on fresh set 2, where revisions 4 and 5 scored 71.5% and 76.0%. Revision 7 has not yet been measured on unseen prompts. Development-set scores (near 100%) are fitted and say little. The owner's 95% goal is about real chat threads staying on the chosen model; it is not measured by these synthetic sets and is not claimed.",
+  "claim": "Held-out results on prompts each frozen revision had never seen: revision 5 81.5% exact (6.0% under-routed) on fresh set 1; revision 6 78.5% (9.0% under, 12.5% over) on fresh set 2; revision 7 80.0% (10.5% under, 9.5% over) on fresh set 3, where revisions 5 and 6 scored 71.5% and 74.0%. Each revision improves the same unseen prompts, but held-out accuracy stays near 78-82% with 6-10% under-routing. Development-set scores are fitted. The owner's 95% goal is about real chat threads staying on the chosen model; it is not measured by these synthetic sets and is not claimed.",
   "fresh_sets": {
     "method": "Each revision was frozen (committed) before a new 200-prompt set, written by two independent agents blind to the classifier and to every earlier set, was scored once. A separate agent re-labelled each set from the prompts alone. Every set was then used as development data for the next revision.",
     "fresh-set-1": {
@@ -2180,7 +2180,1217 @@
     "fresh-set-3": {
       "frozen_rules": "rules-2026-09-25.7",
       "commit": "e7a7e1d",
-      "status": "authored, not yet scored at pause (2026-09-26 00:30 IST)"
+      "label_agreement": "pending at the pause (independent re-labeller running)",
+      "rev7_frozen": {
+        "rules": "rules-2026-09-25.7",
+        "cases": 200,
+        "exact": 160,
+        "exact_rate": 0.8,
+        "exact_ci95": [
+          0.7391,
+          0.8495
+        ],
+        "under_routed": 21,
+        "under_rate": 0.105,
+        "under_ci95": [
+          0.0697,
+          0.1552
+        ],
+        "over_routed": 19,
+        "over_rate": 0.095,
+        "expected_distribution": {
+          "highest": 80,
+          "lowest": 61,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 84,
+          "lowest": 63,
+          "middle": 53
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 65,
+          "highest->lowest": 5,
+          "highest->middle": 10,
+          "lowest->highest": 9,
+          "lowest->lowest": 52,
+          "middle->highest": 10,
+          "middle->lowest": 6,
+          "middle->middle": 43
+        },
+        "per_set": {
+          "fresh-e-2026-09-25.1": {
+            "exact": 83,
+            "under": 8,
+            "over": 9,
+            "cases": 100
+          },
+          "fresh-f-2026-09-25.1": {
+            "exact": 77,
+            "under": 13,
+            "over": 10,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": null,
+        "misses": [
+          {
+            "id": "E013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "unclear_request"
+          },
+          {
+            "id": "E014",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sql_postgres"
+          },
+          {
+            "id": "E019",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "freelance_invoice"
+          },
+          {
+            "id": "E022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "incident_followup"
+          },
+          {
+            "id": "E028",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_data_handling"
+          },
+          {
+            "id": "E030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meetup_talk"
+          },
+          {
+            "id": "E044",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "vendor_evaluation"
+          },
+          {
+            "id": "E048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "django_vps"
+          },
+          {
+            "id": "E077",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E078",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E079",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "E084",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "django_vps"
+          },
+          {
+            "id": "E090",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_agreement"
+          },
+          {
+            "id": "E091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typescript_coding"
+          },
+          {
+            "id": "E095",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sheets_apps_script"
+          },
+          {
+            "id": "E098",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "stakeholder_email"
+          },
+          {
+            "id": "E099",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3003",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3005",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "research_article"
+          },
+          {
+            "id": "F3017",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "flat_scraper"
+          },
+          {
+            "id": "F3020",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_lookup"
+          },
+          {
+            "id": "F3027",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "discord_bot"
+          },
+          {
+            "id": "F3029",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3031",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "team_feedback"
+          },
+          {
+            "id": "F3041",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3043",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3044",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "experiment_results"
+          },
+          {
+            "id": "F3060",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3061",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "concept_learning"
+          },
+          {
+            "id": "F3067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "job_outreach"
+          },
+          {
+            "id": "F3068",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3072",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3080",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "F3095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recipe"
+          },
+          {
+            "id": "F3098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          }
+        ]
+      },
+      "rev6_baseline": {
+        "rules": "rules-2026-09-25.6",
+        "cases": 200,
+        "exact": 148,
+        "exact_rate": 0.74,
+        "exact_ci95": [
+          0.6751,
+          0.7959
+        ],
+        "under_routed": 24,
+        "under_rate": 0.12,
+        "under_ci95": [
+          0.082,
+          0.1723
+        ],
+        "over_routed": 28,
+        "over_rate": 0.14,
+        "expected_distribution": {
+          "highest": 80,
+          "lowest": 61,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 92,
+          "lowest": 64,
+          "middle": 44
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 65,
+          "highest->lowest": 6,
+          "highest->middle": 9,
+          "lowest->highest": 11,
+          "lowest->lowest": 49,
+          "lowest->middle": 1,
+          "middle->highest": 16,
+          "middle->lowest": 9,
+          "middle->middle": 34
+        },
+        "per_set": {
+          "fresh-e-2026-09-25.1": {
+            "exact": 78,
+            "under": 10,
+            "over": 12,
+            "cases": 100
+          },
+          "fresh-f-2026-09-25.1": {
+            "exact": 70,
+            "under": 14,
+            "over": 16,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": null,
+        "misses": [
+          {
+            "id": "E002",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "unclear_request"
+          },
+          {
+            "id": "E014",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sql_postgres"
+          },
+          {
+            "id": "E018",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E019",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "freelance_invoice"
+          },
+          {
+            "id": "E022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "incident_followup"
+          },
+          {
+            "id": "E024",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "airtable_automation"
+          },
+          {
+            "id": "E028",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_data_handling"
+          },
+          {
+            "id": "E030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meetup_talk"
+          },
+          {
+            "id": "E044",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "vendor_evaluation"
+          },
+          {
+            "id": "E048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "django_vps"
+          },
+          {
+            "id": "E049",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_scripting"
+          },
+          {
+            "id": "E052",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E069",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E077",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E078",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E084",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "django_vps"
+          },
+          {
+            "id": "E090",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_agreement"
+          },
+          {
+            "id": "E091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typescript_coding"
+          },
+          {
+            "id": "E095",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sheets_apps_script"
+          },
+          {
+            "id": "E098",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "stakeholder_email"
+          },
+          {
+            "id": "E099",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3003",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3005",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "task_automation"
+          },
+          {
+            "id": "F3013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "research_article"
+          },
+          {
+            "id": "F3017",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "flat_scraper"
+          },
+          {
+            "id": "F3020",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_lookup"
+          },
+          {
+            "id": "F3029",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_analysis_code"
+          },
+          {
+            "id": "F3031",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "team_feedback"
+          },
+          {
+            "id": "F3037",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3041",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3043",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3044",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "experiment_results"
+          },
+          {
+            "id": "F3055",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "incident_summary"
+          },
+          {
+            "id": "F3058",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "work_message"
+          },
+          {
+            "id": "F3060",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3061",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "concept_learning"
+          },
+          {
+            "id": "F3063",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "car_loan"
+          },
+          {
+            "id": "F3067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "job_outreach"
+          },
+          {
+            "id": "F3068",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3072",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3080",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "F3091",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "concept_learning"
+          },
+          {
+            "id": "F3095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recipe"
+          },
+          {
+            "id": "F3098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          }
+        ]
+      },
+      "rev5_baseline": {
+        "rules": "rules-2026-09-25.5",
+        "cases": 200,
+        "exact": 143,
+        "exact_rate": 0.715,
+        "exact_ci95": [
+          0.6488,
+          0.7731
+        ],
+        "under_routed": 28,
+        "under_rate": 0.14,
+        "under_ci95": [
+          0.0987,
+          0.1949
+        ],
+        "over_routed": 29,
+        "over_rate": 0.145,
+        "expected_distribution": {
+          "highest": 80,
+          "lowest": 61,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 91,
+          "lowest": 65,
+          "middle": 44
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 63,
+          "highest->lowest": 7,
+          "highest->middle": 10,
+          "lowest->highest": 13,
+          "lowest->lowest": 47,
+          "lowest->middle": 1,
+          "middle->highest": 15,
+          "middle->lowest": 11,
+          "middle->middle": 33
+        },
+        "per_set": {
+          "fresh-e-2026-09-25.1": {
+            "exact": 75,
+            "under": 13,
+            "over": 12,
+            "cases": 100
+          },
+          "fresh-f-2026-09-25.1": {
+            "exact": 68,
+            "under": 15,
+            "over": 17,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": null,
+        "misses": [
+          {
+            "id": "E002",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E005",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume"
+          },
+          {
+            "id": "E013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "unclear_request"
+          },
+          {
+            "id": "E014",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_postgres"
+          },
+          {
+            "id": "E018",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E019",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "freelance_invoice"
+          },
+          {
+            "id": "E020",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "personal_brand"
+          },
+          {
+            "id": "E022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "incident_followup"
+          },
+          {
+            "id": "E024",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "airtable_automation"
+          },
+          {
+            "id": "E026",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "resume"
+          },
+          {
+            "id": "E028",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_data_handling"
+          },
+          {
+            "id": "E030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meetup_talk"
+          },
+          {
+            "id": "E044",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "vendor_evaluation"
+          },
+          {
+            "id": "E048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "django_vps"
+          },
+          {
+            "id": "E049",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_scripting"
+          },
+          {
+            "id": "E052",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E061",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "frontend_css"
+          },
+          {
+            "id": "E069",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E077",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E078",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E090",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_agreement"
+          },
+          {
+            "id": "E091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typescript_coding"
+          },
+          {
+            "id": "E095",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sheets_apps_script"
+          },
+          {
+            "id": "E098",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "stakeholder_email"
+          },
+          {
+            "id": "E099",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3003",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3005",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "task_automation"
+          },
+          {
+            "id": "F3010",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meeting_notes"
+          },
+          {
+            "id": "F3013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "research_article"
+          },
+          {
+            "id": "F3017",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "flat_scraper"
+          },
+          {
+            "id": "F3020",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_lookup"
+          },
+          {
+            "id": "F3029",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_analysis_code"
+          },
+          {
+            "id": "F3031",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "team_feedback"
+          },
+          {
+            "id": "F3037",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3041",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3043",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3044",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "experiment_results"
+          },
+          {
+            "id": "F3050",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "shopping_list"
+          },
+          {
+            "id": "F3053",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "job_search_logistics"
+          },
+          {
+            "id": "F3056",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "ui_decision"
+          },
+          {
+            "id": "F3058",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "work_message"
+          },
+          {
+            "id": "F3060",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3063",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "car_loan"
+          },
+          {
+            "id": "F3067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "job_outreach"
+          },
+          {
+            "id": "F3068",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3072",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3080",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "F3094",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "personal_budget"
+          },
+          {
+            "id": "F3095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recipe"
+          },
+          {
+            "id": "F3098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          }
+        ]
+      }
     }
   }
 }
