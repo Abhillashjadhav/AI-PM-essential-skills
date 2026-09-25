@@ -51,8 +51,8 @@ The primary user is Abhillash, who works in ChatGPT in the browser, sometimes in
 ## Unresolved provider capabilities (UNKNOWN, not product approvals)
 | Capability | Status |
 |---|---|
-| Enforceable included-only execution (no purchased-credit consumption) on the Codex App Server path | UNKNOWN. No documented control found; live dispatch stays blocked. |
-| Models, reasoning settings, and usage buckets visible to the owner's account | UNKNOWN until `doctor` runs on the owner's Mac |
+| Enforceable included-only execution (no purchased-credit consumption) on the Codex App Server path | **Personal plans: UNSUPPORTED.** Credits apply automatically after included usage and there's no off switch (openai/codex#28382 is open). **Workspace plans: SUPPORTED** through a member credit limit of 0, which the router verifies live before every send. |
+| Models, reasoning settings, and usage buckets visible to the owner's account | The CLI 0.157.0 catalogue is known (gpt-6-astra/sol/luna, gpt-5.6-sol/terra/luna, gpt-5.5). Account-specific availability stays UNKNOWN until `setup` signs in on the owner's Mac. |
 | Per-turn provider attestation of the model used | UNKNOWN. Only `model/rerouted` is documented. |
 | Reliable reconciliation after a lost `turn/start` acknowledgement | UNKNOWN. `clientUserMessageId` is in the schema, but its echo semantics aren't verified. |
 | Supported integration with ChatGPT in the browser or the Codex desktop app | UNSUPPORTED in V1. None has been proven. |

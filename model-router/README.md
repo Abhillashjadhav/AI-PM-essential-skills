@@ -2,7 +2,7 @@
 
 A local terminal tool that picks a suitable model tier for each new chat and keeps that choice fixed for the whole chat. When you accept an architecture, it opens a separate implementation chat for you. It never adds spend.
 
-> **Status: V1. The offline build is complete; live use is blocked.** The router, the simulator, the Codex App Server adapter and all the offline tests work. **Live model sends stay blocked.** No documented control has yet been verified to prove that a send on this path can't use purchased credits. See [docs/capability-evidence.md](docs/capability-evidence.md). Routing works **only in this terminal client**. It doesn't control ChatGPT in the browser or the Codex desktop app.
+> **Status: V1. Complete and tested offline; live sends are blocked by a provider limitation.** The router, automatic resume, one-command setup and the bounded pilot are built and tested (188 offline tests). The Codex adapter was verified against the real Codex CLI 0.157.0 up to sign-in. **No real model turn has been run.** On personal ChatGPT plans, OpenAI applies purchased credits automatically after included usage and offers no switch to stop it ([openai/codex#28382](https://github.com/openai/codex/issues/28382)), so the ₹0 rule keeps live sends blocked. The only enforceable path today is a ChatGPT workspace with your member credit limit set to 0. Details: [docs/capability-evidence.md](docs/capability-evidence.md). Routing works **only in this terminal client**.
 
 ## Try it (no account needed)
 
@@ -27,6 +27,15 @@ Router: Using the approved lower model for this new coding chat:
 the steps are clear, the work is low risk, and included usage looks tight.
 ```
 
+## On your Mac
+
+```bash
+python3 model-router/router.py setup    # pin Codex, ChatGPT sign-in, approve models, check spend (no model turn)
+python3 model-router/router.py pilot    # bounded live check; refuses unless the spend boundary is verified
+```
+
+Or hand the rest to Claude Code in one step: [docs/local-pilot.md](docs/local-pilot.md).
+
 ## Prerequisites
 
 - Python 3.11 or newer. Only the standard library is used, with no `pip install`.
@@ -37,6 +46,9 @@ the steps are clear, the work is low risk, and included usage looks tight.
 
 | Command | What it does |
 |---|---|
+| `router.py setup` | One guided setup. It pins the installed Codex CLI, checks the router's own ChatGPT-only profile, opens Codex's sign-in if needed, approves one model per role, and checks the spend boundary. |
+| `router.py pilot` | A bounded live pilot of at most 8 turns: normal answer, handoff, override, restart/resume. It only runs when the spend boundary is verified. |
+| `router.py serve` | Keeps queued work resuming automatically while this window is open. |
 | `router.py doctor` | Read-only checks: Python, local store, Codex CLI version and checksum, protocol schema, sign-in, config, models, usage, spend boundary. It runs no model turn and prints no credentials. |
 | `router.py demo` | Synthetic walkthrough in a temporary folder. |
 | `router.py project add --name <name> --path <dir>` | Links a project name to a working directory. |
@@ -65,6 +77,10 @@ Inside `chat`, you can use: `/attach`, `/fetch`, `/history`, `/cancel`, `/model`
 
 The retired "80% priority + 20% usage" formula isn't used. The only usage-driven downgrade happens once, when an implementation chat is created. It applies only if the architecture is **proven** clear and simple, the work is low risk, an approved and capable lowest model exists, **and** capacity is estimated TIGHT. Capacity is **UNKNOWN** until you approve a calibration, so out of the box there's no downgrade.
 
+## Optional classifier plugin
+
+The deterministic rules are the classifier; nothing else is needed. If you want, set `MODEL_ROUTER_CLASSIFIER=package.module:function` to consult another classifier (for example a local model). It can raise a role or classify a task the rules didn't recognise, but it can never lower a hard floor (credibility writing, or money, privacy or security coding, or destructive operations). If it fails, the rules take over. A local classifier doesn't change subscription access or spend.
+
 ## Approving models
 
 The default configuration contains no executable model IDs. "Astra (highest)" and "Sol (middle)" are labels only.
@@ -79,7 +95,12 @@ An approval is bound to that exact model, setting, tool scope and evaluation lis
 
 ## Queued work and resume
 
-If included usage runs out, the chat is saved (with a checkpoint if a turn was cut short) and queued. When usage is available again, `wake`, `resume` or `/wake` re-checks sign-in, spend and usage, then continues **on the same model**. The router never redeems reset offers, buys credits, or changes payment settings. If a send's outcome is uncertain after a crash, the router doesn't resend it. It asks you instead.
+If included usage runs out, the chat is saved (with a checkpoint if a turn was cut short) and queued. **While `chat` or `serve` is open, the router re-checks automatically**:
+- It starts at 30 s and doubles up to 15 min, or checks sooner around a reported reset time.
+- Every check re-reads sign-in, spend and usage fresh, holds the dispatch lease, and continues **on the same model**.
+- Your foreground turns always go first.
+
+Nothing runs while the router is closed or the Mac is asleep. After the Mac wakes, the router reconciles any uncertain sends before continuing. `wake`, `resume` and `/wake` still work by hand. The router never redeems reset offers, buys credits, or changes payment settings. If a send's outcome is uncertain after a crash, the router doesn't resend it. It asks you instead.
 
 ## Data, privacy and removal
 
