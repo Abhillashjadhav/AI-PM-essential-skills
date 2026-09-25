@@ -214,7 +214,7 @@ PATTERNS: dict[str, tuple[str, ...]] = {
     "judgement": (
         r"assess",
         r"evaluate",
-        r"judge",
+        r"judge (?:this|it|my|whether|if|how|the quality)",
         r"score",
         r"rate",
         r"critique",
@@ -464,9 +464,72 @@ PATTERNS["hc_verb"] = tuple(p for p in PATTERNS["hc_verb"] if p != r"summari[sz]
     r"intro|pitch|blurb|tagline|summary|cold e-?mails?|outreach)",
 )
 
-RULES_VERSION = "rules-2026-09-25.6"
+# Rules revision 7: categories from the misses of frozen revision 6 on the second
+# fresh set (development data from here on).
+REVISION_7_PATTERNS: dict[str, tuple[str, ...]] = {
+    "security": (
+        # access-control bugs described without security words
+        r"someone(?: else)?'?s (?:application|applications|data|account|orders?|profile|messages?|notes|files|records|invoices?|documents?|payments?)",
+        r"(?:other|another|different) (?:users?|customers?|people|person|tenants?)'?s? (?:data|applications?|orders?|records|accounts?|profiles?|files|invoices?|messages?|documents?|payments?)",
+        r"(?:change|edit|modify|swap|tweak|guess)\w* (?:the )?(?:[\w-]+ )?ids? in the url",
+        # bypasses
+        r"bypass\w*", r"skip(?:s|ping)?[ _-]?(?:auth\w*|login|verification|2fa|otp|checks?)",
+        r"without (?:logging|signing) in", r"disabl\w* (?:the )?(?:auth\w*|login|2fa|csrf|ssl|tls|verification|cert\w* check)",
+        r"(?:verify|ssl_verify|verify_ssl)\s*=\s*false",
+        # bearer secrets being moved around
+        r"(?:commit|push|shar|leak|expos|upload)\w* (?:[\w-]+ ){0,3}\.env", r"\.env[\w.]* (?:in|to|on) (?:git|github|the repo|public)",
+    ),
+    "incident": (
+        r"legit\?*", r"is (?:this|it|that) (?:legit|real|genuine|a scam|safe to (?:click|open))", r"should i (?:click|open) (?:it|the link|this)",
+        r"kyc", r"(?:share|shared|give|gave) (?:the |my )?otp", r"(?:account|acct|a/c) (?:blocked|frozen|freeze|suspended)",
+    ),
+    "privacy": (
+        r"(?:e-?mails?|phones?|phone numbers?|addresses|dob|last_login)(?:,| and| \+| &)+ ?(?:e-?mails?|phones?|phone numbers?|addresses|names|dob|last_login)",
+    ),
+    "architecture": (r"arch(?:itecture)? review", r"poke holes"),
+    "tradeoff": (
+        r"\(a\)[^\n]{0,300}\(b\)", r"what would (?:you|u) do", r"which (?:one )?(?:do|should) (?:we|i) go(?: with| for)?", r"need to decide",
+    ),
+    "publish": (
+        r"posting (?:it |this )?(?:in|on|to|at|tonight|today|tomorrow)", r"(?:about|going) to post", r"before i (?:post|publish|share)",
+    ),
+    "coding": (
+        r"jq", r"terraform", r"systemd", r"apps script", r"(?:sheets|excel) formulas?", r"formula", r"one[- ]liner", r"settings\.json",
+        r"flame ?graph", r"p9[059]", r"latency", r"s3", r"lifecycle rules?", r"vs ?code", r"bigquery", r"airtable", r"n8n", r"zapier",
+    ),
+    "routine": (
+        r"make (?:this|it) sound (?:more |less )?[\w-]{3,20}", r"make (?:this|it) (?:more|less) [\w-]{3,20}",
+        r"make (?:this|it) (?:polite|clear|formal|casual|friendly|professional|nicer|shorter|concise|warmer|firmer|respectful)",
+        r"(?:reply|message|note|text|response) for (?:the |my )?(?:family|group|grp|team|landlord|society)",
+        r"(?:draft|write) (?:a |an )?(?:[\w-]+ ){0,3}(?:reply|message|e-?mail|note|text|letter|complaint)",
+        r"agenda", r"meeting minutes", r"timings? next to",
+        r"put (?:this|these|them|it|my [\w ]{0,20}) (?:in|into) (?:a |an )?(?:csv|table|sheet|spreadsheet|list|json|bullets)",
+        r"(?:past|present|future) tense", r"(?:passive|active) voice",
+        r"(?:convert|change|turn) (?:it |this |these |them )?(?:to|into) (?:jsonl|ndjson|json|csv|yaml|a table|markdown|bullets)",
+    ),
+    "arithmetic": (
+        r"just the number", r"prorat\w+", r"\d+(?:\.\d+)?% of", r"percent(?:age)? of",
+        r"\d{1,2}(?::\d\d)? ?(?:am|pm)? ?(?:pst|pdt|est|edt|cst|gmt|utc|ist|cet|bst|sgt|jst|aest) (?:in|to) (?:pst|pdt|est|edt|cst|gmt|utc|ist|cet|bst|sgt|jst|aest)",
+        r"\d+(?:\.\d+)? ?°? ?(?:f|c|km|mi|miles|kg|lbs?|pounds|cm|inch(?:es)?|ft|feet|litres?|liters?|ml|oz) (?:in|to|into) "
+        r"(?:f|c|km|mi|miles|kg|lbs?|pounds|cm|inch(?:es)?|ft|feet|litres?|liters?|ml|oz)",
+    ),
+    "extraction": (r"whats the", r"fill (?:it|this|the form|in)(?: in)? (?:from|using|with)", r"only (?:those|these) (?:two|three|\d+)"),
+}
+for _name, _extra in REVISION_7_PATTERNS.items():
+    PATTERNS[_name] = PATTERNS.get(_name, ()) + _extra
+    if _name == "arithmetic":
+        PATTERNS["routine"] = PATTERNS["routine"] + _extra
+# A bare ".env" in deployment config is not secret handling; moving it somewhere is (above).
+PATTERNS["security"] = tuple(p for p in PATTERNS["security"] if p != r"\.env")
+# "X vs Y" asks for a trade-off only with a decision cue (see _DECISION_CUE); "judge vs human
+# disagreement" on an agenda does not.
+_VERSUS = r"[\w.+#-]{1,40} vs\.? [\w.+#-]{1,40}"
+PATTERNS["tradeoff"] = tuple(p for p in PATTERNS["tradeoff"] if p != _VERSUS)
+PATTERNS["versus"] = (_VERSUS,)
+
+RULES_VERSION = "rules-2026-09-25.7"
 _ARTIFACT_REQUEST = re.compile(
-    r"^(?:(?:a|an|quick|simple|small|just|pls|please|need)\s+){0,3}(?:bash|python|shell|node|react|sql|typescript|ts|js|go)?\s*"
+    r"^(?:(?:a|an|quick|simple|small|tiny|little|short|one-off|just|pls|please|need)\s+){0,3}(?:bash|python|shell|node|react|sql|typescript|ts|js|go)?\s*"
     r"(?:script|component|function|query|endpoint|regex|makefile|cli|hook|class|unit tests?|tests?|workflow|dockerfile)s?\b",
     re.IGNORECASE,
 )
@@ -486,7 +549,8 @@ _CODING_ACTION = re.compile(
 _CODING_MEDIUM = re.compile(
     r"^[ \t]*(?:sql|python|py|pandas|regex|bash|shell|js|javascript|typescript|ts|jq|awk|sed)[ \t]*[:\-–]"
     r"|\b(?:in|using|with|via) (?:sql|python|pandas|polars|bs4|beautifulsoup|regex|bash|javascript|typescript|node|jq|awk|sed)\b"
-    r"|\b(?:python|bash|node|js|pandas|bs4|sql)[ \t]*\+[ \t]*\w",
+    r"|\b(?:python|bash|node|js|pandas|bs4|sql)[ \t]*\+[ \t]*\w"
+    r"|\b(?:jq|awk|sed|bash|shell|powershell|regex|terraform)(?: (?:one[- ]liner|filter|command|expression|snippet))? (?:to|that|for) \w",
     re.IGNORECASE,
 )
 _BUILD_INTO = re.compile(
@@ -503,13 +567,15 @@ _CODE_CALL = re.compile(  # bounded and possessive: linear time on any input
 _SCOPE_EXCLUSION = re.compile(
     r"\b(?:no|without|doesn'?t (?:need|have|use)|not using|skip(?:ping)?|no need for) (?:any |an? )?"
     r"(?:auth(?:entication)?|login|log-in|sign[- ]?in|user accounts?|payments?|billing)\b"
-    r"|\bnot (?:for|about) security\b|\bnot security[- ](?:related|sensitive)\b|\bnothing to do with security\b",
+    r"|\bnot (?:for|about) security\b|\bnot security[- ](?:related|sensitive)\b|\bnothing to do with security\b"
+    r"|\b(?:is ?n'?t|not|no) (?:a )?security (?:stuff|thing|related|sensitive|concern|issue)\b|\bnothing gets (?:paid|charged|sent)\b",
     re.IGNORECASE,
 )
 # The pasted material is input data for new code ("groups these log lines"), not the code or spec being changed.
 _INPUT_DATA_REF = re.compile(
     r"\b(?:these|this|the following|below|attached|sample) (?:[\w-]+ ){0,2}"
-    r"(?:log lines|logs?|lines|rows|records|entries|csv|json|data|strings|values|numbers|items|emails|events|urls|links|words|names)\b",
+    r"(?:log lines|logs?|lines|rows|records|entries|csv|json|data|strings|values|numbers|items|emails|events|urls|links|words|names|"
+    r"sms|messages|transactions|statements|receipts|invoices|texts)\b",
     re.IGNORECASE,
 )
 # "should i send the invite?" is message logistics, not a judgement call.
@@ -520,7 +586,8 @@ _LOGISTICS_SHOULD = re.compile(
 _COMMENT_LINE = re.compile(r"(?m)^[ \t]*(?:#|//|--|/\*|\*).*$")
 _CODING_MEDIUM_START = re.compile(
     r"^[ \t]*(?:supabase|sqlite|postgres(?:ql)?|mysql|firebase|firestore|next(?:\.?js)?|react|node|flask|django|fastapi|tailwind|"
-    r"css|html|bs4|selenium|gh actions?|github actions?|docker|git)(?:[ \t]+(?:js|ts|query|sql|python))?[ \t]*[:\-–]"
+    r"css|html|bs4|selenium|gh actions?|github actions?|docker|git|bigquery|jq|terraform|systemd|(?:google )?apps script|"
+    r"(?:google )?sheets formula|excel formula|airtable|n8n|zapier)(?:[ \t]+(?:js|ts|q|query|sql|python|formula))?[ \t]*[:\-–]"
     r"|\b(?:bs4|python|bash|sql|sqlite|supabase|pandas|node|js|shell|postgres)(?: js)? (?:script|query|queries|function|snippet)\b",
     re.IGNORECASE,
 )
@@ -543,27 +610,33 @@ _PERSON_HC_NOUNS = {"recruiter", "recruiters", "hiring manager", "hiring manager
 # Presentation-only front-end work: a risk word there is a label, not behaviour.
 _COSMETIC = re.compile(
     r"\b(?:css|tailwind|styl(?:e|es|ing)|layout|misaligned|align\w*|overlap\w*|responsive|breakpoints?|padding|margin|"
-    r"spacing|font|colou?rs?|grid|flex(?:box)?|z-index|dark mode|looks? (?:broken|off|weird)|collaps\w*|wraps?|cent(?:er|re)(?:ed)?|"
-    r"(?:iphone|mobile|tablet) (?:width|safari|view|only))\b",
+    r"spacing|font|colou?rs?|grid|flex(?:box)?|z-index|dark mode|looks? (?:broken|off|weird)|collaps\w*|cent(?:er|re)(?:ed)?|"
+    r"(?:iphone|mobile|tablet) (?:width|safari|view|only)|typo|error (?:string|message) (?:text|wording)|copy change|wording)\b",
     re.IGNORECASE,
 )
 _BEHAVIOUR_ON_RISK = re.compile(
     r"\b(?:charg\w*|pay(?:s|ing|ment flows?)?|refund\w*|transfer\w*|authenticat\w*|authori[sz]\w*|verif\w*|stor(?:e|es|ing)|"
-    r"hash\w*|encrypt\w*|decrypt\w*|redirect\w*|tokens?|sessions?|cookies?|permissions?|validat\w*|leak\w*|expos\w*)\b",
+    r"hash\w*|encrypt\w*|decrypt\w*|redirect\w*|tokens?|sessions?|cookies?|permissions?|validat\w*|leak\w*|expos\w*|"
+    r"payouts?|bank|send_\w+|retr(?:y|ies)|idempot\w*|webhooks?|rate[- ]?limit\w*)\b",
     re.IGNORECASE,
 )
 _RESOURCE_REQUEST = re.compile(
-    r"\b(?:(?:official )?(?:doc|docs|documentation) (?:links?|pages?)|links? (?:to|for)|just (?:the )?links|official docs|"
+    r"\b(?:(?:official )?(?:doc|docs|documentation|download|release) (?:links?|pages?)|links? (?:to|for)|just (?:the )?links|official docs|"
     r"reading list|(?:\d+|a few|some|top \d+) (?:good |best |nice |cheap |quiet )?(?:cafes?|restaurants?|places|spots|hotels?|"
     r"books?|movies?|podcasts?|courses?|tutorials?|tools?|apps?|papers?|resources?)\b)",
     re.IGNORECASE,
 )
 # Constraints ("dont change anything") are not requests to change.
 _CONSTRAINT_NEGATION = re.compile(
-    r"\b(?:don'?t|dont|do not|without|no need to|never) (?:change|improve|edit|rewrite|re-?word|touch|alter|add|remove|fix)"
-    r"(?: or (?:change|improve|edit|rewrite|touch|alter|add|remove|fix))?"
+    r"\b(?:don'?t|dont|do not|without|no need to|never) (?:change|improve|edit|rewrite|re-?word|touch|alter|add|remove|fix|delete|"
+    r"interpret|judge|analy[sz]e|comment|add stuff)"
+    r"(?: or (?:change|improve|edit|rewrite|touch|alter|add|remove|fix|delete|interpret))?"
     r"(?: (?:anything(?: else)?|it|the (?:wording|text|content|tone|meaning)|much|wording|tone|meaning))?",
     re.IGNORECASE,
+)
+# A second, non-cosmetic task in the same message ("fix the typo and also add rate limiting").
+_SECOND_TASK = re.compile(
+    r"\b(?:and|also|plus|then)\b[^.\n]{0,80}\b(?:add|implement|build|wire|integrat\w*|enable|set ?up|create|write)\b", re.IGNORECASE
 )
 _READ_ONLY = re.compile(r"\bread[- ]only\b", re.IGNORECASE)
 _PARENTHETICAL = re.compile(r"\([^()\n]{0,200}\)")
@@ -578,13 +651,15 @@ _SUMMARY_OP = re.compile(
 )
 _CHOICE_QUESTION = re.compile(
     r"(?:\bshould (?:i|we|my|our|the|this) (?:[\w-]+ ){0,4}(?:use|pick|go with|choose|switch to|move to|be)\b|\bwhich (?:is|one is|would be) better\b|\bwhat(?:'s| is) better\b"
-    r"|\b[\w.+#-]{1,40} (?:or|vs\.?|versus) [\w.+#-]{1,40}\b[^.!\n]*\?)",
+    r"|\b[\w.+#-]{1,40},? (?:or|vs\.?|versus) [\w.+#-]{1,40}\b[^.!\n]*\?)",
     re.IGNORECASE,
 )
 _RISK_ACTION = re.compile(
+    # Building or operating something. Generic nouns ("app", "button", "feature") are not actions:
+    # "keep using ur upi app" in a family message is not coding.
     r"\b(?:audit|handle[sd]?|handling|stor(?:e|es|ing)|encrypt\w*|decrypt\w*|implement\w*|build|automat\w*|script|"
-    r"runs? (?:monthly|daily|weekly|nightly)|cron|api|wire|integrat\w*|code|migrat\w*|log(?:s|ging)?|load(?:s|ed|ing)?|"
-    r"add|button|feature|flow|clone|app|endpoint|trigger\w*|generat\w*|commit(?:ted)?|push(?:ed)?)\b",
+    r"runs? (?:monthly|daily|weekly|nightly)|cron|api|wire|integrat\w*|code|migrat\w*|log(?:s|ging)?|endpoint|trigger\w*|"
+    r"commit(?:ted)?|push(?:ed)?)\b",
     re.IGNORECASE,
 )
 _CODE_MARKERS = re.compile(
@@ -609,12 +684,15 @@ _OPERATION_ON_DATA = re.compile(
 MAX_CLASSIFIED_CHARS = 60_000
 
 _RISK_GROUPS = frozenset({"money_movement", "security", "privacy", "destructive", "incident"})
+# Risk words also count behind a hyphen ("auto-refunds"). Identifiers such as payment_status or
+# test_checkout_total are names, not behaviour; bypasses like skip_auth are matched explicitly.
 _COMPILED = {
     name: re.compile(
         (r"(?<!\w)(?:" if name in _RISK_GROUPS else r"(?<![\w-])(?:") + "|".join(patterns) + r")(?![\w-])", re.IGNORECASE
     )
     for name, patterns in PATTERNS.items()
 }
+_DECISION_CUE = re.compile(r"\?|\b(?:decide|decision|pick|choose|which|should|better|recommend|compare|go with)\b", re.IGNORECASE)
 
 _QUOTED_RUN = re.compile(r"(?:[ \t]*\[quoted\][ \t]*){2,}")
 _QUOTE_PATTERNS = (
@@ -655,28 +733,37 @@ class ClassifierInput:
 def split_pasted(text: str) -> tuple[str, str]:
     """Split "instruction: <newline> pasted material" into (instruction, pasted).
 
-    Material pasted after a colon-newline, or a code/log block after a blank
-    line, is data: it can show *that* the task involves code, but its words
-    never set risk or task kind.
+    Candidate split points are tried earliest first: a colon before a newline,
+    an inline colon, and a blank line. Material after the chosen point is data:
+    it can show *that* the task involves code, but its words never set risk or
+    task kind. "Requirements:\n- store passwords..." keeps its tail as
+    instructions, because its head names no material and no operation on it.
     """
-    match = re.search(r":[ \t]*\n", text)
-    if not match:
-        inline = re.search(r":[ \t]+(?=\S)", text)
-        if inline and inline.start() >= 3 and len(text) - inline.end() >= 10:
-            head = text[: inline.start()]
-            if _DATA_REFERENCE.search(head) and _OPERATION_ON_DATA.search(head):
-                return head, text[inline.end():]
-    if match and match.start() >= 3:
-        head, tail = text[: match.start()], text[match.end():]
-        looks_like_data = bool(_CODE_MARKERS.search(tail)) or tail.lstrip()[:1] in {'"', "'", ">", "|", "{", "["}
-        # Split only when the head is an operation on referenced material;
-        # "Requirements:\n- store passwords..." keeps its tail as instructions.
-        if looks_like_data or (_DATA_REFERENCE.search(head) and _OPERATION_ON_DATA.search(head)):
+    candidates = []
+    colon_newline = re.search(r":[ \t]*\n", text)
+    if colon_newline:
+        candidates.append((colon_newline.start(), colon_newline.end(), "colon_newline"))
+    inline = re.search(r":[ \t]+(?=\S)", text)
+    if inline:
+        candidates.append((inline.start(), inline.end(), "inline"))
+    blank = text.find("\n\n")
+    if blank >= 0:
+        candidates.append((blank, blank + 2, "blank"))
+    for start, end, kind in sorted(candidates):
+        head, tail = text[:start], text[end:]
+        if len(head.strip()) < 3:
+            continue
+        names_material = bool(_DATA_REFERENCE.search(head) and _OPERATION_ON_DATA.search(head))
+        shaped_like_data = tail.lstrip()[:1] in {'"', "'", ">", "|", "{", "["}
+        if kind == "colon_newline" and (_CODE_MARKERS.search(tail) or shaped_like_data or names_material):
             return head, tail
-        return text, ""
-    head, sep, tail = text.partition("\n\n")
-    if sep and (_CODE_MARKERS.search(tail) or (_DATA_REFERENCE.search(head) and _OPERATION_ON_DATA.search(head))):
-        return head, tail
+        if kind == "inline" and len(tail) >= 10 and names_material:
+            return head, tail
+        if kind == "blank" and (
+            _CODE_MARKERS.search(tail) or names_material
+            or (_OPERATION_ON_DATA.search(head) and (shaped_like_data or tail.lstrip()[:1] in {"-", "*"} or tail.count("\n") >= 2))
+        ):
+            return head, tail
     return text, ""
 
 
@@ -734,8 +821,7 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     hits["hc_verb"] = _hits("hc_verb", lowered_ops)
     # "X vs Y" inside a parenthetical describes; it does not ask for a trade-off.
     hits["tradeoff"] = _hits("tradeoff", _PARENTHETICAL.sub(" ", lowered))
-    if _READ_ONLY.search(instruction):
-        hits["money_movement"] = []  # read-only code cannot move money
+    hits["versus"] = _hits("versus", _PARENTHETICAL.sub(" ", lowered))
     code_calls = _CODE_CALL.findall(instruction)
     if code_calls:
         hits["coding"] = hits["coding"] + code_calls
@@ -775,10 +861,17 @@ def classify(item: ClassifierInput) -> TaskAssessment:
     # A fenced code block is code material wherever it appears.
     code_context = code_context or any(q.startswith(("```", "~~~")) for q in quoted)
     # Pasted code is data when the task is only to extract from it.
-    is_coding = bool(hits["coding"]) and (coding_intent or not (hits["routine"] or is_extraction)) or (
+    # Three or more distinct technical terms, without a leading summarise/format, is a technical request.
+    technical_density = (
+        len({h.lower() for h in hits["coding"]}) >= 3 and not _LEADING_SUMMARY.search(instruction) and not resource_request
+    )
+    is_coding = bool(hits["coding"]) and (coding_intent or technical_density or not (hits["routine"] or is_extraction)) or (
         code_context and (coding_intent or not is_extraction)
     )
-    cosmetic_only = is_coding and bool(_COSMETIC.search(instruction)) and not _BEHAVIOUR_ON_RISK.search(instruction)
+    cosmetic_only = (
+        is_coding and bool(_COSMETIC.search(instruction)) and not _BEHAVIOUR_ON_RISK.search(instruction)
+        and not _SECOND_TASK.search(instruction)
+    )
     if cosmetic_only:
         # Styling an element named "payments" or "login" does not touch payments or login.
         for name in ("money_movement", "security", "privacy"):
@@ -796,6 +889,8 @@ def classify(item: ClassifierInput) -> TaskAssessment:
                 reasons.append("RISK_IN_MATERIAL_BEING_CHANGED")
     if code_context and not hits["coding"]:
         reasons.append("PASTED_CODE_CONTEXT")
+    if _READ_ONLY.search(instruction):
+        hits["money_movement"] = []  # read-only code cannot move money, whatever the material says
 
     if hits["vague"]:
         uncertainty.append("the request refers to something not stated in the message")
@@ -817,6 +912,8 @@ def classify(item: ClassifierInput) -> TaskAssessment:
         add(TaskKind.UI_DECISION, "UI_DECISION", hits["ui_decision"])
     if hits["tradeoff"]:
         add(TaskKind.TRADEOFF, "TRADEOFF", hits["tradeoff"])
+    elif hits["versus"] and _DECISION_CUE.search(_PARENTHETICAL.sub(" ", instruction)):
+        add(TaskKind.TRADEOFF, "VERSUS_DECISION", hits["versus"])
     elif _CHOICE_QUESTION.search(_PARENTHETICAL.sub(" ", instruction)) and not (
         hits["arithmetic"] or _COMPILED["routine"].search(lowered[:40]) or _COMPILED["extraction"].search(lowered[:40])
     ):

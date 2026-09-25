@@ -66,8 +66,8 @@ CASES = {
 
 
 class Revision6(unittest.TestCase):
-    def test_version(self):
-        self.assertEqual(RULES_VERSION, "rules-2026-09-25.6")
+    def test_version_is_at_least_revision_6(self):
+        self.assertGreaterEqual(int(RULES_VERSION.rsplit(".", 1)[1]), 6)
 
     def test_categories_route_to_the_policy_role(self):
         for expected, prompts in CASES.items():
