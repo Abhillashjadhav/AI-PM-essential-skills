@@ -100,12 +100,12 @@ class AutoResumer:
 
     def _loop(self) -> None:
         while not self._stop.is_set():
+            self._nudge.clear()  # before the tick, so a nudge that arrives during it is kept
             try:
                 delay = self.tick().next_delay
             except Exception as exc:  # the resumer must never die silently
                 self.coordinator.store.event("scheduler.error", {"error": repr(exc)})
                 delay = self.max_interval
-            self._nudge.clear()
             self._nudge.wait(delay)
 
     def detect_sleep(self) -> bool:

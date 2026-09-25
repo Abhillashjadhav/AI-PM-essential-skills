@@ -166,7 +166,7 @@ class EligibilityGate:
         try:
             spend = self.adapter.check_spend_boundary(account, usage)
             spend.validate()
-        except (AdapterError, ValueError) as exc:
+        except Exception as exc:  # any failure to decide is a block, never a pass
             checks["spend"] = "error"
             return blocked(JobState.BLOCKED_SPEND, f"spend boundary could not be evaluated: {exc}", account=account, usage=usage)
         self._record_spend(spend)

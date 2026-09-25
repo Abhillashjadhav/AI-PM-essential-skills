@@ -11,6 +11,7 @@ import argparse
 import json
 import shlex
 import sys
+import threading
 import time
 from pathlib import Path
 from typing import Any
@@ -60,6 +61,11 @@ class TerminalUI(RouterUI):
 
     def ask_approval(self, request: ApprovalRequest) -> str:
         self._end()
+        if threading.current_thread() is not threading.main_thread():
+            # A background (auto-resumed) turn must never read the chat prompt's stdin.
+            print(f"Router: declined a {request.kind.replace('_', ' ')} request from a background turn "
+                  f"({request.command or ', '.join(request.paths) or request.summary}). Re-run it in the foreground to approve.")
+            return "decline"
         print(f"Router: The model asks to run a {request.kind.replace('_', ' ')}:")
         if request.command:
             print(f"  command: {request.command}")
@@ -92,7 +98,11 @@ def build(args: argparse.Namespace, *, ui: RouterUI | None = None) -> tuple[Coor
         coordinator = Coordinator(store, adapter, live=True, ui=ui or TerminalUI())
     from .plugin_classifier import combined_classifier, load_plugin
 
-    plugin = load_plugin()
+    try:
+        plugin = load_plugin()
+    except Exception as exc:  # a bad setting must not break the router
+        plugin = None
+        print(f"Router: ignoring MODEL_ROUTER_CLASSIFIER ({type(exc).__name__}: {exc}); using the built-in rules.", file=sys.stderr)
     if plugin is not None:  # optional; the deterministic rules remain the default
         coordinator.classifier = combined_classifier(plugin)
     return coordinator, store

@@ -1,210 +1,264 @@
 {
- "generated_for": "routing suitability evidence (synthetic prompts written by independent agents blind to the classifier)",
- "history": [
-  {
-   "rules": "rules-2026-09-25.1",
-   "dataset": "heldout-2026-09-25.1",
-   "exact_rate": 0.617,
-   "under": 9,
-   "over": 37,
-   "note": "first blind measurement"
-  },
-  {
-   "rules": "rules-2026-09-25.1",
-   "dataset": "testset-2026-09-25.1",
-   "exact_rate": 0.493,
-   "under": 10,
-   "over": 66,
-   "note": "baseline before any tuning"
-  },
-  {
-   "rules": "rules-2026-09-25.2",
-   "dataset": "testset-2026-09-25.1",
-   "exact_rate": 0.773,
-   "under": 16,
-   "over": 18,
-   "note": "held-out result for revision 2; set then used for tuning"
-  }
- ],
- "current_rules": "rules-2026-09-25.3",
- "current": [
-  {
-   "dataset": "heldout-2026-09-25.1",
-   "role_in_repo": "development set 1: written blind to the classifier; used to tune rules revisions 2-3",
-   "cases": 120,
-   "exact": 119,
-   "exact_rate": 0.9917,
-   "under_routed": 0,
-   "over_routed": 1,
-   "misses": [
+  "generated_for": "routing suitability evidence (synthetic prompts written by independent agents blind to the classifier)",
+  "history": [
     {
-     "id": "H074",
-     "expected": "middle",
-     "observed": "highest",
-     "direction": "over"
+      "rules": "rules-2026-09-25.1",
+      "dataset": "heldout-2026-09-25.1",
+      "exact_rate": 0.617,
+      "under": 9,
+      "over": 37,
+      "note": "first blind measurement"
+    },
+    {
+      "rules": "rules-2026-09-25.1",
+      "dataset": "testset-2026-09-25.1",
+      "exact_rate": 0.493,
+      "under": 10,
+      "over": 66,
+      "note": "baseline before any tuning"
+    },
+    {
+      "rules": "rules-2026-09-25.2",
+      "dataset": "testset-2026-09-25.1",
+      "exact_rate": 0.773,
+      "under": 16,
+      "over": 18,
+      "note": "held-out result for revision 2; set then used for tuning"
+    },
+    {
+      "rules": "rules-2026-09-25.3",
+      "dataset": "heldout-2026-09-25.1",
+      "exact_rate": 0.9917,
+      "under": 0,
+      "over": 1,
+      "note": "development-set result for revision 3"
+    },
+    {
+      "rules": "rules-2026-09-25.3",
+      "dataset": "testset-2026-09-25.1",
+      "exact_rate": 0.9867,
+      "under": 0,
+      "over": 2,
+      "note": "development-set result for revision 3"
+    },
+    {
+      "rules": "rules-2026-09-25.3",
+      "dataset": "final-testset-2026-09-25.1",
+      "exact_rate": 0.86,
+      "under": 14,
+      "over": 7,
+      "note": "frozen-rules held-out result for revision 3"
     }
-   ]
-  },
-  {
-   "dataset": "testset-2026-09-25.1",
-   "role_in_repo": "development set 2: written blind; scored once as a test set (rules rev 2: 77.3% exact, 10.7% under-routed), then used to tune revision 3",
-   "cases": 150,
-   "exact": 148,
-   "exact_rate": 0.9867,
-   "under_routed": 0,
-   "over_routed": 2,
-   "misses": [
+  ],
+  "current_rules": "rules-2026-09-25.4",
+  "current": [
     {
-     "id": "T001",
-     "expected": "lowest",
-     "observed": "highest",
-     "direction": "over"
+      "dataset": "heldout-2026-09-25.1",
+      "role_in_repo": "development set 1: written blind; used to tune rules revisions 2-3",
+      "cases": 120,
+      "exact": 118,
+      "exact_rate": 0.9833,
+      "under_routed": 0,
+      "over_routed": 2,
+      "misses": [
+        {
+          "id": "H061",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "H074",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        }
+      ]
     },
     {
-     "id": "T091",
-     "expected": "middle",
-     "observed": "highest",
-     "direction": "over"
+      "dataset": "testset-2026-09-25.1",
+      "role_in_repo": "development set 2: written blind; scored once as a test set (rev 2), then used to tune revision 3",
+      "cases": 150,
+      "exact": 144,
+      "exact_rate": 0.96,
+      "under_routed": 0,
+      "over_routed": 6,
+      "misses": [
+        {
+          "id": "T001",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "T015",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "T091",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "T117",
+          "expected": "lowest",
+          "observed": "middle",
+          "direction": "over"
+        },
+        {
+          "id": "T142",
+          "expected": "lowest",
+          "observed": "middle",
+          "direction": "over"
+        },
+        {
+          "id": "T143",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        }
+      ]
+    },
+    {
+      "dataset": "final-testset-2026-09-25.1",
+      "role_in_repo": "final test set: scored blind once against revision 3 (86.0% exact, 9.3% under). Revision 4 changes came from a code review (robustness and hidden-risk fixes), not from these misses, but this set has been seen, so the revision 4 number below is post-review, not held-out",
+      "cases": 150,
+      "exact": 129,
+      "exact_rate": 0.86,
+      "under_routed": 13,
+      "over_routed": 8,
+      "misses": [
+        {
+          "id": "F003",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F011",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F012",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F020",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F031",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F035",
+          "expected": "highest",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F062",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F074",
+          "expected": "highest",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F077",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F079",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F088",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F101",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F105",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F114",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F118",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F124",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F127",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F128",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F129",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F136",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F144",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        }
+      ]
     }
-   ]
-  },
-  {
-   "dataset": "final-testset-2026-09-25.1",
-   "role_in_repo": "final test set: written blind; scored once against frozen rules revision 3 (commit above); never used for tuning",
-   "cases": 150,
-   "exact": 129,
-   "exact_rate": 0.86,
-   "under_routed": 14,
-   "over_routed": 7,
-   "misses": [
-    {
-     "id": "F003",
-     "expected": "highest",
-     "observed": "middle",
-     "direction": "under"
-    },
-    {
-     "id": "F011",
-     "expected": "middle",
-     "observed": "highest",
-     "direction": "over"
-    },
-    {
-     "id": "F012",
-     "expected": "highest",
-     "observed": "middle",
-     "direction": "under"
-    },
-    {
-     "id": "F020",
-     "expected": "middle",
-     "observed": "lowest",
-     "direction": "under"
-    },
-    {
-     "id": "F031",
-     "expected": "highest",
-     "observed": "middle",
-     "direction": "under"
-    },
-    {
-     "id": "F035",
-     "expected": "highest",
-     "observed": "lowest",
-     "direction": "under"
-    },
-    {
-     "id": "F062",
-     "expected": "lowest",
-     "observed": "highest",
-     "direction": "over"
-    },
-    {
-     "id": "F074",
-     "expected": "highest",
-     "observed": "lowest",
-     "direction": "under"
-    },
-    {
-     "id": "F077",
-     "expected": "middle",
-     "observed": "lowest",
-     "direction": "under"
-    },
-    {
-     "id": "F079",
-     "expected": "highest",
-     "observed": "middle",
-     "direction": "under"
-    },
-    {
-     "id": "F088",
-     "expected": "lowest",
-     "observed": "highest",
-     "direction": "over"
-    },
-    {
-     "id": "F101",
-     "expected": "lowest",
-     "observed": "highest",
-     "direction": "over"
-    },
-    {
-     "id": "F105",
-     "expected": "lowest",
-     "observed": "highest",
-     "direction": "over"
-    },
-    {
-     "id": "F114",
-     "expected": "middle",
-     "observed": "lowest",
-     "direction": "under"
-    },
-    {
-     "id": "F118",
-     "expected": "middle",
-     "observed": "highest",
-     "direction": "over"
-    },
-    {
-     "id": "F124",
-     "expected": "highest",
-     "observed": "middle",
-     "direction": "under"
-    },
-    {
-     "id": "F127",
-     "expected": "middle",
-     "observed": "lowest",
-     "direction": "under"
-    },
-    {
-     "id": "F128",
-     "expected": "middle",
-     "observed": "lowest",
-     "direction": "under"
-    },
-    {
-     "id": "F129",
-     "expected": "highest",
-     "observed": "middle",
-     "direction": "under"
-    },
-    {
-     "id": "F130",
-     "expected": "highest",
-     "observed": "middle",
-     "direction": "under"
-    },
-    {
-     "id": "F136",
-     "expected": "lowest",
-     "observed": "highest",
-     "direction": "over"
-    }
-   ]
-  }
- ],
- "claim": "final-testset is the only held-out number for revision 3: 86.0% exact, 9.3% under-routed. The owner's 95% suitability goal is NOT met on synthetic prompts and has not been measured on real ones."
+  ],
+  "claim": "The only genuinely held-out number is revision 3 on the final test set: 86.0% exact, 9.3% under-routed. Revision 4 (review fixes: bounded regexes, risk inside pasted or quoted material, no negation suppression) scores 86.0% exact, 8.7% under-routed on that same set, but the set was already seen. The owner's 95% suitability goal is NOT met on synthetic prompts and has not been measured on real ones."
 }
