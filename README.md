@@ -209,6 +209,7 @@ These remain available but are not the seven marketplace products above:
 - [`context-auditor/`](context-auditor/) — identify poisoning, distraction, and conflicting supplied context.
 - [`concise-rewriter/`](concise-rewriter/) — reduce supplied text and report token change.
 - [`context-port/`](context-port/) — separate local-first context-package validation and migration toolkit.
+- [`model-router/`](model-router/) — local terminal model router (per-chat model pinning, architecture → implementation handoff, zero-added-spend gate). Offline build and simulator only; live sends stay blocked until the spend boundary is verified.
 
 The retired [`eval-rubric-generator/`](eval-rubric-generator/) path contains
 migration guidance only. It is not a triggerable skill; rubric creation now
@@ -221,6 +222,7 @@ Keeping these boundaries explicit prevents older utilities from competing with t
 ```bash
 python3 scripts/check_repository_integrity.py
 python3 -m unittest discover -s context-port/tests -q
+python3 -m unittest discover -s model-router/tests -q
 ```
 
 The public-smoke workflow verifies the marketplace manifest, plugin layout, repository links, additional standalone skills, and ContextPort’s deterministic quickstart from a clean checkout.

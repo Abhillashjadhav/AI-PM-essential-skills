@@ -7,28 +7,30 @@
   },
   "warm_selection_ms": {
     "n": 200,
-    "p50": 1.5,
-    "p90": 1.91,
-    "p99": 3.35,
-    "max": 4.48,
-    "mean": 1.56
+    "p50": 1.7,
+    "p90": 2.33,
+    "p99": 9.94,
+    "max": 28.21,
+    "mean": 2.0
   },
   "cold_selection_ms_after_process_ready": {
     "n": 20,
-    "p50": 2.83,
-    "p90": 3.11,
-    "p99": 3.61,
-    "max": 3.61,
-    "mean": 2.8
+    "p50": 2.95,
+    "p90": 3.77,
+    "p99": 4.06,
+    "max": 4.06,
+    "mean": 3.02
   },
   "cold_process_wall_ms_including_interpreter": {
     "n": 20,
-    "p50": 114.65,
-    "p90": 129.35,
-    "p99": 131.54,
-    "max": 131.54,
-    "mean": 116.12
+    "p50": 133.29,
+    "p90": 155.86,
+    "p99": 166.3,
+    "max": 166.3,
+    "mean": 136.43
   },
   "over_1s": 0,
-  "over_4s": 0
+  "over_4s": 0,
+  "rules": "rules-2026-09-25.6",
+  "worst_case_adversarial_60k_chars_s": 0.523
 }
