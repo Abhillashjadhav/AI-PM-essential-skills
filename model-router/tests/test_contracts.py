@@ -85,6 +85,24 @@ class RecordValidation(unittest.TestCase):
         with self.assertRaises(ContractError):
             SpendDecision("UNKNOWN", [], [], "a", utc_now(), False).validate()
 
+    def test_live_allowed_decision_must_name_mechanism(self):
+        evidence = [{"source": "live"}]
+        with self.assertRaises(ContractError):
+            SpendDecision("ALLOWED_INCLUDED_ONLY", [], evidence, "a", utc_now(), False).validate()
+        SpendDecision("ALLOWED_INCLUDED_ONLY", [], evidence, "a", utc_now(), False, mechanism="m").validate()
+
+    def test_usage_snapshot_round_trips_spend_controls(self):
+        from model_router.contracts import UsageSnapshot
+
+        snapshot = UsageSnapshot("u", "a", "business", "s", [], CreditsState(False, False, "0", True), True, False, None,
+                                 utc_now(), "t", False,
+                                 spend_controls=[{"limit_id": "codex", "reached": False, "limit": "0", "used": "0",
+                                                  "remaining_percent": 0, "resets_at": None}],
+                                 credit_limit_ids=["codex"])
+        again = UsageSnapshot.from_dict(snapshot.to_dict())
+        self.assertEqual(again.spend_controls[0].limit, "0")
+        self.assertEqual(again.credit_limit_ids, ["codex"])
+
     def test_screenshot_is_never_enforcement(self):
         with self.assertRaises(ContractError):
             SpendEvidence("e", "auto_reload_off", "acct", "screenshot", "enforced", utc_now(), None, "screenshot").validate()

@@ -626,6 +626,41 @@ class CreditsState(Record):
         return f"credits: hasCredits={self.has_credits} unlimited={self.unlimited} balance={self.balance if self.balance is not None else 'not reported'}"
 
 
+# Workspace plans whose owners/admins can set per-member credit spend limits
+# (ChatGPT Business / Enterprise / Edu spend controls). Personal plans have none.
+WORKSPACE_PLAN_TYPES = frozenset(
+    {
+        "team",
+        "business",
+        "self_serve_business_prolite",
+        "self_serve_business_usage_based",
+        "enterprise",
+        "ent26",
+        "enterprise_cbp_automation",
+        "enterprise_cbp_usage_based",
+        "edu",
+        "edu_plus",
+        "edu_pro",
+    }
+)
+
+
+@dataclasses.dataclass
+class SpendControlObservation(Record):
+    """A provider-reported spend control for one usage snapshot (read live)."""
+
+    limit_id: str
+    reached: bool | None
+    limit: str | None
+    used: str | None
+    remaining_percent: int | None
+    resets_at: str | None
+    source: str | None = None
+
+    def validate(self) -> None:
+        _require_str(self.limit_id, "spend_control.limit_id")
+
+
 @dataclasses.dataclass
 class UsageSnapshot(Record):
     id: str
@@ -640,11 +675,17 @@ class UsageSnapshot(Record):
     observed_at: str
     source: str
     synthetic: bool
+    spend_controls: list[SpendControlObservation] = dataclasses.field(default_factory=list)
+    # limit ids whose snapshot carried a credits object (credits can apply there)
+    credit_limit_ids: list[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.buckets = [b if isinstance(b, UsageBucket) else UsageBucket.from_dict(b) for b in self.buckets]
         if not isinstance(self.credits, CreditsState):
             self.credits = CreditsState.from_dict(self.credits)
+        self.spend_controls = [
+            s if isinstance(s, SpendControlObservation) else SpendControlObservation.from_dict(s) for s in self.spend_controls
+        ]
 
     def validate(self) -> None:
         _require_str(self.id, "usage.id")
@@ -657,6 +698,7 @@ class UsageSnapshot(Record):
         data = super().to_dict()
         data["buckets"] = [b.to_dict() for b in self.buckets]
         data["credits"] = self.credits.to_dict()
+        data["spend_controls"] = [s.to_dict() for s in self.spend_controls]
         return data
 
     def included_usage_available(self) -> bool | None:
@@ -706,6 +748,8 @@ class SpendDecision(Record):
     decided_at: str
     synthetic: bool
     missing: list[str] = dataclasses.field(default_factory=list)
+    # The code-defined enforcement mechanism that justified ALLOWED (never free text).
+    mechanism: str | None = None
 
     def __post_init__(self) -> None:
         self.status = _coerce_enum(SpendStatus, self.status, "status")  # type: ignore[assignment]
@@ -714,6 +758,8 @@ class SpendDecision(Record):
         parse_utc(self.decided_at)
         if self.status is SpendStatus.ALLOWED_INCLUDED_ONLY and not self.evidence:
             raise ContractError("ALLOWED_INCLUDED_ONLY requires evidence")
+        if self.status is SpendStatus.ALLOWED_INCLUDED_ONLY and not self.synthetic and not self.mechanism:
+            raise ContractError("a live ALLOWED_INCLUDED_ONLY decision must name the verified enforcement mechanism")
         if self.status is not SpendStatus.ALLOWED_INCLUDED_ONLY and not (self.reasons or self.missing):
             raise ContractError("a non-allowed spend decision must explain why")
 
