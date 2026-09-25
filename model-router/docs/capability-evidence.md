@@ -11,7 +11,7 @@ Evidence levels:
 
 | Area | Implemented | Tested with simulation | Tested against the real Codex binary | Tested with real models | Blocked on |
 |---|---|---|---|---|---|
-| Routing, pins, overrides, handoff, queue, recovery | yes | yes (188 tests) | — | no | the spend boundary |
+| Routing, pins, overrides, handoff, queue, recovery | yes | yes (205 tests) | — | no | the spend boundary |
 | Automatic resume while running (`chat`, `serve`) | yes | yes | — | no | the spend boundary |
 | Codex App Server adapter (stdio, pin, profile) | yes | yes (fake subprocess) | **yes**: initialize, account/read, config/read, model/list, schema compatibility, pin | no | sign-in (owner) |
 | Spend boundary (`spend.py`) | yes | yes, including fabricated-evidence tests | partly: before sign-in it correctly stays BLOCKED | no | **provider capability** (see below) |
@@ -78,15 +78,17 @@ It would unblock if either of these happens: OpenAI ships the requested toggle (
 | rev 1 | dev set 2 (150) | 49.3% | 10 | 66 | baseline |
 | rev 2 | dev set 2 (150) | 77.3% | 16 | 18 | held-out, then used for tuning |
 | rev 3 | dev sets 1 + 2 | 99.2% / 98.7% | 0 / 0 | 1 / 2 | fitted: says little |
-| **rev 3** | **final test (150)** | **86.0%** | **14 (9.3%)** | 7 (4.7%) | **scored once, never tuned on** |
+| **rev 3** | **final test (150)** | **86.0%** | **14 (9.3%)** | 7 (4.7%) | **scored once, never tuned on: the only held-out number** |
+| rev 4 | dev sets 1 + 2 | 98.3% / 96.0% | 0 / 0 | 2 / 6 | review fixes, not tuning: more conservative |
+| rev 4 | final test (150) | 86.0% | 13 (8.7%) | 8 (5.3%) | post-review rescore of an already-seen set |
 
-**The 95% goal is not met on synthetic prompts, and it has not been measured on your real prompts.** The final-set misses are listed in the evidence file. Under-routed examples include a JWT middleware fix and a "safe to upgrade on Friday with no staging?" question. The weekly report measures the real override rate once live use starts. An optional external classifier can be plugged in, but it cannot lower hard floors, and it doesn't change subscription access.
+**The 95% goal is not met on synthetic prompts, and it has not been measured on your real prompts.** The final-set misses are listed in the evidence file. Under-routed examples include a JWT middleware fix and a "safe to upgrade on Friday with no staging?" question. The weekly report measures the real override rate once live use starts. Revision 4 came from a code review, not from the final-set misses: it makes every pattern linear-time, routes risk hidden inside pasted or quoted material that is being changed to the highest role, stops negation from hiding risk ("make sure it does not leak api keys" is security work), and classifies very long inputs on their start, one step up. An optional external classifier can be plugged in, but it cannot lower hard floors, and it doesn't change subscription access.
 
 ## 4. Other gates
 
 | Gate | Status | Evidence |
 |---|---|---|
-| Offline tests | VERIFIED (synthetic) | `python3 -m unittest discover -s model-router/tests -q` → 188 tests OK |
+| Offline tests | VERIFIED (synthetic) | `python3 -m unittest discover -s model-router/tests -q` → 205 tests OK |
 | Offline routing-policy evaluation | VERIFIED (synthetic) | 33/33 fixture cases; judge self-check usable ([evidence/offline-eval-2026-09-25.json](evidence/offline-eval-2026-09-25.json)) |
 | Routing latency | VERIFIED (build container, simulator) | warm p50 1.5 ms, cold p50 3.0 ms ([evidence/latency-build-container-2026-09-25.json](evidence/latency-build-container-2026-09-25.json)); not measured on your Mac |
 | Automatic resume | VERIFIED (synthetic) | `tests/test_scheduler.py`: bounded backoff (30 s → 15 min), reset times only move the next check earlier, cancellation, the foreground turn wins, sleep is detected and reconciled, two routers produce one send |
