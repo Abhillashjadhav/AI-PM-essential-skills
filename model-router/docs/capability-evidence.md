@@ -18,7 +18,7 @@ Evidence levels:
 | Spend boundary (`spend.py`) | yes | yes, including fabricated-evidence and personal-plan tests | partly: before sign-in it correctly stays BLOCKED | no | **provider capability**: no verified included-only mechanism for personal plans (see below) |
 | Guided setup (`setup`) | yes | yes | yes, up to the sign-in step | — | sign-in (owner) |
 | Bounded live pilot (`pilot`) | yes | yes (all 4 scenarios) | — | **no** | the spend boundary |
-| Routing quality | rules rev 7 | yes: 820 labelled synthetic prompts; held-out 81.5% (rev 5) and 78.5% (rev 6) | — | no | real use for the 95% goal |
+| Routing quality | rules rev 7 | yes: 1,020 labelled synthetic prompts; held-out 81.5% (rev 5), 78.5% (rev 6), 80.0% (rev 7) | — | no | real use for the 95% goal |
 
 ## 1. Zero added spend: what can and cannot be verified
 
@@ -112,11 +112,11 @@ This does not mean personal plans are inherently unusable. It means there is **n
 | rev 3 | final set (150) | 86.0% | 9.3% | 4.7% | — |
 | rev 5 (`f50fa23`) | fresh set 1 (200) | **81.5%** (75.5–86.3%) | **6.0%** | 12.5% | rev 4: 78.5%, 9.0% under |
 | rev 6 (`12e0d73`) | fresh set 2 (200) | **78.5%** (72.3–83.6%) | **9.0%** | 12.5% | rev 4: 71.5%; rev 5: 76.0% |
-| rev 7 (`e7a7e1d`) | fresh set 3 (200) | not yet scored | | | |
+| rev 7 (`e7a7e1d`) | fresh set 3 (200) | **80.0%** (73.9–85.0%) | **10.5%** | 9.5% | rev 5: 71.5%; rev 6: 74.0% |
 
-Model distribution on fresh set 2 (expected → observed with rev 6): highest 78 → 93, middle 59 → 50, lowest 63 → 57. Over-routing leans toward the highest tier, but the router does not send everything there. Label agreement between the authors and the independent re-labeller was 200/200 and 199/200. That shows the labels follow the written policy consistently. It does not show that you would label them the same way, because all the labellers are AI agents.
+Model distribution on fresh set 2 (expected → observed with rev 6): highest 78 → 93, middle 59 → 50, lowest 63 → 57. Over-routing leans toward the highest tier, but the router does not send everything there. Label agreement between the authors and the independent re-labeller was 200/200 on set 1 and 199/200 on set 2; set 3's re-labelling was still running at the pause. That shows the labels follow the written policy consistently. It does not show that you would label them the same way, because all the labellers are AI agents.
 
-**What this means.** Each revision improves the same unseen prompts: fresh set 2 went 71.5% → 76.0% → 78.5% across revisions 4 to 6. But each new, differently written set exposes new phrasings, so held-out accuracy sits around 78–82%, with 6–9% under-routed. The common under-routed categories were:
+**What this means.** Each revision improves the same unseen prompts: fresh set 2 went 71.5% → 76.0% → 78.5% across revisions 4 to 6, and fresh set 3 went 71.5% → 74.0% → 80.0% across revisions 5 to 7. But each new, differently written set exposes new phrasings, so held-out accuracy sits around 78–82%, with 6–10.5% under-routed. The common under-routed categories were:
 - security bugs described without security words ("change the id in the url and you see someone else's data");
 - decisions written as lettered options;
 - personal-data exports;
