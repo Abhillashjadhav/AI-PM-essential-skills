@@ -1,0 +1,90 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "handoff.1",
+  "title": "Handoff package",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "architecture_version",
+    "source_thread_id",
+    "project",
+    "repository",
+    "architecture_prose",
+    "architecture_record",
+    "decisions",
+    "constraints",
+    "approved_scope",
+    "acceptance_tests",
+    "attachments",
+    "nonblocking_items",
+    "owner_acceptance",
+    "clarity",
+    "risk",
+    "created_at"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": [
+        "handoff.1"
+      ]
+    },
+    "architecture_version": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "source_thread_id": {
+      "type": "string"
+    },
+    "architecture_prose": {
+      "type": "string",
+      "minLength": 1
+    },
+    "owner_acceptance": {
+      "type": "object",
+      "required": [
+        "source",
+        "reference"
+      ],
+      "properties": {
+        "source": {
+          "type": "string",
+          "enum": [
+            "owner_message",
+            "finalise_command"
+          ]
+        }
+      }
+    },
+    "clarity": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "enum": [
+            "CLEAR_AND_SIMPLE",
+            "UNCLEAR"
+          ]
+        }
+      }
+    },
+    "risk": {
+      "type": "object",
+      "required": [
+        "value"
+      ],
+      "properties": {
+        "value": {
+          "type": "string",
+          "enum": [
+            "LOW_RISK",
+            "HIGH_RISK"
+          ]
+        }
+      }
+    }
+  }
+}

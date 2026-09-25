@@ -1,0 +1,60 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "model-router-import.1",
+  "title": "Authorised conversation import",
+  "type": "object",
+  "required": [
+    "format",
+    "source",
+    "authorised_by",
+    "projects"
+  ],
+  "properties": {
+    "format": {
+      "type": "string",
+      "enum": [
+        "model-router-import.1"
+      ]
+    },
+    "authorised_by": {
+      "type": "string",
+      "minLength": 1
+    },
+    "projects": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "threads"
+        ],
+        "properties": {
+          "threads": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "id",
+                "created_at"
+              ],
+              "properties": {
+                "kind": {
+                  "type": "string",
+                  "enum": [
+                    "transcript",
+                    "memory_summary"
+                  ]
+                },
+                "messages": {
+                  "type": "array",
+                  "items": {
+                    "type": "object"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

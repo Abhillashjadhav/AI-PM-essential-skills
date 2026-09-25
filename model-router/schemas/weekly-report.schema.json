@@ -1,0 +1,64 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "weekly-report.1",
+  "title": "Weekly report",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "week",
+    "generated_at",
+    "synthetic_included",
+    "cohort_complete",
+    "guardrail",
+    "proposed_adjusted_view",
+    "diagnostic",
+    "system",
+    "latency_ms",
+    "usage_observations",
+    "versions",
+    "this_week_override_events",
+    "review_pack"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "enum": [
+        "weekly-report.1"
+      ]
+    },
+    "week": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-W[0-9]{2}$"
+    },
+    "guardrail": {
+      "type": "object",
+      "required": [
+        "eligible_threads",
+        "threads_with_override",
+        "rate",
+        "wilson_95",
+        "target",
+        "verdict"
+      ],
+      "properties": {
+        "eligible_threads": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "threads_with_override": {
+          "type": "integer",
+          "minimum": 0
+        },
+        "rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "verdict": {
+          "type": "string"
+        }
+      }
+    }
+  }
+}
