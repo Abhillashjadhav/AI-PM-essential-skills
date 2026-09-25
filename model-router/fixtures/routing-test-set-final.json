@@ -1054,5 +1054,5 @@
    "rationale": "Ordinary off-by-one fix."
   }
  ],
- "role_in_repo": "final test set: written blind; scored once against frozen rules revision 3 (commit above); never used for tuning"
+ "role_in_repo": "development set since revision 5: scored once blind against frozen rules revision 3 (86.0% exact, 9.3% under-routed); used to tune revisions 5-6"
 }
