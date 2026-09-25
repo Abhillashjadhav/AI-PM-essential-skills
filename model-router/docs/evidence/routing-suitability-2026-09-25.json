@@ -2180,7 +2180,11 @@
     "fresh-set-3": {
       "frozen_rules": "rules-2026-09-25.7",
       "commit": "e7a7e1d",
-      "label_agreement": "pending at the pause (independent re-labeller running)",
+      "label_agreement": {
+        "author_vs_second_labeller": 199,
+        "cases": 200,
+        "rate": 0.995
+      },
       "rev7_frozen": {
         "rules": "rules-2026-09-25.7",
         "cases": 200,
@@ -2232,7 +2236,11 @@
             "cases": 100
           }
         },
-        "labeller_agreed_subset": null,
+        "labeller_agreed_subset": {
+          "cases": 199,
+          "exact": 159,
+          "under": 21
+        },
         "misses": [
           {
             "id": "E013",

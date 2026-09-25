@@ -1,7 +1,7 @@
 {
  "dataset_version": "fresh-set-3-2026-09-25.1",
  "synthetic": true,
- "author": "two independent agents (E3, F3), blind to the classifier and all other sets; independent re-labelling was still running at the 2026-09-26 00:30 IST pause",
+ "author": "two independent agents (E3, F3), blind to the classifier and all other sets; a separate agent re-labelled the prompts without seeing these labels and agreed on 199/200",
  "role_in_repo": "test set: scored once against frozen rules revision 7 (commit e7a7e1d): 80.0% exact, 10.5% under-routed, 9.5% over-routed. Not yet used for tuning.",
  "cases": [
   {
