@@ -145,6 +145,33 @@ class QueueAndResume(RouterTestCase):
         self.assertEqual([t["text"] for t in self.adapter.sent_turns], ["Format my notes"])
 
 
+class MidTurnSpendChange(RouterTestCase):
+    def test_limit_notification_rechecks_spend_and_stops_the_turn(self):
+        script = [
+            {"kind": "delta", "text": "part one "},
+            {"kind": "usage_changed", "data": {"rateLimits": {"primary": {"usedPercent": 99}}}},
+            {"kind": "delta", "text": "never shown"},
+            {"kind": "completed", "status": "interrupted"},
+        ]
+        result = self.coordinator.submit("Portfolio", "Format my notes")
+        self.scenario.turn_scripts.append(script)
+        original_check = self.adapter.check_spend_boundary
+        calls = {"n": 0}
+
+        def check(account, usage):
+            calls["n"] += 1
+            if calls["n"] > 1:  # the first check is the pre-dispatch gate
+                self.scenario.spend_status = SpendStatus.UNKNOWN
+            return original_check(account, usage)
+
+        self.adapter.check_spend_boundary = check
+        self.assertEqual(self.coordinator.run(result.job_id), JobState.PAUSED)
+        self.assertTrue(any(name == "interrupt_turn" for name, _ in self.adapter.calls))
+        self.assertTrue(self.events("turn.spend_stop"))
+        self.assertTrue(self.store.one("SELECT 1 FROM checkpoints WHERE job_id=?", (result.job_id,)))
+        self.assertEqual(self.coordinator.wake(), [(result.job_id, JobState.BLOCKED_SPEND)], "resume re-checks and stays blocked")
+
+
 class LiveAccountBinding(RouterTestCase):
     def test_unbound_thread_is_not_sent_in_live_mode(self):
         result = self.coordinator.submit("Portfolio", "Format my notes")

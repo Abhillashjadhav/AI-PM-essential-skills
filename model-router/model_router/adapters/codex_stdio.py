@@ -14,8 +14,8 @@ Safety properties:
   passed, and are never printed.
 * A dedicated CODEX_HOME holds this router's profile with
   ``forced_login_method = "chatgpt"``; the effective config is validated.
-* The spend decision is UNKNOWN unless a live-verified enforcement record for
-  this exact pin and account is present and its per-dispatch conditions hold.
+* The spend decision comes from spend.py: only a code-defined mechanism that
+  checks live provider signals can allow a send; files and flags cannot.
 * Methods that could spend or change billing are never called.
 """
 
@@ -40,13 +40,12 @@ from ..contracts import (
     Binding,
     CreditsState,
     ModelInfo,
+    SpendControlObservation,
     SpendDecision,
-    SpendStatus,
     TurnStatus,
     UsageBucket,
     UsageSnapshot,
     new_id,
-    parse_utc,
     utc_now,
 )
 from ..store import atomic_write
@@ -286,7 +285,6 @@ class PinManifest:
     approved_by: str | None
     approved_at: str | None
     adapter_version: str = ADAPTER_VERSION
-    enforcement: list[dict[str, Any]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return dict(self.__dict__)
@@ -295,7 +293,11 @@ class PinManifest:
     def load(cls, path: Path) -> "PinManifest | None":
         if not path.is_file():
             return None
-        return cls(**json.loads(path.read_text(encoding="utf-8")))
+        data = json.loads(path.read_text(encoding="utf-8"))
+        # Anything else in the file (e.g. hand-written "enforcement" claims) is ignored:
+        # spend enforcement is decided only from live signals by code (spend.py).
+        known = {f for f in cls.__dataclass_fields__}
+        return cls(**{k: v for k, v in data.items() if k in known})
 
     def save(self, path: Path) -> None:
         atomic_write(path, json.dumps(self.to_dict(), indent=2, sort_keys=True))
@@ -766,7 +768,9 @@ class CodexStdioAdapter(SubscriptionAdapter):
         return parse_rate_limits(result, account_scope=self._account.account_scope if self._account else None)
 
     def check_spend_boundary(self, account: AccountState, usage: UsageSnapshot) -> SpendDecision:
-        return decide_spend(account, usage, pin_state=self.pin_state, manifest=PinManifest.load(self.config.pin_path))
+        from ..spend import decide_spend
+
+        return decide_spend(account, usage, pin_state=self.pin_state)
 
     def create_thread(self, binding: Binding, *, developer_instructions: str | None, workspace: str | None, sandbox: str) -> ProviderThread:
         self._require_sendable()
@@ -1029,11 +1033,28 @@ def parse_rate_limits(result: dict[str, Any], *, account_scope: str | None) -> U
     plan = None
     credits_raw = None
     spend_control = None
+    controls: list[SpendControlObservation] = []
+    credit_limit_ids: list[str] = []
     for limit_id, snapshot in snapshots.items():
         plan = plan or snapshot.get("planType")
         credits_raw = credits_raw or snapshot.get("credits")
+        if isinstance(snapshot.get("credits"), dict):
+            credit_limit_ids.append(limit_id)
         if snapshot.get("spendControlReached") is not None:
             spend_control = bool(spend_control) or bool(snapshot.get("spendControlReached"))
+        individual = snapshot.get("individualLimit")
+        if isinstance(individual, dict) or snapshot.get("spendControlReached") is not None:
+            individual = individual if isinstance(individual, dict) else {}
+            controls.append(
+                SpendControlObservation(
+                    limit_id=limit_id,
+                    reached=snapshot.get("spendControlReached"),
+                    limit=None if individual.get("limit") is None else str(individual.get("limit")),
+                    used=None if individual.get("used") is None else str(individual.get("used")),
+                    remaining_percent=individual.get("remainingPercent"),
+                    resets_at=_epoch_to_iso(individual.get("resetsAt")),
+                )
+            )
         for window_name in ("primary", "secondary"):
             window = snapshot.get(window_name)
             if not isinstance(window, dict):
@@ -1072,77 +1093,6 @@ def parse_rate_limits(result: dict[str, Any], *, account_scope: str | None) -> U
         observed_at=utc_now(),
         source="account/rateLimits/read",
         synthetic=False,
+        spend_controls=controls,
+        credit_limit_ids=credit_limit_ids,
     )
-
-
-MISSING_ENFORCEMENT = (
-    "no documented provider control that prevents purchased-credit use on the Codex App Server path "
-    "has been verified for this pinned installation and account"
-)
-
-
-def decide_spend(account: AccountState, usage: UsageSnapshot, *, pin_state: str, manifest: PinManifest | None) -> SpendDecision:
-    """ALLOWED_INCLUDED_ONLY only with live, pin-bound, account-bound enforcement
-    evidence whose per-dispatch conditions hold right now. Otherwise UNKNOWN or
-    BLOCKED, with the supporting observations listed."""
-    now = utc_now()
-    supporting = [
-        {"source": "live", "field": "ordinaryUsageAllowed", "value": usage.ordinary_usage_allowed, "status": "supporting"},
-        {"source": "live", "field": "credits", "value": usage.credits.describe(), "status": "supporting"},
-        {"source": "live", "field": "spendControlReached", "value": usage.spend_control_reached, "status": "supporting"},
-    ]
-    if account.auth_mode != "chatgpt":
-        return SpendDecision(SpendStatus.BLOCKED, ["not a ChatGPT-authenticated account"], supporting, account.account_scope, now, False)
-    if usage.spend_control_reached:
-        return SpendDecision(SpendStatus.BLOCKED, ["provider reports a spend control has been reached"], supporting, account.account_scope, now, False)
-    if usage.ordinary_usage_allowed is False:
-        return SpendDecision(SpendStatus.BLOCKED, ["included usage is not allowed right now; a send could draw on purchased credits"], supporting, account.account_scope, now, False)
-    if pin_state not in {"valid"}:
-        return SpendDecision(
-            SpendStatus.UNKNOWN, [f"adapter pin is {pin_state}"], supporting, account.account_scope, now, False,
-            missing=[MISSING_ENFORCEMENT],
-        )
-    if manifest is None or not manifest.enforcement:
-        return SpendDecision(SpendStatus.UNKNOWN, ["spend boundary not enforced by any verified control"], supporting, account.account_scope, now, False, missing=[MISSING_ENFORCEMENT])
-    rejected: list[str] = []
-    for record in manifest.enforcement:
-        why = _enforcement_rejection(record, account, usage, manifest)
-        if why is None:
-            evidence = supporting + [{"source": "live", "control": record.get("control_type"), "status": "enforced", "documentation": record.get("documentation")}]
-            return SpendDecision(SpendStatus.ALLOWED_INCLUDED_ONLY, [], evidence, account.account_scope, now, False)
-        rejected.append(why)
-    return SpendDecision(SpendStatus.UNKNOWN, ["enforcement evidence rejected: " + "; ".join(rejected)], supporting, account.account_scope, now, False, missing=[MISSING_ENFORCEMENT])
-
-
-def _enforcement_rejection(record: dict[str, Any], account: AccountState, usage: UsageSnapshot, manifest: PinManifest) -> str | None:
-    if record.get("source") != "live":
-        return f"evidence source {record.get('source')!r} is not live observation"
-    if record.get("status") != "enforced":
-        return "evidence is supporting only"
-    if not record.get("documentation"):
-        return "no current documentation reference"
-    if record.get("pin_digest") != manifest.digest:
-        return "evidence was recorded for a different adapter pin"
-    if record.get("account_scope") != account.account_scope:
-        return "evidence belongs to another account"
-    expires = record.get("expires_at")
-    if not expires or parse_utc(expires) <= parse_utc(utc_now()):
-        return "evidence expired or has no expiry"
-    for field_name, expected in (record.get("requires") or {}).items():
-        actual = _usage_field(usage, field_name)
-        if actual != expected:
-            return f"condition {field_name}={expected!r} not met (observed {actual!r})"
-    if not record.get("requires"):
-        return "evidence states no per-dispatch observable condition"
-    return None
-
-
-def _usage_field(usage: UsageSnapshot, name: str) -> Any:
-    mapping = {
-        "ordinaryUsageAllowed": usage.ordinary_usage_allowed,
-        "credits.hasCredits": usage.credits.has_credits,
-        "credits.unlimited": usage.credits.unlimited,
-        "credits.balance": usage.credits.balance,
-        "spendControlReached": usage.spend_control_reached,
-    }
-    return mapping.get(name, "__unknown_field__")

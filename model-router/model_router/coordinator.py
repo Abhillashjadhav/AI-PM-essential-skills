@@ -49,6 +49,7 @@ from .contracts import (
     Override,
     Role,
     RouteDecision,
+    SpendStatus,
     TaskAssessment,
     TaskKind,
     ThreadKind,
@@ -1233,6 +1234,7 @@ class Coordinator:
         fatal: list[str] = []
         usage_exhausted = False
         rerouted: tuple[str, str] | None = None
+        spend_stop: str | None = None
         final_status: TurnStatus | None = None
         tool_results: list[dict[str, Any]] = []
         last_renewal = time.monotonic()
@@ -1292,6 +1294,16 @@ class Coordinator:
             elif event.kind in {"usage_changed", "account_changed"}:
                 self.gate.invalidate(f"provider notification: {event.kind}")
                 self.store.event("usage.changed" if event.kind == "usage_changed" else "account.changed", event.data, thread_id=thread_id, job_id=job_id)
+                if spend_stop is None:
+                    spend_stop = self._spend_recheck_mid_turn()
+                    if spend_stop is not None:
+                        self.store.event("turn.spend_stop", {"dispatch_id": dispatch_id, "reason": spend_stop}, thread_id=thread_id, job_id=job_id)
+                        self.ui.notify(f"Router: Stopping this turn — {spend_stop}. The partial answer is kept; the chat keeps its model.")
+                        if provider_turn_id:
+                            try:
+                                self.adapter.interrupt_turn(provider_thread_id, provider_turn_id)
+                            except AdapterError as exc:
+                                self.store.event("turn.interrupt_failed", {"error": str(exc)}, thread_id=thread_id, job_id=job_id)
             elif event.kind == "approval":
                 self.store.event("approval.decided", event.data | {"summary": event.text}, thread_id=thread_id, job_id=job_id)
             elif event.kind == "item" and event.item:
@@ -1325,6 +1337,10 @@ class Coordinator:
                 "UPDATE messages SET complete=?, kind=? WHERE id=?",
                 (0 if partial else 1, "partial" if partial else "answer", answer_id),
             )
+        if spend_stop is not None and not usage_exhausted:
+            self._checkpoint(job_id, thread_id, dispatch_id, provider_turn_id, answer_id, tool_results, f"spend boundary changed mid-turn: {spend_stop}")
+            self.store.transition_job(job_id, JobState.PAUSED, blocker=f"stopped mid-turn: {spend_stop}", extra={"dispatch_id": dispatch_id})
+            return JobState.PAUSED
         if usage_exhausted:
             self._checkpoint(job_id, thread_id, dispatch_id, provider_turn_id, answer_id, tool_results, "included usage ran out mid-turn")
             self.store.transition_job(job_id, JobState.PAUSED, blocker="included usage ran out; work saved", extra={"dispatch_id": dispatch_id})
@@ -1349,6 +1365,21 @@ class Coordinator:
         self.store.transition_job(job_id, JobState.SUCCEEDED)
         self.store.event("turn.completed", {"dispatch_id": dispatch_id, "provider_turn_id": provider_turn_id}, thread_id=thread_id, job_id=job_id)
         return JobState.SUCCEEDED
+
+    def _spend_recheck_mid_turn(self) -> str | None:
+        """Re-read account, usage and the spend decision after a provider limit or
+        credit notification. Returns a reason to stop, or None to continue."""
+        try:
+            account = self.adapter.read_account()
+            usage = self.adapter.read_usage()
+            decision = self.adapter.check_spend_boundary(account, usage)
+        except AdapterError as exc:
+            return f"spend boundary could not be re-checked ({exc})"
+        if self.live and decision.synthetic:
+            return "simulated spend evidence cannot cover a live turn"
+        if decision.status is not SpendStatus.ALLOWED_INCLUDED_ONLY:
+            return f"spend boundary is now {decision.status.value}: " + "; ".join(decision.reasons + decision.missing)
+        return None
 
     def _apply_pending_override(self, thread_id: str, dispatch_id: str) -> None:
         self.store.execute(
