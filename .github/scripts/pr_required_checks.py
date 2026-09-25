@@ -99,6 +99,8 @@ def run_tests() -> int:
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", ".github/tests", "-v"])
     if any(Path("context-port/tests").rglob("test*.py")):
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", "context-port/tests", "-v"])
+    if any(Path("model-router/tests").rglob("test*.py")):
+        commands.append([sys.executable, "-m", "unittest", "discover", "-s", "model-router/tests", "-q"])
     for command in commands:
         completed = subprocess.run(command, check=False)
         if completed.returncode:
