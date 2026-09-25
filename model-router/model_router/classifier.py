@@ -262,6 +262,124 @@ PATTERNS: dict[str, tuple[str, ...]] = {
     ),
 }
 
+# Rules revision 2: vocabulary widened after measuring revision 1 on an
+# independently written development set (see docs/evidence/routing-heldout-*).
+EXTRA_PATTERNS: dict[str, tuple[str, ...]] = {
+    "tradeoff": (
+        r"[\w.+#-]+ vs\.? [\w.+#-]+", r"what would you (?:pick|choose|use|recommend)", r"not sure whether", r"whether to",
+        r"(?:decided|decide|deciding|choose|choosing|pick|picking) (?:between )?[\w.+#-]+ (?:or|vs\.?|versus) [\w.+#-]+",
+        r"what should i do",
+    ),
+    "ui_decision": (
+        r"(?:hero|page|screen|home ?page|landing page|onboarding) layouts?", r"which (?:one|layout|design|version) (?:and why|should i|is better|works better)",
+    ),
+    "architecture": (
+        r"data ?models?", r"design (?:the|a|an|my) (?:[\w-]+ ){0,4}(?:models?|services?|apis?|schema|architecture|app|backend|database)",
+        r"design (?:an?|the|my) (?:[\w-]+ ){0,4}(?:feature|product|flow|experience|system|service|pipeline|agent)",
+        r"take-?home",
+    ),
+    "product_decision": (
+        r"north star", r"(?:success |key |core )?metrics? for", r"kpis?", r"positioning", r"keep the product",
+        r"mvp", r"decide which", r"help me (?:decide|choose|prioriti[sz]e)", r"prioriti[sz]e",
+        r"which (?:features?|ones?|of these|idea|project) (?:to|should i) (?:cut|build|keep|drop|ship|pick|focus on)",
+    ),
+    "hc_noun": (
+        r"recruiters?", r"hiring managers?", r"interviewers?", r"job offer", r"offer letter", r"salary negotiation",
+        r"personal statement", r"portfolio case study", r"cold e-?mails?", r"(?:pm|product|apm) roles?", r"founders?",
+    ),
+    "pub_noun": (r"(?:research|blog|substack|medium) posts?", r"newsletter", r"article"),
+    "hc_verb": (
+        r"reply", r"respond", r"e-?mail", r"message", r"follow up", r"negotiate", r"answer", r"thank", r"punchier",
+        r"make (?:it|this|them|these) (?:better|stronger|punchier|sharper|crisper|more [\w-]+)", r"summari[sz]e (?:[\w-]+ ){0,4}into",
+    ),
+    "publish": (
+        r"publish(?:ing|ed)?", r"post (?:it|this) (?:on|to)", r"share (?:it )?publicly",
+        r"for (?:my )?(?:linkedin|blog|substack|newsletter|medium)",
+    ),
+    "coding": (
+        r"pytest", r"unit tests?", r"tests? for", r"write tests?", r"type hints", r"mypy", r"lint(?:er|ing)?", r"ruff",
+        r"makefile", r"github actions?", r"ci", r"regex", r"css", r"html", r"react", r"components?", r"typescript",
+        r"javascript", r"python", r"node", r"npm", r"pip", r"sql", r"query", r"queries", r"sqlite", r"postgres",
+        r"database", r"db", r"sdk", r"cli", r"argparse", r"plugin", r"async", r"await", r"callbacks?", r"traceback",
+        r"stack trace", r"exception", r"bug", r"crash(?:es|ing)?", r"flaky", r"variable", r"method", r"cache",
+        r"embeddings?", r"scraper", r"httpx", r"requests", r"docker", r"cron", r"bash", r"git",
+        r"commit", r"branch", r"deploy(?:ment)?", r"subcommands?", r"mock", r"frontend", r"backend",
+        r"[\w-]+\.(?:py|ts|tsx|js|jsx|css|html|sql|sh|go|rs|java|rb|yml|yaml|toml|ipynb)", r"[a-z_][a-z0-9_]*\(\)",
+        r"[\w-]+ clone", r"matplotlib", r"pandas", r"numpy", r"tailwind", r"streamlit", r"next\.?js", r"supabase", r"firebase", r"flask",
+        r"django", r"fastapi", r"sqlalchemy", r"eslint", r"prettier", r"tsconfig", r"webpack", r"vite", r"div", r"flexbox",
+        r"hover", r"retr(?:y|ies)", r"backoff", r"wrapper", r"charts?", r"plots?", r"dataframe", r"df", r"landing page",
+        r"export[- ]to[- ]csv", r"nan", r"null", r"undefined", r"pars(?:e|ing|er)", r"lambda", r"endpoints?", r"(?:my|the|this) (?:app|website|site|extension|bot|script|repo|notebook|pipeline)",
+        r"add (?:an? )?[\w -]{0,30} to (?:my|the) [\w -]{0,20}(?:app|site|tool|cli|extension|bot|dashboard)",
+    ),
+    "money_movement": (
+        r"pays?", r"paying", r"auto-?pay(?:s|ing)?", r"wise api", r"paypal", r"razorpay", r"bank transfers?",
+        r"send(?:s|ing)? money", r"payroll", r"subscription billing",
+    ),
+    "security": (
+        r"api[- ]?keys?", r"secret keys?", r"(?:auth|access|bearer|refresh|jwt|github|api) tokens?", r"keychain",
+        r"ssh keys?", r"2fa", r"mfa", r"injection", r"sanitiz(?:e|ation)", r"hash(?:ing)? passwords?", r"\.env",
+        r"leak(?:ed|s)?", r"service role key", r"bucket polic(?:y|ies)", r"iam", r"cors", r"security groups?", r"firewall",
+        r"reset (?:flow|tokens?|links?)", r"password reset",
+    ),
+    "privacy": (
+        r"delete (?:my|the|a|user'?s?) account", r"account deletion", r"user'?s'? (?:data|notes|emails|messages|history|records)",
+        r"(?:users'?|customer'?s?) (?:data|emails|pii|details)", r"contact lists?", r"location data", r"at rest",
+    ),
+    "destructive": (
+        r"force[- ]?push(?:ing)?", r"reset --hard", r"git reset", r"rewrite (?:the )?history", r"clean up the history",
+        r"delete (?:the )?(?:remote )?branch", r"drop (?:the )?[\w]+ table", r"push --force", r"push -f",
+        r"delet(?:e|es|ing) (?:all )?(?:users|rows|records|accounts|data) from (?:the )?(?:prod|production|live)",
+    ),
+    "extraction": (
+        r"count", r"how many", r"just the (?:links|urls|numbers|names|dates|titles)", r"find (?:the )?(?:[\w-]+ ){0,3}(?:links|urls)",
+        r"look up", r"pull up", r"grab", r"give me (?:the|all|just)", r"(?:just )?tell me (?:the|what)", r"what(?:'s| is) the",
+    ),
+    "routine": (
+        r"reply", r"respond", r"e-?mail", r"mail", r"msg", r"message", r"text (?:for|to)", r"dm", r"slack", r"whatsapp",
+        r"alphabeti[sz]e", r"title case", r"lower ?case", r"upper ?case", r"duplicates?", r"dedupe", r"numbered list",
+        r"checklist", r"to-?do(?: list)?", r"table", r"markdown", r"template", r"grocery", r"recipes?", r"b-?day",
+        r"birthday", r"thank(?:s| you)", r"invite", r"rsvp", r"cancel(?:ling)? (?:my )?(?:membership|subscription|order|booking)",
+        r"remind(?:er)?", r"replace (?:every|all)", r"change all", r"turn (?:this|these|my|the) [\w ]{0,40}into",
+        r"convert (?:this|these|my|the)", r"put (?:this|these|my) [\w ]{0,30}into", r"shorten", r"clean up", r"lists?",
+        r"notes?", r"bullets?", r"spell ?check", r"spelling", r"sort(?:ed)?(?: alphabetically)?", r"reformat", r"headings?",
+    ),
+}
+for _name, _extra in EXTRA_PATTERNS.items():
+    PATTERNS[_name] = PATTERNS.get(_name, ()) + _extra
+
+RULES_VERSION = "rules-2026-09-25.3"
+_ARTIFACT_REQUEST = re.compile(
+    r"^(?:(?:a|an|quick|simple|small|just|pls|please|need)\s+){0,3}(?:bash|python|shell|node|react|sql|typescript|ts|js|go)?\s*"
+    r"(?:script|component|function|query|endpoint|regex|makefile|cli|hook|class|unit tests?|tests?|workflow|dockerfile)s?\b",
+    re.IGNORECASE,
+)
+# A coding noun alone ("summarize this post on vector databases") is not a
+# coding task; an action or a problem report on the code makes it one.
+_CODING_ACTION = re.compile(
+    r"\b(?:fix(?:es|ed|ing)?|implement\w*|write|add|build|refactor\w*|migrat\w*|swap|debug\w*|wire|rename|convert|port|"
+    r"create|make|set ?up|update|change|remove|delete|upgrade|optimi[sz]e|speed up|help|why|what am i missing|doesn'?t|"
+    r"encrypt|generate|clean|center|overlap\w*|breaks?|overflow\w*|goes through|pulls?|reads?|"
+    r"does not|isn'?t working|not working|fails?|failing|broken|error|crash\w*|wrong|misses|skips|shows|returns)\b",
+    re.IGNORECASE,
+)
+_CHOICE_QUESTION = re.compile(
+    r"(?:\bshould (?:i|we|my|our|the|this) (?:[\w-]+ ){0,4}(?:use|pick|go with|choose|switch to|move to|be)\b|\bwhich (?:is|one is|would be) better\b|\bwhat(?:'s| is) better\b"
+    r"|\b[\w.+#-]+ (?:or|vs\.?|versus) [\w.+#-]+\b[^.!\n]*\?)",
+    re.IGNORECASE,
+)
+_NEGATION = re.compile(r"(?:\bnot\b|\bisn'?t\b|\bno\b|\bnever\b)[^.;,\n]{0,12}$", re.IGNORECASE)
+_RISK_ACTION = re.compile(
+    r"\b(?:audit|handle[sd]?|handling|stor(?:e|es|ing)|encrypt\w*|decrypt\w*|implement\w*|build|automat\w*|script|"
+    r"runs? (?:monthly|daily|weekly|nightly)|cron|api|wire|integrat\w*|code|migrat\w*|log(?:s|ging)?|load(?:s|ed|ing)?|"
+    r"add|button|feature|flow|clone|app|endpoint|trigger\w*|generat\w*|commit(?:ted)?|push(?:ed)?)\b",
+    re.IGNORECASE,
+)
+_CODE_MARKERS = re.compile(
+    r"(?m)^(?:\s*(?:def |class |import |from \S+ import|function |const |let |var |return |if .*:|for .*:|#include|SELECT |UPDATE |INSERT )"
+    r"|Traceback \(most recent call last\)|\s+File \".*\", line \d+|.*(?:=>|\);|\{\s*$|^\s*\})"
+    r"|\s*//\s*\w|\s*[\w.\[\]]+\s*(?:=|\+=|-=)\s*\S|\s*[\w.]+\(.*\)\s*$)",
+)
+
 _COMPILED = {
     name: re.compile(r"(?<![\w-])(?:" + "|".join(patterns) + r")(?![\w-])", re.IGNORECASE)
     for name, patterns in PATTERNS.items()
@@ -274,12 +392,14 @@ _QUOTE_PATTERNS = (
     re.compile(r"\"[^\"\n]{0,2000}\""),
     re.compile(r"“[^”]{0,2000}”"),
     re.compile(r"‘[^’\n]{12,2000}’"),
+    re.compile(r"(?<=[\s:(])'[^'\n]{12,600}'(?=[\s.,;:)!?]|$)"),
     re.compile(r"(?m)^\s*>.*$"),
 )
 
 _ARCH_REFERENCE = re.compile(
     r"(?:(?:agreed|approved|accepted|existing|finali[sz]ed|signed[- ]off)(?: \w+){0,2} architecture"
-    r"|(?:per|from|following|according to|matching) (?:the|our|this) (?:\w+ ){0,2}architecture)",
+    r"|(?:per|from|following|according to|matching|in) (?:the|our|this|my) (?:\w+ ){0,2}(?:architecture|design doc|design document|spec|handoff))"
+    r"|architecture(?:'s| is| has been) (?:approved|agreed|final|signed off)",
     re.IGNORECASE,
 )
 
@@ -299,10 +419,28 @@ class ClassifierInput:
     project_context: dict = field(default_factory=dict)
 
 
+def split_pasted(text: str) -> tuple[str, str]:
+    """Split "instruction: <newline> pasted material" into (instruction, pasted).
+
+    Material pasted after a colon-newline, or a code/log block after a blank
+    line, is data: it can show *that* the task involves code, but its words
+    never set risk or task kind.
+    """
+    match = re.search(r":[ \t]*\n", text)
+    if match and match.start() >= 3:
+        return text[: match.start()], text[match.end():]
+    head, sep, tail = text.partition("\n\n")
+    if sep and _CODE_MARKERS.search(tail):
+        return head, tail
+    return text, ""
+
+
 def split_instruction(text: str) -> tuple[str, list[str]]:
     """Return (instruction text with quoted material removed, quoted passages)."""
     quoted: list[str] = []
-    instruction = text
+    instruction, pasted = split_pasted(text)
+    if pasted:
+        quoted.append(pasted)
     for pattern in _QUOTE_PATTERNS:
         def _cut(match: re.Match[str]) -> str:
             quoted.append(match.group(0))
@@ -313,7 +451,12 @@ def split_instruction(text: str) -> tuple[str, list[str]]:
 
 
 def _hits(name: str, text: str) -> list[str]:
-    return [m.group(0) for m in _COMPILED[name].finditer(text)]
+    found = []
+    for match in _COMPILED[name].finditer(text):
+        if name in {"money_movement", "security", "privacy"} and _NEGATION.search(text[max(0, match.start() - 30): match.start()]):
+            continue  # "it's the current directory, not a password"
+        found.append(match.group(0))
+    return found
 
 
 def _snippet(text: str, word: str, width: int = 40) -> str:
@@ -327,6 +470,8 @@ def _snippet(text: str, word: str, width: int = 40) -> str:
 def classify(item: ClassifierInput) -> TaskAssessment:
     instruction, quoted = split_instruction(item.text)
     lowered = instruction.lower()
+    _, pasted = split_pasted(item.text)
+    code_context = bool(pasted and _CODE_MARKERS.search(pasted))
     hits = {name: _hits(name, lowered) for name in PATTERNS}
     kinds: list[TaskKind] = []
     flags: list[RiskFlag] = []
@@ -350,7 +495,18 @@ def classify(item: ClassifierInput) -> TaskAssessment:
 
     is_extraction = bool(hits["extraction"])
     has_judgement = bool(hits["judgement"])
-    is_coding = bool(hits["coding"])
+    coding_intent = bool(_CODING_ACTION.search(instruction) or _ARTIFACT_REQUEST.search(instruction.strip()))
+    is_coding = bool(hits["coding"]) and (coding_intent or not (hits["routine"] or is_extraction)) or code_context
+    if code_context and coding_intent:
+        # Changing pasted code: risk inside that code is part of the task.
+        pasted_lower = pasted.lower()
+        for name in ("money_movement", "security", "privacy", "destructive"):
+            extra = _hits(name, pasted_lower)
+            if extra:
+                hits[name] = hits[name] + extra
+                reasons.append("RISK_IN_PASTED_CODE_BEING_CHANGED")
+    if code_context and not hits["coding"]:
+        reasons.append("PASTED_CODE_CONTEXT")
 
     if hits["architecture"]:
         if is_coding and _ARCH_REFERENCE.search(lowered) and len(_ARCH_REFERENCE.findall(lowered)) >= len(hits["architecture"]):
@@ -365,22 +521,39 @@ def classify(item: ClassifierInput) -> TaskAssessment:
         add(TaskKind.UI_DECISION, "UI_DECISION", hits["ui_decision"])
     if hits["tradeoff"]:
         add(TaskKind.TRADEOFF, "TRADEOFF", hits["tradeoff"])
+    elif _CHOICE_QUESTION.search(instruction) and not (hits["routine"] or hits["extraction"]):
+        add(TaskKind.TRADEOFF, "CHOICE_QUESTION", [_CHOICE_QUESTION.search(instruction).group(0)])
 
     # High-credibility writing: a credibility noun plus a writing/judging verb.
     # Pure extraction from the same document is different (handled below).
+    writes_publication = bool(hits["pub_noun"]) and (
+        _writes(hits) or any(re.match(r"(?:turn|convert|put)", w) for w in hits["routine"])
+    )
+    if (writes_publication or (hits["publish"] and (hits["hc_verb"] or hits["routine"] or _writes(hits)))) and not (
+        is_extraction and not has_judgement
+    ):
+        add(TaskKind.HIGH_CREDIBILITY_WRITING, "PUBLICATION_WRITING", hits["publish"])
+        flags.append(RiskFlag.HIGH_CREDIBILITY)
     if hits["hc_noun"]:
         hc_verbs = [v for v in hits["hc_verb"] if v not in {"document"}]
-        if hc_verbs and not (is_extraction and not has_judgement and not _writes(hits)):
+        transformation = [w for w in hits["routine"] if re.match(r"(?:turn|convert|put|shorten|clean up)", w)]
+        hc_verbs = hc_verbs + transformation
+        writing_code = bool(_ARTIFACT_REQUEST.search(instruction.strip()) or re.search(
+            r"\bwrite (?:a |an |me a )?(?:python|bash|shell|node|sql)?\s*(?:script|function|program|parser|scraper)", lowered))
+        if hc_verbs and not writing_code and not (is_extraction and not has_judgement and not _writes(hits)):
             add(TaskKind.HIGH_CREDIBILITY_WRITING, "HIGH_CREDIBILITY", hits["hc_noun"] + hc_verbs)
             flags.append(RiskFlag.HIGH_CREDIBILITY)
-        elif not is_extraction:
+        elif not is_extraction and not hits["routine"] and not writing_code:
             uncertainty.append("credibility-sensitive document mentioned without a clear operation")
             reasons.append("HC_NOUN_UNCLEAR_OPERATION")
 
     money = hits["money_movement"]
     security = hits["security"]
     privacy = hits["privacy"]
-    pure_extraction = is_extraction and not has_judgement and not _writes(hits)
+    risk_action_early = bool(_RISK_ACTION.search(instruction)) and bool(hits["money_movement"] or hits["security"] or hits["privacy"])
+    pure_extraction = (
+        is_extraction and not has_judgement and not _writes(hits) and not (is_coding and coding_intent) and not risk_action_early
+    )
     if not pure_extraction:
         # A pure extraction may mention prices or passwords as data; only an
         # operation on them carries the risk flag.
@@ -396,15 +569,22 @@ def classify(item: ClassifierInput) -> TaskAssessment:
         flags.append(RiskFlag.PRODUCTION)
 
     risky_coding = bool(money or security or privacy)
-    if is_coding and risky_coding and not pure_extraction:
+    risk_action = bool(_RISK_ACTION.search(instruction))
+    routine_only = bool(hits["routine"]) and not is_coding
+    if risky_coding and not pure_extraction and (is_coding or risk_action):
         add(TaskKind.HIGH_RISK_CODING, "HIGH_RISK_CODING", money + security + privacy)
+    elif (security or privacy) and not pure_extraction and not routine_only:
+        # Security/privacy matters (incidents, policies, "is this ok?") are consequential.
+        add(TaskKind.CONSEQUENTIAL_ASSESSMENT, "SECURITY_PRIVACY_MATTER", security + privacy)
     elif is_coding:
         add(TaskKind.IMPLEMENTATION, "IMPLEMENTATION", hits["coding"])
-    elif (money or security or privacy) and not is_extraction:
-        uncertainty.append("money/security/privacy terms without a clear coding operation")
+    elif risky_coding and not is_extraction and not hits["routine"]:
+        uncertainty.append("money/security/privacy terms without a clear operation")
         reasons.append("RISK_TERMS_UNCLEAR_OPERATION")
 
-    if hits["assessment"] or (hits["destructive"] and not is_coding):
+    if hits["production"] and re.search(r"\b(?:delet\w*|drop\w*|truncat\w*|migrat\w*|wipe\w*|update\w* all|backfill\w*)\b", lowered):
+        hits["destructive"] = hits["destructive"] + hits["production"]
+    if hits["assessment"] or hits["destructive"]:
         add(TaskKind.CONSEQUENTIAL_ASSESSMENT, "CONSEQUENTIAL_ASSESSMENT", hits["assessment"] + hits["destructive"])
     elif hits["production"] and (has_judgement or hits["destructive"]):
         add(TaskKind.CONSEQUENTIAL_ASSESSMENT, "PRODUCTION_JUDGEMENT", hits["production"])
@@ -468,7 +648,7 @@ def classify(item: ClassifierInput) -> TaskAssessment:
         uncertainty=_dedupe(uncertainty),
         evidence=_dedupe(evidence)[:8],
         reason_codes=_dedupe(reasons),
-        classifier_version=CLASSIFIER_VERSION,
+        classifier_version=RULES_VERSION,
     )
 
 

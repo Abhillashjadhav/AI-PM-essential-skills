@@ -264,6 +264,9 @@ def cmd_eval(args: argparse.Namespace) -> int:
                   f"(model calls: {result['plan']['model_calls']}). Judge self-check usable: {result['judge_self_check']['usable']}")
             for failure in result["failed"]:
                 print(f"  FAIL {failure['case_id']}: {failure['checks']}")
+            for item in result.get("realistic_prompt_sets", []):
+                print(f"  {item['dataset']} ({item['role_in_repo'].split(':')[0]}): {item['exact']}/{item['cases']} exact, "
+                      f"{item['under_routed']} under-routed, {item['over_routed']} over-routed")
             print(result["note"])
         return 0 if result["status"] == "PASSED" else 1
     if args.eval_action == "report":
