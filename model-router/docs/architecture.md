@@ -1,9 +1,12 @@
 # Architecture
 
+The [2026-09-27 Jev integration architecture](jev-integration.md) supplements this core design. Jev is an optional hosted classifier under TypeSafe's credit controls; orchestration and records remain local. It does not change the GPT spend gate or control the native Codex/ChatGPT composer.
+
 ```mermaid
 flowchart TD
     A["Terminal client (cli.py)"] --> B["Coordinator (coordinator.py)"]
     B --> C["Classifier + policy + registry"]
+    C --> T["Optional TypeSafe Jev classification"]
     B --> D["SQLite store: history, outbox, events"]
     B --> G["Eligibility gate"]
     G --> E["Subscription adapter (base.py)"]
@@ -21,6 +24,8 @@ The router core never sees Codex wire formats. It only uses the typed contracts 
 |---|---|
 | `contracts.py` | Versioned dataclasses and enums, validation, the job state machine and its transition guards |
 | `classifier.py` | Deterministic local rules. Quoted text and attachments are treated as data. Returns reason codes and uncertainty, never a confidence score |
+| `plugin_classifier.py` | Combines optional typed judgments with rules; preserves hard risk floors and removes a resolved UNKNOWN fallback |
+| `jev.py`, `jev_http.py`, `jev_cli.py` | Opt-in Jev client, provider-error cutoff, private request journal, bounded HTTP subprocess, local setup/status/off and classifier-only pilot |
 | `policy.py` | Minimum role per task type, the upward fallback, and the section 5.3 implementation-role rule |
 | `registry.py` | Discovered candidates, approved role mappings bound to hashes, atomic revisions |
 | `capacity.py` | SUFFICIENT, TIGHT or UNKNOWN from a validated calibration artifact. UNKNOWN by default |
