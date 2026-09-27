@@ -33,6 +33,13 @@ MAX_PROMPT_BYTES = 16_000
 MAX_INPUT_TOKENS = 64_000           # published total request limit
 MIN_CONFIDENCE = 0.80               # provisional, not a claim of measured accuracy
 MAX_ORDINARY_CONSEQUENCES = 0.20
+EVALUATION_CANDIDATE = "approved-design-clarification-1"
+EVALUATION_CLARIFICATION = (
+    " Following an already agreed design does not itself require making architecture, "
+    "product or UI decisions. Assess the operations actually requested: changes affecting "
+    "money movement, privacy, security or destructive production behaviour remain "
+    "consequential even when their design is already approved."
+)
 
 CRITERIA = {
     "architecture": "Design/review/finalise architecture, system boundaries, interfaces, or an implementation plan with unresolved design choices.",
@@ -77,12 +84,14 @@ def _number(value) -> bool:
     return type(value) in (int, float) and math.isfinite(value)
 
 
-def request_for(text: str) -> dict:
+def request_for(text: str, *, evaluation_variant: str | None = None) -> dict:
+    if evaluation_variant not in (None, "baseline", EVALUATION_CANDIDATE):
+        raise JevUnavailable("invalid_evaluation_variant")
     if not isinstance(text, str) or not text.strip():
         raise JevUnavailable("empty_prompt")
     if len(text) > MAX_PROMPT_BYTES or len(text.encode("utf-8")) > MAX_PROMPT_BYTES:
         raise JevUnavailable("prompt_too_large")  # never truncate silently
-    return {
+    request = {
         "model": MODEL,
         "state": {"task_text": text},
         "questions": {
@@ -100,6 +109,9 @@ def request_for(text: str) -> dict:
             },
         },
     }
+    if evaluation_variant == EVALUATION_CANDIDATE:
+        request["questions"]["consequences"]["instructions"] += EVALUATION_CLARIFICATION
+    return request
 
 
 def http_once(request: dict, key: str) -> dict:
@@ -365,8 +377,15 @@ class JevClient:
                 state.update(enabled=False, stop_reason="disabled_by_owner")
                 self._write(state)
 
-    def __call__(self, text: str, *, request_id: str | None = None, cache_only: bool = False) -> dict:
-        request = request_for(text)
+    def __call__(self, text: str, *, request_id: str | None = None, cache_only: bool = False,
+                 evaluation_variant: str | None = None) -> dict:
+        # Only the explicit comparison command supplies a variant. No config,
+        # environment variable, task text or result can promote it into routing.
+        request = request_for(text, evaluation_variant=evaluation_variant)
+        if evaluation_variant is not None and not request_id:
+            raise JevUnavailable("evaluation_request_id_required")
+        version = PROMPT_VERSION if evaluation_variant != EVALUATION_CANDIDATE else f"{PROMPT_VERSION}/{EVALUATION_CANDIDATE}"
+        request_digest = hashlib.sha256(json.dumps(request, sort_keys=True, ensure_ascii=False).encode("utf-8")).hexdigest()
         prompt_hash = hashlib.sha256(text.encode("utf-8")).hexdigest()
         request_key = hashlib.sha256((request_id or uuid.uuid4().hex).encode("utf-8")).hexdigest()
         path = self.path / "requests" / (request_key + ".json")
@@ -377,11 +396,19 @@ class JevClient:
                 if prior:
                     if prior.get("prompt_hash") != prompt_hash:
                         raise JevUnavailable("request_changed")
+                    if prior.get("evaluation_variant") != evaluation_variant or (
+                        (evaluation_variant is not None or "request_digest" in prior)
+                        and prior.get("request_digest") != request_digest
+                    ):
+                        raise JevUnavailable("request_changed")
                     if prior.get("status") != "completed":
                         raise JevUnavailable("request_already_attempted")
-                    if prior.get("model") != MODEL or prior.get("prompt_version") != PROMPT_VERSION or prior.get("task_kind") not in CRITERIA:
+                    if prior.get("model") != MODEL or prior.get("prompt_version") != version or prior.get("task_kind") not in CRITERIA:
                         raise JevUnavailable("invalid_local_record")
-                    return {"task_kind": prior["task_kind"], "reason": f"{MODEL}/{PROMPT_VERSION}; cached request"}
+                    cached = {"task_kind": prior["task_kind"], "reason": f"{MODEL}/{version}; cached request"}
+                    if evaluation_variant is not None:
+                        cached["diagnostics"] = evidence_summary(prior)
+                    return cached
                 if cache_only:
                     raise JevUnavailable("recovery_no_cached_result")
                 reason = self._reason(state)
@@ -392,7 +419,9 @@ class JevClient:
                     raise JevUnavailable(reason)
                 key = self._key()
                 attempt = {"at": self.clock(), "status": "pending", "prompt_hash": prompt_hash,
-                           "model": MODEL, "prompt_version": PROMPT_VERSION}
+                           "model": MODEL, "prompt_version": version, "request_digest": request_digest}
+                if evaluation_variant is not None:
+                    attempt["evaluation_variant"] = evaluation_variant
                 # Request records grow individually; no history scan or request-count limit.
                 self._write_json(path, attempt)
                 state["attempts"] += 1
@@ -401,6 +430,8 @@ class JevClient:
                 started = time.monotonic()
                 try:
                     answer, evidence = parse_response(self.transport(request, key))
+                    if evaluation_variant is not None:
+                        answer["reason"] = answer["reason"].replace(f"{MODEL}/{PROMPT_VERSION};", f"{MODEL}/{version};", 1)
                 except Exception as exc:
                     reason = str(exc) if isinstance(exc, JevUnavailable) else "transport"
                     if reason not in {"timeout", "transport", "invalid_response"} and not (reason.startswith("http_") and reason[5:].isdigit()):
