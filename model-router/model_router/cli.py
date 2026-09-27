@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import shlex
 import sys
 import threading
@@ -98,13 +99,21 @@ def build(args: argparse.Namespace, *, ui: RouterUI | None = None) -> tuple[Coor
         coordinator = Coordinator(store, adapter, live=True, ui=ui or TerminalUI())
     from .plugin_classifier import combined_classifier, load_plugin
 
-    try:
-        plugin = load_plugin()
-    except Exception as exc:  # a bad setting must not break the router
-        plugin = None
-        print(f"Router: ignoring MODEL_ROUTER_CLASSIFIER ({type(exc).__name__}: {exc}); using the built-in rules.", file=sys.stderr)
+    plugin = None
+    if getattr(args, "simulate", False):
+        if os.environ.get("MODEL_ROUTER_CLASSIFIER"):
+            print("Router: ignoring MODEL_ROUTER_CLASSIFIER in the offline simulator.", file=sys.stderr)
+    else:
+        try:
+            plugin = load_plugin()
+        except Exception as exc:  # a bad setting must not break the router
+            print(f"Router: ignoring MODEL_ROUTER_CLASSIFIER ({type(exc).__name__}: {exc}); using the built-in rules.", file=sys.stderr)
     if plugin is not None:  # optional; the deterministic rules remain the default
         coordinator.classifier = combined_classifier(plugin)
+    elif not getattr(args, "simulate", False):
+        from .jev import attach_jev_classifier
+
+        attach_jev_classifier(coordinator, data_dir)
     return coordinator, store
 
 
@@ -236,6 +245,10 @@ def cmd_status(args: argparse.Namespace) -> int:
     from .doctor import peak_rss_mib
 
     status["process_peak_rss_mib"] = peak_rss_mib()
+    if not getattr(args, "simulate", False):
+        from .jev import JevClient
+
+        status["jev"] = JevClient(store.data_dir).status()
     _print_json(status)
     return 0
 
@@ -585,6 +598,19 @@ def parser() -> argparse.ArgumentParser:
         description="Local model router: picks a model per chat, keeps it fixed, hands architecture to implementation, never adds spend.",
     )
     sub = root.add_subparsers(dest="command", required=True)
+
+    from .jev_cli import command as jev_command
+
+    jev = sub.add_parser("jev", help="opt-in TypeSafe free-credit classifier; never sends GPT turns").add_subparsers(dest="jev_action", required=True)
+    for action, description in (
+        ("setup", "confirm free credits and save the key privately on this computer"),
+        ("status", "show Jev status and observed usage; no network"),
+        ("disable", "turn off Jev; continue with local rules"),
+        ("pilot", "six public example classifications using your confirmed free credits"),
+    ):
+        p = jev.add_parser(action, help=description)
+        p.add_argument("--data-dir", help="same data directory used by router chat")
+        p.set_defaults(func=jev_command)
 
     p = sub.add_parser("doctor", parents=[common], help="check this machine, sign-in, models, usage and the spend boundary (read-only)")
     p.add_argument("--no-connect", action="store_true", help="do not start the App Server")

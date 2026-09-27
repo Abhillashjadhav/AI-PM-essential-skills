@@ -59,7 +59,13 @@ def combined_classifier(plugin: Callable[[str], Any]) -> Callable[[ClassifierInp
         # prompt carries pasted/quoted material the rules did not interpret.
         may_resolve_unknown = rules.task_kind is TaskKind.UNKNOWN and (plugin_role.rank >= 1 or not has_data)
         if may_resolve_unknown or plugin_role.rank > rules_role.rank:
-            rules.secondary_kinds = [k for k in [rules.task_kind, *rules.secondary_kinds] if k is not kind]
+            # An unknown that has just been resolved is not a real secondary
+            # task. Retaining it forces highest in required_role(), making a
+            # successful classification ineffective. Preserve recognised tasks.
+            rules.secondary_kinds = [
+                k for k in [rules.task_kind, *rules.secondary_kinds]
+                if k is not kind and not (may_resolve_unknown and k is TaskKind.UNKNOWN)
+            ]
             rules.task_kind = kind
             rules.reason_codes.append("PLUGIN_CLASSIFICATION_USED")
             if reason:
