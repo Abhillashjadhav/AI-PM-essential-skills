@@ -51,6 +51,10 @@ CODE_MAP = {
  'HUMAN_VALIDATION_REQUIRED':'C7','MEASUREMENT_INPUT':'A4','MISSING_REQUIRED':'A5',
  'NAMED_BLEND_MAJORITY':'A6','PARENT_UNRESOLVED':'B5','SOURCE_CONFLICT':'A10',
  'SUPPLIER_APPROVAL_REQUIRED':'A10','UNMAPPED_VALUE':'A6',
+ # Withholding exists only because a field's requirement class decides whether a
+ # conflict blocks or withholds. Without A5 there is no optional/required split
+ # to partition on, and this code could not exist.
+ 'WITHHELD_FIELD_PUBLISHED':'A5',
 }
 def keys(*vs):
     s=set()
