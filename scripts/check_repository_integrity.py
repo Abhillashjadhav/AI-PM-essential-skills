@@ -53,7 +53,11 @@ def anchor_slug(heading: str) -> str:
 
 
 def readme_paths() -> list[Path]:
-    return sorted(path for path in ROOT.rglob("README*.md") if ".git" not in path.parts)
+    return sorted(
+        path for path in ROOT.rglob("*.md")
+        if ".git" not in path.parts
+        and (path.name.startswith("README") or path.name.endswith("README.md"))
+    )
 
 
 def repository_contains(path: str) -> bool:
@@ -127,6 +131,8 @@ def validate_marketplace() -> list[str]:
     except (json.JSONDecodeError, OSError) as exc:
         return [f"invalid marketplace manifest: {exc}"]
 
+    if not isinstance(marketplace, dict):
+        return ["marketplace manifest must be an object"]
     plugins = marketplace.get("plugins")
     if not isinstance(plugins, list):
         return ["marketplace manifest: plugins must be a list"]
@@ -177,6 +183,9 @@ def validate_marketplace() -> list[str]:
         except (json.JSONDecodeError, OSError) as exc:
             failures.append(f"marketplace plugin {plugin_name}: invalid plugin manifest: {exc}")
             continue
+        if not isinstance(plugin_manifest, dict):
+            failures.append(f"marketplace plugin {plugin_name}: manifest must be an object")
+            continue
         if plugin_manifest.get("name") != plugin_name:
             failures.append(
                 f"marketplace plugin {plugin_name}: plugin manifest name is "
@@ -188,8 +197,55 @@ def validate_marketplace() -> list[str]:
     return failures
 
 
+def validate_public_inventory() -> list[str]:
+    """Compare public counts and the job table with the actual catalogue."""
+    try:
+        manifest = json.loads(MARKETPLACE_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return []  # validate_marketplace reports the malformed source.
+    if not isinstance(manifest, dict) or not isinstance(manifest.get("plugins"), list):
+        return []
+    plugins = manifest["plugins"]
+    failures: list[str] = []
+    for relative in ("README.md", "CLAUDE.md", "docs/VALIDATION.md"):
+        path = ROOT / relative
+        if not path.is_file():
+            failures.append(f"missing public inventory: {relative}")
+            continue
+        text = path.read_text(encoding="utf-8")
+        counts = re.findall(r"\b(\d+) installable plugins\b", text)
+        if counts != [str(len(plugins))]:
+            failures.append(f"{relative}: expected one count of {len(plugins)} installable plugins")
+
+    sources = []
+    for entry in plugins:
+        if not isinstance(entry, dict) or not isinstance(entry.get("source"), str):
+            continue
+        source = (ROOT / entry["source"]).resolve()
+        try:
+            source.relative_to(ROOT)
+        except ValueError:
+            continue  # validate_marketplace reports paths outside the repository.
+        sources.append(source)
+        if not (source / "README.md").is_file():
+            failures.append(f"marketplace plugin {entry.get('name')}: missing README.md")
+
+    readme = ROOT / "README.md"
+    if readme.is_file():
+        text = readme.read_text(encoding="utf-8")
+        section = re.search(r"^## Choose the job you need done\n(.*?)(?=^## |\Z)",
+                            text, re.MULTILINE | re.DOTALL)
+        links = re.findall(r"^\| \*\*\[[^]]+\]\(([^)]+)\)",
+                           section.group(1) if section else "", re.MULTILINE)
+        listed = [(ROOT / target).resolve() for target in links]
+        if sorted(listed) != sorted(sources):
+            failures.append("README.md: job table must list each marketplace plugin exactly once")
+    return failures
+
+
 def main() -> int:
     failures = validate_marketplace()
+    failures.extend(validate_public_inventory())
     failures.extend(validate_graph_contract())
     failures.extend(validate_pm_human_writer_contract())
 
