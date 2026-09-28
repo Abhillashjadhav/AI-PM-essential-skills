@@ -9,7 +9,7 @@ Turn a one-off task into a guarded autonomous loop: five explicit parts, five no
 
 ## Step 0 — Verification first
 
-Before designing anything, ask: **what does a successful run look like, checkably?** If the user's task has no verifiable success condition ("keep an eye on things", "make it better over time"), stop and help define one — a file that exists with required fields, a count within bounds, a claim with a source link. No verifiable condition, no loop: an unverifiable loop is an unattended failure generator.
+Before designing anything, ask: **what does a successful run look like, checkably?** If the user's task has no verifiable success condition ("keep an eye on things", "make it better over time"), stop and help define one — a file that exists with required fields, a count within bounds, a claim with a source link. No verifiable condition, no loop: an unverifiable loop cannot establish whether a run succeeded.
 
 ## Step 1 — Minimal interview
 
@@ -18,6 +18,11 @@ Ask only what the request didn't already say (one message, not a questionnaire):
 2. **Sources/inputs** — what each run scans or consumes (URLs, repos, folders, APIs).
 3. **Output destination** — where results land (file path pattern, branch, email, issue).
 4. **Schedule** — cron-style cadence, or event-driven.
+
+Before activation, confirm the timezone and numeric budgets with the owner.
+If proposing defaults in a design, label them unapproved and keep them out of
+executable configuration until accepted. Never imply a placeholder host tool
+is installed or that a subscription has an API spending allowance.
 
 ## Step 2 — Generate the loop spec (five parts, all explicit)
 
@@ -35,7 +40,7 @@ STOP-OR-REPEAT — exit conditions: work exhausted, nothing new found (say so
 ```
 
 Rules for VERIFY:
-- The verifier is a **distinct step with its own checklist** — never the executor grading its own output in the same breath. In a Routine, VERIFY is a separately-delimited checklist pass over the produced artifact; in a multi-agent setup, a separate agent.
+- The verifier is a **distinct step with its own checklist** — never the executor grading its own output in the same breath. In a Routine, VERIFY is a separately-delimited checklist pass over the artifact and remains self-review. Use a separate reviewer or deterministic checks when independence is required; record that boundary.
 - Checks must be binary and artifact-inspectable (file exists, fields present, every claim has a source link, item count within bounds, no seen-log duplicates in output).
 - A failed check = failed run, reported as such — never silently shipped.
 
@@ -48,13 +53,20 @@ GUARDRAILS (non-negotiable)
 1. MAX ITERATIONS: <N> items/actions per run; stop and report when hit.
 2. COST CEILING: <token/time budget> per run; stop and report when hit.
 3. SEEN-LOG: each run starts stateless — cross-run memory lives in <path>
-   (create if missing; read before acting; append after acting). Never
+   (create if missing; read before acting; append after verification). Never
    re-process a logged item.
 4. NO DESTRUCTIVE ACTIONS: never delete, overwrite, or send beyond this
    explicit allowlist: <allowlist>. Everything else is append/create-only.
 5. NOTIFY: on completion AND on any guardrail trip or verify failure, emit
    the notification line to <channel>. Never fail silently.
 ```
+
+Define overflow, retries and durable state explicitly. Never advance a discovery
+cursor past unprocessed items. Specify pagination completion, concurrent-run
+exclusion, an idempotent publication key and recovery after uncertain writes.
+For repository PR workflows, verify before opening the PR; keep proposed log
+entries in that PR and pause future runs while it is pending. A run date is not
+an issue creation-time cursor. Notifications must stay inside the action allowlist.
 
 ## Step 4 — Emit both artifacts, user picks one
 
@@ -67,7 +79,7 @@ Label both clearly and tell the user to pick one; running both double-processes 
 ## Hard rules
 
 - **Never generate a loop without all five guardrails.** A request to skip one gets the reason it exists (from `references/guardrail-design.md`) and a loop that still includes it.
-- **Never let the executor verify its own work.** VERIFY is a separate checklist pass over the artifact, never a "looks good to me" from the same prompt flow that produced it.
+- **Do not claim independent verification from self-review.** A separate checklist in one model context does not establish independence. State who or what executes each check.
 - **Verification first.** No verifiable success condition → help define one before generating; never emit a loop whose success can't be checked from its artifacts.
 - **State lives in files.** Each scheduled run starts stateless; anything the loop must remember (seen items, counters, last-run date) is read from and written to files, never assumed from memory.
 - **Honest empty runs.** A run that finds nothing new says so in one line and exits — padding an empty run is a verify failure.

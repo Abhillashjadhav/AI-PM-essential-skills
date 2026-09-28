@@ -141,9 +141,9 @@ Produce all three from the same contract:
 
 The skeleton must not claim deployment. Mark unavailable integrations explicitly.
 
-## Step 8 — Verify independently
+## Step 8 — Verify the contract and execution separately
 
-Run a separate graph-verification pass after generation:
+Run a separate graph-verification pass after generation. State who or what checks it; a second checklist in the same context does not establish reviewer independence:
 
 - exactly one declared start state;
 - every edge references existing nodes;
@@ -159,7 +159,7 @@ Run a separate graph-verification pass after generation:
 - consequential actions stop for human approval;
 - outcome metric and guardrails remain aligned with the problem and hypothesis.
 
-Return `GRAPH_CONTRACT_VALID` only when every check passes. Otherwise return `GRAPH_CONTRACT_BLOCKED` with exact failed checks and required corrections.
+Report static declaration checks separately from executed runtime tests. Name unimplemented behavior explicitly: the bundled sample demonstrates only synthetic fan-out, join and fail-closed checks, not retries, timeouts, budget enforcement or structured BLOCKED transitions. `GRAPH_CONTRACT_VALID` is not an execution certificate. Return it only when every contract check passes. Otherwise return `GRAPH_CONTRACT_BLOCKED` with exact failed checks and required corrections.
 
 ## Limitations
 

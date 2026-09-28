@@ -68,10 +68,17 @@ unresolved question is closed. A real first bind returns `BOUND`; execute the
 adapter, bind again to seal the full trial file, and require read-only
 `VERIFIED` evidence before interpreting a release decision.
 
+Approval is declared in the supplied contract; the pilot does not authenticate
+an approver. Re-binding seals current content, so require fresh human review after
+an intent edit. A matching digest alone is not proof of renewed approval.
+
 ## 4. Run trials and grade
 
 Run at least the suite's `minimum_trials_per_case`. Prefer `pm-verifier
 execute` with a JSON-over-stdio adapter so each trial starts in a fresh process.
+Fresh process means process freshness only. Application state reset is the
+adapter's responsibility; files, environment and external services can be shared.
+Declared IDs and fingerprints are not independent proof of state isolation.
 Never send expected answers to the adapter. Require a unique `isolation_id` and
 an `environment_fingerprint` for every trial. Capture the actual final
 environment state as `outcome`; do not substitute the agent's claim about what

@@ -46,9 +46,15 @@ The second half is not hypothetical. In one author-run exercise, a catalog grade
 
 **Two more questions come from reasoning, not from a probe.** B2 (what binds an answer to its request) and B6 (whether the output schema is closed) have no shipped attack behind them. They are in the bank on argument, and the bank says so rather than letting them borrow the others' evidence.
 
-Six of Part B's eight questions are those seven observed failures, generalised. The bank is mostly a failure log turned into an interview, and the two questions that are not are labelled above rather than passed off as evidence-derived.
+Five of Part B's eight questions map to the five wrong acceptances and two wrong rejections above. B8 was preventive; B2 and B6 are reasoning-led questions without shipped attack evidence on this branch.
 
-> **On the numbers in this README.** Every figure here comes from one author-run exercise against a single grader in a single domain, and that grader is not shipped — so nothing here is independently reproducible. `VERIFICATION.md` records the method, the counts and the limitations in full. Read the eight rows above as a failure log that motivated eight questions, not as a benchmark.
+> **Evidence scope.** The runnable grader and recorded probes ship in [`reference/catalog/`](reference/catalog/). They can be replayed, but replay is not independent adjudication or a model benchmark. [`VERIFICATION.md`](VERIFICATION.md) records the methods and limits; the interview's exit test on a filled contract remains unrun.
+
+Versions name different artifacts: plugin `0.1.0`, catalog grader `revised-v2.1`, and catalog contract `v1.5.1`. The reference has known [D4/D2 divergences](reference/catalog/DIVERGENCES.md).
+
+Current replay (2026-09-28): **50/52 revision checks match; the command fails**
+on two optional-field withholding cases. The reference is a learning artifact
+with known defects, not a validated grader to adopt unchanged.
 
 ## Structure
 
@@ -87,20 +93,18 @@ Outputs `CONTRACT.md`, `OPEN_DECISIONS.md` and `PROCESS_LEDGER.md`.
 | Skill | Where it starts and stops |
 |---|---|
 | `model-grader` | asks the 26 questions; ends at a contract and open decisions |
-| `eval-rubric-generator` | turns a settled contract into pass/fail criteria |
-| `pm-verifier` | runs a suite against outputs and issues release evidence |
+| `pm-verifier` | turns settled requirements into evaluation criteria and runs a suite to issue release evidence; it owns the retired `eval-rubric-generator` route |
 
-### No skill in this repository can fix the reference grader
+### Reference implementation boundary
 
 Hard rule 6 forbids this skill from writing grader code, fixtures or scoring,
 and from repairing an existing grader. That is deliberate, and it has a
 consequence worth stating plainly rather than leaving someone to discover:
 
 **`reference/catalog/` ships with known divergences from its own approved
-decisions, and nothing in this repository is allowed to repair them.**
-`DIVERGENCES.md` records D4 and D2. `eval-rubric-generator` starts from a
-settled contract and writes criteria; `pm-verifier` runs suites and issues
-release evidence. Neither modifies a grader either.
+decisions.** `DIVERGENCES.md` records D4 and D2. Fixes belong in an explicitly
+authorized code contribution with tests and review. They are outside this
+interview skill's scope; that boundary does not forbid repository maintenance.
 
 So if you routed "build a grader" here, the work stops at a contract, a list
 of open decisions, and — where a grader already exists — a report saying which

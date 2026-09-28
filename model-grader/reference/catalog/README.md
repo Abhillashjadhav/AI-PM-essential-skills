@@ -1,37 +1,29 @@
 # Reference implementation — supplier catalog grader
 
-A real, runnable grader, built from answers to this skill's question bank. It is
-here as evidence, not as a product: nobody installs a plugin to grade T‑shirts.
-What it demonstrates is that answering the 26 questions produces something an
-implementer can actually build, and what it costs when a question goes unasked.
+A runnable catalog-grading reference used to develop the interview's questions.
+It illustrates implementation and failure cases; it does not establish that a
+new owner can complete the interview and hand off a buildable contract.
+The reference still has the D4/D2 gaps in [DIVERGENCES.md](DIVERGENCES.md).
 
 Python standard library only. No API keys, no network, no model calls.
 
 ```bash
-cd reference/catalog
+cd model-grader/reference/catalog
 python3 run_checks.py
 ```
 
 ## Why it is worth reading
 
-This grader caught **12 of 12** deliberately injected faults, then missed
-**8 of 8** real exploits. Every miss traced to a decision its contract never made —
-which is the whole argument for the question bank. The eight, and the questions
-that would have caught them:
+The recorded exercise includes five wrong acceptances (`ASTRA_A1` through
+`ASTRA_A5`) and two wrong rejections (`FR1`, `FR2`). They motivate B1, B3,
+B4, B5 and B7; B3 covers both directions. B2 and B6 are reasoning-led questions
+without shipped attack fixtures on this branch. B8 was preventive.
 
-| What got through | Question that was never asked |
-|---|---|
-| an invented label contradicting its own numbers | **B1** what may the output add that the source did not |
-| one answer passed as the answer to four different cases | **B2** what binds an answer to its request |
-| a correct answer rejected over `10.0` vs `10` | **B3** which values compare as numbers, which as text |
-| a rule evaded by capitalising one word | **B3** where casing carries meaning |
-| supplied metadata silently dropped | **B4** what must be preserved when unused |
-| a record inherited from a blocked parent and published | **B5** what makes a source fit to depend on |
-| claims parked outside the expected structure | **B6** is the output schema closed or open |
-| currency relabelled, amounts intact | **B7** which request values may never change |
+The [plugin README](../../README.md) maps the recorded probes to questions.
+These are development findings from one domain, not an independent benchmark.
 
 It also produced the two questions the bank was missing entirely. An audit of
-this grader's 47 consumed inputs and 39 issue codes found three with no question
+this grader's 45 extracted inputs and 43 issue codes found three with no question
 behind them — operations and record states, authority and resolution, pending
 corrections. That is where **A9** and **A10** came from, and why both are marked
 found-by-audit rather than reasoned.
@@ -53,10 +45,16 @@ found-by-audit rather than reasoned.
 
 ## What it does not establish
 
+The 2026-09-28 replay exits 1: 50/52 revision expectations match. The two
+failures concern D4's optional-field withholding. Approved cases (3/3),
+injected faults (12/12), metadata checks (25/25), and saved-candidate replay
+(30/30 accepted) do not cancel those failures or resolve D2.
+
 Its two accuracy targets — >98% of published records correct, <0.5% of valid
 submissions wrongly blocked — are **not measured, and cannot be** from what is
 here. Both need a population with independent ground truth. There is none: zero
 sealed cases, and every one of the 52 checks was written by the same builder that
 wrote the grader.
 
-Gate 3 is open. That is the honest state, and leaving it visible is the point.
+Gate 3 remains open. The plugin version (0.1.0), reference implementation
+(revised-v2.1), and contract (v1.5.1) version different artifacts.

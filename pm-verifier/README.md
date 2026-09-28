@@ -4,7 +4,7 @@
 
 AI Evals for PMs is an evidence-first, out-of-band evaluation and release-gating
 product for AI features and agents. It turns a feature specification or
-existing evaluation into a versioned suite, runs isolated repeated trials,
+existing evaluation into a versioned suite, runs repeated trials in fresh processes,
 grades real outcomes, trajectories, end-to-end system checkpoints, and promised
 memory/state behavior, validates calibrated model judgments, exposes failures,
 and emits auditable `PASS`, `FAIL`, or `BLOCKED` evidence for CI and accountable
@@ -251,7 +251,7 @@ The executable tests cover:
 - explicit release gates versus diagnostic trajectory checks;
 - partial capability-quality scores that cannot bypass binary gates;
 - fresh-process stdio execution and adapter failure blocking;
-- unique trial isolation and environment fingerprints;
+- unique declared isolation IDs and correctly shaped environment fingerprints;
 - deterministic results from identical evidence;
 - report/inspection secret redaction;
 - installable package, console entry point, and versioned schemas;
@@ -285,6 +285,21 @@ the product explicitly promises persistent state.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — layers, states, files, and trust boundaries
 - [`docs/COMPLETE_EVAL_SUITE.md`](docs/COMPLETE_EVAL_SUITE.md) — PMOS-to-engineering handoff and four-surface contract
 - [`docs/MIGRATION.md`](docs/MIGRATION.md) — source-to-destination capability map and consolidation plan
+
+## Trial and approval trust boundaries
+
+A fresh process does not reset files, inherited environment variables, databases
+or remote services. The product adapter owns that reset and truthfully reports
+its isolation ID, fingerprint and outcome; the harness checks the declarations,
+not the external environment itself.
+
+The repository pilot checks a declared approver and `GO` decision in its supported
+PMOS schema (the bundled flat schema 1.0 with FR/AC traceability). Newer PDC
+exports require an adapter change; this branch does not claim generic PDC
+compatibility. The pilot does not authenticate the approver or verify a signature. A digest
+catches edits after binding. Re-binding reads the current files and creates a new
+binding, so an edited-and-rebound contract requires fresh human review. `VERIFIED`
+means the supported evidence checks passed, not that a person approved new content.
 
 ## Production boundary and limitations
 

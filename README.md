@@ -2,7 +2,9 @@
 
 **Install focused Claude Code plugins for the product decisions that make AI systems expensive, unreliable, or difficult to ship.**
 
-This repository is the distribution hub for seven installable plugins. Each plugin solves a distinct job, ships examples and validation fixtures, and is designed to produce a useful artifact within one working session.
+This repository is a Claude Code marketplace with **8 installable plugins** for AI product work: defining acceptance criteria, evaluating a feature, designing recurring workflows, and reviewing context or writing. The catalogue is maintained in [marketplace.json](.claude-plugin/marketplace.json).
+
+Start with the job table below, then inspect the plugin's example and [validation evidence](docs/VALIDATION.md). The plugins have different levels of evidence: some ship deterministic Python runtimes; others provide instructions and manual review cases. Collection-wide live-model quality and fresh-machine installation have not been verified.
 
 ## Install your first plugin
 
@@ -18,25 +20,28 @@ Create an eval for this feature.
 ```
 
 **AI Evals for PMs**, installed as `pm-verifier`, turns the specification into
-a versioned evaluation suite, isolated repeated-trial evidence, outcome,
+a versioned evaluation suite, repeated-trial evidence, outcome,
 trajectory, end-to-end system, and optional memory/state grading, calibrated
 model judgments, failure analysis, and an auditable release decision.
 Its guided customer-support pilot can also bind approved PMOS intent, the eval
 contract, Engineering AgentOS, candidate code, and observed evidence without
 changing the stable public CLI. A canonical receipt seals the complete trial
-file before the pilot can return `VERIFIED`.
+file before the pilot can return `VERIFIED`. Each executed trial uses a fresh
+process; the product adapter owns state reset. PMOS approval is declared in
+the supplied contract, not authenticated by this harness.
 
 ## Choose the job you need done
 
 | Plugin | Use it when you need to… | Ask Claude Code | First useful result |
 |---|---|---|---|
-| **[AI Evals for PMs](pm-verifier/)** (`pm-verifier`) | Turn a PRD, PMOS contract, traces, or an existing suite into an evidence-backed release decision | `Create a complete eval for this feature` | Portable PMOS/eval/engineering contract chain, versioned four-surface suite, isolated trials, failure inspection, and `PASS`, `FAIL`, or `BLOCKED` evidence |
+| **[AI Evals for PMs](pm-verifier/)** (`pm-verifier`) | Turn a PRD, PMOS contract, traces, or an existing suite into release evidence | `Create a complete eval for this feature` | Versioned suite, trials in fresh processes, failure inspection, and `PASS`, `FAIL`, or `BLOCKED` evidence |
 | **[pm-tactical](pm-tactical/)** | Make daily PM work cheaper, faster, and self-checking | `Check whether this task needs a stronger model` | Model routing, frozen-spec validation, prompt optimization, context audit, or project-memory update |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
 | **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
 | **[mcp-migration-auditor](mcp-migration-auditor/)** | Check MCP configurations against the 2026 specification changes | `Audit my MCP setup` | Per-server `BREAKS`, `DEGRADED`, or `SAFE` verdicts with cited fixes |
 | **[pm-human-writer](pm-human-writer/)** | Preserve a PM's voice while removing recognisable AI-writing patterns | `Rewrite this without flattening my judgment` | Voice-protected rewrite with named edits and evidence constraints |
 | **[ai-feature-kill-criteria](ai-feature-kill-criteria/)** | Decide whether an AI feature deserves a prototype | `Define kill criteria for this AI feature` | Falsifiable claim, approved thresholds, cheapest decisive test, owner, and decision date |
+| **[model-grader](model-grader/)** | Define correct output before someone builds a grader | `Define the contract for this grader` | Owner decisions, open questions, and a buildability review; the skill does not implement the grader |
 
 Install any plugin with the same two-step pattern:
 
@@ -48,6 +53,8 @@ claude plugin install <plugin-name>@ai-pm-skills
 ## Case study: one AI feature, first a loop, then a graph
 
 A team is preparing an **AI support-ticket summarizer** for launch. The candidate sometimes omits escalation reasons or introduces unsupported customer facts. The team needs to improve one candidate and then decide whether it is safe and useful enough to release.
+
+This is a design example. Budgets, reviewer separation, durable state and deployment controls require implementation in the chosen runtime; a generated prompt alone does not enforce them.
 
 ### Part 1 — Use a loop for nightly candidate improvement
 
@@ -199,14 +206,15 @@ See the sample audit in [`mcp-migration-auditor`](mcp-migration-auditor/).
 | [`mcp-migration-auditor/`](mcp-migration-auditor/) | MCP compatibility and migration plugin |
 | [`pm-human-writer/`](pm-human-writer/) | Voice-preserving product-writing plugin |
 | [`ai-feature-kill-criteria/`](ai-feature-kill-criteria/) | Pre-build AI feature decision-contract plugin |
+| [`model-grader/`](model-grader/) | Grader-contract interview and a catalog reference with documented limitations |
 | [`tests/`](tests/) | Manifest, trigger, policy, and known-answer fixtures |
 
 ## Additional tools in this repository
 
-These remain available but are not the seven marketplace products above:
+These are separate from the marketplace plugins above:
 
 - [`token-cost-estimator/`](token-cost-estimator/) — compare projected model cost and latency; verify current prices from official sources.
-- [`context-auditor/`](context-auditor/) — identify poisoning, distraction, and conflicting supplied context.
+- [`context-auditor/`](context-auditor/) — review four context failure categories: poisoning, distraction, confusion, and clash, adapted from [Drew Breunig's “How Long Contexts Fail”](https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html).
 - [`concise-rewriter/`](concise-rewriter/) — reduce supplied text and report token change.
 - [`context-port/`](context-port/) — separate local-first context-package validation and migration toolkit.
 

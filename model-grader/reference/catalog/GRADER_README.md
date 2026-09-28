@@ -10,7 +10,13 @@ Python standard library only. Reports include the actual environment and per-che
 
 ## Result
 
-All 3 approved judgments, 12 original faults, 52 revision checks and 25 new metadata-boundary checks matched their expectations. All 30 saved candidate outputs still pass. These are development checks and replay, not a measured model score. The 25 new checks compare the full decision, supplier guidance and publication data before and after metadata changes.
+Re-run on 2026-09-28: 3/3 approved judgments, 12/12 original faults,
+50/52 revision checks and 25/25 metadata-boundary checks matched. The two
+revision failures concern optional-field withholding and match the open D4
+divergence. `run_checks.py` exits 1; this is not a passing reference suite.
+All 30 saved candidate outputs are accepted. These are development checks and
+replay, not a measured model score. Metadata checks compare the decision,
+supplier guidance and publication data before and after metadata changes.
 
 ## Internal versus published
 
@@ -24,4 +30,4 @@ Supported extra descriptions remain allowed in fields with evidence. Unknown fac
 
 The independent reviewer should adjudicate fresh variants; the owner still needs the agreed sample of eight judgments and ten sealed cases prepared outside this builder thread. The 98% publication correctness / 0.5% wrong-rejection targets are not established by these checks. No fresh Sol, Sonnet, Astra or Fable call occurred.
 
-See REVIEW_WITH_CLAUDE.md for independent execution and SETUP.md for source authority setup.
+See [SETUP.md](SETUP.md) for source authority setup and [DIVERGENCES.md](DIVERGENCES.md) for known gaps. Independent adjudication remains pending.
