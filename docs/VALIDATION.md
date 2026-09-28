@@ -72,7 +72,7 @@ name the scope reviewed. No plugin has a verified fresh-install test here.
 | mcp-migration-auditor | Source-cited rules and sample audit | No live server compatibility test | Live skill quality unknown | Config-only evidence leaves some capabilities unconfirmed |
 | pm-human-writer | Checker compares stored examples and required text | No live rewrite execution | Editing quality unknown | Author must review voice and factual preservation |
 | ai-feature-kill-criteria | Skill, README example, manual trigger cases | No evaluation runtime | Live skill quality unknown | Owner supplies thresholds and investment decision |
-| model-grader | Interview, template audit and author-run walkthroughs | Catalog reference replay, with known D4/D2 divergences | Saved catalog candidate outputs; not an interview-quality test | Filled-contract exit test and independent adjudication remain open |
+| model-grader | Interview, template audit and author-run walkthroughs | Catalog replay and payload regressions; D4/D2 repaired | Saved catalog candidate outputs; not an interview-quality test | Filled-contract exit test and independent adjudication remain open |
 | ContextPort (toolkit) | Schemas and synthetic fixtures | Local validation and migration tests | No hosted model required | Real export migration and destination writes unverified |
 | Three standalone skills | Metadata and acceptance examples | No model or tokenizer runtime | No recorded live runs | Token, price and context claims require task-specific evidence |
 

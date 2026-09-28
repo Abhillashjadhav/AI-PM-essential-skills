@@ -31,6 +31,11 @@ jobs:
       - name: Check verifier runtime on every PR
         run: python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -q
 
+      - name: Check catalog reference and publication regressions
+        run: |
+          python3 model-grader/reference/catalog/run_checks.py
+          python3 -m unittest discover -s tests/model-grader -q
+
       - name: Verify marketplace installation sources are copyable
         run: |
           python3 - <<'PY'

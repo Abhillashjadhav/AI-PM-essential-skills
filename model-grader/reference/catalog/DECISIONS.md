@@ -9,11 +9,11 @@ an approved rule implemented wrongly is an implementation defect, reported as on
 | # | Scenario | Required behaviour | Implemented? |
 |---|---|---|---|
 | 1 | Parent has conflicting material composition | Hold the parent and affected children. A child's own matching evidence does not resolve the parent's conflict in a shared material attribute. | ✅ verified |
-| 2 | Parent lacks its own price; shared attributes validated | An otherwise complete child may publish as an individual product. It does not become a parent. Retain the intended relationship internally and link when the parent is ready. | ⚠️ partial |
+| 2 | Parent lacks its own price; shared attributes validated | An otherwise complete child may publish as an individual product. It does not become a parent. Retain the intended relationship internally; omit dangling payload links. Later relinking is a manual supplier action (scope ruling `f2aaec8` in #54). | ✅ payload projection checked; later relinking is a manual supplier action |
 | 3 | Conflicting descriptions, unapproved authoritative source | Recommend a correction to the seller. A database designation does not substitute for seller approval. | ✅ verified |
-| 4 | Only an optional description conflicts | Withhold the disputed description, publish the otherwise valid product, warn the seller. Do not block the whole product. | ❌ not implemented |
+| 4 | Only an optional description conflicts | Withhold the disputed description, publish the otherwise valid product, warn the seller. Do not block the whole product. | ✅ implemented and checked |
 | 5 | "60% cotton, polyester" with no polyester percentage | Preserve both internally, mark polyester's percentage not supplied, never infer 40%. Display "60% cotton". | ✅ verified |
-| 6 | Certification document uploaded, not approved | Hold the entire product. An attachment alone is insufficient. | ✅ verified (per-SKU; see open question a) |
+| 6 | Certification document uploaded, not approved | Hold the family until approval, per the later owner clarification in #54. An attachment alone is insufficient. | ⚠️ current code is per-SKU; later family-wide decision/fix in #54 is not integrated |
 | 7 | Supplier explicitly chooses US/USD | Use the selected market and currency. India/INR defaults must not override. No invented FX, no relabelling. | ✅ verified |
 | 8 | Size chart assigns one measurement to two sizes | Hold the affected SKU and ask the seller to resolve. Never choose automatically. | ✅ verified |
 
@@ -21,6 +21,10 @@ an approved rule implemented wrongly is an implementation defect, reported as on
 catalog, but must not alter public facts, grading, or automated actions.
 Publication and action-taking consume an explicit projection of checked data,
 never the raw submission.
+
+The D4 seller warning is grader-generated and deterministic, as recorded in
+#54. `WITHHELD_FIELD_PUBLISHED` is owner-approved (`5cf24e4`). See
+[DIVERGENCES.md](DIVERGENCES.md) for the imported scope and evidence.
 
 ## Accuracy targets
 

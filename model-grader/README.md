@@ -50,11 +50,12 @@ Five of Part B's eight questions map to the five wrong acceptances and two wrong
 
 > **Evidence scope.** The runnable grader and recorded probes ship in [`reference/catalog/`](reference/catalog/). They can be replayed, but replay is not independent adjudication or a model benchmark. [`VERIFICATION.md`](VERIFICATION.md) records the methods and limits; the interview's exit test on a filled contract remains unrun.
 
-Versions name different artifacts: plugin `0.1.0`, catalog grader `revised-v2.1`, and catalog contract `v1.5.1`. The reference has known [D4/D2 divergences](reference/catalog/DIVERGENCES.md).
+Versions name different artifacts: plugin `0.1.0`, catalog grader `marketplace-d4-d2-v1`, and catalog contract `v1.5.1`. The [D4/D2 repair record](reference/catalog/DIVERGENCES.md) explains the imported decisions and remaining scope.
 
-Current replay (2026-09-28): **50/52 revision checks match; the command fails**
-on two optional-field withholding cases. The reference is a learning artifact
-with known defects, not a validated grader to adopt unchanged.
+Current replay (2026-09-28): **55/55 revision checks match; the command passes**,
+along with 3/3 approved cases, 12/12 fault injections and 31/31 metadata/payload
+checks. Six additional publication regression tests pass. These development
+checks do not establish either accuracy target or the interview's exit condition.
 
 ## Structure
 
@@ -101,10 +102,10 @@ Hard rule 6 forbids this skill from writing grader code, fixtures or scoring,
 and from repairing an existing grader. That is deliberate, and it has a
 consequence worth stating plainly rather than leaving someone to discover:
 
-**`reference/catalog/` ships with known divergences from its own approved
-decisions.** `DIVERGENCES.md` records D4 and D2. Fixes belong in an explicitly
-authorized code contribution with tests and review. They are outside this
-interview skill's scope; that boundary does not forbid repository maintenance.
+**`reference/catalog/` is maintained through separate code contributions.**
+D4 and D2 were repaired with tests and review under explicit owner authorization.
+Later grader policy and evaluation work remains separate; see `DIVERGENCES.md`.
+Repository maintenance is outside this interview skill's scope.
 
 So if you routed "build a grader" here, the work stops at a contract, a list
 of open decisions, and — where a grader already exists — a report saying which
