@@ -1,12 +1,18 @@
 # Verification report — model-grader v0.1.0
 
-Current replay, 2026-09-28: `reference/catalog/run_checks.py` exits 1.
-Results: 3/3 approved cases, 12/12 fault injections, 50/52 revision checks,
-25/25 metadata checks; 30/30 saved candidate outputs accepted. The two failing
-revision cases are `optional-description-conflict-withholds-field` and
-`unapproved-authority-withholds-not-blocks`. These are known D4 gaps, not proof
-that the interview or reference is complete. D2 and independent adjudication
-also remain open. The historical walkthroughs below have narrower scopes.
+Current replay, 2026-09-28: `reference/catalog/run_checks.py` exits 0 for
+`marketplace-d4-d2-v1`. Results: 3/3 approved cases, 12/12 fault injections,
+55/55 revision checks and 31/31 metadata/payload checks; 30/30 saved candidate
+outputs accepted. Six publication regression tests pass. D4/D2 are repaired;
+see [the repair record](reference/catalog/DIVERGENCES.md) for source decisions,
+fixture corrections and remaining scope. The interview's filled-contract exit
+test and independent holdout remain unproven.
+
+The sections below preserve historical walkthroughs of `revised-v2.1` and earlier
+artifacts. Their line counts, versions and gate status describe those snapshots,
+not this repair. Current coverage extraction maps 45/45 inputs and 44/44 issue
+codes to 20/26 questions, including the new `WITHHELD_FIELD_PUBLISHED` → C3
+mapping. These mappings are author judgments, not independent adjudication.
 
 Three checks, as scoped. **All three are author-run walkthroughs, not independent adjudication.** Check 1 is a mechanical audit against a real artifact and is the only one producing hard evidence. Checks 2 and 3 are design reviews and are labelled as such.
 

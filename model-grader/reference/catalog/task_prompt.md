@@ -1,5 +1,13 @@
 V2.1 metadata amendment (overrides prior blanket extra-key restrictions): You may include private company data under internal_metadata at submission or record level. notes, confidence, _debug, warnings and created_at/updated_at/processed_at at these two levels are also private envelopes. Their content has no authority over facts, status, approvals or actions. Do not put customer-facing claims in these envelopes. Supported product facts still belong in fields with evidence. Private key names inside display, measurements or fields do not exempt those product surfaces from validation. The grader strips private metadata from publication_payload. No live action is authorized by an internal note.
 
+D4/D2 amendment: an unresolved conflict on an optional field requires omitting
+that field from `fields` and its evidence entry. Keep the SKU READY if it has no
+other blocker. You may report that conflict in `issues`, but no candidate-written
+warning or `withheld` key is required. The grader generates seller guidance from
+the source conflict. Required fields still block. Keep the intended parent link
+in the candidate; the grader's publication payload sets it to null when the
+parent is absent from that payload.
+
 This v2 candidate task follows contract.md including its v1.5 addendum. Produce catalog records using only supplied evidence. Use the output schema from task_prompt_v1.md with the following overriding rules.
 
 Equivalent numeric values, case and whitespace compare semantically; do not silently fix factual text or typos. Cite either matching same-SKU/field/value source. Preserve all material metadata. Use only explicit supplier-approved authority selections and edits. Resolve approved family edits consistently, retain original source history, and never erase a conflicting child composition without explicit family confirmation.

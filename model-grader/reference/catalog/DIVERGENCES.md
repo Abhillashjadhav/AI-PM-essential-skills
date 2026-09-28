@@ -1,63 +1,63 @@
-# Divergences from the approved decisions
+# Catalog repair status
 
-Executed against `revised-v2.1`. Every result below came from a run, not a reading.
+Checked on 2026-09-28 against `marketplace-d4-d2-v1`.
 
-## D4 · Optional-field conflict blocks the whole SKU — architectural
+## D4 — optional-field withholding repaired
 
-**Decision 4 requires:** withhold the disputed description, publish the otherwise
-valid product, warn the seller.
+A conflict on an optional field withholds that field and leaves an otherwise
+valid SKU eligible for publication. Required-field conflicts still block.
+Candidate reporting of the optional conflict is permitted but not required;
+the grader generates the seller warning from the source evidence. Publishing
+the disputed field fails the SKU and excludes it from the payload.
 
-**Implementation does:** blocks the entire SKU.
+The implementation includes the existing follow-up repairs for inherited
+optional fields, family comparisons and optional issue reporting. Warnings now
+also use final payload eligibility: a source classified READY whose candidate
+fails validation is not described as published.
 
-**Root cause.** The status rule is `wanted = 'BLOCKED' if expected else 'READY'`.
-Any issue blocks the whole record. `SOURCE_CONFLICT` fires on optional fields
-exactly as on required ones. The publication payload is all-or-nothing per record.
-There is no field-withholding path.
+## D2 — dangling payload links repaired
 
-**Executed.** P1 carrying only a disputed `description` → expected status
-`BLOCKED`, absent from the publication payload.
+The candidate retains its intended parent relationship. The payload includes
+the parent link only when that parent also publishes in the same result;
+otherwise `parent_sku` is null and the child's role is preserved. Inputs are not
+mutated. Later relinking is a manual supplier action under the recorded owner
+scope ruling, not an asynchronous feature of this grader.
 
-**Also:** `revision_checks.json` entry `optional-description-conflict-needs-authority`
-encodes the superseded policy — expects `PASS` with P1 `BLOCKED`, rule text
-*"Unresolved optional contradiction still needs authority."* It will keep passing
-while being wrong. This is a builder-authored expectation standing in for an
-owner decision, which the four-gate model exists to make visible.
+## Source and fixture changes
 
-**Required change.** A `WITHHELD` outcome for a single field, distinct from
-blocking the SKU; the withheld field omitted from the payload while the rest
-publishes; seller guidance emitted for it. Optional-field conflict blocks
-nothing else; required-field conflict still blocks.
+This repair reuses the repository's existing work in
+[PR #54](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/54):
 
-**OPEN — how the seller guidance is carried.** Decision 4 says "warn the
-seller". It does not say through which channel, and an earlier revision of
-this file asserted the warning must be candidate-written and grader-checked.
-That was the writer's over-specification, not an owner decision, and it is
-withdrawn. Two options, both consistent with decision 4:
+- Runtime and D4/D2 checks through `c612f67` include the three follow-up repairs.
+- `c522a9d` records the owner ruling that withholding means field absence, without
+  a candidate-written `withheld` marker. The two old failing fixture shapes are
+  corrected accordingly; their expected PASS outcomes are preserved. Three new
+  cases check both acceptance and rejection, giving 55 revision checks.
+- The owner approved `WITHHELD_FIELD_PUBLISHED` in `5cf24e4`; it fails the SKU,
+  rather than silently sanitizing and approving the submitted record.
+- `f2aaec8` records that later relinking is outside the grader's obligations.
 
-| Option | What it means | Cost |
-|---|---|---|
-| **Grader-computed** | the grader derives the guidance from the conflict it detected and reports it, as it already does for `guided_help` | nothing new for the candidate to get wrong; the grader cannot check whether the model understood the conflict |
-| **Candidate-written, grader-checked** | the model must emit the warning and the grader verifies it names the field and the conflicting sources | tests whether the model actually understood; adds a new required output field and a new way to fail |
+The imported source remains attributed. This integration is a new version;
+it does not rewrite or claim to be frozen v2.2/v2.3 or the later v2.6 work.
 
-Unsettled. The owner decides. The D4 implementation should not assume either
-until they do.
+## Executed evidence
 
-## D2 · Child publishes, but carries a dangling parent reference — partial
+- Reference command exits 0: 3/3 approved cases, 12/12 original faults,
+  55/55 revision checks and 31/31 metadata/payload checks match.
+- All 30 saved candidates are accepted; no fresh model run occurred.
+- Six publication regression tests pass, including source/candidate rejection,
+  inherited fields and both parent-link directions. CI runs them and the
+  reference command on every PR.
 
-**Decision 2 requires:** the child publishes as an individual product, does not
-become a parent, and the intended relationship is retained internally and linked
-when the parent is ready.
+## Remaining scope
 
-**Implementation does:** the child publishes correctly. `price` is not in `SHARED`,
-so a parent missing price produces no `PARENT_UNRESOLVED` on the child.
+The later family-wide certification decision and implementation in #54 are not
+part of this narrow D4/D2 integration. The current certification behavior is
+still per-SKU. Later grader PRs also contain input-format, sealed-case and
+additional ruling work that needs its own combined review. None of those PRs
+was bulk-merged or marked obsolete by this repair.
 
-**But:** the payload row for the child carries `role: child` and `parent_sku: P1`
-while P1 is absent from the payload. A downstream consumer sees a child pointing
-at a parent that is not there.
-
-**Executed.** Parent price removed → P1 `BLOCKED`, C1 `READY`, payload `['C1']`,
-C1 row `role: child`, `parent_sku: P1`.
-
-## Verified against the decisions
-
-1, 3, 5, 6 (per-SKU), 7, 8 — see `DECISIONS.md` for the evidence per decision.
+The interview's exit test on a filled contract and an independently adjudicated
+holdout are not established here. The >98% correct-publication and <0.5% wrong-
+rejection targets remain unmeasured. A passing development suite does not
+certify the reference for production use.

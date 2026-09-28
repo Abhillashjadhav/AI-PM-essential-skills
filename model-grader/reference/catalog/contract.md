@@ -156,7 +156,7 @@ Each fixture carries the frozen profile version, the relevant finite allowed val
 - Business decisions incorporated: supplier-resolved parent-first gate, strict company size boundaries, source binding before conversion tolerance, general display rules, generic material acceptance without a percentage floor, and retained error ordering.
 - Latest owner amendments: parent price is mandatory too; India/INR is configured once; country/currency configuration must remain flexible (e.g. US/USD). Changing the destination currency does not supply an exchange rate or a destination selling price. Cross-country repricing rules and FX execution remain outside this India case; never merely relabel an INR amount as USD.
 - Day 2 prediction to test: does the grader catch unauthorized enrichment even when the candidate cites a real child fact? Include the rank-1 fault injection of a spurious supplier-resolution block.
-- Current implementation status: `grader.py`, development checks, saved candidate replay and attack probes ship here. Full dataset/gold approval beyond the three recorded judgments, an independent held-out comparison and the expertise test remain pending. See `DIVERGENCES.md` for D4/D2 gaps; passing development expectations does not close them.
+- Current implementation status: `grader.py`, development checks, saved candidate replay and attack probes ship here. Full dataset/gold approval beyond the three recorded judgments, an independent held-out comparison and the expertise test remain pending. See `DIVERGENCES.md` for the D4/D2 repair and remaining policy/evaluation scope; passing development expectations is not independent validation.
 
 ## Prompt for JudgeLLM
 
