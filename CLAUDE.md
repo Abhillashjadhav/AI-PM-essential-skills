@@ -1,7 +1,7 @@
-# pm-claude-skills
+# AI PM Skills Marketplace
 
 ## What this repo is
-Four Claude Code skills built for AI product managers. Each solves a real problem in the AI PM workflow — inference economics, eval design, context reliability, and output compression.
+The catalogue in `.claude-plugin/marketplace.json` contains **8 installable plugins** for AI product managers. Three standalone utilities and the ContextPort toolkit also live here. Read `README.md` for product boundaries and `docs/VALIDATION.md` for the evidence available for each product; installation and live skill quality are not established by static checks.
 
 ## PR rules (non-negotiable)
 - Every change to a SKILL.md goes through a PR. No direct pushes to main.

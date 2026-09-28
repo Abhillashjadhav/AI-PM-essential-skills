@@ -5,8 +5,9 @@ description: >
   usage, or improve the signal-to-noise ratio of any text. Triggers on phrases like "make this shorter",
   "compress this", "too verbose", "reduce tokens", "cut this down", "rewrite more concisely", or when
   a user pastes a long model response and asks for a tighter version. Rewrites the input at the same
-  information density, shorter — then reports the exact before/after token count and percentage reduction.
+  information density, shorter — then reports measured token counts or clearly labeled estimates.
   Not a summary. A rewrite. Every piece of meaning is preserved.
+  Do not use it to remove facts or to claim exact counts without a matching tokenizer.
 argument-hint: "<paste verbose text to compress>"
 ---
 
@@ -38,19 +39,20 @@ These are the patterns that inflate model output. Cut all of them:
 ## What you produce
 
 ### Step 1: Token count (before)
-Count the tokens in the input. State the count plainly.
+Use a tokenizer for the target model when available. Record its identifier, tool, and exact text scope. Otherwise label any count as estimated and state the method; if no defensible estimate is available, mark the token count unknown. Do not infer an exact count by visual inspection.
 
 ### Step 2: Rewrite
 Produce the compressed version. Same information. Shorter. Active voice. No bloat patterns.
 
 ### Step 3: Token count (after)
-Count the tokens in the rewritten output. State the count.
+Count the rewrite with the same tokenizer, configuration, and text scope as the input. If estimating, use the same estimation method and label both counts and the reduction as approximate. Do not compare measurements made with different tokenizers or scopes.
 
 ### Step 4: Reduction report
 ```
-Before: [N] tokens
-After:  [N] tokens
-Reduction: [N] tokens ([X]%)
+Method: [tokenizer/tool and scope, or estimation method]
+Before: [N measured / approximately N / unknown] tokens
+After:  [N measured / approximately N / unknown] tokens
+Reduction: [N tokens and X%, measured or approximate; unknown if counts unavailable]
 
 Bloat patterns removed:
 - [pattern type]: [example from input]
@@ -61,5 +63,17 @@ Bloat patterns removed:
 - Do not remove facts. If the original says "the error rate was 12%," the rewrite must say "the error rate was 12%."
 - Do not soften claims. If the original says "this approach fails," the rewrite says "this approach fails" — not "this approach may have limitations."
 - Do not change the author's position. Compression is not editing for opinion.
+- Preserve meaningful uncertainty, exceptions, and qualifications; remove a hedge only if doing so leaves the claim unchanged.
 - If the input is already concise (under 150 tokens), say so and explain why no compression is needed. Do not pad it out to justify running the skill.
-- Report real token counts. Do not estimate loosely. Use your best token-counting ability and state if it is approximate.
+- Claim exact token counts only when a matching tokenizer was run or its measurement was explicitly supplied. Attribute supplied measurements and label estimates. Never turn character or word counts into supposedly measured token counts.
+- Calculate reduction as `(before - after) / before * 100` only with comparable, nonzero counts. For empty input, report no rewrite and no percentage; report a negative reduction honestly if the rewrite grows.
+
+## README: acceptance examples
+
+- Input: "Shorten: 'The rollout may reduce errors if the pilot succeeds.' No tokenizer is available." Expected: preserve the uncertainty and condition; label any counts approximate with a method, or leave them unknown. Do not claim exact counts or guaranteed savings.
+- Input: "For the same tokenizer and text scope, supplied measurements are 200 tokens before and 150 after." Expected: attribute the measurements to the user and report 50 tokens / 25% reduction. Do not claim to have run the tokenizer.
+- Input: empty text. Expected: no rewrite, no division by zero, and no percentage-reduction claim.
+
+## Limitations
+
+This skill does not supply a tokenizer or prove that a rewrite preserves every nuance. Compare the output with the source. The acceptance examples are expectations, not recorded live model results.

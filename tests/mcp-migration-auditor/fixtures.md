@@ -1,7 +1,7 @@
-# Gate 2 — Trigger accuracy
+# Manual gate 2 — Trigger expectations
 
 SHOULD FIRE:
-T1. "Audit my MCP setup before the new spec lands"
+T1. "Audit my MCP setup against protocol 2026-07-28"
 T2. "Check MCP compatibility for our servers"
 T3. "Will my MCP servers break on the 2026 spec?"
 T4. "We need an MCP spec migration plan — what's affected?"
@@ -14,7 +14,7 @@ N3. "Install the Slack MCP server"                   (installation)
 N4. "What is MCP?"                                   (knowledge question)
 N5. "Write an MCP server for our ticket system"      (building, not auditing)
 
-# Gate 3 — Functional known-answer (end-to-end)
+# Manual gate 3 — Expected audit
 
 INPUT: mcp-migration-auditor/skills/mcp-migration-auditor/examples/sample-mcp-config.json
 (three servers: ticket-gateway = stateful HTTP with Mcp-Session-Id header and
@@ -28,9 +28,9 @@ EXPECTED (reference output in examples/sample-audit-output.md):
   with the SEP-2596 12-month lifecycle note; fix = direct LLM provider API.
   Must NOT be marked BREAKS: stdio transport is safe, only the sampling
   capability degrades it
-- local-files → SAFE, rule R6, stated plainly with no invented caveats
+- local-files → SAFE for the HTTP-session check, rule R6; other rules remain unconfirmed
 - Output includes the table (server → status → rule → fix) and a prioritized
-  checklist with BREAKS first and deadline framing against 2026-07-28
+  checklist with observed BREAKS first, target revision and deployed version
 - Every verdict cites a SEP that appears in references/spec-changes.md with a
   source URL — no rule outside that file may be asserted
 - R4 (Tasks) must NOT be asserted for any server (no Tasks evidence in the
@@ -39,5 +39,5 @@ EXPECTED (reference output in examples/sample-audit-output.md):
 
 ALL-CLEAR CASE:
 INPUT: a config containing only local-files (plain stdio, no capability flags)
-EXPECTED: one-line all-clear — all servers stdio/local and unaffected by the
-2026-07-28 transport/session changes; no table of non-findings, no false alarms
+EXPECTED: clear the HTTP-session check only; ask about unseen capabilities.
+Do not claim full conformance, invent a breakage, or show a negative countdown.

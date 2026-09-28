@@ -107,6 +107,6 @@ Return exactly these sections:
 
 Do not convert missing evidence into confidence. Do not soften a kill threshold after seeing poor results unless the original threshold was demonstrably invalid; record that as a new decision contract.
 
-## Limits
+## Limitations
 
 This skill structures a decision. It does not prove market demand, validate model performance, set thresholds without accountable human approval, or own the final investment decision.

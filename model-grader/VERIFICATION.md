@@ -1,5 +1,13 @@
 # Verification report — model-grader v0.1.0
 
+Current replay, 2026-09-28: `reference/catalog/run_checks.py` exits 1.
+Results: 3/3 approved cases, 12/12 fault injections, 50/52 revision checks,
+25/25 metadata checks; 30/30 saved candidate outputs accepted. The two failing
+revision cases are `optional-description-conflict-withholds-field` and
+`unapproved-authority-withholds-not-blocks`. These are known D4 gaps, not proof
+that the interview or reference is complete. D2 and independent adjudication
+also remain open. The historical walkthroughs below have narrower scopes.
+
 Three checks, as scoped. **All three are author-run walkthroughs, not independent adjudication.** Check 1 is a mechanical audit against a real artifact and is the only one producing hard evidence. Checks 2 and 3 are design reviews and are labelled as such.
 
 ---
@@ -18,7 +26,7 @@ Three checks, as scoped. **All three are author-run walkthroughs, not independen
 | `authority_registry`, `approved`, `supplier_edits`, `family_wide` | nothing asked who resolves a disagreement, what makes a resolution binding, or how far it propagates | **A10 · Authority and resolution** (A8 at the time) |
 | (combined) | the bank asked what makes a source *fit to depend on* (B5) but never who decides when two sources disagree | folded into A10 |
 
-After adding the two questions this audit produced — numbered A7 and A8 at the time, A9 and A10 since Part A gained two upstream questions — **47 of 47** consumed inputs and **39 of 39** issue codes trace to at least one question. Both new questions carry a "found by audit, not by design" note in the bank, so a reader knows which questions are evidence-derived rather than reasoned.
+Historical record (superseded by the re-run below): after adding the two questions this audit produced — numbered A7 and A8 at the time, A9 and A10 since Part A gained two upstream questions — **47 of 47** consumed inputs and **39 of 39** issue codes trace to at least one question. Both new questions carry a "found by audit, not by design" note in the bank, so a reader knows which questions are evidence-derived rather than reasoned.
 
 **Re-run against `grader.py`, now that the reference ships.** The original numbers could not be reproduced and all three were wrong. `reference/catalog/coverage_audit.py` re-runs the audit; anyone can check it.
 
@@ -98,7 +106,7 @@ The file also covers the third case that gets misfiled most often: a malformed f
 
 1. **Does the interview need a short path for single-field generative tasks?** Check 2 suggests yes; there is no evidence yet. Do not add one until a real interview proves it tedious.
 2. **Should A8 permit any self-resolution?** The bank recommends no and asks the owner. Left open deliberately.
-3. **Is 24 the right number?** It is what one audit produced. A second audit in a different domain is the way to find out, and the honest expectation is that it adds one or two.
+3. **Is 26 the right number?** It is what one audit produced. A second audit in a different domain is the way to find out, and the honest expectation is that it adds one or two.
 
 ## Check 4 · Automated review sweep *(EXECUTED — not independent adjudication)*
 

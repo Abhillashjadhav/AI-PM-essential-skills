@@ -4,7 +4,7 @@ Three parts. **Part A** makes a grader possible to write. **Part B** makes it ha
 
 Ask at most three per turn. Quote the spec where it already answers one.
 
-Ten in Part A, eight in each of B and C. A9 and A10 were added after an audit of a working grader found it consumed inputs no question asked for. A1 and A2 were added after a build dry-run found an implementer could not write a first check without them. The note on each says so.
+Ten in Part A, eight in each of B and C. A9 and A10 came from a working-grader audit. A1 and A2 came from a blank-template slot review, not an exit test on a filled contract.
 
 ---
 
@@ -20,7 +20,7 @@ Without these, the first line of a check cannot be written.
 
 **Complete answer names:** the grader's arguments; its return shape; the unit a verdict attaches to; and if the contract also sets rates across a run, whether measuring them is the grader's job or the harness's.
 
-*Found by dry-run, not by design — see `VERIFICATION.md` Check 5.*
+*Found by blank-template slot review — see `VERIFICATION.md` Check 5.*
 
 ## A2 · Reference-based or rule-based
 
@@ -107,7 +107,7 @@ Without these, the first line of a check cannot be written.
 
 # Part B · Integrity — what stops it being cheated
 
-Each family exists because its absence let something wrong pass a real grader. State the failure when you ask. Source: a catalog grader that caught 12 of 12 injected faults and missed 8 of 8 real exploits.
+The catalog reference has probes for B1, B3, B4, B5 and B7. B2 and B6 describe risks without shipped attack evidence on this branch; B8 was preventive. Identify the evidence behind each question. Do not present a hypothetical risk as an executed exploit.
 
 ## B1 · Addition — what may appear that the source did not
 
@@ -121,11 +121,11 @@ Each family exists because its absence let something wrong pass a real grader. S
 
 **Ask:** If the system returned a well-formed answer to a *different* request, what in your checks would notice?
 
-**Failure:** one saved answer passed as the correct answer to four different cases. Sixteen wrong-case pairs passed. Nothing bound answer to question.
+**Risk (reasoning only):** an otherwise valid answer could be reused for the wrong request if nothing binds it to that request. No B2 attack fixture is shipped on this branch.
 
 **Complete answer names:** the identifier carried from request to response, and the check comparing them.
 
-**Weight:** under optimisation pressure this is the cheapest strategy available — one canned answer for a family of prompts, reward collected every time. The highest-value question in the bank.
+**Why ask:** request binding is needed to attribute an answer to the task it claims to solve.
 
 ## B3 · Comparison — what counts as the same value
 
@@ -155,7 +155,7 @@ Each family exists because its absence let something wrong pass a real grader. S
 
 **Ask:** May the output carry keys you did not specify? If yes, which, and may they carry claims about the subject? Where do notes, confidence, debug and timestamps legitimately live?
 
-**Failure:** claims parked outside the expected structure passed unchecked. The repair then over-reached and began rejecting harmless internal keys — the worse of the two errors.
+**Risk (reasoning only):** unchecked extra fields could carry unsupported public claims, while an overly strict schema could reject harmless private metadata. No B6 attack fixture is shipped on this branch; metadata boundary checks are separate evidence.
 
 **Complete answer names:** closed or open; the permitted private envelope if open; and the two rules that make an envelope safe — it may never carry a claim about the subject, and it may never reach a publishing or acting consumer. Systems that publish or act consume an explicit projection of checked data, never the raw submission.
 

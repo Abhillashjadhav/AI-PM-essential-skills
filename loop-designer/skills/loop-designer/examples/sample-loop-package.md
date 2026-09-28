@@ -1,110 +1,84 @@
-# Generated loop package — daily GitHub issue triage
+# Worked loop template — daily GitHub issue triage
 
-Known-answer output for `sample-request.md`. Used as the Gate 3 fixture in
+Manual expected output for `sample-request.md`; no scheduler or durable-state
+implementation ships with this example. Review cases are in
 `tests/loop-designer/fixtures.md`.
-
----
 
 ## 1. Loop spec
 
-```
+```text
 LOOP SPEC: daily-issue-triage (acme/support-widget)
-DISCOVER  — open issues in acme/support-widget created since the timestamp in
-            triage/seen-log.md (fallback: last 24h on first run). Issues only —
-            not PRs, not comments.
-PLAN      — dedup FIRST: read triage/seen-log.md (create if missing), drop any
-            issue number already logged. Then select all survivors up to the
-            iteration cap, oldest first (no ranking needed — triage wants
-            completeness, not curation).
-EXECUTE   — write triage/YYYY-MM-DD.md on branch triage/daily with one entry
-            per issue, exactly these fields:
-            - Issue: #<number> <title> (<link>)
-            - Summary: <one line, from the issue body — no speculation>
-            - Suggested label: <one of the repo's existing labels>
-            Then open a PR from triage/daily to main titled
-            "Daily triage YYYY-MM-DD — N new issues".
-VERIFY    — separate checklist pass over the produced file (not the executor
-            re-reading its own reasoning — inspect the artifact):
-            [ ] triage/YYYY-MM-DD.md exists on the branch
-            [ ] entry count == survivor count from PLAN (no drops, no padding)
-            [ ] every entry has all 3 fields and a working issue link
-            [ ] every suggested label exists in the repo's label list
-            [ ] no entry's issue number appears in the pre-run seen-log
-            Any unchecked box → run FAILED → notify (guardrail 5), do not
-            merge, do not update the seen-log for unverified entries.
-STOP-OR-REPEAT — stop when: all survivors processed and verified (append them
-            to seen-log, notify success) | zero new issues (write the one-line
-            honest entry "No new issues since last run" in the notification,
-            skip the file, stop) | iteration cap or cost ceiling hit (process
-            none beyond the cap; report what was left).
+PREFLIGHT — require a host-enforced single-run lock for this repository.
+            If the host cannot enforce it, stop BLOCKED. Under the lock, find
+            open triage PRs, including drafts. If one is pending, return
+            WAITING_FOR_MERGE with its link; create no new branch or PR.
+DISCOVER  — list every open issue, with pagination. Exclude PRs. Read the
+            processed issue IDs from triage/seen-log.md on main. An absent log
+            on the first run means no processed IDs; an unreadable or malformed
+            log is BLOCKED. Do not use run dates as discovery cutoffs.
+PLAN      — deduplicate by issue ID against the log. Order survivors by
+            (created_at, issue number). Select the oldest 25; count the rest
+            as deferred. If discovery is incomplete, report BLOCKED, not EMPTY.
+EXECUTE   — use a host-supplied run ID and branch triage/daily-<run-id>.
+            Write triage/<run-id>.md with each selected issue's number, title,
+            link, one-line source-backed summary and existing suggested label.
+            Prepare a seen-log append for the same IDs in this branch, recording
+            issue created_at separately from processed_at. These are proposed
+            records; they become canonical only when the PR is merged.
+VERIFY    — inspect the prepared changes before opening a PR:
+            [ ] issue IDs exactly match PLAN; no duplicates or unselected IDs
+            [ ] each entry has the required fields and source-backed summary
+            [ ] each suggested label exists in the repository
+            [ ] seen-log changes append exactly the selected IDs
+            [ ] no ID was already in main's pre-run log
+            Any failure: report FAILED with the branch/artifact location;
+            open no PR and leave main's log unchanged.
+PUBLISH   — open one PR to main only after VERIFY passes. If the API result is
+            uncertain, look up the same branch's PR before retrying; never open
+            a second PR. Unknown state remains BLOCKED for owner inspection.
+STOP      — READY_FOR_REVIEW with PR link and deferred count; EMPTY if complete
+            discovery found no survivors; WAITING_FOR_MERGE for an existing PR;
+            FAILED/BLOCKED for any incomplete action. Always emit a run result.
+            Release the host lock on exit. Never merge the PR automatically.
 ```
 
-## 2. Guardrails block
+A checklist pass by the same model is self-review. Independent adjudication
+requires a separately configured reviewer or deterministic checks.
 
-```
-GUARDRAILS (non-negotiable)
-1. MAX ITERATIONS: 25 issues per run; if more are new, triage the oldest 25,
-   list the remainder count in the notification, stop.
-2. COST CEILING: one discovery pass + one file + one PR per run; no retries
-   beyond 2 per API call; if the run exceeds ~15 minutes or approaches its
-   token budget, stop and report progress.
-3. SEEN-LOG: cross-run memory lives in triage/seen-log.md (append-only lines:
-   "<issue-number> <ISO-date>"). Read before acting, create if missing, append
-   after VERIFY passes — never before.
-4. NO DESTRUCTIVE ACTIONS: allowlist = create files under triage/, create
-   branch triage/daily, open PRs to main. Never delete or edit issues, never
-   close anything, never push to main directly, never email anyone.
-5. NOTIFY: end every run with one line in the PR body (or as a repo issue
-   comment if no PR was made): "TRIAGE OK — N issues" | "TRIAGE EMPTY — no new
-   issues" | "TRIAGE FAILED — <which check/guardrail> — <what was preserved>".
-   Never end silently.
-```
+## 2. Guardrails
 
-## 3a. Artifact — Claude Code Routine prompt (cloud scheduled)
+1. **Work cap:** 25 issues per run. Overflow remains eligible because the next
+   run scans all open issues and excludes only committed processed IDs.
+2. **Budget:** one complete discovery, one branch and one PR; at most two
+   retries per API operation and a 15-minute proposed run limit. Prompt text
+   does not meter tokens or enforce timeouts; the host must enforce its budget.
+3. **State:** `triage/seen-log.md` on main is canonical. Include the proposed
+   append in the verified PR. A pending PR pauses later runs; a closed unmerged
+   PR leaves its IDs eligible. A timestamp is audit data, not a cursor.
+4. **Action scope:** create the run branch, add its triage artifact, append its
+   proposed log entries and open one PR. Do not edit issues, comment on issues,
+   close existing PRs or push to main. Preserve failed artifacts for inspection.
+5. **Notification:** print a structured final status, artifact/PR link and
+   deferred count to the scheduler's run output. No additional message channel
+   is assumed. The owner must confirm that failed run output is visible.
 
-> Register with cron `0 7 * * *` in the repo's environment.
+## 3a. Scheduled prompt
 
-```
-You are the daily issue-triage loop for acme/support-widget. Each run is
-stateless — follow every step; all memory lives in files.
+Use the complete spec and guardrails above as the scheduled prompt. Include the
+repository, host lock mechanism, run ID, budget enforcement and run-output
+location in the scheduler configuration. Do not enable the schedule while any
+of those host requirements is unresolved. The prompt does not install them.
 
-DISCOVER: list open issues created since the newest timestamp in
-triage/seen-log.md (first run: last 24 hours). Issues only.
-PLAN: read triage/seen-log.md (create if missing). Drop any issue number
-already logged. Take up to 25 survivors, oldest first.
-EXECUTE: write triage/YYYY-MM-DD.md on branch triage/daily — per issue exactly:
-"Issue: #<number> <title> (<link>)", "Summary: <one line from the issue body,
-no speculation>", "Suggested label: <an existing repo label>". Open a PR to
-main titled "Daily triage YYYY-MM-DD — N new issues".
-VERIFY (separate pass — inspect the file you produced, checklist, all boxes
-required): file exists on branch; entry count equals survivor count; every
-entry has all 3 fields and a working link; every label exists in the repo;
-no entry is in the pre-run seen-log. Any failure → report FAILED, do not
-update seen-log.
-STOP: on verified success append processed issue numbers + date to
-triage/seen-log.md. If zero new issues, skip the file and report the empty run.
+## 3b. Local cron variant
 
-GUARDRAILS: max 25 issues/run (list remainder count if exceeded). Budget: one
-discovery pass, one file, one PR; stop and report if exceeded. Allowlist:
-create under triage/, branch triage/daily, PRs to main — never delete, close,
-edit issues, or push to main. End EVERY run with exactly one of:
-"TRIAGE OK — N issues" | "TRIAGE EMPTY — no new issues" |
-"TRIAGE FAILED — <check/guardrail> — <preserved>". Never end silently.
-```
-
-## 3b. Artifact — local cron variant
-
-Same prompt body, run by your machine instead of a cloud Routine. Save the
-prompt above as `~/.claude/loops/daily-issue-triage.md`, then:
+Save the full prompt as `~/.claude/loops/daily-issue-triage.md`. An example daily
+schedule, after host locking and timeout handling are configured:
 
 ```bash
-# crontab -e  (07:00 daily; adjust CLAUDE_BIN and repo path)
 0 7 * * * cd ~/code/support-widget && claude -p "$(cat ~/.claude/loops/daily-issue-triage.md)" >> ~/.claude/loops/daily-issue-triage.log 2>&1
 ```
 
-macOS launchd equivalent (`~/Library/LaunchAgents/com.acme.issue-triage.plist`):
-`ProgramArguments = [zsh, -c, "cd ~/code/support-widget && claude -p \"$(cat ~/.claude/loops/daily-issue-triage.md)\""]`,
-`StartCalendarInterval = {Hour 7, Minute 0}`.
-
-**Pick ONE runner** (cloud Routine or local cron) — running both
-double-processes the seen-log window between firings.
+The cron line alone provides neither locking nor budget enforcement. On macOS,
+use the same prompt with a launchd job and the same host prerequisites.
+Pick one scheduler. Verify failure visibility and crash recovery before using
+real repository writes; this document is a template, not a deployed runner.

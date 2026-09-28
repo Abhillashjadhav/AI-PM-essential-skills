@@ -1,14 +1,17 @@
 # mcp-migration-auditor
 
-**The MCP 2026-07-28 release candidate is here. Is your server ready?**
+**Check MCP configuration evidence against selected migration rules.**
 
-One skill that scans your MCP configs against the *verified* changes in the MCP 2026-07-28 release candidate — stateless transport, removed sessions, deprecated capabilities, Tasks migration, OAuth hardening — and tells you per server: **BREAKS**, **DEGRADED**, or **SAFE**, with the rule, the official source, and the specific fix.
+One skill that scans your MCP configs against the source-cited changes in the MCP 2026-07-28 specification — stateless transport, removed sessions, deprecated capabilities, Tasks migration, OAuth hardening — and tells you per server: **BREAKS**, **DEGRADED**, or **SAFE**, with the rule, the official source, and the specific fix.
 
 Installable plugin in the [ai-pm-skills](../) marketplace.
 
 ## The problem
 
-The 2026-07-28 release candidate removes the `Mcp-Session-Id` header and the initialize handshake (SEP-2567, SEP-2575), deprecates Roots/Sampling/Logging (SEP-2577), moves Tasks to an extension with a new lifecycle (SEP-2663), and hardens OAuth (six SEPs). Teams running remote MCP servers built on sessions should assess migration now; teams on deprecated capabilities have a 12-month clock (SEP-2596). Most teams don't know which bucket they're in — and most "what's changing in MCP" content is speculation. This skill audits only against rules quoted from the official blog and spec changelog, with URLs, in `skills/mcp-migration-auditor/references/spec-changes.md`.
+A config can expose a protocol dependency, but it cannot reveal every server
+capability or prove runtime compatibility. This skill records what each finding
+rests on and asks for missing evidence. Rules were rechecked on 2026-09-28;
+July 28 is a past revision date. See the [source ledger](skills/mcp-migration-auditor/references/spec-changes.md) for sources and scope limits.
 
 ## Install (30 seconds)
 
@@ -26,7 +29,7 @@ audit my MCP setup
 Also fires on: "check MCP compatibility", "will my MCP servers break", "MCP spec migration", "MCP 2026 spec check", "scan mcp config". The skill finds your `.mcp.json` / `claude_desktop_config.json` / settings files (or takes a pasted config) and returns:
 
 ```
-MCP MIGRATION AUDIT — release candidate 2026-07-28
+MCP MIGRATION AUDIT — target 2026-07-28; deployed version supplied by owner
 
 | Server             | Transport   | Status   | Rule                     | Fix |
 |--------------------|-------------|----------|--------------------------|-----|
@@ -35,7 +38,8 @@ MCP MIGRATION AUDIT — release candidate 2026-07-28
 | local-files        | stdio local | SAFE     | R6 — stdio unaffected    | none |
 ```
 
-…plus a prioritized migration checklist: BREAKS items deadline-framed first, DEGRADED clock items second, and an honest one-line all-clear if everything you run is stdio/local. No false alarms — an unaffected setup is told it's unaffected.
+The checklist prioritizes evidenced incompatibilities and keeps unresolved rules
+visible. `SAFE` applies only to the stated checks, not to full protocol conformance.
 
 ## What it checks (all source-cited)
 
@@ -53,7 +57,7 @@ A deliberately vulnerable config ships in `skills/mcp-migration-auditor/examples
 
 ## Testing
 
-Three-gate harness, same convention as the other plugins (`tests/mcp-migration-auditor/fixtures.md`): manifest lint, trigger fire/no-fire phrasings, and the known-answer end-to-end audit above.
+Manual review cases in `tests/mcp-migration-auditor/fixtures.md` cover triggers and expected audit output. Manifest and metadata checks are automated. No test invokes the live skill or probes a real server.
 
 ## License
 

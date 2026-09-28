@@ -1,6 +1,6 @@
 # agent-graph-designer
 
-**One complex AI workflow → a bounded, executable graph of guarded loops.**
+**Design an agent graph with explicit handoffs, joins and approval rules.**
 
 `agent-graph-designer` first decides whether a graph is justified. If one loop is enough, it returns `LOOP_SUFFICIENT` and routes the job to [`loop-designer`](../loop-designer/). If coordination is the problem, it returns `GRAPH_REQUIRED` and produces explicit node, edge, state, handoff, join, recovery, and approval contracts.
 
@@ -61,7 +61,7 @@ It does not fire for GraphRAG, knowledge graphs, database schemas, org charts, d
 - **Joins are contracts, not waiting rooms.** No branch may disappear silently, and partial success requires an explicit policy.
 - **Human judgment remains accountable.** The graph may prepare evidence and recommendations; it may not silently merge, deploy, send, purchase, publish, or approve a consequential outcome.
 
-## Verified example
+## Synthetic example
 
 [`examples/sample-request.md`](skills/agent-graph-designer/examples/sample-request.md) is transformed into:
 
@@ -69,7 +69,7 @@ It does not fire for GraphRAG, knowledge graphs, database schemas, org charts, d
 - [`sample-graph-contract.json`](skills/agent-graph-designer/examples/sample-graph-contract.json)
 - [`sample-orchestrator.py`](skills/agent-graph-designer/examples/sample-orchestrator.py)
 
-The sample uses synthetic evidence, runs three independent review loops concurrently, joins deterministically, and stops at `AWAITING_HUMAN_APPROVAL`. It never claims to launch anything.
+The runner calls one synthetic fixture function concurrently for three branch IDs, checks branch presence, schema labels, digests and PASS status, then stops at `AWAITING_HUMAN_APPROVAL`. A failed check raises `ValueError`. The `verified_by` strings are fixture labels, not separate reviewers.
 
 ```bash
 python3 agent-graph-designer/skills/agent-graph-designer/examples/sample-orchestrator.py
@@ -78,7 +78,7 @@ python3 agent-graph-designer/skills/agent-graph-designer/examples/sample-orchest
 ## Limitations
 
 - The plugin designs and validates orchestration artifacts; it does not deploy them.
-- The sample runner proves local topology and state behavior with synthetic inputs, not live-model quality or production safety.
+- The sample runner demonstrates fan-out, a deterministic join and fail-closed checks. It does not execute retries, timeouts, budget enforcement, freshness checks or structured `BLOCKED` transitions. Those remain requirements in the design contract.
 - Generated tool integrations remain proposals until their real APIs, credentials, permissions, and failure behavior are verified.
 - Parallel branches may reduce latency but increase token and operational cost; measure cost per verified outcome.
 

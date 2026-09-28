@@ -114,4 +114,6 @@ What changed
 - <specific edit>
 ```
 
+## Limitations
+
 Do not score the writer, guess whether AI wrote the original, or claim the edit will improve engagement. The skill improves writing hygiene and clarity; it does not predict distribution or product outcomes.

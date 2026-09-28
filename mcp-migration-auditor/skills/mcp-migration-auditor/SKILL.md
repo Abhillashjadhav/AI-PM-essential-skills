@@ -1,13 +1,16 @@
 ---
 name: mcp-migration-auditor
-description: Use this skill when the user wants to audit my MCP setup, check MCP compatibility, asks will my MCP servers break, mentions MCP spec migration, wants an MCP 2026 spec check, or says scan mcp config — also on any readiness question about the MCP 2026-07-28 specification (stateless transport, removed Mcp-Session-Id, deprecated roots/sampling/logging, experimental Tasks migration, OAuth hardening). Locates MCP configs (.mcp.json, claude_desktop_config.json, mcp.json, settings files) or accepts a pasted one, checks each server against rules verified from the official MCP blog and spec changelog, and outputs a per-server BREAKS/DEGRADED/SAFE table naming the triggering rule and specific fix, plus a prioritized migration checklist against the 2026-07-28 final date. Stdio-only local setups get an honest all-clear. Do NOT use for context-window cost audits of MCP connectors (cli-over-mcp-auditor's job), for debugging a broken MCP connection, or for installing new servers.
+description: Use this skill when the user wants to audit my MCP setup, check MCP compatibility, asks will my MCP servers break, mentions MCP spec migration, wants an MCP 2026 spec check, or says scan mcp config — also on any readiness question about the MCP 2026-07-28 specification (stateless transport, removed Mcp-Session-Id, deprecated roots/sampling/logging, experimental Tasks migration, OAuth hardening). Locates MCP configs (.mcp.json, claude_desktop_config.json, mcp.json, settings files) or accepts a pasted one, checks each server against rules verified from the official MCP blog and spec changelog, and outputs a per-server BREAKS/DEGRADED/SAFE table naming the triggering rule and specific fix, plus a scoped migration checklist for the deployed protocol version. Stdio findings distinguish transport from capability evidence. Do NOT use for context-window cost audits of MCP connectors (cli-over-mcp-auditor's job), for debugging a broken MCP connection, or for installing new servers.
 ---
 
 # MCP Migration Auditor
 
-Scan MCP server configs against the verified breaking changes in the MCP **2026-07-28** specification and report exactly which servers break, which degrade, and which are safe — with the rule and official source behind every verdict.
+Review MCP configs for the selected **2026-07-28** migration risks below. For each finding, name the target version, observed evidence, source and remaining unknowns. A scoped clearance is not a full compatibility certificate.
 
-**The clock:** the release candidate locked May 21, 2026; the final specification ships **July 28, 2026**. Every rule below comes from the official announcement and spec changelog — full quotes and URLs in `references/spec-changes.md`. If a check isn't in that file, this skill doesn't make it.
+**Source status:** rules rechecked on 2026-09-28 against the versioned
+specification; see `references/spec-changes.md`. July 28 is a past revision date.
+Record the deployed protocol/client/SDK versions before applying a migration
+verdict. These selected checks are not full protocol conformance.
 
 ## Step 1 — Locate configs
 
@@ -15,7 +18,7 @@ Search the project for MCP configs, in this order: `.mcp.json`, `mcp.json`, `cla
 
 ## Step 2 — Classify transport per server
 
-- `command`-based entries → **stdio/local**. Per the official announcement, stdio and local transports "operate independently of Streamable HTTP statelessness requirements and session infrastructure changes" — these start at SAFE.
+- `command`-based entries → **stdio/local**. HTTP session changes alone do not establish a transport failure; inspect shared protocol/capability rules before any broader verdict.
 - `url`-based entries (HTTP / Streamable HTTP / SSE) → remote. These get the full rule pass.
 
 ## Step 3 — Apply the verified rules
@@ -23,11 +26,11 @@ Search the project for MCP configs, in this order: `.mcp.json`, `mcp.json`, `cla
 | Rule | Evidence to look for | Verdict | Source |
 |---|---|---|---|
 | **R1 — Protocol session dependency** | `Mcp-Session-Id` in headers, session-affinity/sticky-session settings, session-store references for an MCP endpoint | **BREAKS** — header and protocol-level session removed | SEP-2567 |
-| **R2 — Handshake pinning** | custom client/server code pinned to `initialize`/`initialized`; version negotiation done once at connect | **BREAKS** — handshake removed; protocol version, client info, capabilities travel in `_meta` per request; `server/discover` replaces capability exchange | SEP-2575 |
-| **R3 — Deprecated capabilities** | server uses **roots**, **sampling**, or **logging** (config flags, docs, or user confirmation) | **DEGRADED** — still works in this release and for ≥12 months under the lifecycle policy, but on the deprecation clock | SEP-2577, SEP-2596 |
+| **R2 — Handshake pinning** | custom client/server code pinned to `initialize`/`initialized`; version negotiation done once at connect | **BREAKS** — handshake removed; protocol version and capabilities travel in `_meta` per request; client identity is recommended; `server/discover` replaces capability exchange | SEP-2575 |
+| **R3 — Deprecated capabilities** | server uses **roots**, **sampling**, or **logging** (config flags, docs, or user confirmation) | **DEGRADED** — deprecated feature; inspect specific method removals and the current lifecycle registry | SEP-2577, SEP-2596 |
 | **R4 — Experimental Tasks** | server or client shipped against the 2025-11-25 experimental Tasks API | **BREAKS** — Tasks moved to an official extension with a new lifecycle; `tasks/list` removed | SEP-2663 |
-| **R5 — OAuth patterns** | remote server using OAuth: no `iss` validation, credentials assumed portable across authorization servers, missing `application_type` in dynamic client registration | **DEGRADED** — action required for compliance: validate `iss` (RFC 9207), re-register credentials (issuer-bound), declare `application_type` | SEP-2468, SEP-2352, SEP-837 |
-| **R6 — Plain stdio, none of the above** | `command`-based, no deprecated capabilities, no Tasks | **SAFE** — say so plainly | official announcement, "Unaffected Deployments" |
+| **R5 — OAuth patterns** | remote server using OAuth: no validation of a present `iss`, credentials assumed portable across authorization servers, missing `application_type` in dynamic client registration | **DEGRADED** — action required for compliance: validate `iss` (RFC 9207), re-register credentials (issuer-bound), declare `application_type` | SEP-2468, SEP-2352, SEP-837 |
+| **R6 — Stdio transport scope** | `command`-based; other applicable checks explicitly resolved | **SAFE for checked scope** — list unconfirmed rules separately | official announcement, "Unaffected Deployments" |
 
 Fixes, stated per verdict:
 - R1 → redesign around explicit state handles (the spec's recommended pattern: mint handles from tools, thread identifiers across calls) or upgrade to an SDK release implementing 2026-07-28 statelessness.
@@ -40,23 +43,26 @@ Fixes, stated per verdict:
 ## Step 4 — Report
 
 ```
-MCP MIGRATION AUDIT — spec final 2026-07-28 (<N> days away)
+MCP MIGRATION AUDIT — target 2026-07-28; reviewed <date>; deployed version <version/unknown>
 | Server | Transport | Status | Rule | Fix |
 |--------|-----------|--------|------|-----|
 ```
 
-Below the table, a prioritized checklist: BREAKS items first (deadline-framed — these stop working against 2026-07-28 implementations), then DEGRADED (12-month deprecation clock items and OAuth compliance actions), then a one-line all-clear for SAFE servers. If **every** server is stdio/local with no flagged capabilities, the entire report is one line: all servers are stdio/local and unaffected by the 2026-07-28 transport and session changes — no false alarms, no padding.
+Below the table, list observed incompatibilities first, migration work second,
+and unresolved evidence last. Explain which implementation/version each finding
+applies to. A stdio-only config can clear the HTTP session check; it cannot by
+itself establish that hidden capabilities or client code are compatible.
 
 ## Hard rules
 
-- **No invented rules.** Every verdict cites a rule from the table above, and every rule traces to a quoted official source in `references/spec-changes.md`. If the user asks about a change not covered there, say it's unverified rather than improvising an answer.
-- **No false alarms.** Stdio-only setups that trip no capability rule get the one-line all-clear. Alarm fatigue kills audit tools.
+- **No invented rules.** Every verdict cites a rule from the table above, and every rule traces to an official source in `references/spec-changes.md`. If the user asks about a change not covered there, say it's unverified rather than improvising an answer.
+- **No false alarms.** Report only evidenced incompatibilities. Missing capability evidence is unconfirmed, not SAFE or BREAKS.
 - **Unknown is not a verdict.** Capabilities invisible in config are asked about, not assumed either way.
-- **Dates are fixed.** RC locked May 21, 2026; final spec July 28, 2026; deprecations hold for at least twelve months from deprecation per SEP-2596. Never dramatize the timeline beyond these facts.
+- **No countdown from stale dates.** State the target revision, source-check date and deployed version. Check the current lifecycle registry before asserting a removal deadline.
 
 ## Limitations
 
 - Config-level scanning sees transport and headers, not server internals; rules R3/R4 usually require the user's confirmation or server documentation, and the audit says so per row.
-- Rules reflect the 2026-07-28 **release candidate** as officially announced; if the final specification changes between RC and release, `references/spec-changes.md` is the file to update.
+- R1–R6 cover selected migration risks, not every 2026-07-28 requirement. The source ledger names additional areas requiring implementation evidence.
 - OAuth findings cover the documented SEP-level changes, not a full security review of the deployment.
 - The audit reads configs; it does not probe live servers or verify that a declared transport matches runtime behavior.

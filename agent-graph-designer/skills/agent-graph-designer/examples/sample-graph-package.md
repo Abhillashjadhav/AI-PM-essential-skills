@@ -49,24 +49,23 @@ The source of truth is [`sample-graph-contract.json`](sample-graph-contract.json
 
 It performs no model, network, deployment, merge, send, publish, purchase, delete, or overwrite action.
 
-## Independent verification
+## Contract checks and runtime evidence
 
-```text
-GRAPH_CONTRACT_VALID
-PASS exactly one start node is declared
-PASS all edge endpoints reference declared nodes
-PASS all non-terminal nodes have visible exits
-PASS both terminal nodes are reachable
-PASS all three fan-out branches converge at one ALL_REQUIRED join
-PASS join validates presence, schema, candidate digest, and branch status
-PASS every retry cycle is bounded to two attempts
-PASS candidate-freeze, exhausted-review, timeout, and join failures terminate BLOCKED with a reason
-PASS whole-graph and per-node budgets are bounded
-PASS tools and writes are allowlisted per node
-PASS reviewers cannot approve launch
-PASS launch waits at a named human approval gate
-PASS runner stops with no external actions taken
-```
+`GRAPH_CONTRACT_VALID` describes the static contract check. The successful
+synthetic run has no external actions taken; neither result proves that every
+declared transition has been executed.
+
+| Claim | Evidence / boundary |
+|---|---|
+| Start, edges, terminal reachability, retry caps, budgets and permissions are declared | Static contract checker |
+| Three branches run concurrently and join against required IDs | Synthetic runner |
+| Join rejects missing branches, mismatched schema labels/digests or non-PASS status | Runner checks; rejection raises `ValueError` |
+| Run stops at `AWAITING_HUMAN_APPROVAL` without an external action | Synthetic runner |
+| Independent reviewers, timeout handling, retry execution, cost metering, freshness and structured `BLOCKED` results | Not implemented by this runner |
+
+The topology above describes the intended workflow. It is not a trace of all
+transitions being executed. All review branches use the same fixture function;
+its `verified_by` labels do not prove independent verification.
 
 ## Limitations
 

@@ -30,7 +30,7 @@ This skill asks for both, then tests whether the answers are sufficient. It does
 
 ### 0. Frame the outcome first
 
-Before any rule, establish what the system is for. Read `references/question-bank.md` §A1 and ask for: the desired outcome in one sentence, the correctness target, the wrong-rejection target, and the tradeoff between them.
+State the supplied goal and work through `references/question-bank.md` in order. A1 and A2 establish the grader interface and comparison approach; A3 asks for the outcome, correctness target, wrong-rejection target and tradeoff. Reuse answers already supplied.
 
 Targets are the owner's numbers, always. Never supply them. A worked example using one project's targets is in `examples/catalog.md` — it is an illustration of the shape of an answer, not a default to apply.
 
@@ -39,7 +39,7 @@ Targets are the owner's numbers, always. Never supply them. A worked example usi
 Read `references/question-bank.md` and work through it in order. Three parts:
 
 - **Part A · Shape (A1–A10)** — what a grader mechanically needs to exist. The grader itself, reference-based or rule-based, outcome and targets, input and output shape, requirement classes, allowed values, evidence and provenance, record relationships, operations and record states, authority and resolution. Skip one of these and the grader cannot be written. A1 and A2 come first because they decide what the grader *is*; everything after them describes the system being graded.
-- **Part B · Integrity (B1–B8)** — what stops it being cheated. Seven of the eight carry the concrete exploit that got through when it went unasked; B8 is the one the source project asked in time, and its bank entry says so. State the failure in one line when you ask, and for B8 state what it prevents; a question with no failure attached is a checklist item and gets waved through.
+- **Part B · Integrity (B1–B8)** — decisions that can prevent false acceptance or rejection. B1, B3, B4, B5 and B7 have recorded probes; B2 and B6 are reasoning-led questions without shipped attacks on this branch; B8 was preventive. State the observed failure or hypothetical risk accurately when asking.
 - **Part C · Verdict and judgment (C1–C8)** — statuses, issue codes, blocker versus warning, tolerances, rollup and denominator, error ranking, human judgment, verification plan.
 
 For every rule collected, capture **both sides**: an incorrect example that must fail, and a legitimate example that must pass, each with its expected reason and the owner decision behind it. Show the complete relevant input so the owner can judge it fairly rather than from a fragment. Any example you propose is tagged `UNAPPROVED` until the owner adjudicates it.

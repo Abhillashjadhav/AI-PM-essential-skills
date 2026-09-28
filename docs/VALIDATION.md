@@ -6,7 +6,7 @@ This document records what this repository's checks establish and what they do n
 
 `VERIFIED` by [`scripts/check_repository_integrity.py`](../scripts/check_repository_integrity.py):
 
-- the seven marketplace plugins have registered sources, plugin manifests, and skill directories;
+- the catalogue's **8 installable plugins** have registered sources, plugin manifests, and skill directories;
 - the three public standalone skill directories exist: `token-cost-estimator`, `context-auditor`, and `concise-rewriter`;
 - the retired `eval-rubric-generator` directory has no triggerable `SKILL.md`;
 - each of those directories contains `SKILL.md`;
@@ -38,7 +38,7 @@ This document records what this repository's checks establish and what they do n
   are executable;
 - subprocess adapter failures, oversized or inherited streams, finite timeout
   enforcement, unordered trajectories, non-finite metrics, malformed IDs, and
-  shared trial isolation produce `BLOCKED`;
+  duplicate declared trial isolation IDs produce `BLOCKED`;
 - identical evidence produces identical results and displayed evidence is
   redacted for credential/PII patterns; and
 - the package installs without runtime dependencies and the production example
@@ -47,13 +47,39 @@ This document records what this repository's checks establish and what they do n
   requires approved stable FR/AC traceability, binds PMOS/eval/engineering,
   candidate, adapter, automation, run, and trial artifacts by digest, rejects
   boundary tampering, and supports a pre-evidence `BOUND` state followed by
-  verified real-adapter evidence.
+  structurally verified real-adapter evidence. PMOS approval is declared, not
+  authenticated. Re-binding computes a new digest from current files; it is not
+  proof that the prior approver approved those new contents.
+
+Fresh adapter processes can still share files, environment variables, databases
+and remote services. The adapter is trusted to reset application state and
+report it honestly. IDs and fingerprints alone do not prove state isolation.
+
+## Evidence by product
+
+These columns describe the evidence present, not a blanket readiness rating.
+Static checks inspect stored artifacts; deterministic runtime checks execute
+code; recorded model runs concern specific saved outputs; human evidence must
+name the scope reviewed. No plugin has a verified fresh-install test here.
+
+| Product | Static / manual material | Deterministic runtime | Recorded model evidence | Human evidence / limits |
+|---|---|---|---|---|
+| pm-verifier | Manifest, skill, synthetic suites | Execute/grade/report/inspect and known-bad tests | Synthetic judge evidence; no live model-quality result | Product-specific calibration required |
+| pm-tactical | Five skills, trigger and known-answer review cases | No shipped general runtime | Live skill quality unknown | Generated decisions need owner review |
+| loop-designer | Trigger cases and worked loop template | No scheduler/state runtime shipped | Live skill quality unknown | Prompt budgets and checklist passes are not independent enforcement |
+| agent-graph-designer | Contract topology checker and review cases | Synthetic fan-out, join and fail-closed example | No live reviewers in the sample | Retries, budgets and structured BLOCKED are contract requirements, not runner behavior |
+| mcp-migration-auditor | Source-cited rules and sample audit | No live server compatibility test | Live skill quality unknown | Config-only evidence leaves some capabilities unconfirmed |
+| pm-human-writer | Checker compares stored examples and required text | No live rewrite execution | Editing quality unknown | Author must review voice and factual preservation |
+| ai-feature-kill-criteria | Skill, README example, manual trigger cases | No evaluation runtime | Live skill quality unknown | Owner supplies thresholds and investment decision |
+| model-grader | Interview, template audit and author-run walkthroughs | Catalog reference replay, with known D4/D2 divergences | Saved catalog candidate outputs; not an interview-quality test | Filled-contract exit test and independent adjudication remain open |
+| ContextPort (toolkit) | Schemas and synthetic fixtures | Local validation and migration tests | No hosted model required | Real export migration and destination writes unverified |
+| Three standalone skills | Metadata and acceptance examples | No model or tokenizer runtime | No recorded live runs | Token, price and context claims require task-specific evidence |
 
 ## Manually validated material
 
 The Markdown fixture documents under [`tests/`](../tests/) and product example directories provide reviewer prompts, known-answer cases, and expected outputs. They are **manual review material**, not automated behavioural tests: no repository command executes the Claude Code skills against those documents.
 
-The agent-graph-designer contract checker and sample runner validate committed synthetic artifacts only. They do not invoke a hosted model or prove that the skill will produce equivalent artifacts in every live runtime.
+The agent-graph-designer contract checker and sample runner validate committed synthetic artifacts only. The runner uses one fixture-producing function for all branches and raises `ValueError` on a failed join. It does not execute the contract's timeout, retry, budget or `BLOCKED` transitions, and does not establish reviewer independence.
 
 ContextPort's evaluation notes under [`context-port/evals/`](../context-port/evals/) record expected deterministic gates and synthetic-fixture observations. Review them with the corresponding command output; do not treat the documents alone as a passing automated run.
 
