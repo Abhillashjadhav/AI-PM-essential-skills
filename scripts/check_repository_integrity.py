@@ -136,7 +136,11 @@ def validate_marketplace() -> list[str]:
         if not isinstance(raw, dict) or not isinstance(raw.get("name"), str):
             failures.append("marketplace manifest: every plugin needs a string name")
             continue
-        by_name[str(raw["name"])] = raw
+        name = str(raw["name"])
+        if name in by_name:
+            failures.append(f"marketplace manifest: duplicate plugin name {name!r}")
+            continue
+        by_name[name] = raw
 
     expected = set(EXPECTED_PLUGINS)
     actual = set(by_name)
