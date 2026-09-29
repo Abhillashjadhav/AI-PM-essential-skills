@@ -355,6 +355,7 @@ class CapacityState(str, enum.Enum):
 
 class SpendStatus(str, enum.Enum):
     ALLOWED_INCLUDED_ONLY = "ALLOWED_INCLUDED_ONLY"
+    ALLOWED_ACCOUNT_CONFIRMED = "ALLOWED_ACCOUNT_CONFIRMED"
     BLOCKED = "BLOCKED"
     UNKNOWN = "UNKNOWN"
 
@@ -405,6 +406,7 @@ class ThreadKind(str, enum.Enum):
 
 class GateStatus(str, enum.Enum):
     VERIFIED = "VERIFIED"
+    ACCOUNT_CONFIRMED = "ACCOUNT_CONFIRMED"
     FAILED = "FAILED"
     BLOCKED = "BLOCKED"
     NOT_RUN = "NOT_RUN"
@@ -626,6 +628,27 @@ class CreditsState(Record):
         return f"credits: hasCredits={self.has_credits} unlimited={self.unlimited} balance={self.balance if self.balance is not None else 'not reported'}"
 
 
+@dataclasses.dataclass
+class LimitBillingState(Record):
+    """Keep every provider limit's billing facts; never select just the first."""
+
+    limit_id: str
+    plan_type: str | None
+    credits: CreditsState
+    reached_type: str | None = None
+
+    def __post_init__(self) -> None:
+        if not isinstance(self.credits, CreditsState):
+            self.credits = CreditsState.from_dict(self.credits)
+
+    def validate(self) -> None:
+        _require_str(self.limit_id, "billing_limit.limit_id")
+        self.credits.validate()
+
+    def to_dict(self) -> dict[str, Any]:
+        return super().to_dict() | {"credits": self.credits.to_dict()}
+
+
 # Workspace plans whose owners/admins can set per-member credit spend limits
 # (ChatGPT Business / Enterprise / Edu spend controls). Personal plans have none.
 WORKSPACE_PLAN_TYPES = frozenset(
@@ -679,6 +702,8 @@ class UsageSnapshot(Record):
     # Every limit id the provider reported. Credits may apply to any of them:
     # a snapshot without credit fields is unknown, never "credits cannot apply".
     credit_limit_ids: list[str] = dataclasses.field(default_factory=list)
+    billing_limits: list[LimitBillingState] = dataclasses.field(default_factory=list)
+    billing_errors: list[str] = dataclasses.field(default_factory=list)
 
     def __post_init__(self) -> None:
         self.buckets = [b if isinstance(b, UsageBucket) else UsageBucket.from_dict(b) for b in self.buckets]
@@ -687,6 +712,9 @@ class UsageSnapshot(Record):
         self.spend_controls = [
             s if isinstance(s, SpendControlObservation) else SpendControlObservation.from_dict(s) for s in self.spend_controls
         ]
+        self.billing_limits = [
+            b if isinstance(b, LimitBillingState) else LimitBillingState.from_dict(b) for b in self.billing_limits
+        ]
 
     def validate(self) -> None:
         _require_str(self.id, "usage.id")
@@ -694,12 +722,16 @@ class UsageSnapshot(Record):
         for bucket in self.buckets:
             bucket.validate()
         self.credits.validate()
+        for limit in self.billing_limits:
+            limit.validate()
+        _require_list_of_str(self.billing_errors, "usage.billing_errors")
 
     def to_dict(self) -> dict[str, Any]:
         data = super().to_dict()
         data["buckets"] = [b.to_dict() for b in self.buckets]
         data["credits"] = self.credits.to_dict()
         data["spend_controls"] = [s.to_dict() for s in self.spend_controls]
+        data["billing_limits"] = [b.to_dict() for b in self.billing_limits]
         return data
 
     def included_usage_available(self) -> bool | None:
@@ -749,11 +781,15 @@ class SpendDecision(Record):
     decided_at: str
     synthetic: bool
     missing: list[str] = dataclasses.field(default_factory=list)
-    # The code-defined enforcement mechanism that justified ALLOWED (never free text).
+    # Code-defined provider mechanism or explicitly owner-confirmed policy.
     mechanism: str | None = None
 
     def __post_init__(self) -> None:
         self.status = _coerce_enum(SpendStatus, self.status, "status")  # type: ignore[assignment]
+
+    @property
+    def allows_send(self) -> bool:
+        return self.status in {SpendStatus.ALLOWED_INCLUDED_ONLY, SpendStatus.ALLOWED_ACCOUNT_CONFIRMED}
 
     def validate(self) -> None:
         parse_utc(self.decided_at)
@@ -761,6 +797,14 @@ class SpendDecision(Record):
             raise ContractError("ALLOWED_INCLUDED_ONLY requires evidence")
         if self.status is SpendStatus.ALLOWED_INCLUDED_ONLY and not self.synthetic and not self.mechanism:
             raise ContractError("a live ALLOWED_INCLUDED_ONLY decision must name the verified enforcement mechanism")
+        if self.status is SpendStatus.ALLOWED_ACCOUNT_CONFIRMED:
+            if self.synthetic or self.mechanism != "personal_subscription_owner_confirmed_v1":
+                raise ContractError("account-confirmed spending needs the personal policy and live signals")
+            owner = [e for e in self.evidence if e.get("source") == "owner_confirmation"]
+            if not owner or any(e.get("status") != "supporting" or e.get("account_scope") != self.account_scope for e in owner):
+                raise ContractError("owner confirmation must be account-bound supporting evidence, never enforcement")
+            if not self.reasons:
+                raise ContractError("account-confirmed spending must explain the account-setting dependency")
         if self.status is not SpendStatus.ALLOWED_INCLUDED_ONLY and not (self.reasons or self.missing):
             raise ContractError("a non-allowed spend decision must explain why")
 
