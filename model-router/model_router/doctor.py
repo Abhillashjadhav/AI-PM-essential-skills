@@ -176,7 +176,8 @@ def _live_read_only(config: CodexConfig) -> list[Gate]:
         gates.append(
             Gate(
                 "spend boundary",
-                GateStatus.VERIFIED if spend.status is SpendStatus.ALLOWED_INCLUDED_ONLY else GateStatus.BLOCKED,
+                (GateStatus.VERIFIED if spend.status is SpendStatus.ALLOWED_INCLUDED_ONLY else
+                 GateStatus.ACCOUNT_CONFIRMED if spend.status is SpendStatus.ALLOWED_ACCOUNT_CONFIRMED else GateStatus.BLOCKED),
                 f"{spend.status.value}: " + "; ".join(spend.reasons + spend.missing),
                 {"evidence": spend.evidence},
             )

@@ -39,6 +39,7 @@ from typing import Any, Callable, Iterator
 from ..contracts import (
     Binding,
     CreditsState,
+    LimitBillingState,
     ModelInfo,
     SpendControlObservation,
     SpendDecision,
@@ -559,6 +560,7 @@ class CodexStdioAdapter(SubscriptionAdapter):
         self.config = config
         self.rpc: JsonRpcProcess | None = None
         self.pin_state = "unchecked"
+        self.validated_pin_digest: str | None = None
         self.pin_problems: list[str] = []
         self.dropped_env: list[str] = []
         self._account: AccountState | None = None
@@ -603,6 +605,7 @@ class CodexStdioAdapter(SubscriptionAdapter):
             current, problems = inspect_installation(executable, self.config.home)
             self.pin_problems = problems
         self.pin_state, reasons = pin_status(saved, current)
+        self.validated_pin_digest = saved.digest if saved is not None and self.pin_state == "valid" else None
         self.pin_problems = self.pin_problems + reasons
 
     def _connect(self) -> JsonRpcProcess:
@@ -774,12 +777,30 @@ class CodexStdioAdapter(SubscriptionAdapter):
     def read_usage(self) -> UsageSnapshot:
         result = self._read_request("account/rateLimits/read", None) or {}
         self._last_usage_raw = redact(result)
-        return parse_rate_limits(result, account_scope=self._account.account_scope if self._account else None)
+        try:
+            return parse_rate_limits(result, account_scope=self._account.account_scope if self._account else None)
+        except (ValueError, TypeError, KeyError, AttributeError, OverflowError) as exc:
+            raise AdapterError(f"invalid provider usage fields ({type(exc).__name__}); sends blocked", executed="no") from exc
 
     def check_spend_boundary(self, account: AccountState, usage: UsageSnapshot) -> SpendDecision:
-        from ..spend import decide_spend
+        from ..billing import BillingPolicy
+        from ..spend import _decimal, confirmation_problems, decide_spend
 
-        return decide_spend(account, usage, pin_state=self.pin_state)
+        policy = BillingPolicy(self.config.data_dir)
+        confirmation, _ = policy.load()
+        profile = str(self.config.home.resolve())
+        if confirmation and confirmation.enabled:
+            drift = confirmation_problems(confirmation, account, adapter_pin=self.validated_pin_digest, profile=profile)
+            credits_observed = any(b.credits.has_credits is True or b.credits.unlimited is True or
+                                   (_decimal(b.credits.balance) is not None and _decimal(b.credits.balance) != 0)
+                                   for b in usage.billing_limits)
+            if drift or credits_observed:
+                policy.disable("account/profile/pin changed" if drift else "provider reported credits", expected_id=confirmation.id)
+                confirmation, _ = policy.load()
+        result = decide_spend(account, usage, pin_state=self.pin_state, personal_confirmation=confirmation,
+                              adapter_pin=self.validated_pin_digest, profile=profile)
+        result.validate()
+        return result
 
     def create_thread(self, binding: Binding, *, developer_instructions: str | None, workspace: str | None, sandbox: str) -> ProviderThread:
         self._require_sendable()
@@ -1037,7 +1058,41 @@ def translate_notification(method: str | None, params: dict[str, Any], turn_id: 
     return None
 
 
+def _billing_facts(result: dict[str, Any]) -> tuple[list[LimitBillingState], list[str]]:
+    """Preserve all limits, including conflicting legacy/by-id observations."""
+    facts: list[LimitBillingState] = []
+    errors: list[str] = []
+    raw: list[tuple[str, Any]] = []
+    by_id = result.get("rateLimitsByLimitId")
+    if isinstance(by_id, dict):
+        raw.extend((str(key), value) for key, value in by_id.items())
+    elif by_id is not None:
+        errors.append("rateLimitsByLimitId is not an object")
+    legacy = result.get("rateLimits")
+    if legacy is not None:
+        raw.append((str(legacy.get("limitId") or "default") if isinstance(legacy, dict) else "default", legacy))
+    if not raw:
+        errors.append("provider returned no billing limits")
+    for limit_id, value in raw:
+        if not isinstance(value, dict):
+            errors.append(f"limit {limit_id!r} is not an object")
+            continue
+        credit = value.get("credits")
+        credits = (CreditsState(credit.get("hasCredits"), credit.get("unlimited"), credit.get("balance"), True)
+                   if isinstance(credit, dict) else CreditsState(None, None, None, False))
+        facts.append(LimitBillingState(limit_id, value.get("planType"), credits, value.get("rateLimitReachedType")))
+        if value.get("spendControlReached") not in (None, False) or type(value.get("spendControlReached")) not in (bool, type(None)):
+            errors.append(f"limit {limit_id!r} has a reached or invalid spend-control signal")
+        for key in ("primary", "secondary"):
+            window = value.get(key)
+            if window is not None and (not isinstance(window, dict) or type(window.get("usedPercent")) not in (int, float)
+                                       or not 0 <= window["usedPercent"] <= 100):
+                errors.append(f"limit {limit_id!r} has an invalid {key} usage window")
+    return facts, errors
+
+
 def parse_rate_limits(result: dict[str, Any], *, account_scope: str | None) -> UsageSnapshot:
+    billing_limits, billing_errors = _billing_facts(result)
     snapshots: dict[str, dict[str, Any]] = {}
     by_id = result.get("rateLimitsByLimitId")
     if isinstance(by_id, dict) and by_id:
@@ -1110,4 +1165,6 @@ def parse_rate_limits(result: dict[str, Any], *, account_scope: str | None) -> U
         synthetic=False,
         spend_controls=controls,
         credit_limit_ids=credit_limit_ids,
+        billing_limits=billing_limits,
+        billing_errors=billing_errors,
     )

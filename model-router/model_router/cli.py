@@ -139,7 +139,7 @@ def cmd_doctor(args: argparse.Namespace) -> int:
         print(format_gates(gates))
         blocked = [g.name for g in gates if g.status.value in {"BLOCKED", "FAILED"}]
         print()
-        if any(g.name == "spend boundary" and g.status.value != "VERIFIED" for g in gates):
+        if any(g.name == "spend boundary" and g.status.value in {"BLOCKED", "FAILED"} for g in gates):
             print("Live model sends stay blocked: zero added spend cannot be verified yet.")
         if blocked:
             print("Not ready: " + ", ".join(blocked))
@@ -366,9 +366,22 @@ def cmd_setup(args: argparse.Namespace) -> int:
 
     data_dir = Path(args.data_dir).expanduser() if args.data_dir else default_data_dir()
     print("Model router setup: checks this machine, pins Codex, signs in (Codex's own ChatGPT login), approves models,")
-    print("and checks the zero-added-spend boundary. It sends no model turn.\n")
+    print("and checks subscription billing eligibility. Personal plans need your billing-setting confirmation. No model turn.\n")
     report = Setup(data_dir, codex_path=args.codex_path, codex_home=Path(args.codex_home) if args.codex_home else None).run()
     return 0 if report.get("ready") else 3
+
+
+def cmd_billing(args: argparse.Namespace) -> int:
+    from .billing import BillingPolicy
+
+    data_dir = Path(args.data_dir).expanduser() if args.data_dir else default_data_dir()
+    policy = BillingPolicy(data_dir)
+    if args.billing_action == "disable":
+        policy.disable()
+        print("Personal subscription mode disabled. New sends stop at their next eligibility check; "
+              "close active router sessions before changing billing. This cannot undo a request already sent.")
+    _print_json(policy.status())
+    return 0
 
 
 def cmd_start(args: argparse.Namespace) -> int:
@@ -427,6 +440,9 @@ def cmd_pilot(args: argparse.Namespace) -> int:
         try:
             report = run_routing_check(coordinator, allow_simulated=args.simulate)
             _print_json(report)
+            if report.get("configured_execution_passed") and not report["passed"]:
+                print("Both tasks returned answers with the requested provider thread configurations. "
+                      "Separate per-turn model identity was not reported; full model verification remains open.")
             return 0 if report["passed"] else 3 if report["blocked"] else 1
         finally:
             coordinator.close()
@@ -668,9 +684,15 @@ def parser() -> argparse.ArgumentParser:
 
     root = argparse.ArgumentParser(
         prog="router.py",
-        description="Local model router: picks a model per chat, keeps it fixed, hands architecture to implementation, never adds spend.",
+        description="Local model router: picks a model per chat, keeps it fixed, and checks subscription billing before sends.",
     )
     sub = root.add_subparsers(dest="command", required=True)
+
+    billing = sub.add_parser("billing", help="view or disable your saved personal subscription confirmation").add_subparsers(
+        dest="billing_action", required=True)
+    for action in ("status", "disable"):
+        p = billing.add_parser(action, parents=[common])
+        p.set_defaults(func=cmd_billing)
 
     from .jev_cli import command as jev_command
 
@@ -744,7 +766,7 @@ def parser() -> argparse.ArgumentParser:
     p.add_argument("--path", default=".", help="existing project folder (default: current folder)")
     p.set_defaults(func=cmd_start)
 
-    p = sub.add_parser("pilot", parents=[common], help="bounded live pilot (only when the spend boundary is verified)")
+    p = sub.add_parser("pilot", parents=[common], help="bounded live pilot (requires billing eligibility)")
     p.add_argument("--routing-check", action="store_true", help="two new chats: simple/lowest and difficult/highest; require real model-use evidence")
     p.set_defaults(func=cmd_pilot)
 

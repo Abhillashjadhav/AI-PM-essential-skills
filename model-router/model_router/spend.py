@@ -1,4 +1,4 @@
-"""The zero-added-spend boundary.
+"""Subscription spending policies, with distinct levels of assurance.
 
 Three separate questions, never merged:
 
@@ -18,12 +18,11 @@ checks live provider signals whose meaning is documented. No file, record,
 flag, owner attestation, screenshot or usage percentage can add a mechanism or
 satisfy one.
 
-Personal plans (Free/Go/Plus/Pro) have **no verified included-only
-mechanism**. ``assess_personal_plan`` records exactly what can be verified
-live (zero balance, no unlimited credits, ordinary usage allowed) and names the
-guarantee that is missing (the automatic-reload setting is not readable, and
-no documented rule says a zero-balance account stops rather than reloads).
-See docs/capability-evidence.md for the evidence and its sources.
+Personal plans remain UNKNOWN by default. The separately approved
+ALLOWED_ACCOUNT_CONFIRMED policy combines a locally saved owner confirmation
+that reload is off with strict fresh account/usage checks. It authorizes ordinary
+operation, not just a pilot, but never claims an account-wide spending guarantee.
+The owner setting cannot be read continuously and can change outside the router.
 """
 
 from __future__ import annotations
@@ -33,11 +32,13 @@ from decimal import Decimal, InvalidOperation
 from typing import Callable
 
 from .adapters.base import AccountState
+from .billing import DEPENDENCY, PERSONAL_POLICY, PersonalConfirmation
 from .contracts import (
     WORKSPACE_PLAN_TYPES,
     SpendDecision,
     SpendStatus,
     UsageSnapshot,
+    parse_utc,
     utc_now,
 )
 
@@ -192,12 +193,77 @@ def supporting_observations(usage: UsageSnapshot) -> list[dict]:
     ]
 
 
+def personal_observation_problems(account: AccountState, usage: UsageSnapshot, *, pin_state: str) -> list[str]:
+    """All observable conditions; a stored owner choice cannot override these."""
+    problems: list[str] = list(usage.billing_errors)
+    if account.authenticated is not True or account.auth_mode != "chatgpt" or account.config_ok is not True:
+        problems.append("a verified ChatGPT-only account/profile is required")
+    if not account.account_scope or usage.account_scope != account.account_scope:
+        problems.append("account and usage must identify the same account")
+    plan = _plan(account.plan_type)
+    if plan not in PERSONAL_PLAN_TYPES or _plan(usage.plan_type) != plan:
+        problems.append("account and usage must report the same personal plan")
+    if account.synthetic is not False or usage.synthetic is not False or usage.source != "account/rateLimits/read":
+        problems.append("fresh live provider observations are required")
+    if pin_state != "valid":
+        problems.append("the approved Codex installation must still match its pin")
+    for label, observed in (("account", account.observed_at), ("usage", usage.observed_at)):
+        try:
+            age = (parse_utc(utc_now()) - parse_utc(observed)).total_seconds()
+            if not -5 <= age <= 30:
+                problems.append(f"{label} observation is stale or in the future")
+        except (ValueError, TypeError):
+            problems.append(f"{label} observation has an invalid timestamp")
+    if usage.ordinary_usage_allowed is not True:
+        problems.append("included usage must explicitly be allowed now")
+    if usage.spend_control_reached or any(c.reached for c in usage.spend_controls):
+        problems.append("the provider reports a reached spending control")
+    if not usage.buckets:
+        problems.append("no usage windows were reported")
+    for bucket in usage.buckets:
+        value = bucket.used_percent
+        if type(value) not in {int, float} or not 0 <= value < 100 or bucket.reached_type:
+            problems.append(f"usage window {bucket.limit_id!r} is exhausted or unknown")
+    if not usage.billing_limits:
+        problems.append("per-limit billing fields were not reported")
+    reported_ids = {b.limit_id for b in usage.billing_limits}
+    if not set(usage.credit_limit_ids).issubset(reported_ids):
+        problems.append("billing fields do not cover every reported limit")
+    for limit in usage.billing_limits:
+        credit = limit.credits
+        if _plan(limit.plan_type) != plan:
+            problems.append(f"limit {limit.limit_id!r} has a missing or different plan")
+        if (credit.reported is not True or credit.has_credits is not False or credit.unlimited is not False
+                or _decimal(credit.balance) != 0):
+            problems.append(f"limit {limit.limit_id!r} must report zero credits, hasCredits=false and unlimited=false")
+        if limit.reached_type:
+            problems.append(f"limit {limit.limit_id!r} reports a reached limit")
+    return problems
+
+
+def confirmation_problems(confirmation: PersonalConfirmation, account: AccountState, *, adapter_pin: str | None,
+                          profile: str | None) -> list[str]:
+    try:
+        confirmation.validate()
+    except (ValueError, TypeError):
+        return ["the saved billing confirmation is invalid"]
+    if not confirmation.enabled:
+        return ["personal subscription mode is disabled; run router.py setup to confirm again"]
+    if (confirmation.account_scope != account.account_scope or confirmation.plan_type != _plan(account.plan_type)
+            or confirmation.adapter_pin != adapter_pin or confirmation.profile != profile):
+        return ["account, plan, profile or Codex pin changed; run router.py setup to confirm billing again"]
+    return []
+
+
 def decide_spend(
     account: AccountState,
     usage: UsageSnapshot,
     *,
     pin_state: str,
     mechanisms: tuple[Mechanism, ...] = MECHANISMS,
+    personal_confirmation: PersonalConfirmation | None = None,
+    adapter_pin: str | None = None,
+    profile: str | None = None,
 ) -> SpendDecision:
     now = utc_now()
     supporting = supporting_observations(usage)
@@ -217,6 +283,17 @@ def decide_spend(
     if pin_state != "valid":
         return decision(SpendStatus.UNKNOWN, [f"adapter pin is {pin_state}; live signals are not trusted until it is valid"],
                         missing=["a valid adapter pin"])
+    if personal_confirmation is not None and _plan(account.plan_type) in PERSONAL_PLAN_TYPES:
+        problems = confirmation_problems(personal_confirmation, account, adapter_pin=adapter_pin, profile=profile)
+        problems += personal_observation_problems(account, usage, pin_state=pin_state)
+        if problems:
+            return decision(SpendStatus.BLOCKED, problems)
+        evidence = supporting + [
+            {"source": "owner_confirmation", "status": "supporting", "account_scope": account.account_scope,
+             "confirmation_id": personal_confirmation.id, "confirmed_at": personal_confirmation.confirmed_at},
+            {"source": "live", "status": "supporting", "billing_limits": [b.to_dict() for b in usage.billing_limits]},
+        ]
+        return decision(SpendStatus.ALLOWED_ACCOUNT_CONFIRMED, [DEPENDENCY], evidence=evidence, mechanism=PERSONAL_POLICY)
     reasons: list[str] = []
     for mechanism in mechanisms:
         try:
