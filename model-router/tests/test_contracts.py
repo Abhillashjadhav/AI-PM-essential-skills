@@ -108,6 +108,32 @@ class RecordValidation(unittest.TestCase):
             SpendEvidence("e", "auto_reload_off", "acct", "screenshot", "enforced", utc_now(), None, "screenshot").validate()
         SpendEvidence("e", "auto_reload_off", "acct", "screenshot", "supporting", utc_now(), None, "screenshot").validate()
 
+    def test_owner_confirmed_allow_is_distinct_and_requires_supporting_account_evidence(self):
+        from model_router.contracts import SpendStatus
+
+        evidence = [{"source": "owner_confirmation", "account_scope": "a", "status": "supporting"}]
+        decision = SpendDecision("ALLOWED_ACCOUNT_CONFIRMED", ["relies on owner's billing setting"], evidence,
+                                 "a", utc_now(), False, mechanism="personal_subscription_owner_confirmed_v1")
+        decision.validate()
+        self.assertTrue(decision.allows_send)
+        self.assertNotEqual(decision.status, SpendStatus.ALLOWED_INCLUDED_ONLY)
+        for change in ({"evidence": []}, {"mechanism": "made_up"}, {"synthetic": True}, {"reasons": []},
+                       {"account_scope": "other"}, {"evidence": [evidence[0] | {"status": "enforced"}]}):
+            with self.subTest(change=change), self.assertRaises(ContractError):
+                SpendDecision.from_dict(decision.to_dict() | change)
+
+    def test_billing_facts_round_trip_without_dropping_second_limit(self):
+        from model_router.contracts import LimitBillingState, UsageSnapshot
+
+        snapshot = UsageSnapshot("u", "a", "pro", "s", [], CreditsState(False, False, "0", True), True, False,
+                                 None, utc_now(), "live", False, billing_limits=[
+                                     LimitBillingState("first", "pro", CreditsState(False, False, "0", True)),
+                                     LimitBillingState("second", "pro", CreditsState(True, False, "2", True)),
+                                 ], billing_errors=["unreadable third limit"])
+        again = UsageSnapshot.from_dict(snapshot.to_dict())
+        self.assertEqual(again.billing_limits[1].credits.balance, "2")
+        self.assertEqual(again.billing_errors, ["unreadable third limit"])
+
     def test_unreported_credits_carry_no_values(self):
         with self.assertRaises(ContractError):
             CreditsState(has_credits=False, unlimited=None, balance=None, reported=False).validate()
