@@ -4,6 +4,12 @@
 **Status:** Approved by the owner (requirements supplied in the implementation prompt; no interview repeated)
 **Source prompt:** [model-router/docs/implementation-prompt.md](../model-router/docs/implementation-prompt.md)
 
+## Owner-approved update — 2026-09-29
+
+Support normal operation on personal ChatGPT subscriptions after each installer confirms automatic credit purchases are OFF and accepts that this setting is not readable by the client. This is not a two-task-only exception. Account, plan, profile and pin bind the local confirmation; live zero-credit and included-usage checks remain mandatory. Account/billing changes can happen elsewhere, so an absolute account-wide zero-spend guarantee is not claimed. No paid API fallback, credit purchase, reset redemption, forced upgrade or silent model change is authorized. The existing provider-control path remains distinct.
+
+This replaces blanket personal-plan blocking as the sole interpretation of the existing no-extra-spend goal. [Detailed approved operating contract](../model-router/docs/personal-subscription.md). Public release still requires actual execution evidence, quality evaluation, review and explicit merge/release approval.
+
 ## Problem
 The owner picks models by hand and usually defaults to the strongest, newest one. That's quick, but it spends included subscription usage on work a less demanding model could finish. The router should choose a suitable model automatically, keep one conversation on one model, and save the strongest reasoning for work where it matters.
 

@@ -143,7 +143,7 @@ python3 model-router/router.py chat --project MyProject
 
 If `MODEL_ROUTER_CLASSIFIER` is already set, that explicit plugin takes precedence over the built-in Jev integration. Remove that setting in the launching terminal to use Jev. Use the same `--data-dir` for Jev setup and router chat if overriding the default.
 
-The original GPT spend gate may still report BLOCKED/UNKNOWN, particularly on a personal plan. Report that exact result; do not bypass it or buy another plan. Jev-only testing is still available independently. The router does not automatically start in response to opening the desktop app or typing into its normal chat box.
+Personal GPT plans can now use the [owner-confirmed subscription policy](personal-subscription.md), with per-send live checks. A missing confirmation or failing check still reports BLOCKED/UNKNOWN. Report that exact result; do not bypass it or buy another plan. Jev-only testing is still available independently. The router does not automatically start in response to opening the desktop app or typing into its normal chat box.
 
 For a desktop shortcut, use the app's local-environment action UI to run `python3 model-router/router.py chat --project MyProject`. No undocumented environment-file schema or app settings were written by this cloud session.
 

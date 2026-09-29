@@ -1,4 +1,10 @@
-# Return-to-work note — Jev integration
+# Return-to-work note
+
+## Current next step — 2026-09-29
+
+Use `docs/model-router-personal-subscription`, run `router.py setup`, then `router.py pilot --routing-check`. Existing model approvals are reused; record the billing confirmation locally for the same account. [Complete instructions](personal-subscription.md). No model weights, paid API credentials or workspace upgrade are required by this mode. Do not merge or release until review and real-task validation are complete.
+
+## Historical Jev integration note
 
 No new product decision was needed to finish the TypeSafe integration. The approved direction has been implemented: TypeSafe enforces credits; the router has no local spending cap or daily billing check.
 
