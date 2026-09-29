@@ -1,14 +1,13 @@
 """One-command setup and a bounded live pilot.
 
-``setup`` does everything that needs no human, and pauses only for the two
-things that do: ChatGPT sign-in (Codex's own browser login, never a pasted
-credential) and approving which discovered model serves each role.
+``setup`` checks ChatGPT sign-in, model approvals and billing eligibility.
+Personal subscription mode needs an account-bound owner confirmation that
+automatic credit purchases are off. Repeat setup reuses a valid confirmation.
 
 ``pilot`` runs a small, fixed set of real turns (normal answer, architecture
 -> implementation handoff, human override, restart/resume) and refuses to
-start unless the spend boundary is ALLOWED_INCLUDED_ONLY from a verified
-mechanism. It never exhausts real usage on purpose; limit handling is covered
-by the simulator tests.
+start unless a supported spending policy permits sending. It never exhausts
+real usage on purpose; limit handling is covered by the simulator tests.
 """
 
 from __future__ import annotations
@@ -147,10 +146,38 @@ class Setup:
             finally:
                 store.close()
 
+            refreshed = adapter.read_account()
+            if (refreshed.account_scope, refreshed.plan_type) != (account.account_scope, account.plan_type):
+                step("account", "BLOCKED", "account or plan changed during model approval; run setup again")
+                return self._finish(report, "Setup stopped; model approvals were not transferred to another account.")
+            account = refreshed  # model approval can take minutes; discard that old account snapshot
             usage = adapter.read_usage()
             decision = adapter.check_spend_boundary(account, usage)
+            from .billing import BillingPolicy, DEPENDENCY
+            from .spend import PERSONAL_PLAN_TYPES, personal_observation_problems
+
+            if not decision.allows_send and account.plan_type in PERSONAL_PLAN_TYPES:
+                problems = personal_observation_problems(account, usage, pin_state=adapter.pin_state)
+                if not problems and adapter.validated_pin_digest:
+                    self.say("\nPersonal subscription mode: use included usage with zero credit balance.")
+                    self.say(DEPENDENCY)
+                    self.say("This confirmation is saved for this account, profile and Codex pin. It applies to normal chat, "
+                             "pilots and queued work while the router is running. Check status or disable with router.py billing.")
+                    if self.confirm("Have you checked automatic reload is OFF for this account, and accept this dependency?"):
+                        BillingPolicy(self.data_dir).confirm(
+                            account_scope=account.account_scope, plan_type=account.plan_type,
+                            adapter_pin=adapter.validated_pin_digest, profile=str(adapter.config.home.resolve()))
+                        # Human input can take minutes. Never authorize from the old snapshot.
+                        account, usage = adapter.read_account(), adapter.read_usage()
+                        decision = adapter.check_spend_boundary(account, usage)
             report["spend"] = {"status": decision.status.value, "mechanism": decision.mechanism,
                                "reasons": decision.reasons, "missing": decision.missing}
+            if decision.status is SpendStatus.ALLOWED_ACCOUNT_CONFIRMED:
+                status = BillingPolicy(self.data_dir).status()
+                report["spend"]["verification"] = "owner_confirmation_plus_live_checks"
+                step("spend boundary", "ACCOUNT-CONFIRMED", f"confirmed {status['confirmed_at']}; live credit and usage checks passed")
+                self.say(DEPENDENCY)
+                return self._finish(report, "Ready for a live test. Run: python3 model-router/router.py pilot --routing-check", ready=True)
             if decision.status is SpendStatus.ALLOWED_INCLUDED_ONLY:
                 verification = _mechanism_verification(decision.mechanism)
                 report["spend"]["verification"] = verification
@@ -211,8 +238,11 @@ class Setup:
 
 
 def _mechanism_verification(mechanism_id: str | None) -> str:
+    from .billing import PERSONAL_POLICY
     from .spend import MECHANISMS
 
+    if mechanism_id == PERSONAL_POLICY:
+        return "owner_confirmation_plus_live_checks"
     return next((m.verification for m in MECHANISMS if m.id == mechanism_id), "unknown")
 
 
@@ -273,8 +303,8 @@ def run_pilot(coordinator, *, project_dir: Path, allow_simulated: bool = False) 
     report["spend"] = {"status": decision.status.value, "mechanism": decision.mechanism, "synthetic": decision.synthetic,
                        "verification": _mechanism_verification(decision.mechanism) if decision.mechanism else None,
                        "reasons": decision.reasons, "missing": decision.missing}
-    if decision.status is not SpendStatus.ALLOWED_INCLUDED_ONLY or (decision.synthetic and not allow_simulated):
-        report["blocked"] = "spend boundary is not ALLOWED_INCLUDED_ONLY from a verified mechanism: " + "; ".join(
+    if not decision.allows_send or (decision.synthetic and not allow_simulated):
+        report["blocked"] = "spend boundary is not ALLOWED_INCLUDED_ONLY from a verified mechanism or ALLOWED_ACCOUNT_CONFIRMED: " + "; ".join(
             decision.reasons + decision.missing
         )
         return _save_pilot(store, report)

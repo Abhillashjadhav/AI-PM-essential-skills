@@ -1087,6 +1087,14 @@ class Coordinator:
         except Exception as exc:
             return self._hold_before_send(job_id, dispatch_id, JobState.BLOCKED_CAPABILITY, f"unexpected error before sending: {exc}")
 
+        # Thread creation/resume can take time. Re-read billing after it, so
+        # another terminal's disable or an account change cannot use our old
+        # personal-plan preflight result.
+        if eligibility.spend and eligibility.spend.status is SpendStatus.ALLOWED_ACCOUNT_CONFIRMED:
+            final_check = self.gate.check(binding, thread_account_scope=thread["account_scope"], thread_id=thread_id)
+            if not final_check.ok:
+                return self._hold_before_send(job_id, dispatch_id, final_check.state, final_check.blocker or "billing changed")
+
         try:
             self._set_dispatch(dispatch_id, DispatchPhase.SENT, expected=[DispatchPhase.PREPARED])
         except StaleState:
@@ -1393,11 +1401,12 @@ class Coordinator:
             account = self.adapter.read_account()
             usage = self.adapter.read_usage()
             decision = self.adapter.check_spend_boundary(account, usage)
+            decision.validate()
         except Exception as exc:  # cannot confirm -> stop the turn safely
             return f"spend boundary could not be re-checked ({type(exc).__name__}: {exc})"
         if self.live and decision.synthetic:
             return "simulated spend evidence cannot cover a live turn"
-        if decision.status is not SpendStatus.ALLOWED_INCLUDED_ONLY:
+        if not decision.allows_send:
             return f"spend boundary is now {decision.status.value}: " + "; ".join(decision.reasons + decision.missing)
         return None
 

@@ -148,6 +148,16 @@ class EligibilityGate:
             )
         available = usage.included_usage_available()
         if available is False:
+            # Still observe credit/account changes while paused. Otherwise a
+            # purchased balance could disappear before the next eligible send
+            # without invalidating the owner's old billing confirmation.
+            try:
+                paused_spend = self.adapter.check_spend_boundary(account, usage)
+                paused_spend.validate()
+                self._record_spend(paused_spend)
+            except Exception as exc:
+                return blocked(JobState.BLOCKED_SPEND, f"billing while paused could not be checked: {exc}",
+                               account=account, usage=usage)
             checks["usage"] = "exhausted"
             reset = usage.earliest_reset()
             return blocked(
@@ -157,6 +167,7 @@ class EligibilityGate:
                 reset_at=reset,
                 account=account,
                 usage=usage,
+                spend=paused_spend,
                 notes=notes,
             )
         checks["usage"] = "available" if available else "unknown"
@@ -182,7 +193,7 @@ class EligibilityGate:
         if spend.account_scope != account.account_scope:
             checks["spend"] = "foreign_account"
             return blocked(JobState.BLOCKED_SPEND, "spend evidence belongs to another account", account=account, usage=usage, spend=spend)
-        if spend.status is not SpendStatus.ALLOWED_INCLUDED_ONLY:
+        if not spend.allows_send:
             checks["spend"] = spend.status.value
             missing = ("; missing: " + "; ".join(spend.missing)) if spend.missing else ""
             return blocked(
@@ -193,7 +204,11 @@ class EligibilityGate:
                 spend=spend,
                 notes=notes,
             )
-        checks["spend"] = "allowed_included_only"
+        checks["spend"] = spend.status.value.lower()
+        if spend.status is SpendStatus.ALLOWED_ACCOUNT_CONFIRMED:
+            confirmed = next(e for e in spend.evidence if e.get("source") == "owner_confirmation")
+            notes.append(f"Personal subscription mode: billing confirmed by you on {confirmed['confirmed_at']}; "
+                         "live zero-credit and included-usage checks passed.")
 
         if binding is not None:
             try:
@@ -272,7 +287,8 @@ class EligibilityGate:
                 spend.account_scope,
                 dumps(spend.to_dict()),
                 spend.status.value,
-                "synthetic" if spend.synthetic else "live",
+                ("synthetic" if spend.synthetic else "owner_confirmation_plus_live_checks"
+                 if spend.status is SpendStatus.ALLOWED_ACCOUNT_CONFIRMED else "live"),
                 spend.decided_at,
                 None,
             ),

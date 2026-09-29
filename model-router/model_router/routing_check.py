@@ -12,9 +12,9 @@ CASES = (
     ("simple", Role.LOWEST,
      "Reformat this supplied list as three bullet points, keeping the words unchanged: apples; pears; figs."),
     ("difficult", Role.HIGHEST,
-     "Design the architecture for a multi-tenant task-management service. Compare a shared database with "
-     "isolated databases, tenant authorization, consistency, failure recovery, and migration trade-offs. "
-     "Recommend an approach and state assumptions. Explain in at most 200 words; do not run commands or change files."),
+     "Design the architecture for a task-management service. Compare a monolith with separate services, "
+     "event-driven updates, consistency, failure recovery, and migration trade-offs. Recommend an approach "
+     "for a small team with uncertain growth and state your assumptions. Return an architecture review in at most 200 words."),
 )
 
 
@@ -35,6 +35,12 @@ def verdict(row: dict) -> str:
     return "PASS" if observed == row["expected_model"] else "FAIL_OBSERVED_MODEL"
 
 
+def configured_execution_passed(row: dict) -> bool:
+    """Functional integration evidence, explicitly weaker than model attestation."""
+    return (verdict(row) in {"PASS", "MODEL_USE_UNVERIFIED"}
+            and row.get("thread_configured_model") == row.get("expected_model"))
+
+
 def run_routing_check(coordinator, *, allow_simulated: bool = False) -> dict:
     """At most one explicit dispatch per case. No scheduler, retries, handoffs or promotion.
 
@@ -47,7 +53,7 @@ def run_routing_check(coordinator, *, allow_simulated: bool = False) -> dict:
     path = store.data_dir / "routing-checks" / run_id / "report.json"
     report = {
         "run_id": run_id, "started_at": utc_now(), "live": coordinator.live,
-        "status": "RUNNING", "passed": False, "blocked": None,
+        "status": "RUNNING", "passed": False, "configured_execution_passed": False, "blocked": None,
         "max_dispatch_attempts": 2, "dispatch_attempts": 0,
         "cases": [{"case": name, "prompt": prompt, "expected_role": role.value, "status": "NOT_RUN"}
                   for name, role, prompt in CASES],
@@ -78,7 +84,7 @@ def run_routing_check(coordinator, *, allow_simulated: bool = False) -> dict:
         spend = coordinator.adapter.check_spend_boundary(account, usage)
         report["spend"] = {"status": spend.status.value, "reasons": spend.reasons, "missing": spend.missing}
         report["plan"] = account.plan_type
-        if spend.status is not SpendStatus.ALLOWED_INCLUDED_ONLY:
+        if not spend.allows_send:
             return stop("GPT spending check did not allow a send; no classifier or GPT task was called.")
         if spend.synthetic and (coordinator.live or not allow_simulated):
             return stop("Synthetic evidence cannot authorize this live test.")
@@ -122,6 +128,7 @@ def run_routing_check(coordinator, *, allow_simulated: bool = False) -> dict:
             created = store.events(event_type="thread.provider_created", thread_id=result.thread_id)
             row["thread_configured_model"] = created[-1]["payload"].get("model") if created else None
             row["status"] = verdict(row)
+            row["configured_execution_passed"] = configured_execution_passed(row)
             coordinator.ui.notify(f"Routing check {row['case']}: {row['status']}; "
                                   f"per-turn model: {row['dispatch'].get('observed_model') or 'not reported'}.")
             save()
@@ -130,6 +137,8 @@ def run_routing_check(coordinator, *, allow_simulated: bool = False) -> dict:
                 break  # no repeat, queue drain or further send after an execution failure
 
         statuses = [row["status"] for row in report["cases"]]
+        report["configured_execution_passed"] = coordinator.live and all(
+            row.get("configured_execution_passed", False) for row in report["cases"])
         if not coordinator.live:
             report["status"] = "SIMULATED"
         elif all(status == "PASS" for status in statuses):
