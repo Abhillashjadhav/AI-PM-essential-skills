@@ -359,6 +359,18 @@ def _validate_file(path: Path) -> int:
 
 
 def main(argv: list[str] | None = None) -> int:
+    """Capture lifecycle metadata when the optional local bridge is installed."""
+    try:
+        from workflow_beacon import capture
+    except Exception:
+        return _main(argv)
+    with capture("ai-pm-skills.contextport", project_root=Path.cwd()) as run:
+        result = _main(argv)
+        run.set_result(result)
+        return result
+
+
+def _main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(prog="contextport", description=__doc__)
     parser.add_argument("--version", action="version", version=f"ContextPort {CLI_VERSION}")
     subparsers = parser.add_subparsers(dest="command", required=True)
