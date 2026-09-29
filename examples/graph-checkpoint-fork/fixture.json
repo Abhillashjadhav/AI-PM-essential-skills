@@ -1,0 +1,54 @@
+{
+  "dataset": "fictional-return-case-v1",
+  "request": {
+    "order_id": "DEMO-1042",
+    "customer_id": "SYNTHETIC-01",
+    "as_of": "2026-09-15",
+    "question": "My headphones arrived damaged. What refund am I eligible for?",
+    "retrieval_query": "damaged headphones refund return restocking fee"
+  },
+  "orders": {
+    "DEMO-1042": {
+      "customer_id": "SYNTHETIC-01",
+      "product": "Headphones",
+      "paid_rupees": 2400,
+      "delivered_on": "2026-09-12",
+      "currency": "INR"
+    }
+  },
+  "return_evidence": {
+    "DEMO-1042": {
+      "inspection_id": "SYNTHETIC-INSPECTION-01",
+      "condition": "arrived_damaged",
+      "inspection_confirmed": true
+    }
+  },
+  "policies": [
+    {
+      "id": "RET-2025",
+      "title": "Damaged headphones refund return restocking fee",
+      "text": "Returns within 30 days receive the purchase price less a 20 percent restocking fee, including damaged items.",
+      "effective_from": "2025-01-01",
+      "effective_to": "2026-08-31",
+      "return_window_days": 30,
+      "restocking_percent": 20,
+      "damaged_item_exempt": false
+    },
+    {
+      "id": "RET-2026",
+      "title": "Current returns policy",
+      "text": "Goods confirmed damaged on arrival qualify for a full refund within 30 days. Other returns incur a restocking fee.",
+      "effective_from": "2026-09-01",
+      "effective_to": null,
+      "return_window_days": 30,
+      "restocking_percent": 20,
+      "damaged_item_exempt": true
+    }
+  ],
+  "oracle": {
+    "policy_id": "RET-2026",
+    "eligible": true,
+    "refund_rupees": 2400,
+    "explanation": "This fixed fixture's current rule grants a full refund for confirmed arrival damage within 30 days."
+  }
+}

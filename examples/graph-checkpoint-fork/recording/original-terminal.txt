@@ -1,0 +1,22 @@
+$ python3 terminal_run.py baseline --out actual-run-2
+
+Fresh run | fictional damaged return
+Lookup: text match only
+[1/6] Validate request ...
+      request validated
+[2/6] Retrieve order ...
+[3/6] Check return evidence ...
+      order ₹2,400
+      arrival damage confirmed
+SAVED C1: 2c1fa9863196
+Continuing from the saved decision point
+[4/6] Retrieve policy ...
+      selected RET-2025
+      expired 2026-08-31
+[5/6] Calculate refund ...
+      proposed refund: ₹1,920
+[6/6] Verify proposal ...
+      FAIL: expired policy / wrong amount
+RESULT BLOCKED | no refund sent
+Original run and checkpoint saved.
+$ 

@@ -1,0 +1,187 @@
+{
+  "attempts": {
+    "calculate_refund": 2,
+    "retrieve_policy": 1
+  },
+  "events": [
+    {
+      "changed_field": "config.retrieval_strategy",
+      "event": "fork_created",
+      "new": "effective_date",
+      "old": "text_match",
+      "parent_checkpoint_sha256": "68caefd74ddbf326d15835ca78b2003081d3da6ac1fb249ff5e342d045f7e36c",
+      "run_id": "required-task-failure",
+      "sequence": 1
+    },
+    {
+      "artifact_sha256": "a9558923491167637457470b0dbb317c1e031fa87acb289155ff2ff268dce62a",
+      "event": "task_restored",
+      "run_id": "required-task-failure",
+      "sequence": 2,
+      "task": "validate_request"
+    },
+    {
+      "artifact_sha256": "1df3261904421a06a9689fa549d4b041f6a2d12ec3f8f074e3e6c3fc425ae27e",
+      "event": "task_restored",
+      "run_id": "required-task-failure",
+      "sequence": 3,
+      "task": "lookup_order"
+    },
+    {
+      "artifact_sha256": "7b7a0a2aeb336bc0f40ab5177ad314b29b0dcfd86ad6d92c8abd80e9ff7613df",
+      "event": "task_restored",
+      "run_id": "required-task-failure",
+      "sequence": 4,
+      "task": "inspect_return"
+    },
+    {
+      "event": "task_started",
+      "run_id": "required-task-failure",
+      "sequence": 5,
+      "task": "retrieve_policy"
+    },
+    {
+      "event": "task_completed",
+      "run_id": "required-task-failure",
+      "sequence": 6,
+      "task": "retrieve_policy",
+      "value": {
+        "policy": {
+          "damaged_item_exempt": true,
+          "effective_from": "2026-09-01",
+          "effective_to": null,
+          "id": "RET-2026",
+          "restocking_percent": 20,
+          "return_window_days": 30,
+          "text": "Goods confirmed damaged on arrival qualify for a full refund within 30 days. Other returns incur a restocking fee.",
+          "title": "Current returns policy"
+        },
+        "ranked_candidates": [
+          {
+            "date_applicable": true,
+            "id": "RET-2026",
+            "score": 4
+          }
+        ],
+        "strategy": "effective_date"
+      }
+    },
+    {
+      "event": "task_started",
+      "run_id": "required-task-failure",
+      "sequence": 7,
+      "task": "calculate_refund"
+    },
+    {
+      "attempts": 2,
+      "event": "task_failed",
+      "reason": "Injected fixture failure",
+      "run_id": "required-task-failure",
+      "sequence": 8,
+      "task": "calculate_refund"
+    },
+    {
+      "event": "run_blocked",
+      "failures": {
+        "calculate_refund": "Injected fixture failure"
+      },
+      "run_id": "required-task-failure",
+      "sequence": 9
+    }
+  ],
+  "executed": [
+    "retrieve_policy",
+    "calculate_refund"
+  ],
+  "external_actions": [],
+  "failures": {
+    "calculate_refund": "Injected fixture failure"
+  },
+  "final_refund_rupees": null,
+  "model_calls": 0,
+  "parent_checkpoint_sha256": "68caefd74ddbf326d15835ca78b2003081d3da6ac1fb249ff5e342d045f7e36c",
+  "proposed_refund_rupees": null,
+  "restored": [
+    "validate_request",
+    "lookup_order",
+    "inspect_return"
+  ],
+  "run_id": "required-task-failure",
+  "state": {
+    "config": {
+      "retrieval_strategy": "effective_date"
+    },
+    "records": {
+      "inspect_return": {
+        "admission_check": "PASS",
+        "artifact_sha256": "7b7a0a2aeb336bc0f40ab5177ad314b29b0dcfd86ad6d92c8abd80e9ff7613df",
+        "origin_run": "original",
+        "producer": "inspect_return",
+        "recorded_at": "2026-09-15T18:13:54.780839+00:00"
+      },
+      "lookup_order": {
+        "admission_check": "PASS",
+        "artifact_sha256": "1df3261904421a06a9689fa549d4b041f6a2d12ec3f8f074e3e6c3fc425ae27e",
+        "origin_run": "original",
+        "producer": "lookup_order",
+        "recorded_at": "2026-09-15T18:13:54.780158+00:00"
+      },
+      "retrieve_policy": {
+        "admission_check": "PASS",
+        "artifact_sha256": "ae7a1c7ad90a7b334132175feda507579deed11c4a5dc73178bea306e21e010f",
+        "origin_run": "required-task-failure",
+        "producer": "retrieve_policy",
+        "recorded_at": "2026-09-15T18:13:55.364159+00:00"
+      },
+      "validate_request": {
+        "admission_check": "PASS",
+        "artifact_sha256": "a9558923491167637457470b0dbb317c1e031fa87acb289155ff2ff268dce62a",
+        "origin_run": "original",
+        "producer": "validate_request",
+        "recorded_at": "2026-09-15T18:13:54.776205+00:00"
+      }
+    },
+    "values": {
+      "inspect_return": {
+        "condition": "arrived_damaged",
+        "inspection_confirmed": true,
+        "inspection_id": "SYNTHETIC-INSPECTION-01"
+      },
+      "lookup_order": {
+        "currency": "INR",
+        "customer_id": "SYNTHETIC-01",
+        "delivered_on": "2026-09-12",
+        "paid_rupees": 2400,
+        "product": "Headphones"
+      },
+      "retrieve_policy": {
+        "policy": {
+          "damaged_item_exempt": true,
+          "effective_from": "2026-09-01",
+          "effective_to": null,
+          "id": "RET-2026",
+          "restocking_percent": 20,
+          "return_window_days": 30,
+          "text": "Goods confirmed damaged on arrival qualify for a full refund within 30 days. Other returns incur a restocking fee.",
+          "title": "Current returns policy"
+        },
+        "ranked_candidates": [
+          {
+            "date_applicable": true,
+            "id": "RET-2026",
+            "score": 4
+          }
+        ],
+        "strategy": "effective_date"
+      },
+      "validate_request": {
+        "as_of": "2026-09-15",
+        "customer_id": "SYNTHETIC-01",
+        "order_id": "DEMO-1042",
+        "question": "My headphones arrived damaged. What refund am I eligible for?",
+        "retrieval_query": "damaged headphones refund return restocking fee"
+      }
+    }
+  },
+  "status": "BLOCKED"
+}

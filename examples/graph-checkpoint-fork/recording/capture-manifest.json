@@ -1,0 +1,58 @@
+{
+  "source": "Two live bash pseudo-terminals captured during execution",
+  "slides": false,
+  "frame_rate": 20,
+  "frames": 900,
+  "recorded_video_seconds": 45.0,
+  "wall_seconds": 45.15810846699969,
+  "commands": [
+    {
+      "terminal": "original-terminal",
+      "command": "python3 terminal_run.py baseline --out actual-run-2",
+      "started_at": 1.203383,
+      "finished_at": 16.459361
+    },
+    {
+      "terminal": "fork-terminal",
+      "command": "python3 terminal_run.py fork --out actual-run-2",
+      "started_at": 18.959489,
+      "finished_at": 30.746119
+    },
+    {
+      "terminal": "fork-terminal",
+      "command": "python3 terminal_run.py check --out actual-run-2",
+      "started_at": 32.746308,
+      "finished_at": 38.98281
+    }
+  ],
+  "reading_pauses": true,
+  "model_calls": 0,
+  "verification": {
+    "checks": {
+      "both original files preserved": true,
+      "fork verified at the fixture amount": true,
+      "no live model or external action": true,
+      "one retrieval choice changed": true,
+      "only downstream tasks rerun": true,
+      "original proposal blocked": true,
+      "prefix artifacts unchanged": true,
+      "same saved starting point": true
+    },
+    "core_checks_passed": 25,
+    "difference_rupees": 480,
+    "passed": true,
+    "reading_delays_excluded_from_work_clock": true
+  },
+  "capture_sha256": "b463184f778d9af829f35d575829c1a0e6c7f141f77d1cdac374fc14968246ef",
+  "export": {
+    "filename": "graph-engineering-live-terminal-1p5x.mp4",
+    "speed": 1.5,
+    "duration_seconds": 30.0,
+    "frame_rate": 30,
+    "frames": 900,
+    "width": 1920,
+    "height": 1080,
+    "decode_verified": true,
+    "sha256": "99636088e69d4f0fb9068d106bace52d62556c208b6c4b062a3276985b3f26fb"
+  }
+}

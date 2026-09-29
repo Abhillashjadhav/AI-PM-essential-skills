@@ -1,0 +1,62 @@
+{
+  "payload": {
+    "checkpoint_id": "C1",
+    "code_sha256": "8cc591e077522ca9037e1dd1fa0bbc67911c9b4ae53acae20511b72d2edd4f89",
+    "fixture_sha256": "2d5a50f8b48a6ecc46eeb93c1fcf5427d012e224f4ec3343d6e71fdff86ad48b",
+    "next_tasks": [
+      "retrieve_policy"
+    ],
+    "schema_version": 1,
+    "source_run": "original",
+    "state": {
+      "config": {
+        "retrieval_strategy": "text_match"
+      },
+      "records": {
+        "inspect_return": {
+          "admission_check": "PASS",
+          "artifact_sha256": "7b7a0a2aeb336bc0f40ab5177ad314b29b0dcfd86ad6d92c8abd80e9ff7613df",
+          "origin_run": "original",
+          "producer": "inspect_return",
+          "recorded_at": "2026-09-15T18:13:54.780839+00:00"
+        },
+        "lookup_order": {
+          "admission_check": "PASS",
+          "artifact_sha256": "1df3261904421a06a9689fa549d4b041f6a2d12ec3f8f074e3e6c3fc425ae27e",
+          "origin_run": "original",
+          "producer": "lookup_order",
+          "recorded_at": "2026-09-15T18:13:54.780158+00:00"
+        },
+        "validate_request": {
+          "admission_check": "PASS",
+          "artifact_sha256": "a9558923491167637457470b0dbb317c1e031fa87acb289155ff2ff268dce62a",
+          "origin_run": "original",
+          "producer": "validate_request",
+          "recorded_at": "2026-09-15T18:13:54.776205+00:00"
+        }
+      },
+      "values": {
+        "inspect_return": {
+          "condition": "arrived_damaged",
+          "inspection_confirmed": true,
+          "inspection_id": "SYNTHETIC-INSPECTION-01"
+        },
+        "lookup_order": {
+          "currency": "INR",
+          "customer_id": "SYNTHETIC-01",
+          "delivered_on": "2026-09-12",
+          "paid_rupees": 2400,
+          "product": "Headphones"
+        },
+        "validate_request": {
+          "as_of": "2026-09-15",
+          "customer_id": "SYNTHETIC-01",
+          "order_id": "DEMO-1042",
+          "question": "My headphones arrived damaged. What refund am I eligible for?",
+          "retrieval_query": "damaged headphones refund return restocking fee"
+        }
+      }
+    }
+  },
+  "sha256": "68caefd74ddbf326d15835ca78b2003081d3da6ac1fb249ff5e342d045f7e36c"
+}
