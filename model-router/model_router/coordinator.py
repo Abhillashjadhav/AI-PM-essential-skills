@@ -245,7 +245,10 @@ class Coordinator:
         metadata: dict[str, Any] | None = None,
         request_id: str | None = None,
         synthetic: bool | None = None,
+        evaluation: bool = False,
     ) -> SubmitResult:
+        if evaluation and thread_id is not None:
+            raise ContractError("routing evaluation requires a new thread")
         submitted = time.monotonic()
         request_id = request_id or new_id("req")
         existing_job = self.store.one("SELECT * FROM jobs WHERE logical_key=?", (f"request:{request_id}",))
@@ -279,7 +282,8 @@ class Coordinator:
             conn.execute(
                 "INSERT INTO threads(id, project_id, kind, synthetic, title, status, created_at, updated_at, account_scope) "
                 "VALUES (?,?,?,?,?,?,?,?,?)",
-                (thread_id, project_row["id"], ThreadKind.ORDINARY.value, int(synthetic), text.strip()[:80], "active", now, now, self.account_scope),
+                (thread_id, project_row["id"], ThreadKind.EVALUATION.value if evaluation else ThreadKind.ORDINARY.value,
+                 int(synthetic), text.strip()[:80], "active", now, now, self.account_scope),
             )
             message_id = self.store.add_message(
                 thread_id, "user", "prompt", text, provenance="terminal", conn=conn
@@ -287,8 +291,9 @@ class Coordinator:
             self._store_attachments(conn, thread_id, manifest)
             conn.execute(
                 "INSERT INTO jobs(id, logical_key, thread_id, request_id, kind, state, priority, urgency, route_attempt_id, "
-                "input_message_id, created_at, updated_at) VALUES (?,?,?,?,?,?,?,?,?,?,?,?)",
-                (job_id, f"request:{request_id}", thread_id, request_id, "user_turn", JobState.DRAFT.value, 0, urgency, attempt, message_id, now, now),
+                "input_message_id, created_at, updated_at, user_requested) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                (job_id, f"request:{request_id}", thread_id, request_id, "evaluation" if evaluation else "user_turn",
+                 JobState.DRAFT.value, 0, urgency, attempt, message_id, now, now, 0 if evaluation else 1),
             )
             self.store.event("route.proposed", {"request_id": request_id, "route_attempt_id": attempt}, thread_id=thread_id, job_id=job_id, conn=conn)
             self.store.transition_job(job_id, JobState.ROUTING, conn=conn)

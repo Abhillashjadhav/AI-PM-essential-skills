@@ -419,6 +419,19 @@ def cmd_pilot(args: argparse.Namespace) -> int:
     from .onboard import PILOT_TURN_BUDGET, run_pilot
 
     coordinator, store = build(args)
+    if args.routing_check:
+        from .routing_check import run_routing_check
+
+        print("Two-task check: one simple task, one difficult task, two new chats. At most two GPT dispatch attempts.")
+        print("PASS requires real responses and matching per-turn model evidence. A model label alone is insufficient.")
+        try:
+            report = run_routing_check(coordinator, allow_simulated=args.simulate)
+            _print_json(report)
+            return 0 if report["passed"] else 3 if report["blocked"] else 1
+        finally:
+            coordinator.close()
+            coordinator.adapter.close()
+            store.close()
     report = run_pilot(coordinator, project_dir=store.data_dir / "pilot-project", allow_simulated=args.simulate)
     if report.get("blocked"):
         print(f"Router: pilot not started — {report['blocked']}")
@@ -732,6 +745,7 @@ def parser() -> argparse.ArgumentParser:
     p.set_defaults(func=cmd_start)
 
     p = sub.add_parser("pilot", parents=[common], help="bounded live pilot (only when the spend boundary is verified)")
+    p.add_argument("--routing-check", action="store_true", help="two new chats: simple/lowest and difficult/highest; require real model-use evidence")
     p.set_defaults(func=cmd_pilot)
 
     p = sub.add_parser("serve", parents=[common], help="keep queued work resuming automatically while this window is open")
