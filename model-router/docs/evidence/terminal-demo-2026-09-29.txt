@@ -1,0 +1,39 @@
+SIMULATED TERMINAL SESSION — executed 2026-09-29 in the cloud build container.
+No Jev, GPT, user account or network call. This is not the native Codex composer.
+Trailing terminal-prompt spaces removed for repository whitespace checks.
+
+Scripted user input:
+Review the architecture for a reporting app.
+Clarify the component boundaries.
+/new
+Implement the CSV export per the agreed architecture.
+/new
+Format my private notes into bullet points.
+/quit
+
+Observed stdout:
+Terminal model router. Enter prompts at 'You:' below.
+The normal Codex chat box is not connected to this router.
+SIMULATED INTERACTIVE DEMO: local rules and fake models; no Jev, GPT or network calls.
+Router: New model discovered: sim-astra-1 (candidate only; needs evaluation and your approval)
+Router: New model discovered: sim-sol-1 (candidate only; needs evaluation and your approval)
+Router: New model discovered: sim-luna-1 (candidate only; needs evaluation and your approval)
+Project: RouterDemo  [SIMULATED]
+Router: this terminal receives your prompts; the normal Codex chat box does not.
+Router: first prompt selects a model; follow-ups keep it. /new starts another chat; /quit exits.
+You: Router: Highest reasoning — architecture decision. Model stays fixed for this chat.
+Router: selected model: sim-astra-1.
+Router: (routing took 1 ms)
+[SIMULATED sim-astra-1] Answer for: Review the architecture for a reporting app.
+You: [SIMULATED sim-astra-1] Answer for: Clarify the component boundaries.
+You: Router: new chat in this project. Your next prompt will select its model; the previous chat is saved.
+You: Router: Middle reasoning — implementation from an agreed design. Model stays fixed for this chat.
+Router: selected model: sim-sol-1.
+Router: (routing took 1 ms)
+[SIMULATED sim-sol-1] Answer for: Implement the CSV export per the agreed architecture.
+You: Router: new chat in this project. Your next prompt will select its model; the previous chat is saved.
+You: Router: Lowest reasoning — routine text work. Model stays fixed for this chat.
+Router: selected model: sim-luna-1.
+Router: (routing took 1 ms)
+[SIMULATED sim-luna-1] Answer for: Format my private notes into bullet points.
+You:

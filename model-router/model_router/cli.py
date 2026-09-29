@@ -26,6 +26,7 @@ from .registry import mapping_hash_for
 from .store import Store, default_data_dir
 
 HELP_CHAT = """Inside chat, type a message, or one of:
+  /new                     start a fresh chat in this project; choose its model from the next prompt
   /attach <path>            attach a local TXT/MD/DOCX/PDF to your next message
   /fetch <url>              fetch a public page you named and attach it as data
   /history                  show this chat's messages
@@ -370,6 +371,50 @@ def cmd_setup(args: argparse.Namespace) -> int:
     return 0 if report.get("ready") else 3
 
 
+def cmd_start(args: argparse.Namespace) -> int:
+    """One entry point for the terminal experience; never installs a host hook."""
+    path = Path(args.path).expanduser().resolve()
+    if not path.is_dir():
+        print("Router: --path must name an existing project folder.")
+        return 2
+    args.project = args.project or path.name
+    print("Terminal model router. Enter prompts at 'You:' below.")
+    print("The normal Codex chat box is not connected to this router.")
+    if not args.simulate:
+        if not sys.stdin.isatty():
+            print("Router: live start needs your interactive terminal for setup and approvals.")
+            return 2
+        data_dir = Path(args.data_dir).expanduser() if args.data_dir else default_data_dir()
+        from .jev import JevClient
+        jev = JevClient(data_dir).status()
+        if jev.get("enabled"):
+            print("Router: Jev is enabled for eligible first prompts; GPT access is checked separately.")
+        else:
+            print(f"Router: Jev is off ({jev.get('reason', 'unknown')}); the local rules will choose tiers.")
+            print("Router: to re-enable Jev intentionally, run: python3 model-router/router.py jev setup")
+        if cmd_setup(args) != 0:
+            print("Router: live chat was not started. Jev tests do not activate GPT or the Codex chat box.")
+            return 3
+    coordinator, store = build(args)
+    try:
+        if args.simulate:
+            from .demo import approve_simulated_bindings
+            print("SIMULATED INTERACTIVE DEMO: local rules and fake models; no Jev, GPT or network calls.")
+            coordinator.start()
+            approve_simulated_bindings(coordinator)
+        existing = store.project_by_name(args.project)
+        if existing is None:
+            coordinator.add_project(args.project, str(path))
+        elif Path(existing["root"]).resolve() != path:
+            print("Router: that project name already points to a different folder. Choose another --project name.")
+            return 2
+    finally:
+        coordinator.close()
+        coordinator.adapter.close()
+        store.close()
+    return cmd_chat(args)
+
+
 def cmd_pilot(args: argparse.Namespace) -> int:
     from .onboard import PILOT_TURN_BUDGET, run_pilot
 
@@ -421,6 +466,8 @@ def _chat_loop(args: argparse.Namespace, coordinator: Coordinator, store: Store,
             return 1
     ui = coordinator.ui
     print(f"Project: {project}" + ("  [SIMULATED]" if args.simulate else ""))
+    print("Router: this terminal receives your prompts; the normal Codex chat box does not.")
+    print("Router: first prompt selects a model; follow-ups keep it. /new starts another chat; /quit exits.")
     if thread_id:
         print(f"Router: continuing chat {thread_id} on {store.thread(thread_id)['pinned_model']}.")
         for job in store.all("SELECT id FROM jobs WHERE thread_id=? AND state NOT IN ('SUCCEEDED','FAILED','CANCELLED')", (thread_id,)):
@@ -448,10 +495,14 @@ def _chat_loop(args: argparse.Namespace, coordinator: Coordinator, store: Store,
         pending_attachments.clear()
         if result.handoff is not None:
             _report_handoff(coordinator, result.handoff, ui, resumer)
+            if result.handoff.status in {"CREATED", "EXISTING"}:
+                thread_id = result.handoff.target_thread_id
+                ui.notify(f"Router: now in the implementation chat on {result.handoff.model_id}; your next message goes there.")
             continue
         if thread_id is None:
             thread_id = result.thread_id
             ui.notify(f"Router: {result.explanation}")
+            ui.notify(f"Router: selected model: {result.model_id or 'not selected — waiting for approval/availability'}.")
             timing = result.timings_ms.get("submit_to_selection_ms")
             if timing is not None:
                 ui.notify(f"Router: (routing took {timing:.0f} ms{' incl. startup' if result.timings_ms.get('cold') else ''})")
@@ -507,6 +558,12 @@ def _chat_command(coordinator: Coordinator, text: str, thread_id: str | None, pe
     store = coordinator.store
     if command in {"/quit", "/exit"}:
         return thread_id, True
+    if command == "/new" and not rest:
+        if pending:
+            ui.notify("Router: send the pending attachments before starting a new chat; none were discarded.")
+            return thread_id, False
+        ui.notify("Router: new chat in this project. Your next prompt will select its model; the previous chat is saved.")
+        return None, False
     if command == "/help":
         print(HELP_CHAT)
     elif command == "/attach" and rest:
@@ -563,6 +620,9 @@ def _chat_command(coordinator: Coordinator, text: str, thread_id: str | None, pe
             thread_id, acceptance=AcceptanceEvidence(source="finalise_command", reference=f"cli:{utc_now()}", text=text), record_payload=record
         )
         _report_handoff(coordinator, handoff, ui, resumer)
+        if handoff.status in {"CREATED", "EXISTING"}:
+            thread_id = handoff.target_thread_id
+            ui.notify(f"Router: now in the implementation chat on {handoff.model_id}; your next message goes there.")
     elif command == "/threads":
         for row in coordinator.threads():
             print(f"{row['id']}  {row['kind']:<14} {row['pinned_model'] or '-':<18} {row['title'] or ''}")
@@ -665,6 +725,11 @@ def parser() -> argparse.ArgumentParser:
 
     p = sub.add_parser("setup", parents=[common], help="one guided setup: pin Codex, ChatGPT sign-in, approve models, check spend")
     p.set_defaults(func=cmd_setup)
+
+    p = sub.add_parser("start", parents=[common], help="guided terminal startup, then chat if live setup passes; --simulate is an interactive offline demo")
+    p.add_argument("--project", help="project name (defaults to the folder name)")
+    p.add_argument("--path", default=".", help="existing project folder (default: current folder)")
+    p.set_defaults(func=cmd_start)
 
     p = sub.add_parser("pilot", parents=[common], help="bounded live pilot (only when the spend boundary is verified)")
     p.set_defaults(func=cmd_pilot)
