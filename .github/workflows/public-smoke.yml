@@ -64,3 +64,8 @@ jobs:
           python3 context-port/contextport.py validate context-port/fixtures/contextpack-valid.json
           python3 context-port/demo.py
           python3 -m unittest discover -s context-port/tests -q
+
+      - name: Run model-router offline quickstart
+        run: |
+          python3 model-router/router.py demo
+          python3 -m unittest discover -s model-router/tests -q

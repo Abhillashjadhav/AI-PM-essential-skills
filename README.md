@@ -217,6 +217,7 @@ These are separate from the marketplace plugins above:
 - [`context-auditor/`](context-auditor/) — review four context failure categories: poisoning, distraction, confusion, and clash, adapted from [Drew Breunig's “How Long Contexts Fail”](https://www.dbreunig.com/2025/06/22/how-contexts-fail-and-how-to-fix-them.html).
 - [`concise-rewriter/`](concise-rewriter/) — reduce supplied text and report token change.
 - [`context-port/`](context-port/) — separate local-first context-package validation and migration toolkit.
+- [`model-router/`](model-router/) — local terminal model router with per-chat model pinning, architecture-to-implementation handoff, and optional TypeSafe Jev classification. Its offline demo and tests are usable now; GPT live sends retain the documented spend gate.
 
 The retired [`eval-rubric-generator/`](eval-rubric-generator/) path contains
 migration guidance only. It is not a triggerable skill; rubric creation now
