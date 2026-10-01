@@ -1,0 +1,56 @@
+{
+  "format": "model-router-import.1",
+  "source": "synthetic example for tests and documentation",
+  "authorised_by": "owner",
+  "synthetic": true,
+  "projects": [
+    {
+      "id": "p-portfolio",
+      "name": "Portfolio",
+      "threads": [
+        {
+          "id": "t-1",
+          "title": "Pricing page copy",
+          "created_at": "2026-09-20T10:00:00Z",
+          "model": "example-model",
+          "kind": "transcript",
+          "messages": [
+            {
+              "id": "m1",
+              "role": "user",
+              "created_at": "2026-09-20T10:00:00Z",
+              "content": "Tighten the pricing page headline."
+            },
+            {
+              "id": "m2",
+              "role": "assistant",
+              "created_at": "2026-09-20T10:00:05Z",
+              "content": "Try: 'Plans that grow with you.'"
+            }
+          ]
+        },
+        {
+          "id": "t-2",
+          "title": "Remembered preferences",
+          "created_at": "2026-09-21T09:00:00Z",
+          "kind": "memory_summary",
+          "messages": [
+            {
+              "id": "s1",
+              "role": "assistant",
+              "created_at": "2026-09-21T09:00:00Z",
+              "content": "Summary: prefers short answers."
+            }
+          ]
+        },
+        {
+          "id": "t-old",
+          "title": "Old thread",
+          "created_at": "2026-07-01T09:00:00Z",
+          "kind": "transcript",
+          "messages": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,70 @@
+{
+  "dataset_version": "implementation-cases.2026-09-25.1",
+  "synthetic": true,
+  "description": "Section 5.3 implementation-role branches (R07-R11) with explicitly synthetic capacity estimates.",
+  "cases": [
+    {
+      "id": "R07-sufficient",
+      "requires_highest": false,
+      "clarity": "CLEAR_AND_SIMPLE",
+      "risk": "LOW_RISK",
+      "lowest_candidate_ok": true,
+      "capacity": "SUFFICIENT",
+      "expected_role": "middle"
+    },
+    {
+      "id": "R08-tight-clear-low-risk",
+      "requires_highest": false,
+      "clarity": "CLEAR_AND_SIMPLE",
+      "risk": "LOW_RISK",
+      "lowest_candidate_ok": true,
+      "capacity": "TIGHT",
+      "expected_role": "lowest"
+    },
+    {
+      "id": "R08-tight-but-lowest-unapproved",
+      "requires_highest": false,
+      "clarity": "CLEAR_AND_SIMPLE",
+      "risk": "LOW_RISK",
+      "lowest_candidate_ok": false,
+      "capacity": "TIGHT",
+      "expected_role": "middle"
+    },
+    {
+      "id": "R09-unknown-capacity",
+      "requires_highest": false,
+      "clarity": "CLEAR_AND_SIMPLE",
+      "risk": "LOW_RISK",
+      "lowest_candidate_ok": true,
+      "capacity": "UNKNOWN",
+      "expected_role": "middle"
+    },
+    {
+      "id": "R10-unclear-tight",
+      "requires_highest": false,
+      "clarity": "UNCLEAR",
+      "risk": "LOW_RISK",
+      "lowest_candidate_ok": true,
+      "capacity": "TIGHT",
+      "expected_role": "middle"
+    },
+    {
+      "id": "R10-high-risk-level-tight",
+      "requires_highest": false,
+      "clarity": "CLEAR_AND_SIMPLE",
+      "risk": "HIGH_RISK",
+      "lowest_candidate_ok": true,
+      "capacity": "TIGHT",
+      "expected_role": "middle"
+    },
+    {
+      "id": "R11-money-tight",
+      "requires_highest": true,
+      "clarity": "CLEAR_AND_SIMPLE",
+      "risk": "HIGH_RISK",
+      "lowest_candidate_ok": true,
+      "capacity": "TIGHT",
+      "expected_role": "highest"
+    }
+  ]
+}
