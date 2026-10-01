@@ -608,6 +608,7 @@ def parser() -> argparse.ArgumentParser:
         ("disable", "turn off Jev; continue with local rules"),
         ("pilot", "six public example classifications using your confirmed free credits"),
         ("report", "read saved public pilot scores; no model calls or credential access"),
+        ("compare", "compare one inactive wording candidate on 12 public cases; at most 24 Jev calls, no GPT"),
     ):
         p = jev.add_parser(action, help=description)
         p.add_argument("--data-dir", help="same data directory used by router chat")

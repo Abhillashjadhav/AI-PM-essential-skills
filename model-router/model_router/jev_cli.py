@@ -48,6 +48,9 @@ def command(args) -> int:
             return run_pilot(pilot)
         if args.jev_action == "report":
             return report_saved_pilot(pilot)
+        if args.jev_action == "compare":
+            from .jev_compare import run_comparison
+            return run_comparison(pilot)
     except (JevUnavailable, OSError, ValueError, EOFError, KeyboardInterrupt) as exc:
         reason = str(exc) if isinstance(exc, JevUnavailable) else "setup interrupted or invalid input"
         print(f"Jev: {reason}. No automatic retry; routing uses the local rules.", file=sys.stderr)
@@ -129,6 +132,8 @@ def report_saved_pilot(pilot: JevClient) -> int:
             record = pilot._read_json(path)
             if record is None:
                 continue
+            if "evaluation_variant" in record:
+                continue  # opt-in comparisons are separate from the active pilot
             prompt_hash = record.get("prompt_hash")
             if not isinstance(prompt_hash, str) or prompt_hash not in hashes:
                 continue
