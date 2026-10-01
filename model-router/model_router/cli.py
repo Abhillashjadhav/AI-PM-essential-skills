@@ -377,10 +377,20 @@ def cmd_billing(args: argparse.Namespace) -> int:
     data_dir = Path(args.data_dir).expanduser() if args.data_dir else default_data_dir()
     policy = BillingPolicy(data_dir)
     if args.billing_action == "disable":
-        policy.disable()
-        print("Personal subscription mode disabled. New sends stop at their next eligibility check; "
-              "close active router sessions before changing billing. This cannot undo a request already sent.")
-    _print_json(policy.status())
+        changed = policy.disable()
+        status = policy.status()
+        if changed:
+            print("Personal subscription mode disabled. New sends stop at their next eligibility check; "
+                  "close active router sessions before changing billing. This cannot undo a request already sent.")
+        elif status["source"] == "none":
+            print("No saved owner confirmation existed to disable.")
+        elif status["source"] == "invalid_local_record":
+            print("The saved confirmation is invalid; personal subscription mode remains blocked.")
+        else:
+            print("Personal subscription mode was already disabled.")
+    else:
+        status = policy.status()
+    _print_json(status)
     return 0
 
 

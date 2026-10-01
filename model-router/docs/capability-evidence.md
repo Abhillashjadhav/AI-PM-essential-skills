@@ -1,4 +1,14 @@
-# Capability evidence (as of 2026-09-25)
+# Capability evidence
+
+## Current addendum — personal subscriptions, 2026-09-29
+
+The owner approved ordinary personal-subscription operation, not just a two-task exception. The new `ALLOWED_ACCOUNT_CONFIRMED` path depends on an account-bound owner confirmation of automatic reload OFF plus fresh, consistent live billing/usage checks. It does not claim provider enforcement. Confirmation is installer-specific; no author's account state is shipped. [Current operating contract and evidence](personal-subscription.md).
+
+320 offline router tests and required repository checks pass. A fake App Server exercises setup, two distinct model requests, ordinary chat, pause/reset, revocation and cross-process disable. No actual GPT turn was run here. The owner-provided Mac setup showed successful sign-in, role approvals and live usage reporting; its old blanket personal-plan gate blocked before any GPT request. Private screenshots, logs and account details are not committed.
+
+**The sections below are historical evidence for the earlier provider-enforcement-only design.** Their blanket personal-plan blocking, test counts and absence of account setup evidence are superseded by this addendum. Remaining absence of live GPT/tool/model-attestation evidence is not superseded.
+
+## Historical baseline — 2026-09-25
 
 ## Addendum: Jev integration, 2026-09-27
 

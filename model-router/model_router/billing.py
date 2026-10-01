@@ -110,6 +110,25 @@ class BillingPolicy:
 
     def status(self) -> dict:
         current, problem = self.load()
+        if current is None:
+            invalid = bool(problem and problem.startswith("invalid saved confirmation"))
+            source = "invalid_local_record" if invalid else "none"
+            note = (
+                "The saved local confirmation is invalid and cannot enable personal subscription mode. "
+                "The router cannot verify the provider's current credit settings."
+                if invalid else
+                "No owner confirmation is saved. The router cannot verify whether automatic "
+                "credit purchases are off in the provider account."
+            )
+        elif current.enabled:
+            source = "owner_confirmation"
+            note = DEPENDENCY
+        else:
+            source = "owner_confirmation"
+            note = (
+                "The saved owner confirmation is disabled. It records a prior choice, not the "
+                "provider's current credit settings; confirm account settings again before setup."
+            )
         return {"enabled": bool(current and current.enabled), "confirmed_at": current.confirmed_at if current else None,
-                "policy": PERSONAL_POLICY, "source": "owner_confirmation", "provider_verified": False,
-                "problem": problem, "note": DEPENDENCY}
+                "policy": PERSONAL_POLICY, "source": source, "provider_verified": False,
+                "problem": problem, "note": note}

@@ -1,6 +1,6 @@
 # Technical decisions
 
-These are reversible engineering choices made while building V1. The product decisions are the owner's and are listed in the [PRD](../../prds/2026-09-25-model-router.md). None of the choices below reopens them.
+These are reversible engineering choices made while building V1. The product decisions are the owner's and are listed in the [PRD](../../prds/2026-09-25-model-router.md). Historical choices D8, D22 and D28 are superseded for explicitly enabled personal-subscription operation by D35 below; the provider-enforcement-only path retains them.
 
 | # | Decision | Why | Reversibility |
 |---|---|---|---|
@@ -36,3 +36,6 @@ These are reversible engineering choices made while building V1. The product dec
 | D31 | Classifier rules revision 6: categories from revision 5's fresh-set-1 misses. Frozen at commit `12e0d73`, then scored once on fresh set 2. Low-stakes personal writing and planning (poems, trip plans) route lowest, as a hypothesis | Each revision gets a set it has never seen; the personal-task floor is unconfirmed by the owner | High |
 | D32 | Classifier rules revision 7: categories from revision 6's fresh-set-2 misses, safety fixes first (a styling rule had hidden a payout change). Frozen at commit `e7a7e1d`, then scored once on fresh set 3: 80.0% exact, 10.5% under-routed | The same freeze-then-measure discipline | High |
 | D20 | The marketplace, existing skills and ContextPort are untouched. The router lives in `model-router/` | Repository rules | — |
+
+| D35 | Owner-approved reusable personal-subscription policy: locally confirmed reload OFF, plus fresh live zero-credit/included-usage checks. Saved consent is account/plan/profile/pin-bound and revocable; status is `ALLOWED_ACCOUNT_CONFIRMED`, never provider enforcement | Owner requested normal operation and a reusable product on 2026-09-29. The client cannot monitor reload settings or prevent billing changes elsewhere; that dependency is explicit during setup | Disable is reversible; completed usage is not |
+| D36 | Keep functional integration and per-turn identity separate: `configured_execution_passed` reports matching requested/configured models and complete responses; strict `passed` still needs matching observed per-turn identity | Missing provider attestation must not become a fabricated result or conceal successful execution | High |

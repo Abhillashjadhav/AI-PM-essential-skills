@@ -2,11 +2,11 @@
 
 A local terminal tool that picks a suitable model tier for each new chat and keeps that choice fixed for the whole chat. When you accept an architecture, it opens a separate implementation chat for you. GPT work uses the existing subscription eligibility checks. Optional TypeSafe Jev classification uses provider-managed credits.
 
-> **TypeSafe update, 2026-09-27:** Jev integration is implemented and tested offline (252 router tests). TypeSafe enforces its credit limits; there is **no local spending cap**. The router runs on your Mac, while Jev and GPT run online. Run it inside the desktop app's integrated terminal if available. It does not intercept the native Codex/ChatGPT composer. [Architecture and activation](docs/jev-integration.md) · [Return-to-work note](docs/owner-follow-ups.md).
+**Current status (2026-09-29):** reusable personal-subscription operation is implemented and passes **320 offline router tests**. Normal terminal chat and the two-task check use the same billing policy. Each installer confirms automatic credit purchases are off; live account and usage checks still run before sends. This is distinct from a provider-enforced spending guarantee. [Setup and operation](docs/personal-subscription.md).
 
-> **Status: not complete. Built and tested offline; live sends are blocked because no verified included-only mechanism exists for personal ChatGPT plans.** The router, automatic resume, one-command setup and the bounded pilot are built and tested offline (252 offline tests, including Jev). The Codex adapter was verified against the real Codex CLI 0.157.0 up to sign-in. **No real model turn has been run.**
->
-> On a personal plan the router can verify a zero credit balance live. It cannot verify that automatic reload is off, and it cannot guarantee that no purchase happens during a task, so the ₹0 rule keeps live sends blocked. That is a missing provider guarantee, not proof that personal plans can never work. A workspace member credit limit of 0 is a documented control, but it is **unverified** until a real account shows it working. Routing quality on unseen synthetic prompts: 78.5–81.5% exact for rules revisions 5–7, each scored once on 200 prompts it had never seen (6–10.5% under-routed). The 95% real-use goal needs real use. Details: [docs/capability-evidence.md](docs/capability-evidence.md). Routing works **only in this terminal client**.
+**Not yet production-validated:** no real GPT response has been observed by this build session, separate per-turn model identity is not normally reported, coding-tool availability needs live verification, and the 95% real-use routing target is unproven. Rules-only held-out results remain 78.5–81.5% exact across prior revisions. Do not publish this as a finished production release yet.
+
+Optional TypeSafe Jev uses provider-managed credits with no local spending cap. The router runs locally; Jev and GPT run online. Native Codex/ChatGPT chat boxes are not intercepted. Use this terminal client (including an app's integrated terminal if available). No model weights are required.
 
 ## Try it (no account needed)
 
@@ -35,7 +35,7 @@ the steps are clear, the work is low risk, and included usage looks tight.
 
 ```bash
 python3 model-router/router.py setup    # pin Codex, ChatGPT sign-in, approve models, check spend (no model turn)
-python3 model-router/router.py pilot    # bounded live check; refuses unless the spend boundary is verified
+python3 model-router/router.py pilot --routing-check  # two fresh chats, at most two GPT dispatches
 ```
 
 Or hand the rest to Codex on your Mac with one prompt: [docs/local-pilot.md](docs/local-pilot.md).
@@ -43,7 +43,7 @@ Or hand the rest to Codex on your Mac with one prompt: [docs/local-pilot.md](doc
 ## Prerequisites
 
 - Python 3.11 or newer. Only the standard library is used, with no `pip install`.
-- For live use (later): the Codex CLI on your Mac, signed in with ChatGPT under the router's own profile, then `doctor`, `adapter pin`, and a verified spend boundary.
+- For live use: the Codex CLI, ChatGPT sign-in under the router's own profile, approved model mappings, a valid pin, and either owner-confirmed personal-subscription operation or the existing provider-control policy.
 - Optional: `pdftotext` (poppler-utils) for text PDFs. Without it, PDF input is reported as BLOCKED.
 
 ## Commands
@@ -51,7 +51,10 @@ Or hand the rest to Codex on your Mac with one prompt: [docs/local-pilot.md](doc
 | Command | What it does |
 |---|---|
 | `router.py setup` | One guided setup. It pins the installed Codex CLI, checks the router's own ChatGPT-only profile, opens Codex's sign-in if needed, approves one model per role, and checks the spend boundary. |
-| `router.py pilot` | A bounded live pilot of at most 8 turns: normal answer, handoff, override, restart/resume. It only runs when the spend boundary is verified. |
+| `router.py pilot` | A bounded live pilot of at most 8 turns: normal answer, handoff, override, restart/resume. It only runs when a supported billing policy permits sends; start with the two-task check. |
+| `router.py pilot --routing-check` | Two fresh public tasks: simple/lowest and difficult/highest; actual answers, configured model and per-turn evidence reported separately. |
+| `router.py billing status` / `billing disable` | View or disable the local personal-subscription confirmation; no network call or purchase. |
+| `router.py start --project <name> --path <dir>` | Reuse setup and enter normal terminal chat. |
 | `router.py serve` | Keeps queued work resuming automatically while this window is open. |
 | `router.py doctor` | Read-only checks: Python, local store, Codex CLI version and checksum, protocol schema, sign-in, config, models, usage, spend boundary. It runs no model turn and prints no credentials. |
 | `router.py demo` | Synthetic walkthrough in a temporary folder. |
