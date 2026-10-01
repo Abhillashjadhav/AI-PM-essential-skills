@@ -1,0 +1,113 @@
+{
+ "what": "router doctor + setup run against the real released Codex CLI (npm @openai/codex 0.157.0, linux-x64) in the build container; unauthenticated, no model turn",
+ "date": "2026-09-25",
+ "binary_sha256": "1a822376d4634ac32dddc030e5117c63359f7f8cd4b1b64382c68190287d0258",
+ "schema_digest": "1bf42c6f88db25da21db917fafba0897a507924a8af8f5f762653207ef7600d5",
+ "gates": [
+  {
+   "detail": {},
+   "evidence": "Python 3.11.15",
+   "name": "python",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {
+    "problems": []
+   },
+   "evidence": "<router data dir>/router.sqlite3 schema v1; dir mode 0o700; db mode 0o600",
+   "name": "local store",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {
+    "launcher": {},
+    "schema_digest": "1bf42c6f88db25da21db917fafba0897a507924a8af8f5f762653207ef7600d5"
+   },
+   "evidence": "<npm @openai/codex 0.157.0 linux-x64 binary> version 'codex-cli 0.157.0' sha256 1a822376d4634ac3\u2026",
+   "name": "codex cli",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {
+    "notes": [
+     "other server requests are declined or answered with an error: ['account/chatgptAuthTokens/refresh', 'applyPatchApproval', 'attestation/generate', 'execCommandApproval', 'item/permissions/requestApproval', 'item/tool/call', 'item/tool/requestUserInput', 'mcpServer/elicitation/request']"
+    ]
+   },
+   "evidence": "installed schema has every required method/field",
+   "name": "protocol compatibility",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {
+    "reasons": []
+   },
+   "evidence": "pin state: valid",
+   "name": "adapter pin",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {
+    "pin": {
+     "problems": [],
+     "state": "valid"
+    }
+   },
+   "evidence": "initialize/account/read answered over stdio",
+   "name": "app server",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {},
+   "evidence": "auth mode none; sign in with: CODEX_HOME=<router data dir>/codex-home codex login",
+   "name": "chatgpt sign-in",
+   "status": "BLOCKED"
+  },
+  {
+   "detail": {},
+   "evidence": "forced_login_method=chatgpt; no provider override",
+   "name": "effective config",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {
+    "models": [
+     "gpt-6-astra",
+     "gpt-6-sol",
+     "gpt-6-luna",
+     "gpt-5.6-sol",
+     "gpt-5.6-terra",
+     "gpt-5.6-luna",
+     "gpt-5.5"
+    ]
+   },
+   "evidence": "7 model(s) in the CLI catalogue (not yet confirmed for your account)",
+   "name": "model catalogue",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {},
+   "evidence": "needs ChatGPT sign-in; then decided per request from live provider signals (spend.py)",
+   "name": "spend boundary",
+   "status": "BLOCKED"
+  },
+  {
+   "detail": {},
+   "evidence": "pdftotext (poppler-utils) not installed; text PDFs are BLOCKED, TXT/MD/DOCX work",
+   "name": "pdf extraction",
+   "status": "BLOCKED"
+  },
+  {
+   "detail": {},
+   "evidence": "peak RSS 27.8 MiB for this doctor run (not a pilot measurement)",
+   "name": "process memory",
+   "status": "VERIFIED"
+  },
+  {
+   "detail": {},
+   "evidence": "no supported ChatGPT-web or Codex-desktop integration; routing works in this terminal client only",
+   "name": "browser / desktop integration",
+   "status": "BLOCKED"
+  }
+ ],
+ "limits": "Linux build of the same release, not the owner's macOS install; no ChatGPT sign-in, so account, usage and spend signals are unobserved."
+}
