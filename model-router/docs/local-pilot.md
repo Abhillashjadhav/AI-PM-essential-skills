@@ -1,23 +1,28 @@
 # Continue on your Mac (one prompt for Codex)
 
+For the newly added TypeSafe classifier, first use [the Jev setup and six-example pilot](jev-integration.md#activate-and-test-on-the-mac). It is independent of the GPT spend gate. [Owner follow-up note](owner-follow-ups.md).
+
 The cloud build environment has done everything that doesn't need your Mac or your ChatGPT account. The rest must run on your Mac. Open **Codex in your local clone** of this repository and paste the prompt below. That is the whole handoff.
 
 Running this handoff in Codex uses your own Codex allowance. If your account holds purchased credits, Codex itself could draw them after your included usage. That is outside the router's control.
 
 ```text
 You are continuing the model-router work in this repository on my Mac. Do not restart the design.
-Branch: claude/intelligent-johnson-rhr02b (it contains the whole stack: draft PRs #68 -> #69 -> #70).
+Branch: docs/model-router-jev-guide (includes the existing stack, draft #71, and the Jev guide).
 Do not merge anything into main, do not force-push, and keep the stack.
 
 Hard rules:
-- Never ask me to paste a password, token, cookie or API key. Sign-in is Codex's own browser login.
+- Never ask for a password, token, cookie or API key in a chat message. GPT sign-in is Codex's own login.
+  TypeSafe key entry is only through the hidden local `router.py jev setup` terminal prompt.
 - Do not buy credits, buy a reset, change billing or reload settings, or call any purchase or reset method.
 - Do not edit model-router/model_router/spend.py, and do not create files that claim spend enforcement. If the
   spend boundary is not ALLOWED_INCLUDED_ONLY, the live pilot stays blocked. Report that; do not work around it.
-- Commands that start the Codex App Server need network access. Ask me to approve running them outside your sandbox.
+- Commands that start the Codex App Server need network access. Use the available approved execution environment;
+  if a real access approval is required, explain it. Do not weaken the GPT eligibility gate.
 
 Steps:
-1. git fetch origin && git checkout claude/intelligent-johnson-rhr02b && git pull --ff-only
+1. Fetch and switch to docs/model-router-jev-guide without overwriting local changes; pull --ff-only.
+   If this is a single-branch clone, explicitly fetch that branch into its origin tracking ref first.
    Record: git rev-parse HEAD, sw_vers, uname -m, python3 --version (needs 3.11+), codex --version.
 2. python3 -m unittest discover -s model-router/tests -q        (must pass on macOS; fix only real macOS issues)
 3. python3 model-router/tools/measure_latency.py 200 20         (routing latency on this Mac)
