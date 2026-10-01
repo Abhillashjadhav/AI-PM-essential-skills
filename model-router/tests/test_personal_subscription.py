@@ -101,6 +101,47 @@ class PersonalPolicyGuards(unittest.TestCase):
 
 
 class ConfirmationStorage(unittest.TestCase):
+    def test_billing_status_explains_absent_enabled_disabled_and_invalid_records(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            policy = BillingPolicy(Path(tmp) / "data")
+            fresh = policy.status()
+            self.assertFalse(fresh["enabled"])
+            self.assertIsNone(fresh["confirmed_at"])
+            self.assertEqual(fresh["source"], "none")
+            self.assertIn("No owner confirmation", fresh["note"])
+            self.assertNotIn("OFF according to your saved confirmation", fresh["note"])
+            disabled_before_setup = subprocess.run(
+                [sys.executable, str(ROOT / "router.py"), "billing", "disable",
+                 "--data-dir", str(policy.data_dir)],
+                capture_output=True, text=True,
+            )
+            self.assertEqual(disabled_before_setup.returncode, 0)
+            self.assertIn("No saved owner confirmation existed", disabled_before_setup.stdout)
+
+            policy.confirm(account_scope="a", plan_type="pro", adapter_pin="pin", profile="profile")
+            enabled = policy.status()
+            self.assertTrue(enabled["enabled"])
+            self.assertIn("saved confirmation", enabled["note"])
+            self.assertFalse(enabled["provider_verified"])
+
+            self.assertTrue(policy.disable())
+            disabled = policy.status()
+            self.assertFalse(disabled["enabled"])
+            self.assertEqual(disabled["source"], "owner_confirmation")
+            self.assertIn("disabled", disabled["note"])
+            self.assertNotIn("OFF according to your saved confirmation", disabled["note"])
+
+            store = Store(policy.data_dir)
+            try:
+                store.execute("UPDATE meta SET value=? WHERE key=?", ('{"enabled":true}', KEY))
+            finally:
+                store.close()
+            invalid = policy.status()
+            self.assertFalse(invalid["enabled"])
+            self.assertEqual(invalid["source"], "invalid_local_record")
+            self.assertIn("invalid", invalid["note"])
+            self.assertNotIn("OFF according to your saved confirmation", invalid["note"])
+
     def test_private_persistent_confirmation_atomic_disable_and_audit(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "data"
