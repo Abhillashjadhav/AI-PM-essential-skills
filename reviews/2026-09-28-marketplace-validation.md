@@ -1,5 +1,14 @@
 # Marketplace validation evidence
 
+> Status update (2026-09-30): This report records its original September 28
+> run, but its catalog limitation below is superseded on main
+> `316f02050650a3da60342a600b26ae1b99adf412` after merged PR #79.
+> Fresh local `python3 model-grader/reference/catalog/run_checks.py` exits 0:
+> 3/3 approved, 12/12 faults, 55/55 revisions, 30/30 saved candidates, and
+> 31/31 metadata checks. See [catalog follow-through](2026-09-28-catalog-followthrough.md).
+> This does not imply later grader draft PRs, live accuracy or independent
+> calibration were completed.
+
 Combined code was checked at `9f78447` on 2026-09-28; subsequent documentation
 clarifications leave that runtime and validator code unchanged. CI must also
 pass on the final PR heads before merge.

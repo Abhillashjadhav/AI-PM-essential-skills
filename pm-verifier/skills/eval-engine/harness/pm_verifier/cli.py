@@ -122,9 +122,121 @@ def _contract_lineage_input_paths(
     return protected
 
 
+def _validate_execute_outputs(
+    project: Path,
+    trials_out: Path,
+    results_out: Path,
+    judgments: Path | None,
+) -> None:
+    """Refuse output aliases before an adapter can mutate evaluation evidence."""
+    try:
+        project_root = project.resolve()
+        protected = {
+            (project_root / name).resolve()
+            for name in (
+                "suite.json", "run.json", "dataset.json", "cases.jsonl",
+                "trials.jsonl", "judgments.jsonl", "calibration.json",
+                "goldens.jsonl",
+            )
+        }
+        if judgments is not None:
+            protected.add(judgments.resolve())
+        run = load_json(project_root / "run.json")
+        protected.update(_contract_lineage_input_paths(project_root, run))
+
+        resolved_outputs: list[Path] = []
+        for output in (trials_out, results_out):
+            if output.is_symlink():
+                raise EvidenceError("execute output must not be a symbolic link")
+            if output.exists():
+                if not output.is_file():
+                    raise EvidenceError("existing execute output must be a regular file")
+                if output.stat().st_nlink > 1:
+                    raise EvidenceError("execute output must not be a multiply linked file")
+            resolved = output.resolve()
+            if resolved in protected:
+                raise EvidenceError("execute output must not overwrite evaluation inputs")
+            resolved_outputs.append(resolved)
+        if resolved_outputs[0] == resolved_outputs[1]:
+            raise EvidenceError("execute outputs must not alias each other")
+    except EvidenceError:
+        raise
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise EvidenceError(f"execute paths cannot be resolved safely: {exc}") from exc
+
+
+def _project_writer_inputs(
+    project: Path, trials: Path | None, judgments: Path | None
+) -> set[Path]:
+    """Resolve actual project inputs without suppressing normal BLOCKED output.
+
+    A malformed or absent run.json is evaluated by the existing engine, which
+    writes a useful BLOCKED result. Only readable lineage entries add paths.
+    """
+    root = project.resolve()
+    paths = {
+        root / name for name in (
+            "suite.json", "run.json", "dataset.json", "cases.jsonl",
+            "trials.jsonl", "judgments.jsonl", "calibration.json",
+        )
+    }
+    paths.add(trials if trials is not None else project / "trials.jsonl")
+    paths.add(judgments if judgments is not None else project / "judgments.jsonl")
+    run_path = root / "run.json"
+    try:
+        run = load_json(run_path) if run_path.is_file() else {}
+    except EvidenceError:
+        run = {}
+    lineage = run.get("contract_lineage")
+    if isinstance(lineage, list):
+        for artifact in lineage:
+            declared = artifact.get("path") if isinstance(artifact, dict) else None
+            if isinstance(declared, str) and declared.strip():
+                try:
+                    selected = Path(declared)
+                    selected = selected if selected.is_absolute() else root / selected
+                    paths.add(selected.resolve())
+                except (OSError, RuntimeError, ValueError):
+                    # Evidence validation reports the malformed lineage in its
+                    # ordinary BLOCKED output when the destination is distinct.
+                    continue
+    return paths
+
+
+def _validate_writer_output(output: Path, inputs: set[Path], *, command: str) -> None:
+    """Refuse only unsafe aliases; keep distinct custom destinations valid."""
+    try:
+        if output.resolve() in {source.resolve() for source in inputs}:
+            raise EvidenceError(f"{command} output must not overwrite input evidence")
+        if output.exists() and output.is_file():
+            output_stat = output.stat()
+            for source in inputs:
+                if source.is_file():
+                    source_stat = source.stat()
+                    if (output_stat.st_dev, output_stat.st_ino) == (
+                        source_stat.st_dev, source_stat.st_ino
+                    ):
+                        raise EvidenceError(
+                            f"{command} output must not overwrite input evidence"
+                        )
+    except EvidenceError:
+        raise
+    except (OSError, RuntimeError, ValueError) as exc:
+        raise EvidenceError(f"{command} paths cannot be resolved safely: {exc}") from exc
+
+
 def main(argv: Sequence[str] | None = None) -> int:
     args = build_parser().parse_args(argv)
     if args.command in {"prepare", "validate", "run"}:
+        try:
+            _validate_writer_output(
+                args.out,
+                _project_writer_inputs(args.project, args.trials, args.judgments),
+                command=args.command,
+            )
+        except EvidenceError as exc:
+            print(f"ERROR: {exc}", file=sys.stderr)
+            return 2
         result = evaluate_project(
             args.project,
             trials_path=args.trials,
@@ -145,6 +257,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         trials_out = _project_path(args.project, args.trials_out)
         results_out = _project_path(args.project, args.results_out)
         try:
+            _validate_execute_outputs(
+                args.project, trials_out, results_out, args.judgments
+            )
             adapter_errors = execute_trials(
                 args.project,
                 adapter_command,
@@ -166,6 +281,7 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _decision_exit(result["decision"])
     if args.command == "report":
         try:
+            _validate_writer_output(args.out, {args.results}, command="report")
             result = load_json(args.results)
         except EvidenceError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
@@ -175,6 +291,10 @@ def main(argv: Sequence[str] | None = None) -> int:
         return _decision_exit(result.get("decision", "BLOCKED"))
     if args.command == "inspect":
         try:
+            if args.out is not None:
+                _validate_writer_output(
+                    args.out, {args.results, args.trials}, command="inspect"
+                )
             result = load_json(args.results)
             trials = load_jsonl(args.trials) if args.trials.is_file() else []
         except EvidenceError as exc:
@@ -268,6 +388,9 @@ def main(argv: Sequence[str] | None = None) -> int:
         return 0
     if args.command == "calibrate":
         try:
+            _validate_writer_output(
+                args.out, {args.suite, args.goldens, args.judgments}, command="calibrate"
+            )
             suite = load_json(args.suite)
         except EvidenceError as exc:
             print(f"ERROR: {exc}", file=sys.stderr)
@@ -276,6 +399,11 @@ def main(argv: Sequence[str] | None = None) -> int:
         write_json(args.out, result)
         print(f"calibrate: {result['status']} -> {args.out}")
         return _decision_exit(result["status"])
+    try:
+        _validate_writer_output(args.out, {args.pairs}, command="bias")
+    except EvidenceError as exc:
+        print(f"ERROR: {exc}", file=sys.stderr)
+        return 2
     result = analyze_pairwise_bias(args.pairs)
     write_json(args.out, result)
     print(f"bias: {result['status']} -> {args.out}")

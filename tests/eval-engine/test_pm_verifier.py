@@ -9,6 +9,7 @@ import sys
 import tempfile
 import time
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 
@@ -37,6 +38,7 @@ from pm_verifier.adapter import (  # noqa: E402
     execute_trials,
 )
 from pm_verifier.reporting import render_inspection, render_markdown  # noqa: E402
+from pm_verifier.cli import main as cli_main  # noqa: E402
 
 
 class PMVerifierTest(unittest.TestCase):
@@ -65,6 +67,67 @@ class PMVerifierTest(unittest.TestCase):
             encoding="utf-8",
         )
         return path
+
+    def test_execute_rejects_output_input_aliases_before_adapter(self) -> None:
+        for option, output in (
+            ("--results-out", "run.json"),
+            ("--trials-out", "suite.json"),
+            ("--results-out", "judgments.jsonl"),
+            ("--results-out", "trials.jsonl"),
+            ("--results-out", "calibration.json"),
+        ):
+            with self.subTest(option=option, output=output):
+                protected = self.project / output
+                before = protected.read_bytes()
+                with patch("pm_verifier.cli.execute_trials") as adapter:
+                    result = cli_main([
+                        "execute", "--project", str(self.project), option, output,
+                        "--", sys.executable, str(self.project / "reference_adapter.py"),
+                    ])
+                self.assertEqual(result, 2)
+                adapter.assert_not_called()
+                self.assertEqual(protected.read_bytes(), before)
+
+    def test_execute_rejects_output_aliases_via_links_and_lineage(self) -> None:
+        run_path = self.project / "run.json"
+        run = json.loads(run_path.read_text())
+        run["contract_lineage"] = [{"path": "reference_adapter.py"}]
+        run_path.write_text(json.dumps(run))
+        for alias in ("symlink", "hardlink", "lineage", "outputs"):
+            output = self.project / "collision.json"
+            if alias == "symlink":
+                output.symlink_to(run_path)
+            elif alias == "hardlink":
+                os.link(run_path, output)
+            before = run_path.read_bytes()
+            args = ["execute", "--project", str(self.project)]
+            if alias == "lineage":
+                args += ["--results-out", "reference_adapter.py"]
+            elif alias == "outputs":
+                args += ["--trials-out", "collision.json", "--results-out", "collision.json"]
+            else:
+                args += ["--results-out", "collision.json"]
+            with self.subTest(alias=alias), patch("pm_verifier.cli.execute_trials") as adapter:
+                result = cli_main([
+                    *args, "--", sys.executable, str(self.project / "reference_adapter.py"),
+                ])
+            self.assertEqual(result, 2)
+            adapter.assert_not_called()
+            self.assertEqual(run_path.read_bytes(), before)
+            if output.is_symlink() or output.exists():
+                output.unlink()
+
+    def test_execute_allows_distinct_output_paths(self) -> None:
+        external_trials = Path(self.tempdir.name) / "trials.fresh.jsonl"
+        external_results = Path(self.tempdir.name) / "results.fresh.json"
+        result = cli_main([
+            "execute", "--project", str(self.project),
+            "--trials-out", str(external_trials), "--results-out", str(external_results),
+            "--", sys.executable, str(self.project / "reference_adapter.py"),
+        ])
+        self.assertEqual(result, 0)
+        self.assertEqual(json.loads(external_results.read_text())["decision"], "PASS")
+        self.assertTrue(external_trials.is_file())
 
     def fault(self, name: str) -> Path:
         specs = json.loads(
