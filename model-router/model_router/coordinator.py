@@ -3,7 +3,8 @@ queueing, cancellation and restart recovery.
 
 Invariants enforced here (see docs/architecture.md):
 
-* The route decision and exact binding are durable before any provider call.
+* The route decision and exact binding are durable before any GPT work call.
+  An opt-in classifier may run earlier under its own provider credit limits and durable request log.
 * A thread's model never changes except through an explicit owner override.
 * No turn is sent unless the eligibility gate passed moments before, in this
   process, under the single dispatch lease.
@@ -300,7 +301,7 @@ class Coordinator:
             attachment_manifest=manifest,
             explicit_priority=priority,
             explicit_urgency=urgency,
-            metadata=metadata or {},
+            metadata={**(metadata or {}), "_router_request_id": request_id},
             project_context={"name": project_row["name"]},
         )
         timings = {"startup_ms": round(startup_ms, 2), "attachment_prep_ms": round(prep_ms, 2), "cold": float(cold)}
@@ -644,7 +645,7 @@ class Coordinator:
         """
         thread = self.store.thread(thread_id)
         segment = int(thread["current_segment"]) + 1
-        assessment = self.classifier(ClassifierInput(text=text))
+        assessment = self.classifier(ClassifierInput(text=text, metadata={"_router_segment_only": True}))
         assessment.segment = segment
         with self.store.transaction() as conn:
             conn.execute("UPDATE threads SET current_segment=?, updated_at=? WHERE id=?", (segment, utc_now(), thread_id))
@@ -1570,13 +1571,17 @@ class Coordinator:
     def _recover(self) -> list[dict[str, Any]]:
         report: list[dict[str, Any]] = []
         for row in self.store.all("SELECT * FROM jobs WHERE state='ROUTING'"):
-            # No provider call happens during routing: re-route with a new fence.
+            # No GPT work call happens during routing. Jev may have classified
+            # already: recover its cached result or use rules, never resend it.
             attempt = new_id("route")
             self.store.execute("UPDATE jobs SET route_attempt_id=? WHERE id=?", (attempt, row["id"]))
             self.store.event("route.restarted", {"route_attempt_id": attempt}, thread_id=row["thread_id"], job_id=row["id"])
             message = self.store.one("SELECT content FROM messages WHERE id=?", (row["input_message_id"],))
             result = self._route_new(
-                row["thread_id"], row["id"], attempt, row["request_id"], ClassifierInput(text=message["content"] if message else ""),
+                row["thread_id"], row["id"], attempt, row["request_id"],
+                ClassifierInput(text=message["content"] if message else "", metadata={
+                    "_router_request_id": row["request_id"], "_router_recovery": True,
+                }),
                 time.monotonic(), {"cold": 1.0, "after_restart": 1.0}, [],
             )
             report.append({"job_id": row["id"], "action": "rerouted", "state": result.state.value})
