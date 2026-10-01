@@ -1,0 +1,23 @@
+{
+ "definitions": {
+  "TurnStatus": {
+   "enum": [
+    "completed",
+    "interrupted",
+    "failed",
+    "inProgress"
+   ],
+   "type": "string"
+  }
+ },
+ "properties": {
+  "threadId": {},
+  "turn": {}
+ },
+ "required": [
+  "threadId",
+  "turn"
+ ],
+ "title": "TurnCompletedNotification",
+ "type": "object"
+}

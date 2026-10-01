@@ -1,0 +1,1408 @@
+{
+ "dataset_version": "fresh-set-2-2026-09-25.1",
+ "synthetic": true,
+ "author": "two independent agents (C2, D2), blind to the classifier and all other sets; a separate agent re-labelled the prompts without seeing these labels and agreed on 199/200",
+ "role_in_repo": "development set: scored once against frozen rules revision 6 (commit 12e0d73): 78.5% exact, 9.0% under-routed, 12.5% over-routed; then used to tune revision 7",
+ "cases": [
+  {
+   "id": "C001",
+   "prompt": "summarise for my notes pls, 5 bullets max\n\nstandup 22/9 - ravi: eval harness v2 blocked, labelling vendor invoice stuck w/ finance (PO pending). deepa: search p95 840ms vs 600 target, suspects reranker. me: bulk tagging prd due thu. ravi: staging db password got rotated sat night so update ur .env. nikhil OOO wed-fri.",
+   "expected_role": "lowest",
+   "category": "meeting_notes",
+   "rationale": "Ordinary summary of pasted notes is the lowest row; the password and invoice mentions are pasted data, not a security or money task."
+  },
+  {
+   "id": "C002",
+   "prompt": "ok real question. do we ship AI summaries to all enterprise tenants this friday or keep it behind the flag one more sprint? golden set pass rate 91%, target was 93. legal hasn't signed off on the 30 day retention of ticket text. sales wants it for the Kestrel Logistics renewal (1.2cr ARR). gut says wait but idk",
+   "expected_role": "highest",
+   "category": "product_decision",
+   "rationale": "A launch go/no-go with legal and revenue trade-offs is a product decision / difficult trade-off, so highest."
+  },
+  {
+   "id": "C003",
+   "prompt": "getting this in my job tracker (next 14 app router) on the dashboard page\n\nError: Text content does not match server-rendered HTML.\nServer: \"25/9/2026\" Client: \"9/25/2026\"\n\ncomponent is just <td>{new Date(job.applied_at).toLocaleDateString()}</td>\n\nhow do i fix w/o making the whole table client side",
+   "expected_role": "middle",
+   "category": "side_project_nextjs_supabase",
+   "rationale": "Ordinary debugging with no money, privacy or security risk falls in the middle row."
+  },
+  {
+   "id": "C004",
+   "prompt": "fix grammar only, keep my tone: hey all standup moved to 10.30 tmrw bc of the all hands, pls update ur cal and if ur blocked just drop it in thread no need to wait",
+   "expected_role": "lowest",
+   "category": "workplace_message",
+   "rationale": "A mechanical grammar fix on an ordinary team message is the lowest row."
+  },
+  {
+   "id": "C005",
+   "prompt": "write me a linkedin post abt what i learnt shipping our first llm eval pipeline. main points: golden sets rot in ~6 wks, llm judges agreed w/ humans less than we assumed, and the biggest win was just making PMs write expected outputs. short, no emojis, no 'i'm humbled'",
+   "expected_role": "highest",
+   "category": "linkedin_post",
+   "rationale": "LinkedIn posts are high-credibility work, which the policy routes to highest."
+  },
+  {
+   "id": "C006",
+   "prompt": "postgres q: weekly active searchers for last 8 wks. table events(user_id, event_name, ts). count a user in a week only if they did >=2 'search' events that week. weeks starting monday pls",
+   "expected_role": "middle",
+   "category": "sql_query",
+   "rationale": "Writing an ordinary analytics query without money, privacy or security risk is the middle row."
+  },
+  {
+   "id": "C007",
+   "prompt": "make this polite + clear for my landlord, english: hi mr rao transferring sept rent today eve, also geyser in 2nd bathroom still leaking since last week pls send plumber this week, i'm home after 6",
+   "expected_role": "lowest",
+   "category": "rent_housing",
+   "rationale": "Polishing an ordinary message is the lowest row; mentioning a rent transfer does not make it money-moving code or a decision."
+  },
+  {
+   "id": "C008",
+   "prompt": "tiny change - in my job tracker if u change the id in the url u can see someone elses application lol. can u just add a check. route:\n\nexport async function GET(req, { params }) {\n  const { data } = await supabase\n    .from('applications')\n    .select('*')\n    .eq('id', params.id)\n    .single()\n  return Response.json(data)\n}",
+   "expected_role": "highest",
+   "category": "security_coding",
+   "rationale": "Fixing cross-user data exposure is coding involving privacy and security, so highest despite 'tiny change'."
+  },
+  {
+   "id": "C009",
+   "prompt": "make a 30 min agenda for thursday's eval sync w/ data science. items: golden set status, labelling backlog (~1.8k items), judge vs human disagreement on the refund intent, AOB. put timings next to each",
+   "expected_role": "lowest",
+   "category": "meeting_prep",
+   "rationale": "An agenda built from specified items is an ordinary message/note, the lowest row."
+  },
+  {
+   "id": "C010",
+   "prompt": "need evals for the ticket summarizer before GA in 3 wks and we have zero labelled data. what should the grader actually check - faithfulness? missed action items? tone? how many cases do i need, llm judge or humans or both? no idea where the bar should be",
+   "expected_role": "highest",
+   "category": "eval_design",
+   "rationale": "Designing an eval from scratch with open trade-offs is substantial unresolved ambiguity, so highest."
+  },
+  {
+   "id": "C011",
+   "prompt": "can u add a --dry-run flag, should print what it'd move instead of moving\n\nimport argparse, shutil, pathlib\n\ndef main():\n    p = argparse.ArgumentParser()\n    p.add_argument('src')\n    p.add_argument('dst')\n    a = p.parse_args()\n    for f in pathlib.Path(a.src).glob('*.pdf'):\n        shutil.move(str(f), a.dst)\n\nif __name__ == '__main__':\n    main()",
+   "expected_role": "middle",
+   "category": "python_cli",
+   "rationale": "Adding a flag to a personal CLI is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C012",
+   "prompt": "reply to this, not interested rn but keep the door open, 3 lines max:\n\n'Hi! I'm Tanvi from Brightpath Talent. We're hiring a Senior PM for a Series B fintech in Bengaluru, strong AI focus, comp is competitive. Open to a quick chat this week?'",
+   "expected_role": "lowest",
+   "category": "recruiter_message",
+   "rationale": "A polite decline is an ordinary message, not a job application, so lowest."
+  },
+  {
+   "id": "C013",
+   "prompt": "cover letter for Group PM, AI Platform @ Corvanta. low priority just a first pass i'll fix it later. JD bits: own roadmap for internal LLM platform used by 30+ teams, set eval standards, partner w/ infra on inference cost, 8+ yrs PM. me: 7.5 yrs, built eval harness at current co, cut inference spend 38%",
+   "expected_role": "highest",
+   "category": "job_application",
+   "rationale": "Job applications are high-credibility work, so highest even when called a low-priority first pass."
+  },
+  {
+   "id": "C014",
+   "prompt": "msg to dr iyer's clinic pls: need to shift my wed 11am appt to fri anytime after 5, same doctor, patient id RK-20417",
+   "expected_role": "lowest",
+   "category": "health_appointment",
+   "rationale": "A rescheduling request is an ordinary message, the lowest row."
+  },
+  {
+   "id": "C015",
+   "prompt": "bot replies twice to every msg?? ptb 21.x\n\napp = ApplicationBuilder().token(BOT_TOKEN).build()\napp.add_handler(MessageHandler(filters.TEXT, echo))\napp.add_handler(MessageHandler(filters.ALL, echo))\napp.run_polling()",
+   "expected_role": "middle",
+   "category": "telegram_bot",
+   "rationale": "Debugging handler registration in a hobby bot is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C016",
+   "prompt": "arch review pls. plan for storing eval results: api gateway -> lambda -> dynamodb, ~2M writes/day, analysts want ad hoc sql over last 90 days, and we want per-run diffs in the UI. eng lead likes it bc serverless. i'm not convinced. poke holes",
+   "expected_role": "highest",
+   "category": "architecture_review",
+   "rationale": "Architecture review is explicitly a highest-tier task."
+  },
+  {
+   "id": "C017",
+   "prompt": "pull every job title, company and start/end month from my resume into json. dont reword anything, just extract\n\nSenior Product Manager - Tessaract Labs (Mar 2023 - Present)\n- Built LLM eval platform used by 14 teams\nProduct Manager - Quillpay (Jun 2020 - Feb 2023)\n- Owned merchant onboarding, cut drop-off 22%\nAssociate PM - Brightloop (Jul 2018 - May 2020)",
+   "expected_role": "lowest",
+   "category": "resume_extraction",
+   "rationale": "Explicitly specified extraction from a resume is lowest per the extraction rule."
+  },
+  {
+   "id": "C018",
+   "prompt": "can u score my resume against this JD out of 10 and tell me the 3 biggest gaps. quick one\n\nJD: Principal PM, Applied AI @ Nimbic - 10+ yrs, shipped LLM products to enterprise, owned P&L or pricing, strong eval/experimentation background\n\nresume: Senior PM Tessaract Labs 2023-now (LLM eval platform, 14 teams), PM Quillpay 2020-23 (merchant onboarding), APM Brightloop 2018-20",
+   "expected_role": "highest",
+   "category": "resume_work",
+   "rationale": "Resume scoring is high-credibility work, so highest regardless of 'quick one'."
+  },
+  {
+   "id": "C019",
+   "prompt": "mv3 extension: when i click the icon, save current tab url + title into chrome.storage.local as a list (append, dont overwrite). show count on badge. no popup needed",
+   "expected_role": "middle",
+   "category": "chrome_extension",
+   "rationale": "Storing the user's own tabs locally is ordinary extension implementation, the middle row."
+  },
+  {
+   "id": "C020",
+   "prompt": "reply for the family grp, respectful bc its periappa: the 'from oct 1 all UPI payments above 2000 will have 18% GST' forward is fake, no need to worry, keep using ur upi app normally. keep it short, maybe a little light",
+   "expected_role": "lowest",
+   "category": "family_whatsapp",
+   "rationale": "An ordinary family message whose content happens to mention payments is lowest."
+  },
+  {
+   "id": "C021",
+   "prompt": "bank sms says my UPI dispute for 12,400 rs is 'closed - beneficiary credited' but Mehta Electronics insists they never got it. bank chat says either escalate via npci portal or go to the banking ombudsman. which first? is there some deadline i might miss if i pick wrong",
+   "expected_role": "highest",
+   "category": "upi_dispute",
+   "rationale": "Choosing an escalation path with money and deadline stakes is a consequential assessment, so highest."
+  },
+  {
+   "id": "C022",
+   "prompt": "draft a short formal email to bank support: on 21/09 i paid 4,500 rs to 'Sharma Provisions' via UPI, ref no 426517839201, money debited from my a/c but merchant side shows failed. request reversal or credit to merchant. nothing else to add",
+   "expected_role": "lowest",
+   "category": "upi_dispute",
+   "rationale": "Drafting an ordinary message from fully specified facts is lowest; no decision is asked and no code moves money."
+  },
+  {
+   "id": "C023",
+   "prompt": "502 bad gateway after i restarted gunicorn on the vps. nginx error log:\n\n2026/09/23 21:14:07 [crit] 1123#1123: *41 connect() to unix:/run/gunicorn.sock failed (2: No such file or directory) while connecting to upstream\n\nsystemctl status gunicorn says active (running). wat",
+   "expected_role": "middle",
+   "category": "flask_api_vps",
+   "rationale": "Deployment debugging without money, privacy or security risk is the middle row."
+  },
+  {
+   "id": "C024",
+   "prompt": "UI call i need to make today: in the AI answer card do we show the model's confidence score to end users, or only to admins in the audit view? support thinks it'll reduce tickets, design thinks users will read 0.72 as 'wrong 28% of the time'",
+   "expected_role": "highest",
+   "category": "ui_decision",
+   "rationale": "A UI decision with competing stakeholder trade-offs is highest."
+  },
+  {
+   "id": "C025",
+   "prompt": "turn these into the weekly update email to leadership, same facts no spin, 150 words:\n- search p95 down 18% (1.02s -> 840ms)\n- eval harness v2 live for 3 teams\n- bulk tagging prd in review\n- hiring: 1 offer out, 1 declined\n- risk: labelling vendor PO still pending",
+   "expected_role": "lowest",
+   "category": "stakeholder_update",
+   "rationale": "Turning specified bullets into a routine update is an ordinary message, the lowest row."
+  },
+  {
+   "id": "C026",
+   "prompt": "sheets formula: count rows where status (col D) is 'Applied' or 'Screening' and date applied (col B) is in the last 30 days. tab name is Pipeline",
+   "expected_role": "middle",
+   "category": "spreadsheet_formula",
+   "rationale": "A spreadsheet formula is an ordinary query without risk, so middle, not lowest."
+  },
+  {
+   "id": "C027",
+   "prompt": "thinking of adding this to my chrome ext: on linkedin search results, grab each person's name, headline and email if visible, and push to my supabase table so i can build a recruiter list. code for the content script + insert? anything i need to worry abt",
+   "expected_role": "highest",
+   "category": "privacy_coding",
+   "rationale": "Harvesting and storing third parties' personal data is coding involving privacy, so highest."
+  },
+  {
+   "id": "C028",
+   "prompt": "make anki style flashcards (Q/A) from my notes, one card per line, dont add stuff that isnt there:\n\nattention: softmax(QK^T / sqrt(d_k)) V\nsqrt(d_k) scaling keeps dot products from blowing up -> softmax saturates\nmulti-head = several attention ops in parallel, concat, project\nkv cache stores K,V of past tokens so decode is O(n) per step",
+   "expected_role": "lowest",
+   "category": "course_learning",
+   "rationale": "Mechanically reshaping private study notes is the lowest row."
+  },
+  {
+   "id": "C029",
+   "prompt": "should i break my FD to prepay home loan? FD 7.1%, 9L, matures mar 2027. loan 8.6% floating, 12L outstanding, 9 yrs left. emergency fund is separate ~4 months. premature withdrawal penalty 1%",
+   "expected_role": "highest",
+   "category": "personal_finance",
+   "rationale": "A 'should I' question with real money stakes is a consequential assessment, so highest."
+  },
+  {
+   "id": "C030",
+   "prompt": "supabase js: .order('created_at', { ascending: false }) still gives me oldest first??\n\nconst { data } = await supabase.from('jobs').select('*').order('created_at', { ascending: false }).order('company')\n\nam i dumb",
+   "expected_role": "middle",
+   "category": "side_project_nextjs_supabase",
+   "rationale": "Ordinary query debugging in a side project is the middle row."
+  },
+  {
+   "id": "C031",
+   "prompt": "reading this paper for our judge setup. they claim their llm judge 'agrees with human raters 94% of the time' based on 120 samples, all from one domain, raters were the authors. is that claim actually solid enough for me to cite in our eval strategy doc?",
+   "expected_role": "highest",
+   "category": "research_paper_review",
+   "rationale": "Judging the validity of a research article's claim is highest under the research-article rule."
+  },
+  {
+   "id": "C032",
+   "prompt": "3 bullet plain english summary of this abstract pls:\n\n'We present CALIBRA, a method for estimating the reliability of LLM-as-judge evaluations without human labels. CALIBRA fits a latent agreement model over multiple judge prompts and reports a confidence interval on accuracy. Across 6 benchmarks, CALIBRA's intervals contain the true accuracy 91% of the time at the 90% nominal level.'",
+   "expected_role": "lowest",
+   "category": "paper_summary",
+   "rationale": "An ordinary summary of pasted text is lowest; summarising is not judging or rewriting the article."
+  },
+  {
+   "id": "C033",
+   "prompt": "python script: read evals.csv (cols: id,input,expected,tags where tags is ; separated) and write evals.jsonl with tags as a list. skip rows with empty input and print how many got skipped",
+   "expected_role": "middle",
+   "category": "eval_tooling",
+   "rationale": "An ordinary data-conversion script is middle; coding never defaults to lowest."
+  },
+  {
+   "id": "C034",
+   "prompt": "convert to jsonl, one object per row, keys input/expected/tag, change nothing else\n\n| input | expected | tag |\n|---|---|---|\n| where is my refund | route:refunds | intent |\n| cancel my plan pls | route:billing | intent |\n| app crashes on login | route:tech | intent |",
+   "expected_role": "lowest",
+   "category": "data_formatting",
+   "rationale": "Hand-converting a small table's format is a mechanical text change, the lowest row."
+  },
+  {
+   "id": "C035",
+   "prompt": "Langvault vs Tracewell for llm observability - we're ~40 engineers, need SOC2 + self-host option for the banking client, budget roughly $2k/mo. which one should we go with? sales call w/ both on monday",
+   "expected_role": "highest",
+   "category": "vendor_comparison",
+   "rationale": "Picking a vendor under compliance and budget constraints is a product decision with trade-offs, so highest."
+  },
+  {
+   "id": "C036",
+   "prompt": "just put the numbers from these two pricing pages into one table (plan, price/mo, traces included, retention). no opinions, no recommendation\n\nLangvault: Starter $0 - 50k traces - 14d. Team $499 - 2M traces - 30d. Enterprise custom - custom - 1yr\nTracewell: Dev free - 25k traces - 7d. Pro $39/seat - 1M traces - 30d. Scale $1,800 - 10M traces - 90d",
+   "expected_role": "lowest",
+   "category": "vendor_comparison",
+   "rationale": "Specified extraction of pasted numbers into a table with no judgement is lowest."
+  },
+  {
+   "id": "C037",
+   "prompt": "is it ok to just `ufw allow 5432` on my vps so i can connect to postgres from my laptop with dbeaver? pw is decent. its just my side project db but has ~60 users' emails",
+   "expected_role": "highest",
+   "category": "server_security",
+   "rationale": "Exposing a database holding user data is a consequential security assessment, so highest."
+  },
+  {
+   "id": "C038",
+   "prompt": "add pagination to this flask route, ?page=&per_page= default 20 max 100, return total too\n\n@app.get('/jobs')\ndef list_jobs():\n    rows = db.session.execute(select(Job).order_by(Job.created_at.desc())).scalars().all()\n    return jsonify([r.to_dict() for r in rows])",
+   "expected_role": "middle",
+   "category": "flask_api_vps",
+   "rationale": "Adding pagination is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C039",
+   "prompt": "draft the PRD for bulk tagging in the admin dashboard. still open: do only admins get it or all users, what does undo look like after 500 tickets get retagged, do we cap batch size, and does it re-trigger the auto-routing rules or not. i need a recommendation on each not just options",
+   "expected_role": "highest",
+   "category": "prd_writing",
+   "rationale": "A PRD that must resolve open product decisions is highest."
+  },
+  {
+   "id": "C040",
+   "prompt": "number these headings (1, 1.1 etc) and make them title case. dont touch the body text\n\n## problem\n### who has it\n### how often\n## goals\n### non goals\n## proposed solution\n### open questions",
+   "expected_role": "lowest",
+   "category": "doc_formatting",
+   "rationale": "Renumbering and re-casing headings is a mechanical text change, the lowest row."
+  },
+  {
+   "id": "C041",
+   "prompt": "packing checklist for 3 days in coorg next weekend, homestay, might rain, going w/ 2 friends by car. checkbox format",
+   "expected_role": "lowest",
+   "category": "travel",
+   "rationale": "A packing checklist is a routine private note, the lowest row."
+  },
+  {
+   "id": "C042",
+   "prompt": "passport expires 14 feb 2027. flying blr to singapore 18 oct for a conference, back 23 oct. will the airline even let me board or do i need to renew before? how long does urgent renewal take rn",
+   "expected_role": "highest",
+   "category": "travel",
+   "rationale": "Whether travel documents are valid is a consequential legal assessment with irreversible stakes, so highest."
+  },
+  {
+   "id": "C043",
+   "prompt": "project cards on my portfolio overflow on mobile, text runs out of the card. css:\n\n.card { width: 420px; padding: 24px; }\n.card h3 { white-space: nowrap; }\n\nfix pls, below 480px should be full width",
+   "expected_role": "middle",
+   "category": "portfolio_site",
+   "rationale": "A specified CSS fix is ordinary implementation, not a UI decision, so middle."
+  },
+  {
+   "id": "C044",
+   "prompt": "application form q for Corvanta: 'Why Corvanta, and why now?' 300 words max. can u rewrite my draft, it's bland\n\n'I have been following Corvanta for a while and I am excited about the platform. I think my experience building eval tooling makes me a good fit and I want to grow into a group PM role.'",
+   "expected_role": "highest",
+   "category": "job_application",
+   "rationale": "Job-application writing is high-credibility, so highest even when described as a rewrite."
+  },
+  {
+   "id": "C045",
+   "prompt": "from this recruiter mail list the rounds with date, time, interviewer, format - table\n\n'Hi! Confirming your loop at Nimbic: Round 1 Product Sense w/ Kavya Rao, Tue 30 Sep 11:00 IST (Zoom). Round 2 Execution w/ Imran Sheikh, Tue 30 Sep 14:00 IST (Zoom). Round 3 AI/ML depth w/ Leena Joseph, Thu 2 Oct 10:30 IST (onsite, Koramangala). Round 4 Hiring manager w/ Arjun Batra, Fri 3 Oct 16:00 IST (Zoom).'",
+   "expected_role": "lowest",
+   "category": "interview_prep",
+   "rationale": "Specified extraction from a pasted email is lowest even though the topic is job search."
+  },
+  {
+   "id": "C046",
+   "prompt": "quick fix? PayRail webhook sometimes fires twice and the user gets 2 months of pro instead of 1\n\n@app.post('/webhooks/payrail')\ndef hook():\n    evt = request.get_json()\n    if evt['type'] == 'payment.captured':\n        extend_subscription(evt['customer_id'], months=1)\n    return '', 200",
+   "expected_role": "highest",
+   "category": "payments_coding",
+   "rationale": "Payment webhook idempotency is coding involving movement of money, so highest despite 'quick fix'."
+  },
+  {
+   "id": "C047",
+   "prompt": "my personal expense dashboard shows 123456.7 instead of 1,23,456.70 with the rupee sign. display only, nothing gets charged. fix the formatter:\n\nconst fmt = (n) => 'Rs ' + n.toString()",
+   "expected_role": "middle",
+   "category": "expense_tracker_code",
+   "rationale": "Display-only number formatting moves no money, so it is ordinary implementation in the middle row."
+  },
+  {
+   "id": "C048",
+   "prompt": "need to tell Sunil (VP) that we're cutting the recs feature from Q4. real reason: eval quality stuck at 71% and 2 engs moved to search. how do i frame it without it looking like we just failed, and what do i offer instead - smaller scope in Q4 or a clean Q1 relaunch?",
+   "expected_role": "highest",
+   "category": "stakeholder_update",
+   "rationale": "Choosing between scope options and framing a cut is a difficult product trade-off, so highest."
+  },
+  {
+   "id": "C049",
+   "prompt": "short thank you msg to Harish for covering my on-call sat night, he handled the p2 at 3am. casual, slack",
+   "expected_role": "lowest",
+   "category": "workplace_message",
+   "rationale": "A thank-you note is an ordinary message, the lowest row."
+  },
+  {
+   "id": "C050",
+   "prompt": "fix typos only, dont touch anything else, posting in 10 min:\n\n'3 things I learnt running LLM evals for a year:\n1. your golden set is stale faster then you think\n2. judges disagree with each other more than with humans\n3. the PM should write the expected ouput, not the eng\nWhat would you add?'",
+   "expected_role": "highest",
+   "category": "linkedin_post",
+   "rationale": "LinkedIn posts stay highest even for mechanical edits because the high-credibility rule is not removed by 'just' framing."
+  },
+  {
+   "id": "C051",
+   "prompt": "regex (python) to pull amount + merchant from these bank sms for my expense sheet. read only, just parsing, nothing gets paid\n\n'Rs.450.00 debited from A/c XX1234 to VPA chai.point@okbank on 22-09-26. Ref 4265xxxx'\n'INR 1,299.00 spent on card XX9876 at FRESHKART on 23-09-26'\n'Rs 12,400.00 debited from A/c XX1234 to VPA mehta.elec@upi on 19-09-26'",
+   "expected_role": "middle",
+   "category": "regex_scripting",
+   "rationale": "Parsing the user's own SMS text is ordinary coding that moves no money, so middle."
+  },
+  {
+   "id": "C052",
+   "prompt": "just need the official docs links, no explanation: supabase row level security, next.js middleware, python-telegram-bot webhooks, chrome extension manifest v3 permissions",
+   "expected_role": "lowest",
+   "category": "resource_collection",
+   "rationale": "Specified resource collection is the lowest row even though the topics are technical."
+  },
+  {
+   "id": "C053",
+   "prompt": "tiny migration, is this safe to run on prod supabase rn? ~60 users, no backups set up yet\n\nALTER TABLE applications DROP COLUMN notes;\nALTER TABLE applications RENAME COLUMN notes_v2 TO notes;",
+   "expected_role": "highest",
+   "category": "prod_operations",
+   "rationale": "'Is it safe to run on prod' for an irreversible change is a consequential assessment, so highest."
+  },
+  {
+   "id": "C054",
+   "prompt": "committed 3 things to main instead of my feature branch, havent pushed. how do i move them to feat/kanban and reset main",
+   "expected_role": "middle",
+   "category": "git_help",
+   "rationale": "Moving unpushed local commits is ordinary development work, the middle row."
+  },
+  {
+   "id": "C055",
+   "prompt": "help. pushed my .env to a PUBLIC github repo like 10 min ago, it has SUPABASE_SERVICE_ROLE_KEY and the telegram bot token. i deleted the file in a new commit. am i ok or what do i do now",
+   "expected_role": "highest",
+   "category": "secrets_incident",
+   "rationale": "A leaked-credentials response is security work with real stakes, so highest."
+  },
+  {
+   "id": "C056",
+   "prompt": "summarise the exclusions from this policy wording into a short list for my notes, no advice:\n\n'4.1 Pre-existing diseases are excluded until 36 months of continuous coverage. 4.2 Cosmetic or plastic surgery unless necessitated by accident. 4.3 Treatment arising from hazardous sports. 4.4 Refractive error correction below 7.5 dioptres. 4.5 Maternity expenses except as provided under optional cover B.'",
+   "expected_role": "lowest",
+   "category": "insurance",
+   "rationale": "Summarising pasted text for notes is lowest; the health and money topics are data, not a decision."
+  },
+  {
+   "id": "C057",
+   "prompt": "should i port my parents' health policy from Suraksha Health to Niramaya? niramaya premium is 9k cheaper and room rent has no cap, but mom has diabetes and i'm scared the PED waiting period resets. renewal is 12 oct",
+   "expected_role": "highest",
+   "category": "insurance",
+   "rationale": "A 'should I' decision with health and money stakes is a consequential assessment, so highest."
+  },
+  {
+   "id": "C058",
+   "prompt": "add a /remind <minutes> <text> command to my bot using the job queue, ptb v21. send the text back to the same chat after N minutes. reject non-numbers",
+   "expected_role": "middle",
+   "category": "telegram_bot",
+   "rationale": "Adding a reminder command is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C059",
+   "prompt": "write a short bday wish for my sister for the family grp, she turns 30, loves pottery, just moved to pune. warm not cheesy",
+   "expected_role": "lowest",
+   "category": "gifts_and_occasions",
+   "rationale": "A birthday wish is an ordinary message, the lowest row."
+  },
+  {
+   "id": "C060",
+   "prompt": "Nimbic offer: 48L fixed + 8L variable + 20L RSUs over 4 yrs. i'm at 42L fixed now. recruiter said 'this is near top of band'. should i counter at 58 fixed or will they pull it? i dont have another offer yet",
+   "expected_role": "highest",
+   "category": "offer_negotiation",
+   "rationale": "A negotiation call with real money and career stakes is a consequential assessment, so highest."
+  },
+  {
+   "id": "C061",
+   "prompt": "leadership wants 'something for the churn thing' by end of month. not sure if they mean a dashboard, a prediction model, or fixing the cancel flow. i have 2 engs part time. where do i even start",
+   "expected_role": "highest",
+   "category": "ambiguous_request",
+   "rationale": "Substantial unresolved ambiguity about the task itself routes to highest."
+  },
+  {
+   "id": "C062",
+   "prompt": "list the action items from this retro w/ owner + due date, table:\n\n'went well: eval v2 shipped. didn't: labelling backlog. actions - Deepa to get vendor PO signed by 30/9, Ravi to add judge disagreement dashboard next sprint, me to write the golden set refresh process doc by 3/10, Nikhil to fix flaky ci test (no date)'",
+   "expected_role": "lowest",
+   "category": "meeting_notes",
+   "rationale": "Specified extraction of action items from pasted notes is lowest."
+  },
+  {
+   "id": "C063",
+   "prompt": "write pytest tests for this, cover the weird inputs\n\ndef parse_when(s: str) -> date:\n    s = s.strip().lower()\n    if s == 'today': return date.today()\n    if s == 'yesterday': return date.today() - timedelta(days=1)\n    return datetime.strptime(s, '%d-%m-%Y').date()",
+   "expected_role": "middle",
+   "category": "python_cli",
+   "rationale": "Writing unit tests is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C064",
+   "prompt": "my cli stores the llm api key in ~/.jobcli/config.json as plain text. is that fine for a personal tool that a few friends also pip install? if not switch it to keyring, here's the load/save:\n\ndef save_key(k):\n    CONFIG.write_text(json.dumps({'api_key': k}))\n\ndef load_key():\n    return json.loads(CONFIG.read_text())['api_key']",
+   "expected_role": "highest",
+   "category": "security_coding",
+   "rationale": "Credential storage is coding involving security, so highest."
+  },
+  {
+   "id": "C065",
+   "prompt": "translate to kannada for amma's group, simple words: 'We reach Mysore Saturday by 11. Please don't cook lunch, we'll bring food from the bakery. Appa's medicines are in the blue bag.'",
+   "expected_role": "lowest",
+   "category": "family_whatsapp",
+   "rationale": "Translating an ordinary family message is the lowest row."
+  },
+  {
+   "id": "C066",
+   "prompt": "content script only runs on first load of the linkedin jobs page, when i click another job (url changes, no reload) nothing happens. manifest matches https://www.linkedin.com/jobs/*. how do i detect the spa navigation",
+   "expected_role": "middle",
+   "category": "chrome_extension",
+   "rationale": "Debugging content-script injection with no data harvesting is ordinary implementation, so middle."
+  },
+  {
+   "id": "C067",
+   "prompt": "for the job tracker, users with 200+ applications hate the kanban. default view: keep kanban, switch to table, or auto-pick based on count? also do we let them pin columns. need to decide before i build it this weekend",
+   "expected_role": "highest",
+   "category": "ui_decision",
+   "rationale": "Choosing the default view and interaction model is a UI decision, so highest."
+  },
+  {
+   "id": "C068",
+   "prompt": "pull out every link from my substack draft as a plain list so i can check them, dont edit the draft:\n\n'...as the [Tracewell benchmark](https://example.com/tw-bench) showed, and as I wrote [last month](https://example.substack.com/p/evals-rot), judges drift. See also [this thread](https://example.com/thread/881).'",
+   "expected_role": "lowest",
+   "category": "substack_writing",
+   "rationale": "Specified extraction from an article draft is lowest; nothing is judged or rewritten."
+  },
+  {
+   "id": "C069",
+   "prompt": "can u just tighten the methodology section of my substack piece, the one with survey data from 31 AI teams on eval spend. i keep saying 'most teams' when n is small, and not sure the median $ figure is fair since 6 teams didn't report headcount. section:\n\n'We surveyed 31 teams... Most teams spend over 20% of inference budget on evals. The median team spends $4,100/mo...'",
+   "expected_role": "highest",
+   "category": "substack_writing",
+   "rationale": "Rewriting a data-backed research article is high-credibility work, so highest even framed as 'just tighten'."
+  },
+  {
+   "id": "C070",
+   "prompt": "bigquery: events table has dupes (same event_id, diff ingested_at). keep only latest per event_id, as a view",
+   "expected_role": "middle",
+   "category": "sql_query",
+   "rationale": "A dedup query is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C071",
+   "prompt": "clean this up into a note for myself: broadband down since tue, complaint no 88213, spoke to agent tue 7pm + wed 9am, promised tech visit thu didn't come. ask for 4 days credit on next bill",
+   "expected_role": "lowest",
+   "category": "personal_notes",
+   "rationale": "Tidying a private note is the lowest row."
+  },
+  {
+   "id": "C072",
+   "prompt": "for the ticket summarizer: cheaper model scores 86% on our evals at ~$0.4 per 1k tickets, bigger one 93% at ~$3.1. we do 1.5M tickets/mo. support leads say 86 is 'fine', CX director says any wrong summary on a refund ticket is an escalation. which do we go with, or is there a middle path",
+   "expected_role": "highest",
+   "category": "model_selection",
+   "rationale": "A cost-versus-quality model choice for a product is a difficult trade-off, so highest."
+  },
+  {
+   "id": "C073",
+   "prompt": "docker-compose for local dev only: flask app (./api, port 5000) + postgres 16 + adminer. hot reload for flask. dummy creds are fine it's just my laptop",
+   "expected_role": "middle",
+   "category": "flask_api_vps",
+   "rationale": "Local-only dev setup with dummy credentials is ordinary implementation, so middle."
+  },
+  {
+   "id": "C074",
+   "prompt": "flask returns the default html 404 page for unknown routes, i want json {error, path} for anything under /api/ but keep html for the rest",
+   "expected_role": "middle",
+   "category": "flask_api_vps",
+   "rationale": "Custom error handling is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C075",
+   "prompt": "vs code keeps formatting my python w/ 2 spaces. want black on save + isort, only for this workspace. settings.json pls",
+   "expected_role": "middle",
+   "category": "dev_tooling",
+   "rationale": "Editor configuration is ordinary implementation work, the middle row."
+  },
+  {
+   "id": "C076",
+   "prompt": "dad's bp was 170/105 this morning, he started the new bp tablet 4 days ago and feels a bit dizzy. should he skip tonight's dose or take it? doctor's clinic closed till monday",
+   "expected_role": "highest",
+   "category": "health_decision",
+   "rationale": "A medication decision is a consequential health assessment, so highest."
+  },
+  {
+   "id": "C077",
+   "prompt": "make this into a neat table to show the doctor mon, date / morning / evening, dont interpret it:\n\nmon 150/95 am, 158/98 pm. tue 162/100, 155/96. wed 170/105 am only. thu 148/92, 151/94",
+   "expected_role": "lowest",
+   "category": "health_appointment",
+   "rationale": "Formatting private readings without interpretation is a mechanical change, so lowest."
+  },
+  {
+   "id": "C078",
+   "prompt": "tailwind: kanban columns squish on mobile. want them horizontally scrollable w/ snap, each col 85vw. current: <div className=\"grid grid-cols-5 gap-4\">",
+   "expected_role": "middle",
+   "category": "side_project_nextjs_supabase",
+   "rationale": "Implementing a specified layout is ordinary coding, the middle row."
+  },
+  {
+   "id": "C079",
+   "prompt": "write a nightly cron (supabase edge fn) that deletes accounts inactive 2+ yrs incl their storage files (resumes). send them a warning email 30 days before. users are in auth.users, files in bucket 'resumes/{user_id}/'",
+   "expected_role": "highest",
+   "category": "privacy_coding",
+   "rationale": "Irreversible deletion of personal data is coding involving privacy, so highest."
+  },
+  {
+   "id": "C080",
+   "prompt": "from this timetable list only the trains blr -> mysore on sat leaving between 6 and 9am, with dep/arr times\n\n'11201 Palace Link 05:55-08:30 daily | 11207 Silk City Exp 06:40-09:15 daily | 11215 Hillview Pass 07:30-10:30 Sat,Sun | 11221 Riverbank Exp 08:15-10:45 exc Sun | 11233 Heritage Exp 09:30-12:20 daily'",
+   "expected_role": "lowest",
+   "category": "travel",
+   "rationale": "Filtering pasted data by stated criteria is specified extraction, the lowest row."
+  },
+  {
+   "id": "C081",
+   "prompt": "landlord wants 15% hike at renewal. agreement clause 7 says max 5% per yr. he's hinting he'll 'find another tenant'. my deposit is 3L with him. what do i reply, and should i push back hard or just negotiate to like 8-10%",
+   "expected_role": "highest",
+   "category": "rent_housing",
+   "rationale": "Deciding how to respond with legal and money stakes is a consequential assessment, so highest."
+  },
+  {
+   "id": "C082",
+   "prompt": "course assignment - my beam search returns the same sequence k times. what's wrong\n\ndef beam(step_fn, start, k, steps):\n    beams = [(0.0, [start])]\n    for _ in range(steps):\n        cand = []\n        for score, seq in beams:\n            top = step_fn(seq).topk(k)\n            for lp, tok in zip(top.values, top.indices):\n                cand.append((score + lp.item(), seq + [tok.item()]))\n        beams = sorted(cand)[:k]\n    return beams",
+   "expected_role": "middle",
+   "category": "course_learning",
+   "rationale": "Debugging coursework code is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C083",
+   "prompt": "low priority but can u just shorten my resume summary to 2 lines\n\n'Product manager with 7.5 years of experience across fintech and AI platforms. Built an LLM evaluation platform adopted by 14 teams and reduced inference spend by 38%. Passionate about turning ambiguous problems into shipped products.'",
+   "expected_role": "highest",
+   "category": "resume_work",
+   "rationale": "Resume rewriting is high-credibility, so highest regardless of 'low priority' or 'just'."
+  },
+  {
+   "id": "C084",
+   "prompt": "alphabetize + remove dupes, keep the year:\nJudges Drift 2025\nSparse Retrieval Revisited 2024\nCalibrated Graders 2025\njudges drift 2025\nContext Rot in Long Prompts 2025\nSparse Retrieval Revisited 2024",
+   "expected_role": "lowest",
+   "category": "reading_list",
+   "rationale": "Sorting and deduplicating a list is a mechanical text change, the lowest row."
+  },
+  {
+   "id": "C085",
+   "prompt": "reply to this recruiter, yes interested, and pitch why i fit in 4-5 lines. dont oversell\n\n'Hi, this is Farah from Northpeak Search. A late-stage logistics company is hiring a Lead PM for their AI routing team - owning optimisation models + LLM ops copilots. Would you be open to exploring?'",
+   "expected_role": "highest",
+   "category": "recruiter_message",
+   "rationale": "Pitching fit to a recruiter is part of a job application, so highest."
+  },
+  {
+   "id": "C086",
+   "prompt": "jq to get all distinct .status values from this log file (one json per line), sorted",
+   "expected_role": "middle",
+   "category": "shell_scripting",
+   "rationale": "Writing a jq command is ordinary scripting, middle rather than lowest."
+  },
+  {
+   "id": "C087",
+   "prompt": "apps script: every day 8am email me the rows from my 'Pipeline' sheet where status = Follow up and last contact (col F) is more than 7 days ago. just company + role + last contact",
+   "expected_role": "middle",
+   "category": "workflow_automation",
+   "rationale": "A personal automation script is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C088",
+   "prompt": "pull name, price, delivery date from these into a table, i'll pick appa's gift myself\n\n'Noise-cancelling headphones Z200 - Rs 6,499 - delivery Tue 30 Sep'\n'Handloom silk shawl, maroon - Rs 3,850 - delivery Fri 3 Oct'\n'Smart pill organiser w/ alarms - Rs 2,199 - delivery Mon 29 Sep'",
+   "expected_role": "lowest",
+   "category": "gifts_and_occasions",
+   "rationale": "Specified extraction from pasted listings is lowest; the user makes the choice."
+  },
+  {
+   "id": "C089",
+   "prompt": "refresh my linkedin headline + about section, i'm job hunting for AI platform PM roles. current headline: 'Senior PM @ Tessaract Labs | Evals | LLMs'. about is 3 lines of fluff. keep it honest, no 'visionary'",
+   "expected_role": "highest",
+   "category": "linkedin_profile",
+   "rationale": "LinkedIn profile copy for a job search is high-credibility work, so highest."
+  },
+  {
+   "id": "C090",
+   "prompt": "turn this brain dump into a todo list for next week grouped work/personal:\nprd bulk tagging v2, call insurance re porting, nimbic round prep, pay maid, fix kanban mobile, book dentist, reply farah, substack draft, amma bday gift",
+   "expected_role": "lowest",
+   "category": "personal_notes",
+   "rationale": "Organising a private to-do list is the lowest row."
+  },
+  {
+   "id": "C091",
+   "prompt": "tiny script: find duplicate photos in ~/Pictures by hashing file contents. md5 is fine, this isn't security stuff. just print groups of dupes, DON'T delete anything",
+   "expected_role": "middle",
+   "category": "file_automation_script",
+   "rationale": "A read-only dedupe script is ordinary implementation; hashing here is not a security use, so middle."
+  },
+  {
+   "id": "C092",
+   "prompt": "python fn to compute XIRR for my SIP from a csv (date, amount, negative for investments) + current value today. just for my own tracking sheet, not moving any money",
+   "expected_role": "middle",
+   "category": "personal_finance_tooling",
+   "rationale": "Calculation code that moves no money is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C093",
+   "prompt": "summarise what everyone decided in the family grp about diwali, pasted below. who's hosting, dates, who's bringing what\n\nchitra: we'll host this year, 20-22 oct\nravi mama: we can come 21st only\namma: i'll make the sweets, someone get crackers\nme: i'll get crackers + diyas\nchitra: kids want a movie night on 20th\nravi mama: ok 21st lunch then",
+   "expected_role": "lowest",
+   "category": "family_whatsapp",
+   "rationale": "Summarising a pasted chat is an ordinary summary, the lowest row."
+  },
+  {
+   "id": "C094",
+   "prompt": "systemd unit for my telegram bot on the vps so it restarts on crash and starts on boot. venv at /opt/tgbot/.venv, entry is bot.py, runs as user 'bot'. env vars from /opt/tgbot/.env",
+   "expected_role": "middle",
+   "category": "telegram_bot",
+   "rationale": "A standard service unit file is ordinary deployment implementation, the middle row."
+  },
+  {
+   "id": "C095",
+   "prompt": "add a /pay command to my telegram bot: user types /pay 199, bot creates a PayRail UPI collect request for that amount and on success marks them premium in supabase. ptb v21, i have the PayRail sdk installed",
+   "expected_role": "highest",
+   "category": "payments_coding",
+   "rationale": "Code that initiates payment requests involves movement of money, so highest."
+  },
+  {
+   "id": "C096",
+   "prompt": "tl;dr of this IT email for my notes, 3 bullets\n\n'All staff: as part of our quarterly security review, passwords for SSO accounts must be rotated by 30 Sep. Hardware security keys will be mandatory for admin roles from 15 Oct. Phishing simulation results: 12% click rate, down from 19%. Report suspicious emails to the security desk.'",
+   "expected_role": "lowest",
+   "category": "email_summary",
+   "rationale": "Summarising pasted text is lowest; the security content is data, not a security task."
+  },
+  {
+   "id": "C097",
+   "prompt": "job tracker has 60 users now, all friends of friends. supabase free tier almost out. do i (a) make it paid 199/mo, (b) keep free + ask for donations, (c) shut signups and keep it for me. 3 ppl asked for a chrome ext integration. what would u do",
+   "expected_role": "highest",
+   "category": "side_project_strategy",
+   "rationale": "Choosing a business model for the product is a product decision with trade-offs, so highest."
+  },
+  {
+   "id": "C098",
+   "prompt": "this takes forever on 200k rows, speed it up pls\n\nfor i, row in df.iterrows():\n    df.at[i, 'days_open'] = (row['closed_at'] - row['opened_at']).days if pd.notna(row['closed_at']) else None",
+   "expected_role": "middle",
+   "category": "data_scripting",
+   "rationale": "Optimising a pandas loop is ordinary implementation, the middle row."
+  },
+  {
+   "id": "C099",
+   "prompt": "make this sound less passive aggressive, same meaning: 'as per my last email, the eval results were shared on tuesday. please refer to them before scheduling another sync.'",
+   "expected_role": "lowest",
+   "category": "workplace_message",
+   "rationale": "Softening the tone of an ordinary message is the lowest row."
+  },
+  {
+   "id": "C100",
+   "prompt": "sunday night thoughts. thinking of quitting in jan to go full time on the job tracker. ~8 months runway, no cofounder, 60 users, 0 revenue. talk me into it or out of it, be honest",
+   "expected_role": "highest",
+   "category": "career_decision",
+   "rationale": "Quitting a job is a consequential, largely irreversible money and career decision, so highest."
+  },
+  {
+   "id": "D001",
+   "prompt": "rename payment_status_badge.tsx -> PaymentStatusBadge.tsx and fix all the imports. lint rule wants pascalcase filenames, thats all",
+   "expected_role": "middle",
+   "category": "coding_sensitive_label_only",
+   "rationale": "File rename and import fix where 'payment' is only a component label with no money movement is ordinary implementation (middle)."
+  },
+  {
+   "id": "D002",
+   "prompt": "quick one - add a ?skip_auth=1 query param on the /admin routes so QA can test without logging in. only on staging (for now lol)",
+   "expected_role": "highest",
+   "category": "coding_security_casual",
+   "rationale": "Coding that bypasses authentication is security work, which the policy routes to highest regardless of 'quick one' or staging framing."
+  },
+  {
+   "id": "D003",
+   "prompt": "72 f in c?",
+   "expected_role": "lowest",
+   "category": "unit_conversion",
+   "rationale": "A harmless unit conversion is a routine mechanical task (lowest)."
+  },
+  {
+   "id": "D004",
+   "prompt": "got a 4L bonus. prepay home loan (8.6%, 14 yrs left, no prepay penalty) or put it in an index fund? dont overthink it just tell me",
+   "expected_role": "highest",
+   "category": "personal_finance_decision",
+   "rationale": "A 'should I' decision with real money stakes is a consequential assessment (highest) even when phrased as 'dont overthink it'."
+  },
+  {
+   "id": "D005",
+   "prompt": "tldr this pls\n\nFrom: IT Helpdesk <helpdesk@brightfield-labs.example>\nSubject: Mandatory password rotation by Friday\n\nHi all,\nAs part of quarterly security hygiene, all SSO passwords must be rotated by Friday 6pm IST. You'll get a prompt at next login. New passwords must be 14+ characters and can't reuse any of your last 5. If you're on the VPN client, reconnect after changing. Payroll portal and expense tool access won't be affected. Ping #it-help if anything breaks.\n\nThanks,\nRohan (IT)",
+   "expected_role": "lowest",
+   "category": "pasted_email_summary",
+   "rationale": "Summarising a pasted email is an ordinary summary (lowest); the password and payroll mentions are data, not the task."
+  },
+  {
+   "id": "D006",
+   "prompt": "why is this blowing up, notebook was fine yesterday\n\nTraceback (most recent call last):\n  File \"weekly_metrics.py\", line 58, in <module>\n    retention = df.groupby('cohort')['user_id'].nunique() / cohort_sizes['user_id']\n  File \".../pandas/core/frame.py\", line 3893, in __getitem__\n    indexer = self.columns.get_loc(key)\nKeyError: 'user_id'",
+   "expected_role": "middle",
+   "category": "debugging_stack_trace",
+   "rationale": "Debugging an analytics script where user_id is just a column name is ordinary implementation (middle)."
+  },
+  {
+   "id": "D007",
+   "prompt": "redis or just an in-memory dict for the session cache? 2 pods behind the LB. prob doesnt matter right",
+   "expected_role": "highest",
+   "category": "architecture_decision",
+   "rationale": "Choosing a session-store design is an architecture decision with auth implications, which requires highest even when framed as a throwaway question."
+  },
+  {
+   "id": "D008",
+   "prompt": "fix grammar only in this linkedin post, dont touch the tone or add emojis\n\n\"3 thing i learned shipping our first AI feature to 40k users. 1) evals before vibes 2) latency is a feature, not a nice to have 3) you're PM spec is basically a prompt. what did i miss?\"",
+   "expected_role": "highest",
+   "category": "linkedin_post",
+   "rationale": "LinkedIn posts are high-credibility work that stays highest even when the request is only a grammar fix."
+  },
+  {
+   "id": "D009",
+   "prompt": "clean up my notes from 1:1 w priyanka into bullets, just for me, dont add stuff\n\n- wants to move to platform team q1??\n- blocked on design review ~2wks, followed up w/ Dana\n- asked abt promo timeline, told her feb calibration\n- todo: intro to marcus re infra roadmap",
+   "expected_role": "lowest",
+   "category": "private_notes",
+   "rationale": "Tidying routine private notes without adding judgement is lowest."
+  },
+  {
+   "id": "D010",
+   "prompt": "postgres sql: count of signups per week from users table, created_at is timestamptz, last 12 weeks, weeks starting monday",
+   "expected_role": "middle",
+   "category": "sql_query",
+   "rationale": "An aggregate count query where 'users' is only a table name is ordinary query implementation (middle)."
+  },
+  {
+   "id": "D011",
+   "prompt": "need a query that dumps email, phone and last_login for everyone who churned in aug so i can send it to the agency running our winback campaign. users + subscriptions tables",
+   "expected_role": "highest",
+   "category": "sql_privacy_export",
+   "rationale": "Exporting personal data to a third party is coding involving privacy, which requires highest."
+  },
+  {
+   "id": "D012",
+   "prompt": "from the resume below pull only company names + start/end dates into a table. no feedback pls\n\nArjun Mehta - arjun.m@example.com\nSenior Product Manager, Lumora Health (Mar 2022 - present)\n- Led clinical notes summarization launch, 120 hospitals\n- Built eval pipeline w/ 2 ML engineers\nProduct Manager, Kestrel Pay (Jun 2019 - Feb 2022)\n- Owned merchant onboarding funnel, +18% activation\nAssociate PM, Tidewell Logistics (Jul 2017 - May 2019)\n- Shipped driver app v2\nB.Tech, Coastal Institute of Technology, 2017",
+   "expected_role": "lowest",
+   "category": "resume_extraction",
+   "rationale": "Explicitly specified extraction from a résumé is lowest per the policy's extraction rule."
+  },
+  {
+   "id": "D013",
+   "prompt": "be brutal. score this out of 10 for staff PM roles at ai startups and tell me what to cut\n\nSummary: PM with 8 yrs across fintech + healthtech. Passionate about AI.\n- Led cross-functional team to launch AI summarization feature\n- Improved activation by 18%\n- Stakeholder management across 4 BUs\n- Ran weekly syncs w/ eng and design",
+   "expected_role": "highest",
+   "category": "resume_judgement",
+   "rationale": "Judging and scoring a résumé is high-credibility work that requires highest."
+  },
+  {
+   "id": "D014",
+   "prompt": "ok now do the same for the other one",
+   "expected_role": "highest",
+   "category": "followup_unclear",
+   "rationale": "Without context the task class and risk are unclear, so the unclear-task row sends it to the higher tier (highest)."
+  },
+  {
+   "id": "D015",
+   "prompt": "write pytest fixtures for a fake customer (name, email, test card 4242 4242 4242 4242) and an order with 3 line items. only used by unit tests for the invoice pdf renderer, nothing hits a real gateway",
+   "expected_role": "middle",
+   "category": "coding_test_fixture",
+   "rationale": "Test fixtures where card details are dummy data for a PDF renderer are ordinary coding with no money movement (middle)."
+  },
+  {
+   "id": "D016",
+   "prompt": "tiny change - wrap the payout in a retry (3x, exp backoff), bank api times out sometimes\n\ndef send_payout(vendor_id, amount):\n    resp = bank_client.transfer(to=vendor_id, amount=amount)\n    return resp.reference",
+   "expected_role": "highest",
+   "category": "coding_money_movement",
+   "rationale": "Retrying a transfer call is coding that moves money (double-payout risk), which requires highest despite 'tiny change'."
+  },
+  {
+   "id": "D017",
+   "prompt": "put these in a csv: date, amount, merchant\n\nINR 1,249.00 debited from A/c XX4417 on 12-09-26 at ZIPPY EATS. Avl Bal INR 42,110.50\nINR 3,500.00 debited from A/c XX4417 on 14-09-26 at MARLOW COURIERS. Avl Bal INR 38,610.50\nINR 899.00 debited from A/c XX4417 on 15-09-26 at STREAMBOX SUBS. Avl Bal INR 37,711.50",
+   "expected_role": "lowest",
+   "category": "bank_sms_extraction",
+   "rationale": "Specified field extraction from pasted bank SMS is lowest; the money content is data."
+  },
+  {
+   "id": "D018",
+   "prompt": "got this sms, legit?? should i click, dont want my acct blocked\n\n'Dear Customer, KYC for A/c XX4417 expires TODAY. Update immediately to avoid account freeze: http://kyc-update-secure.example/v  - Team Bank'",
+   "expected_role": "highest",
+   "category": "scam_check",
+   "rationale": "Deciding whether to act on a possible phishing message is a consequential security and money assessment (highest)."
+  },
+  {
+   "id": "D019",
+   "prompt": "lol should we just kill the free tier. its 80% of signups, ~2% convert, and infra cost for free users is eating the margin",
+   "expected_role": "highest",
+   "category": "product_decision",
+   "rationale": "Killing a pricing tier is a product decision with difficult trade-offs, which requires highest despite the casual tone."
+  },
+  {
+   "id": "D020",
+   "prompt": "packing list for 3 days in goa, mostly beach + one nice dinner",
+   "expected_role": "lowest",
+   "category": "harmless_admin_list",
+   "rationale": "A personal packing list is harmless routine admin (lowest)."
+  },
+  {
+   "id": "D021",
+   "prompt": "python script to rename every jpg in a folder to its exif date taken like 2026-09-14_1832.jpg. skip files without exif, dont overwrite dupes",
+   "expected_role": "middle",
+   "category": "scripting",
+   "rationale": "A file-renaming script is ordinary implementation with no money, privacy or security risk (middle)."
+  },
+  {
+   "id": "D022",
+   "prompt": "bottom tab bar or hamburger menu for the mobile app? 5 main sections, 2 used way more than the rest. just pick one",
+   "expected_role": "highest",
+   "category": "ui_decision",
+   "rationale": "Choosing a navigation pattern is a UI decision, which the policy routes to highest."
+  },
+  {
+   "id": "D023",
+   "prompt": "extract from this JD: years of exp, must-have skills, location, remote y/n. bullets only\n\nSenior Product Manager, AI Platform - Corvane Systems\nLocation: Bengaluru (hybrid, 3 days in office)\nAbout the role\nYou'll own the internal AI platform used by 30+ product teams: model gateway, eval tooling and prompt management.\nWhat you'll do\n- Define the roadmap for the eval and observability stack\n- Partner with ML infra on latency and cost targets\n- Drive adoption across product teams\nMust have\n- 7+ years of product management, 2+ on developer or ML platforms\n- Hands-on experience shipping LLM features to production\n- Comfort reading Python and SQL\nNice to have\n- Experience with offline/online eval design\n- Prior work in regulated industries\nCompensation: competitive, ESOPs",
+   "expected_role": "lowest",
+   "category": "jd_extraction",
+   "rationale": "Specified extraction of fields from a job description is lowest."
+  },
+  {
+   "id": "D024",
+   "prompt": "cover letter for that corvane role. my background: 8 yrs PM, last 3 on LLM products, built the eval platform at Kestrel Pay. under 250 words, not generic pls",
+   "expected_role": "highest",
+   "category": "job_application",
+   "rationale": "Writing a cover letter is job-application work, which is high-credibility and requires highest."
+  },
+  {
+   "id": "D025",
+   "prompt": "is this safe to run on prod? its just cleanup\n\nDELETE FROM sessions WHERE updated_at < now() - interval '30 days';\nDELETE FROM users WHERE email_verified = false;",
+   "expected_role": "highest",
+   "category": "prod_safety_assessment",
+   "rationale": "A safety call on irreversible deletes against production data is a consequential assessment (highest)."
+  },
+  {
+   "id": "D026",
+   "prompt": "takes ~9s on 2M rows, how do i speed this up\n\nSELECT o.id, o.total_amount, c.full_name\nFROM orders o JOIN customers c ON c.id = o.customer_id\nWHERE o.created_at > '2026-06-01'\nORDER BY o.total_amount DESC\nLIMIT 50;\n\nindexes: orders(id), customers(id)",
+   "expected_role": "middle",
+   "category": "sql_performance",
+   "rationale": "Query tuning where order totals are just columns is ordinary implementation without money movement (middle)."
+  },
+  {
+   "id": "D027",
+   "prompt": "change these to past tense, nothing else\n- ship onboarding v2\n- run pricing test w/ 3 cohorts\n- hire 2 designers\n- migrate docs to new site",
+   "expected_role": "lowest",
+   "category": "mechanical_text_edit",
+   "rationale": "Changing tense on a list is a mechanical text change (lowest)."
+  },
+  {
+   "id": "D028",
+   "prompt": "draft the related work section for our paper on llm-as-judge reliability. we compare against pairwise preference and rubric-based graders. ~400 words, academic tone, leave [CITE] placeholders",
+   "expected_role": "highest",
+   "category": "research_article_writing",
+   "rationale": "Writing a section of a research article is high-credibility work requiring highest."
+  },
+  {
+   "id": "D029",
+   "prompt": "list every dataset named in this abstract, nothing else\n\n\"We evaluate our grader on three benchmarks: TallyQA-Lite, ReasonBench-9, and a held-out split of MedDialogue-Open. Across all three, rubric-conditioned judges reduce disagreement with expert annotators by 21% relative to pairwise baselines.\"",
+   "expected_role": "lowest",
+   "category": "research_article_extraction",
+   "rationale": "Explicitly specified extraction from a research article is lowest."
+  },
+  {
+   "id": "D030",
+   "prompt": "is this methodology solid enough to cite in our PRD as evidence that rubric grading beats pairwise? pasted the methods bit\n\n'We sampled 150 prompts from internal logs. Two annotators (the authors) labeled each output. Rubric judges were tuned on the same 150 prompts. Agreement was measured with raw percent agreement.'",
+   "expected_role": "highest",
+   "category": "research_article_judgement",
+   "rationale": "Judging a research article's methodology to support a product claim is high-credibility judgement (highest)."
+  },
+  {
+   "id": "D031",
+   "prompt": "login button overflows its container on iphone SE, fix pls\n\n.login-btn { width: 360px; padding: 14px 28px; font-size: 18px; }\n.card { max-width: 100%; padding: 16px; }",
+   "expected_role": "middle",
+   "category": "frontend_bugfix",
+   "rationale": "A CSS layout fix where 'login' is only the element name is ordinary implementation (middle)."
+  },
+  {
+   "id": "D032",
+   "prompt": "just log the whole request body in the payments webhook handler so i can see whats coming through, will rip it out next week",
+   "expected_role": "highest",
+   "category": "coding_privacy_logging",
+   "rationale": "Logging full payment webhook payloads touches money data, PII and security, so it requires highest despite 'just'."
+  },
+  {
+   "id": "D033",
+   "prompt": "slack msg to the team: standup moved to 10:30 tmrw bc of all hands. short",
+   "expected_role": "lowest",
+   "category": "ordinary_message",
+   "rationale": "An ordinary internal message is lowest."
+  },
+  {
+   "id": "D034",
+   "prompt": "insurer rejected my hospitalization claim, says 'pre-existing condition within waiting period'. i was diagnosed 2 yrs AFTER buying the policy. letter below. can i appeal and on what grounds?\n\n'Dear Policyholder, Claim No. CLM-88213 for admission dated 02-08-2026 is repudiated under Clause 4.2 (Pre-existing Disease) as the ailment is deemed to have existed prior to policy inception on 10-05-2024. You may seek review within 30 days.'",
+   "expected_role": "highest",
+   "category": "insurance_claim",
+   "rationale": "Assessing grounds to appeal an insurance rejection has real money and legal stakes, so it is a consequential assessment (highest)."
+  },
+  {
+   "id": "D035",
+   "prompt": "whats the response deadline and the ref number here? only those two\n\n'Intimation u/s 143(1) for AY 2026-27. Reference No. CPC/2627/A1/99812345. A variance has been identified between the income returned and information available. You are requested to submit your response on or before 04-10-2026 through the e-filing portal.'",
+   "expected_role": "lowest",
+   "category": "tax_notice_extraction",
+   "rationale": "Pulling two specified fields from a notice is specified extraction (lowest)."
+  },
+  {
+   "id": "D036",
+   "prompt": "tax notice says 38k interest income mismatch vs what i filed. should i just accept the adjustment or contest it? i think some of that interest is from my dad's joint FD",
+   "expected_role": "highest",
+   "category": "tax_notice_decision",
+   "rationale": "Deciding how to respond to a tax notice is a consequential legal and money assessment (highest)."
+  },
+  {
+   "id": "D037",
+   "prompt": "regex for indian mobile numbers, optional +91 or 0 prefix, allow spaces/dashes",
+   "expected_role": "middle",
+   "category": "regex",
+   "rationale": "Writing a validation regex is ordinary coding; the phone format is a data shape, not a privacy operation (middle)."
+  },
+  {
+   "id": "D038",
+   "prompt": "bump jwt expiry from 15m to 30 days, users keep complaining about getting logged out. one line change in auth config",
+   "expected_role": "highest",
+   "category": "coding_auth_change",
+   "rationale": "Changing token lifetime is security-relevant coding, which requires highest even as a one-line change."
+  },
+  {
+   "id": "D039",
+   "prompt": "summarize this call in 5 bullets for my own notes\n\nNadia: we're pushing the insights dashboard to nov, data team is underwater\nLeo: fine but then the churn model needs to ship first\nNadia: agreed. Leo owns churn model, target oct 20\nSam: I'll update the roadmap doc and tell sales\nLeo: also need a decision on whether we sunset the csv export\nNadia: parking that for next week",
+   "expected_role": "lowest",
+   "category": "meeting_summary",
+   "rationale": "An ordinary summary of a pasted transcript is lowest; decisions mentioned in it are data, not decisions asked of the model."
+  },
+  {
+   "id": "D040",
+   "prompt": "cool that works. now add a test for the empty string case too",
+   "expected_role": "middle",
+   "category": "followup_clear_coding",
+   "rationale": "The follow-up clearly asks for an ordinary unit test, so it is middle."
+  },
+  {
+   "id": "D041",
+   "prompt": "fix the 'recieve' typo in the README and also add rate limiting to /api/login, getting hammered by bots since yesterday",
+   "expected_role": "highest",
+   "category": "mixed_request",
+   "rationale": "A mixed request takes its most demanding part, and login rate limiting is security coding (highest)."
+  },
+  {
+   "id": "D042",
+   "prompt": "rename tmpData to parsedRows in utils.js and also write a haiku abt it for #eng-fun lol",
+   "expected_role": "middle",
+   "category": "mixed_request",
+   "rationale": "The most demanding part is an ordinary code refactor, so the mixed request is middle."
+  },
+  {
+   "id": "D043",
+   "prompt": "just links, no commentary: official docs for postgres row level security, python hashlib, and the owasp password storage cheat sheet",
+   "expected_role": "lowest",
+   "category": "resource_collection",
+   "rationale": "Specified resource collection is lowest; security being the subject does not make it security coding."
+  },
+  {
+   "id": "D044",
+   "prompt": "sanity check this before i write the tech spec:\n\nclient -> api gateway -> lambda -> dynamodb (balances table)\n- we update the user's balance row directly on each txn, no event log / ledger entries\n- idempotency: none yet, planning to rely on client not double-submitting\n- ~20k txns/day, expect 10x by q2\n- reconciliation w/ bank is a nightly csv diff\n\nanything obviously wrong?",
+   "expected_role": "highest",
+   "category": "architecture_review",
+   "rationale": "An architecture review of a money-moving ledger design requires highest."
+  },
+  {
+   "id": "D045",
+   "prompt": "undo my last commit but keep the changes staged, havent pushed yet",
+   "expected_role": "middle",
+   "category": "git_help",
+   "rationale": "Routine git help is ordinary implementation (middle)."
+  },
+  {
+   "id": "D046",
+   "prompt": "can i just force push to main to get rid of that commit with the .env in it? has the prod db password. team of 6, i dont think anyone pulled yet",
+   "expected_role": "highest",
+   "category": "git_irreversible_security",
+   "rationale": "A leaked production secret plus an irreversible history rewrite is a security-consequential assessment (highest)."
+  },
+  {
+   "id": "D047",
+   "prompt": "3pm PST in IST?",
+   "expected_role": "lowest",
+   "category": "timezone_conversion",
+   "rationale": "A time-zone conversion is harmless mechanical admin (lowest)."
+  },
+  {
+   "id": "D048",
+   "prompt": "blood report came in. hba1c 6.3, fasting 118, ldl 162. doc appt is in 3 wks. is this bad? should i start anything before then",
+   "expected_role": "highest",
+   "category": "medical_decision",
+   "rationale": "Interpreting lab results and deciding on action has real health stakes, making it a consequential assessment (highest)."
+  },
+  {
+   "id": "D049",
+   "prompt": "copy test name, value, unit, ref range into a table. dont interpret anything, its for my spreadsheet\n\nHbA1c 6.3 % (4.0 - 5.6)\nFasting Glucose 118 mg/dL (70 - 99)\nLDL Cholesterol 162 mg/dL (< 100)\nTSH 2.1 mIU/L (0.4 - 4.0)\nVitamin D 18 ng/mL (30 - 100)",
+   "expected_role": "lowest",
+   "category": "medical_report_extraction",
+   "rationale": "Specified extraction from a pasted report without interpretation is lowest."
+  },
+  {
+   "id": "D050",
+   "prompt": "landlord sent the agreement, signing tmrw morning. anything sketchy?\n\n7. Tenant forfeits the entire security deposit if vacating before 11 months for any reason.\n9. Landlord or agents may enter the premises at any time for inspection.\n12. Rent shall increase by 10% every six months.\n15. Tenant bears all structural repair costs.",
+   "expected_role": "highest",
+   "category": "rental_agreement_review",
+   "rationale": "Reviewing a lease before signing is a consequential legal and money judgement (highest)."
+  },
+  {
+   "id": "D051",
+   "prompt": "from this agreement just pull: monthly rent, deposit, lock-in period, notice period\n\nThis Leave and License Agreement is made on 20-09-2026 between Mr. Vikram Deshpande (Licensor) and Ms. Anaya Rao (Licensee). The monthly license fee shall be INR 24,000 payable by the 5th of each month. The Licensee shall pay an interest-free refundable deposit of INR 1,00,000. Neither party may terminate within the first 6 months (lock-in). Thereafter either party may terminate with 2 months' written notice.",
+   "expected_role": "lowest",
+   "category": "rental_agreement_extraction",
+   "rationale": "Pulling four specified terms from an agreement is specified extraction (lowest)."
+  },
+  {
+   "id": "D052",
+   "prompt": "draft a short msg to mr deshpande saying rent will come on the 7th this month not the 5th, salary got delayed. polite not grovelling",
+   "expected_role": "lowest",
+   "category": "ordinary_message",
+   "rationale": "A short routine message to a landlord is an ordinary message (lowest)."
+  },
+  {
+   "id": "D053",
+   "prompt": "visa form asks 'have you ever been refused a visa or entry to any country?'. i applied for a uk visa in 2019 but withdrew before they decided. tick yes or no?",
+   "expected_role": "highest",
+   "category": "visa_form",
+   "rationale": "Answering a visa declaration has legal consequences, so it is a consequential assessment (highest)."
+  },
+  {
+   "id": "D054",
+   "prompt": "pandas: df has user_id, event, ts (utc). need DAU per day + 7 day rolling avg, then a line plot. ts is string rn",
+   "expected_role": "middle",
+   "category": "data_analysis_code",
+   "rationale": "Ordinary data-analysis code where user_id is a column label is middle."
+  },
+  {
+   "id": "D055",
+   "prompt": "should onboarding ask for phone number on step 1 or after they create their first project? growth wants it upfront for whatsapp nudges, i think it'll tank completion",
+   "expected_role": "highest",
+   "category": "product_decision",
+   "rationale": "An onboarding trade-off between growth and completion, involving personal data collection, is a product decision requiring highest."
+  },
+  {
+   "id": "D056",
+   "prompt": "turn this into one comma separated line of names\n\n[{\"name\": \"Ira\"}, {\"name\": \"Tomas\"}, {\"name\": \"Wen\"}, {\"name\": \"Kofi\"}, {\"name\": \"Beatriz\"}]",
+   "expected_role": "lowest",
+   "category": "mechanical_format",
+   "rationale": "Reformatting pasted data into a list is a mechanical text change (lowest)."
+  },
+  {
+   "id": "D057",
+   "prompt": "jq filter that outputs sku and qty from .items[] only where qty > 0, one line per item, from our order export json",
+   "expected_role": "middle",
+   "category": "json_script",
+   "rationale": "Writing a jq filter is ordinary scripting; 'order' is only a data label (middle)."
+  },
+  {
+   "id": "D058",
+   "prompt": "low priority, whenever u get a sec - is this iam policy too loose? its attached to the reporting lambda\n\n{\n  \"Version\": \"2012-10-17\",\n  \"Statement\": [{\"Effect\": \"Allow\", \"Action\": \"s3:*\", \"Resource\": \"*\"}]\n}",
+   "expected_role": "highest",
+   "category": "cloud_security_review",
+   "rationale": "An IAM permission review is security work, and 'low priority' does not remove the highest requirement."
+  },
+  {
+   "id": "D059",
+   "prompt": "s3 lifecycle rule to move objects in the design-exports bucket older than 90 days to glacier, terraform pls",
+   "expected_role": "middle",
+   "category": "cloud_config_ordinary",
+   "rationale": "A storage lifecycle rule is ordinary infrastructure implementation without security or money movement (middle)."
+  },
+  {
+   "id": "D060",
+   "prompt": "docker builds take 6 min every time, how do i get pip deps cached\n\nFROM python:3.12-slim\nWORKDIR /app\nCOPY . .\nRUN pip install -r requirements.txt\nCMD [\"python\", \"main.py\"]",
+   "expected_role": "middle",
+   "category": "devops_config",
+   "rationale": "Dockerfile build optimisation is ordinary implementation (middle)."
+  },
+  {
+   "id": "D061",
+   "prompt": "fix grammar in my journal entry, its private, dont change the meaning or make it sound fancy\n\n'today was rough. the demo broke infront of the VP and i froze. but Marcus covered and we got thru it. need to stop doing live demos without a backup recording'",
+   "expected_role": "lowest",
+   "category": "private_notes",
+   "rationale": "Grammar cleanup of a private journal entry is a mechanical edit to private notes (lowest)."
+  },
+  {
+   "id": "D062",
+   "prompt": "linkedin post announcing i'm joining Halvern AI as head of product. humble, not cringe, thank the Kestrel team. max 120 words",
+   "expected_role": "highest",
+   "category": "linkedin_post",
+   "rationale": "A LinkedIn post is high-credibility public writing requiring highest."
+  },
+  {
+   "id": "D063",
+   "prompt": "translate to hindi for my mom: reached safely, will call after dinner, dont wait up",
+   "expected_role": "lowest",
+   "category": "translation",
+   "rationale": "Translating a short private message is a routine mechanical text task (lowest)."
+  },
+  {
+   "id": "D064",
+   "prompt": "ts fetch wrapper that retries GET requests on 502/503 with exp backoff, max 3 tries, and throws a typed error after",
+   "expected_role": "middle",
+   "category": "api_client_code",
+   "rationale": "Retrying idempotent GET requests is ordinary implementation without money or security risk (middle)."
+  },
+  {
+   "id": "D065",
+   "prompt": "build the delete-my-account endpoint. has to actually satisfy gdpr erasure - user data is in postgres, s3 uploads, and the analytics warehouse. soft delete is fine right?",
+   "expected_role": "highest",
+   "category": "coding_privacy_feature",
+   "rationale": "Implementing personal-data erasure is privacy coding, which requires highest."
+  },
+  {
+   "id": "D066",
+   "prompt": "easiest way to let the react app create charges directly? thinking just put the payment provider secret key in the vite env, saves a backend hop",
+   "expected_role": "highest",
+   "category": "coding_secrets",
+   "rationale": "Exposing a payment secret key in client code is security and money-movement coding (highest)."
+  },
+  {
+   "id": "D067",
+   "prompt": "review this diff pls, its just css + a new empty-state illustration on the orders page\n\n- .orders-empty { display: none; }\n+ .orders-empty { display: flex; flex-direction: column; align-items: center; gap: 12px; }\n+ .orders-empty img { width: 160px; opacity: .8; }",
+   "expected_role": "middle",
+   "category": "code_review",
+   "rationale": "Reviewing a styling diff where 'orders' is only a page name is ordinary implementation (middle)."
+  },
+  {
+   "id": "D068",
+   "prompt": "can u review before i merge, touched the password reset token gen\n\n- token = secrets.token_urlsafe(32)\n+ token = f\"{user.id}-{int(time.time())}\"  # easier to debug",
+   "expected_role": "highest",
+   "category": "code_review_security",
+   "rationale": "Reviewing a change to password-reset token generation is security review (highest)."
+  },
+  {
+   "id": "D069",
+   "prompt": "remind-me list for this week sorted by day: renew gym (fri), call plumber (any day), bday wish to neha (thu), return library books (wed)",
+   "expected_role": "lowest",
+   "category": "harmless_admin_list",
+   "rationale": "Sorting personal reminders is harmless routine admin (lowest)."
+  },
+  {
+   "id": "D070",
+   "prompt": "can you handle the lakshmi thing from yesterday, same approach as before",
+   "expected_role": "highest",
+   "category": "ambiguous_request",
+   "rationale": "The task class and stakes cannot be determined, so the unclear-task row sends it to highest."
+  },
+  {
+   "id": "D071",
+   "prompt": "ok second one, same undefined error but in the cart component now\n\nTypeError: Cannot read properties of undefined (reading 'items')\n    at CartSummary (CartSummary.tsx:42:18)\n    at renderWithHooks (react-dom.development.js:16305:18)",
+   "expected_role": "middle",
+   "category": "followup_clear_coding",
+   "rationale": "The follow-up is clearly a debugging task in a UI component with no money movement, so it is middle."
+  },
+  {
+   "id": "D072",
+   "prompt": "now the same title case thing for this second list\nbuy milk\ncall bank re new card\nbook dentist\npay electricity bill",
+   "expected_role": "lowest",
+   "category": "followup_clear_mechanical",
+   "rationale": "The follow-up is a mechanical text change; 'bank' and 'pay' are list contents, not tasks (lowest)."
+  },
+  {
+   "id": "D073",
+   "prompt": "add eggs and bread to the grocery list. also should i move my parents from the family floater to individual health plans? premium went up 40% this year and dad is 68",
+   "expected_role": "highest",
+   "category": "mixed_request",
+   "rationale": "The mixed request takes its most demanding part, a consequential health-insurance decision (highest)."
+  },
+  {
+   "id": "D074",
+   "prompt": "vendor MSA clause below, legal is OOO till monday and sales wants to sign today. ok as is?\n\n'Vendor's aggregate liability shall not exceed the fees paid in the one (1) month preceding the claim. Customer shall indemnify Vendor against any claims arising from Customer Data, including breaches caused by Vendor systems.'",
+   "expected_role": "highest",
+   "category": "contract_review",
+   "rationale": "Deciding whether to sign terms with liability and data-breach exposure is a consequential legal assessment (highest)."
+  },
+  {
+   "id": "D075",
+   "prompt": "from this msa text just list the renewal date, termination notice period and payment terms (net X). nothing else\n\n'...The initial term commences on 01-11-2026 and ends on 31-10-2027, and renews automatically for successive 12-month terms unless either party gives ninety (90) days' written notice of non-renewal. Invoices are payable within forty-five (45) days of receipt...'",
+   "expected_role": "lowest",
+   "category": "contract_extraction",
+   "rationale": "Pulling specified terms from a contract is specified extraction (lowest)."
+  },
+  {
+   "id": "D076",
+   "prompt": "google sheets formula: sum col D where col B = 'reimbursable' and the date in col A is in september 2026",
+   "expected_role": "middle",
+   "category": "spreadsheet_formula",
+   "rationale": "A spreadsheet formula is ordinary query-style implementation (middle); 'reimbursable' is only a label."
+  },
+  {
+   "id": "D077",
+   "prompt": "quick one: tailor my resume summary to the corvane JD, 3 lines max\n\ncurrent: 'Product manager with 8 years experience across fintech and healthtech, recently focused on AI products.'",
+   "expected_role": "highest",
+   "category": "resume_tailoring",
+   "rationale": "Tailoring a résumé is high-credibility work that stays highest even when labelled 'quick'."
+  },
+  {
+   "id": "D078",
+   "prompt": "just fix typos in these resume bullets, nothing else, sending it in an hour\n\n- Led cross-functional team of 12 to ship payements reconcilation tool, reducing manual effort by 60%\n- Managed stakholder alignment across 4 buisness units",
+   "expected_role": "highest",
+   "category": "resume_edit",
+   "rationale": "Editing résumé text is high-credibility work; 'just fix typos' does not lower it from highest."
+  },
+  {
+   "id": "D079",
+   "prompt": "bgv form needs Employer | Designation | From | To. fill it from my resume text, exact months, dont change titles\n\nSenior PM - Lumora Health - Mar 2022 to present\nPM - Kestrel Pay - Jun 2019 to Feb 2022\nAPM - Tidewell Logistics - Jul 2017 to May 2019",
+   "expected_role": "lowest",
+   "category": "resume_extraction",
+   "rationale": "Explicitly specified extraction from a résumé into a form layout is lowest."
+  },
+  {
+   "id": "D080",
+   "prompt": "add a skeleton loader to the transactions list while it fetches. react + tailwind, match the row height (56px)",
+   "expected_role": "middle",
+   "category": "frontend_feature",
+   "rationale": "A loading-state UI implementation where 'transactions' is only a label is ordinary coding (middle)."
+  },
+  {
+   "id": "D081",
+   "prompt": "write a cron that auto-refunds orders stuck in payment_pending for more than 7 days using the payments api refund endpoint. python, runs nightly",
+   "expected_role": "highest",
+   "category": "coding_money_movement",
+   "rationale": "Automated refunds move money, so the coding requires highest."
+  },
+  {
+   "id": "D082",
+   "prompt": "p95 on /catalog went from 200ms to 1.4s after yesterday's deploy. flame graph says most time is in json serialization of the product list (~5k items). ideas + code?",
+   "expected_role": "middle",
+   "category": "performance_debugging",
+   "rationale": "Performance debugging without money, privacy or security risk is ordinary implementation (middle)."
+  },
+  {
+   "id": "D083",
+   "prompt": "summarize this for #eng in 4 bullets\n\nPostmortem INC-2291: On 18 Sep a misconfigured cache key caused 212 users to briefly see another user's saved-card last 4 digits and billing city on the checkout page for ~14 min. Root cause: cache key omitted user_id after refactor PR #4410. Detection: customer support ticket. Remediation: cache flushed, key fixed, regression test added. Follow-ups: notify affected users (Legal owns), add cache-key lint rule (Platform owns, due 30 Sep).",
+   "expected_role": "lowest",
+   "category": "pasted_incident_summary",
+   "rationale": "Summarising a pasted postmortem is an ordinary summary (lowest); the privacy incident it describes is data, not the task."
+  },
+  {
+   "id": "D084",
+   "prompt": "for our meeting summarizer, what should the eval actually check? we can only afford one llm grader rn - hallucinated action items or missed action items, which one matters more",
+   "expected_role": "highest",
+   "category": "eval_design_decision",
+   "rationale": "Choosing what the eval checks under a one-grader constraint is a difficult product trade-off requiring highest."
+  },
+  {
+   "id": "D085",
+   "prompt": "script to read my bank statement csv (date, description, amount) and total spend by category using keyword rules like 'ZIPPY'->food. runs locally, just prints a table",
+   "expected_role": "middle",
+   "category": "scripting",
+   "rationale": "A local categorisation script reads financial data but moves no money and exposes nothing, so it is ordinary implementation (middle)."
+  },
+  {
+   "id": "D086",
+   "prompt": "pull all the acceptance criteria out of this PRD section into a checklist, verbatim, dont rephrase\n\nFeature: Saved filters\nUsers can save up to 10 filters. AC1: Saving an 11th filter shows an error toast. AC2: Saved filters persist across sessions. Notes: design TBD for mobile. AC3: Deleting a filter asks for confirmation. Open question: should filters be shareable?",
+   "expected_role": "lowest",
+   "category": "spec_extraction",
+   "rationale": "Verbatim extraction of specified items from a document is lowest."
+  },
+  {
+   "id": "D087",
+   "prompt": "pricing page primary CTA: keep the brand purple or switch to green? green did +3% clicks but n was like 400 per arm",
+   "expected_role": "highest",
+   "category": "ui_decision",
+   "rationale": "A UI decision resting on a weak experiment is a difficult trade-off requiring highest."
+  },
+  {
+   "id": "D088",
+   "prompt": "convert to python requests, read the token from an env var\n\ncurl -X POST https://api.example.com/v1/reports -H 'Authorization: Bearer $TOKEN' -H 'Content-Type: application/json' -d '{\"range\": \"7d\", \"format\": \"csv\"}'",
+   "expected_role": "middle",
+   "category": "code_conversion",
+   "rationale": "Converting a curl call to Python is ordinary coding; the auth header is a standard placeholder, not security design (middle)."
+  },
+  {
+   "id": "D089",
+   "prompt": "write unit tests for this, include negatives and zero\n\ndef format_inr(amount_paise: int) -> str:\n    return f\"₹{amount_paise / 100:,.2f}\"",
+   "expected_role": "middle",
+   "category": "unit_tests",
+   "rationale": "Testing a currency formatting function is ordinary coding with no money movement (middle)."
+  },
+  {
+   "id": "D090",
+   "prompt": "links to the official 'whats new' pages for python 3.11, 3.12 and 3.13. just the list",
+   "expected_role": "lowest",
+   "category": "resource_collection",
+   "rationale": "Specified resource collection is lowest."
+  },
+  {
+   "id": "D091",
+   "prompt": "summarize this thread in 3 bullets and then write the sql they're asking for\n\nMaya: can we get weekly active teams for the board deck?\nJon: define active = any event in the week\nMaya: yes, last 8 weeks\nJon: tables are teams(id, name) and events(team_id, ts)",
+   "expected_role": "middle",
+   "category": "mixed_request",
+   "rationale": "The mixed request's most demanding part is an ordinary SQL query, so it is middle."
+  },
+  {
+   "id": "D092",
+   "prompt": "reply to farah: yes thurs 4pm works, ill send the invite. one line",
+   "expected_role": "lowest",
+   "category": "ordinary_message",
+   "rationale": "A one-line scheduling reply is an ordinary message (lowest)."
+  },
+  {
+   "id": "D093",
+   "prompt": "bash one liner to find files over 1gb in my home dir sorted by size",
+   "expected_role": "middle",
+   "category": "shell_command",
+   "rationale": "A shell command is ordinary coding, which defaults to middle and never lowest."
+  },
+  {
+   "id": "D094",
+   "prompt": "should i run the orders table migration tonight or wait till after the sale weekend? its adding a non-null column w/ default on ~40M rows, pg 15",
+   "expected_role": "highest",
+   "category": "ops_decision",
+   "rationale": "Timing a large production migration around peak sales is a consequential operational trade-off (highest)."
+  },
+  {
+   "id": "D095",
+   "prompt": "prorated rent for 12 days of a 30 day month, rent is 24000. just the number",
+   "expected_role": "lowest",
+   "category": "simple_calculation",
+   "rationale": "A simple arithmetic calculation for personal admin is harmless (lowest)."
+  },
+  {
+   "id": "D096",
+   "prompt": "github action that runs pytest and ruff on every PR to main, python 3.12, cache pip",
+   "expected_role": "middle",
+   "category": "ci_config",
+   "rationale": "A CI workflow is ordinary implementation (middle)."
+  },
+  {
+   "id": "D097",
+   "prompt": "typo in auth/login.ts error string - 'Invalid pasword' should be 'Invalid password'. thats literally it",
+   "expected_role": "middle",
+   "category": "coding_sensitive_label_only",
+   "rationale": "A string fix in source code is ordinary coding (middle); the auth file name is only a label and no auth logic changes."
+  },
+  {
+   "id": "D098",
+   "prompt": "test_checkout_total fails like 1 in 10 on CI, always passes locally. whats going on\n\ndef test_checkout_total():\n    cart = make_cart(items=random_items(5))\n    assert checkout_total(cart) == sum(i.price for i in cart.items) * 1.18",
+   "expected_role": "middle",
+   "category": "flaky_test_debugging",
+   "rationale": "Debugging a flaky test that computes totals moves no money, so it is ordinary implementation (middle)."
+  },
+  {
+   "id": "D099",
+   "prompt": "airflow dag skeleton: pull from our events api every hour, land raw json in gcs, load to a bigquery staging table. no transforms yet",
+   "expected_role": "middle",
+   "category": "data_pipeline",
+   "rationale": "An ETL pipeline skeleton is ordinary implementation (middle)."
+  },
+  {
+   "id": "D100",
+   "prompt": "dedupe + sort alphabetically, ignore case\n\nKofi\nira\nTomas\nWen\nIra\nbeatriz\nKofi",
+   "expected_role": "lowest",
+   "category": "mechanical_format",
+   "rationale": "Deduplicating and sorting a list is a mechanical text change (lowest)."
+  }
+ ]
+}

@@ -1,0 +1,3404 @@
+{
+  "generated_for": "routing suitability evidence (synthetic prompts written by independent agents blind to the classifier)",
+  "history": [
+    {
+      "rules": "rules-2026-09-25.1",
+      "dataset": "heldout-2026-09-25.1",
+      "exact_rate": 0.617,
+      "under": 9,
+      "over": 37,
+      "note": "first blind measurement"
+    },
+    {
+      "rules": "rules-2026-09-25.1",
+      "dataset": "testset-2026-09-25.1",
+      "exact_rate": 0.493,
+      "under": 10,
+      "over": 66,
+      "note": "baseline before any tuning"
+    },
+    {
+      "rules": "rules-2026-09-25.2",
+      "dataset": "testset-2026-09-25.1",
+      "exact_rate": 0.773,
+      "under": 16,
+      "over": 18,
+      "note": "held-out result for revision 2; set then used for tuning"
+    },
+    {
+      "rules": "rules-2026-09-25.3",
+      "dataset": "heldout-2026-09-25.1",
+      "exact_rate": 0.9917,
+      "under": 0,
+      "over": 1,
+      "note": "development-set result for revision 3"
+    },
+    {
+      "rules": "rules-2026-09-25.3",
+      "dataset": "testset-2026-09-25.1",
+      "exact_rate": 0.9867,
+      "under": 0,
+      "over": 2,
+      "note": "development-set result for revision 3"
+    },
+    {
+      "rules": "rules-2026-09-25.3",
+      "dataset": "final-testset-2026-09-25.1",
+      "exact_rate": 0.86,
+      "under": 14,
+      "over": 7,
+      "note": "frozen-rules held-out result for revision 3"
+    }
+  ],
+  "current_rules": "rules-2026-09-25.7",
+  "current": [
+    {
+      "dataset": "heldout-2026-09-25.1",
+      "role_in_repo": "development set 1: written blind; used to tune rules revisions 2-3",
+      "cases": 120,
+      "exact": 118,
+      "exact_rate": 0.9833,
+      "under_routed": 0,
+      "over_routed": 2,
+      "misses": [
+        {
+          "id": "H061",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "H074",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        }
+      ]
+    },
+    {
+      "dataset": "testset-2026-09-25.1",
+      "role_in_repo": "development set 2: written blind; scored once as a test set (rev 2), then used to tune revision 3",
+      "cases": 150,
+      "exact": 144,
+      "exact_rate": 0.96,
+      "under_routed": 0,
+      "over_routed": 6,
+      "misses": [
+        {
+          "id": "T001",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "T015",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "T091",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "T117",
+          "expected": "lowest",
+          "observed": "middle",
+          "direction": "over"
+        },
+        {
+          "id": "T142",
+          "expected": "lowest",
+          "observed": "middle",
+          "direction": "over"
+        },
+        {
+          "id": "T143",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        }
+      ]
+    },
+    {
+      "dataset": "final-testset-2026-09-25.1",
+      "role_in_repo": "final test set: scored blind once against revision 3 (86.0% exact, 9.3% under). Revision 4 changes came from a code review (robustness and hidden-risk fixes), not from these misses, but this set has been seen, so the revision 4 number below is post-review, not held-out",
+      "cases": 150,
+      "exact": 129,
+      "exact_rate": 0.86,
+      "under_routed": 13,
+      "over_routed": 8,
+      "misses": [
+        {
+          "id": "F003",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F011",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F012",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F020",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F031",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F035",
+          "expected": "highest",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F062",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F074",
+          "expected": "highest",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F077",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F079",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F088",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F101",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F105",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F114",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F118",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F124",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F127",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F128",
+          "expected": "middle",
+          "observed": "lowest",
+          "direction": "under"
+        },
+        {
+          "id": "F129",
+          "expected": "highest",
+          "observed": "middle",
+          "direction": "under"
+        },
+        {
+          "id": "F136",
+          "expected": "lowest",
+          "observed": "highest",
+          "direction": "over"
+        },
+        {
+          "id": "F144",
+          "expected": "middle",
+          "observed": "highest",
+          "direction": "over"
+        }
+      ]
+    }
+  ],
+  "claim": "Held-out results on prompts each frozen revision had never seen: revision 5 81.5% exact (6.0% under-routed) on fresh set 1; revision 6 78.5% (9.0% under, 12.5% over) on fresh set 2; revision 7 80.0% (10.5% under, 9.5% over) on fresh set 3, where revisions 5 and 6 scored 71.5% and 74.0%. Each revision improves the same unseen prompts, but held-out accuracy stays near 78-82% with 6-10% under-routing. Development-set scores are fitted. The owner's 95% goal is about real chat threads staying on the chosen model; it is not measured by these synthetic sets and is not claimed.",
+  "fresh_sets": {
+    "method": "Each revision was frozen (committed) before a new 200-prompt set, written by two independent agents blind to the classifier and to every earlier set, was scored once. A separate agent re-labelled each set from the prompts alone. Every set was then used as development data for the next revision.",
+    "fresh-set-1": {
+      "frozen_rules": "rules-2026-09-25.5",
+      "commit": "f50fa23",
+      "label_agreement": {
+        "author_vs_second_labeller": 200,
+        "cases": 200,
+        "rate": 1.0
+      },
+      "rev5_frozen": {
+        "rules": "rules-2026-09-25.5",
+        "cases": 200,
+        "exact": 163,
+        "exact_rate": 0.815,
+        "exact_ci95": [
+          0.7554,
+          0.8627
+        ],
+        "under_routed": 12,
+        "under_rate": 0.06,
+        "under_ci95": [
+          0.0347,
+          0.1019
+        ],
+        "over_routed": 25,
+        "over_rate": 0.125,
+        "expected_distribution": {
+          "lowest": 60,
+          "highest": 80,
+          "middle": 60
+        },
+        "observed_distribution": {
+          "lowest": 54,
+          "highest": 96,
+          "middle": 50
+        },
+        "confusion_expected_by_observed": {
+          "highest->highest": 73,
+          "highest->lowest": 4,
+          "highest->middle": 3,
+          "lowest->highest": 13,
+          "lowest->lowest": 45,
+          "lowest->middle": 2,
+          "middle->highest": 10,
+          "middle->lowest": 5,
+          "middle->middle": 45
+        },
+        "per_set": {
+          "fresh-a-2026-09-25.1": {
+            "cases": 100,
+            "exact": 83,
+            "under": 5,
+            "over": 12
+          },
+          "fresh-b-2026-09-25.1": {
+            "cases": 100,
+            "exact": 80,
+            "under": 7,
+            "over": 13
+          }
+        },
+        "labeller_agreed_subset": {
+          "cases": 200,
+          "exact": 163,
+          "exact_rate": 0.815,
+          "under": 12
+        },
+        "misses": [
+          {
+            "id": "A008",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "css_layout"
+          },
+          {
+            "id": "A022",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "schema_extraction"
+          },
+          {
+            "id": "A023",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "email_template_html"
+          },
+          {
+            "id": "A026",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "A028",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "web_scraping"
+          },
+          {
+            "id": "A032",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "ambiguous_consequential_request"
+          },
+          {
+            "id": "A045",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "dependency_troubleshooting"
+          },
+          {
+            "id": "A055",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "private_journal_summary"
+          },
+          {
+            "id": "A059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typo_fix"
+          },
+          {
+            "id": "A062",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recruiter_logistics_reply"
+          },
+          {
+            "id": "A065",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "supabase_query"
+          },
+          {
+            "id": "A067",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "personal_data_scraping"
+          },
+          {
+            "id": "A069",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "A072",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "dom_selectors"
+          },
+          {
+            "id": "A081",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_contact_extraction"
+          },
+          {
+            "id": "A082",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "css_styling"
+          },
+          {
+            "id": "A098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "hashing_for_dedup"
+          },
+          {
+            "id": "B004",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "github_actions"
+          },
+          {
+            "id": "B009",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "supabase_dev"
+          },
+          {
+            "id": "B022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "mechanical_text_edit"
+          },
+          {
+            "id": "B025",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "trip_planning"
+          },
+          {
+            "id": "B026",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_extraction"
+          },
+          {
+            "id": "B028",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "supabase_dev"
+          },
+          {
+            "id": "B033",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "bank_upi"
+          },
+          {
+            "id": "B034",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "notes_organising"
+          },
+          {
+            "id": "B041",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "tax_money_decision"
+          },
+          {
+            "id": "B051",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "content_summary"
+          },
+          {
+            "id": "B059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "document_extraction"
+          },
+          {
+            "id": "B060",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "resume_writing"
+          },
+          {
+            "id": "B070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sensitive_word_coding"
+          },
+          {
+            "id": "B078",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "architecture"
+          },
+          {
+            "id": "B081",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "B087",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sensitive_word_coding"
+          },
+          {
+            "id": "B092",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "ui_decision"
+          },
+          {
+            "id": "B093",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "document_extraction"
+          },
+          {
+            "id": "B098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "python_pandas"
+          },
+          {
+            "id": "B099",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_code"
+          }
+        ]
+      },
+      "rev4_baseline": {
+        "rules": "rules-2026-09-25.4",
+        "cases": 200,
+        "exact": 157,
+        "exact_rate": 0.785,
+        "exact_ci95": [
+          0.723,
+          0.8363
+        ],
+        "under_routed": 18,
+        "under_rate": 0.09,
+        "under_ci95": [
+          0.0577,
+          0.1378
+        ],
+        "over_routed": 25,
+        "over_rate": 0.125,
+        "expected_distribution": {
+          "lowest": 60,
+          "highest": 80,
+          "middle": 60
+        },
+        "observed_distribution": {
+          "lowest": 56,
+          "highest": 93,
+          "middle": 51
+        },
+        "confusion_expected_by_observed": {
+          "highest->highest": 70,
+          "highest->lowest": 4,
+          "highest->middle": 6,
+          "lowest->highest": 14,
+          "lowest->lowest": 44,
+          "lowest->middle": 2,
+          "middle->highest": 9,
+          "middle->lowest": 8,
+          "middle->middle": 43
+        },
+        "per_set": {
+          "fresh-a-2026-09-25.1": {
+            "cases": 100,
+            "exact": 79,
+            "under": 10,
+            "over": 11
+          },
+          "fresh-b-2026-09-25.1": {
+            "cases": 100,
+            "exact": 78,
+            "under": 8,
+            "over": 14
+          }
+        },
+        "labeller_agreed_subset": {
+          "cases": 200,
+          "exact": 157,
+          "exact_rate": 0.785,
+          "under": 18
+        },
+        "misses": [
+          {
+            "id": "A003",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "architecture_review"
+          },
+          {
+            "id": "A005",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "ci_automation"
+          },
+          {
+            "id": "A008",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "css_layout"
+          },
+          {
+            "id": "A011",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "auth_session_debugging"
+          },
+          {
+            "id": "A022",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "schema_extraction"
+          },
+          {
+            "id": "A026",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "A028",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "web_scraping"
+          },
+          {
+            "id": "A032",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "ambiguous_consequential_request"
+          },
+          {
+            "id": "A045",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "dependency_troubleshooting"
+          },
+          {
+            "id": "A055",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "private_journal_summary"
+          },
+          {
+            "id": "A059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typo_fix"
+          },
+          {
+            "id": "A062",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recruiter_logistics_reply"
+          },
+          {
+            "id": "A063",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "typescript_errors"
+          },
+          {
+            "id": "A065",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "supabase_query"
+          },
+          {
+            "id": "A067",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "personal_data_scraping"
+          },
+          {
+            "id": "A069",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "A072",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "dom_selectors"
+          },
+          {
+            "id": "A073",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "access_control_fix"
+          },
+          {
+            "id": "A081",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_contact_extraction"
+          },
+          {
+            "id": "A082",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "css_styling"
+          },
+          {
+            "id": "A098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "hashing_for_dedup"
+          },
+          {
+            "id": "B004",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "github_actions"
+          },
+          {
+            "id": "B006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "log_reading"
+          },
+          {
+            "id": "B009",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "supabase_dev"
+          },
+          {
+            "id": "B022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "mechanical_text_edit"
+          },
+          {
+            "id": "B025",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "trip_planning"
+          },
+          {
+            "id": "B026",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_extraction"
+          },
+          {
+            "id": "B028",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "supabase_dev"
+          },
+          {
+            "id": "B033",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "bank_upi"
+          },
+          {
+            "id": "B034",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "notes_organising"
+          },
+          {
+            "id": "B041",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "tax_money_decision"
+          },
+          {
+            "id": "B051",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "content_summary"
+          },
+          {
+            "id": "B059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "document_extraction"
+          },
+          {
+            "id": "B060",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "resume_writing"
+          },
+          {
+            "id": "B070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sensitive_word_coding"
+          },
+          {
+            "id": "B078",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "architecture"
+          },
+          {
+            "id": "B079",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "mechanical_text_edit"
+          },
+          {
+            "id": "B081",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "B087",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sensitive_word_coding"
+          },
+          {
+            "id": "B092",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "ui_decision"
+          },
+          {
+            "id": "B093",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "document_extraction"
+          },
+          {
+            "id": "B098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "python_pandas"
+          },
+          {
+            "id": "B099",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_code"
+          }
+        ]
+      }
+    },
+    "fresh-set-2": {
+      "frozen_rules": "rules-2026-09-25.6",
+      "commit": "12e0d73",
+      "label_agreement": {
+        "author_vs_second_labeller": 199,
+        "cases": 200,
+        "rate": 0.995
+      },
+      "rev6_frozen": {
+        "rules": "rules-2026-09-25.6",
+        "cases": 200,
+        "exact": 157,
+        "exact_rate": 0.785,
+        "exact_ci95": [
+          0.723,
+          0.8363
+        ],
+        "under_routed": 18,
+        "under_rate": 0.09,
+        "under_ci95": [
+          0.0577,
+          0.1378
+        ],
+        "over_routed": 25,
+        "over_rate": 0.125,
+        "expected_distribution": {
+          "highest": 78,
+          "lowest": 63,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 93,
+          "lowest": 57,
+          "middle": 50
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 68,
+          "highest->lowest": 3,
+          "highest->middle": 7,
+          "lowest->highest": 17,
+          "lowest->lowest": 46,
+          "middle->highest": 8,
+          "middle->lowest": 8,
+          "middle->middle": 43
+        },
+        "per_set": {
+          "fresh-c-2026-09-25.1": {
+            "exact": 78,
+            "under": 12,
+            "over": 10,
+            "cases": 100
+          },
+          "fresh-d-2026-09-25.1": {
+            "exact": 79,
+            "under": 6,
+            "over": 15,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": {
+          "cases": 199,
+          "exact": 157,
+          "under": 18
+        },
+        "misses": [
+          {
+            "id": "C006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "C007",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_housing"
+          },
+          {
+            "id": "C008",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "security_coding"
+          },
+          {
+            "id": "C009",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meeting_prep"
+          },
+          {
+            "id": "C016",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "architecture_review"
+          },
+          {
+            "id": "C020",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "family_whatsapp"
+          },
+          {
+            "id": "C022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "upi_dispute"
+          },
+          {
+            "id": "C026",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "C034",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_formatting"
+          },
+          {
+            "id": "C050",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "linkedin_post"
+          },
+          {
+            "id": "C051",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "regex_scripting"
+          },
+          {
+            "id": "C067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "ui_decision"
+          },
+          {
+            "id": "C070",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "C072",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "model_selection"
+          },
+          {
+            "id": "C075",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "dev_tooling"
+          },
+          {
+            "id": "C077",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "health_appointment"
+          },
+          {
+            "id": "C086",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_scripting"
+          },
+          {
+            "id": "C087",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "workflow_automation"
+          },
+          {
+            "id": "C091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "file_automation_script"
+          },
+          {
+            "id": "C094",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "telegram_bot"
+          },
+          {
+            "id": "C097",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "side_project_strategy"
+          },
+          {
+            "id": "C099",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "workplace_message"
+          },
+          {
+            "id": "D002",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "coding_security_casual"
+          },
+          {
+            "id": "D003",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "D009",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "private_notes"
+          },
+          {
+            "id": "D011",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "sql_privacy_export"
+          },
+          {
+            "id": "D016",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "coding_money_movement"
+          },
+          {
+            "id": "D017",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "bank_sms_extraction"
+          },
+          {
+            "id": "D018",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "scam_check"
+          },
+          {
+            "id": "D027",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "mechanical_text_edit"
+          },
+          {
+            "id": "D029",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "research_article_extraction"
+          },
+          {
+            "id": "D035",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "tax_notice_extraction"
+          },
+          {
+            "id": "D047",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "timezone_conversion"
+          },
+          {
+            "id": "D049",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "medical_report_extraction"
+          },
+          {
+            "id": "D057",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "json_script"
+          },
+          {
+            "id": "D059",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "cloud_config_ordinary"
+          },
+          {
+            "id": "D076",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "D079",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_extraction"
+          },
+          {
+            "id": "D082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "performance_debugging"
+          },
+          {
+            "id": "D088",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "code_conversion"
+          },
+          {
+            "id": "D093",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_command"
+          },
+          {
+            "id": "D095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "simple_calculation"
+          },
+          {
+            "id": "D097",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "coding_sensitive_label_only"
+          }
+        ]
+      },
+      "rev5_baseline": {
+        "rules": "rules-2026-09-25.5",
+        "cases": 200,
+        "exact": 152,
+        "exact_rate": 0.76,
+        "exact_ci95": [
+          0.6963,
+          0.8139
+        ],
+        "under_routed": 19,
+        "under_rate": 0.095,
+        "under_ci95": [
+          0.0617,
+          0.1436
+        ],
+        "over_routed": 29,
+        "over_rate": 0.145,
+        "expected_distribution": {
+          "highest": 78,
+          "lowest": 63,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 97,
+          "lowest": 56,
+          "middle": 47
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 68,
+          "highest->lowest": 3,
+          "highest->middle": 7,
+          "lowest->highest": 19,
+          "lowest->lowest": 44,
+          "middle->highest": 10,
+          "middle->lowest": 9,
+          "middle->middle": 40
+        },
+        "per_set": {
+          "fresh-c-2026-09-25.1": {
+            "exact": 75,
+            "under": 13,
+            "over": 12,
+            "cases": 100
+          },
+          "fresh-d-2026-09-25.1": {
+            "exact": 77,
+            "under": 6,
+            "over": 17,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": {
+          "cases": 199,
+          "exact": 152,
+          "under": 19
+        },
+        "misses": [
+          {
+            "id": "C006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "C007",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_housing"
+          },
+          {
+            "id": "C008",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "security_coding"
+          },
+          {
+            "id": "C009",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meeting_prep"
+          },
+          {
+            "id": "C016",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "architecture_review"
+          },
+          {
+            "id": "C020",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "family_whatsapp"
+          },
+          {
+            "id": "C022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "upi_dispute"
+          },
+          {
+            "id": "C026",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "C027",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_coding"
+          },
+          {
+            "id": "C034",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_formatting"
+          },
+          {
+            "id": "C050",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "linkedin_post"
+          },
+          {
+            "id": "C051",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "regex_scripting"
+          },
+          {
+            "id": "C052",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "C066",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "chrome_extension"
+          },
+          {
+            "id": "C067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "ui_decision"
+          },
+          {
+            "id": "C070",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "C072",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "model_selection"
+          },
+          {
+            "id": "C075",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "dev_tooling"
+          },
+          {
+            "id": "C077",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "health_appointment"
+          },
+          {
+            "id": "C086",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_scripting"
+          },
+          {
+            "id": "C087",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "workflow_automation"
+          },
+          {
+            "id": "C091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "file_automation_script"
+          },
+          {
+            "id": "C094",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "telegram_bot"
+          },
+          {
+            "id": "C097",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "side_project_strategy"
+          },
+          {
+            "id": "C099",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "workplace_message"
+          },
+          {
+            "id": "D002",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "coding_security_casual"
+          },
+          {
+            "id": "D003",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "D010",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "D011",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "sql_privacy_export"
+          },
+          {
+            "id": "D017",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "bank_sms_extraction"
+          },
+          {
+            "id": "D018",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "scam_check"
+          },
+          {
+            "id": "D027",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "mechanical_text_edit"
+          },
+          {
+            "id": "D031",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "frontend_bugfix"
+          },
+          {
+            "id": "D035",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "tax_notice_extraction"
+          },
+          {
+            "id": "D043",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "D047",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "timezone_conversion"
+          },
+          {
+            "id": "D049",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "medical_report_extraction"
+          },
+          {
+            "id": "D051",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rental_agreement_extraction"
+          },
+          {
+            "id": "D057",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "json_script"
+          },
+          {
+            "id": "D059",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "cloud_config_ordinary"
+          },
+          {
+            "id": "D076",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "D079",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_extraction"
+          },
+          {
+            "id": "D082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "performance_debugging"
+          },
+          {
+            "id": "D086",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spec_extraction"
+          },
+          {
+            "id": "D088",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "code_conversion"
+          },
+          {
+            "id": "D093",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_command"
+          },
+          {
+            "id": "D095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "simple_calculation"
+          },
+          {
+            "id": "D097",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "coding_sensitive_label_only"
+          }
+        ]
+      },
+      "rev4_baseline": {
+        "rules": "rules-2026-09-25.4",
+        "cases": 200,
+        "exact": 143,
+        "exact_rate": 0.715,
+        "exact_ci95": [
+          0.6488,
+          0.7731
+        ],
+        "under_routed": 21,
+        "under_rate": 0.105,
+        "under_ci95": [
+          0.0697,
+          0.1552
+        ],
+        "over_routed": 36,
+        "over_rate": 0.18,
+        "expected_distribution": {
+          "highest": 78,
+          "lowest": 63,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 102,
+          "lowest": 52,
+          "middle": 46
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 67,
+          "highest->lowest": 5,
+          "highest->middle": 6,
+          "lowest->highest": 25,
+          "lowest->lowest": 37,
+          "lowest->middle": 1,
+          "middle->highest": 10,
+          "middle->lowest": 10,
+          "middle->middle": 39
+        },
+        "per_set": {
+          "fresh-c-2026-09-25.1": {
+            "exact": 72,
+            "under": 14,
+            "over": 14,
+            "cases": 100
+          },
+          "fresh-d-2026-09-25.1": {
+            "exact": 71,
+            "under": 7,
+            "over": 22,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": {
+          "cases": 199,
+          "exact": 143,
+          "under": 21
+        },
+        "misses": [
+          {
+            "id": "C001",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meeting_notes"
+          },
+          {
+            "id": "C006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "C007",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_housing"
+          },
+          {
+            "id": "C008",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "security_coding"
+          },
+          {
+            "id": "C009",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meeting_prep"
+          },
+          {
+            "id": "C016",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "architecture_review"
+          },
+          {
+            "id": "C019",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "chrome_extension"
+          },
+          {
+            "id": "C020",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "family_whatsapp"
+          },
+          {
+            "id": "C022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "upi_dispute"
+          },
+          {
+            "id": "C026",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "C027",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_coding"
+          },
+          {
+            "id": "C028",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "course_learning"
+          },
+          {
+            "id": "C034",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_formatting"
+          },
+          {
+            "id": "C050",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "linkedin_post"
+          },
+          {
+            "id": "C051",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "regex_scripting"
+          },
+          {
+            "id": "C052",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "C066",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "chrome_extension"
+          },
+          {
+            "id": "C067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "ui_decision"
+          },
+          {
+            "id": "C070",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "C072",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "model_selection"
+          },
+          {
+            "id": "C075",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "dev_tooling"
+          },
+          {
+            "id": "C077",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "health_appointment"
+          },
+          {
+            "id": "C086",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_scripting"
+          },
+          {
+            "id": "C087",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "workflow_automation"
+          },
+          {
+            "id": "C091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "file_automation_script"
+          },
+          {
+            "id": "C094",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "telegram_bot"
+          },
+          {
+            "id": "C097",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "side_project_strategy"
+          },
+          {
+            "id": "C099",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "workplace_message"
+          },
+          {
+            "id": "D002",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "coding_security_casual"
+          },
+          {
+            "id": "D003",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "D008",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "linkedin_post"
+          },
+          {
+            "id": "D009",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "private_notes"
+          },
+          {
+            "id": "D010",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "D011",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "sql_privacy_export"
+          },
+          {
+            "id": "D012",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_extraction"
+          },
+          {
+            "id": "D017",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "bank_sms_extraction"
+          },
+          {
+            "id": "D023",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "jd_extraction"
+          },
+          {
+            "id": "D027",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "mechanical_text_edit"
+          },
+          {
+            "id": "D031",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "frontend_bugfix"
+          },
+          {
+            "id": "D035",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "tax_notice_extraction"
+          },
+          {
+            "id": "D039",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meeting_summary"
+          },
+          {
+            "id": "D043",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "D047",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "timezone_conversion"
+          },
+          {
+            "id": "D049",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "medical_report_extraction"
+          },
+          {
+            "id": "D051",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rental_agreement_extraction"
+          },
+          {
+            "id": "D057",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "json_script"
+          },
+          {
+            "id": "D059",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "cloud_config_ordinary"
+          },
+          {
+            "id": "D076",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "D078",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "resume_edit"
+          },
+          {
+            "id": "D079",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume_extraction"
+          },
+          {
+            "id": "D082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "performance_debugging"
+          },
+          {
+            "id": "D083",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "pasted_incident_summary"
+          },
+          {
+            "id": "D086",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spec_extraction"
+          },
+          {
+            "id": "D088",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "code_conversion"
+          },
+          {
+            "id": "D093",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_command"
+          },
+          {
+            "id": "D095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "simple_calculation"
+          },
+          {
+            "id": "D097",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "coding_sensitive_label_only"
+          }
+        ]
+      }
+    },
+    "fresh-set-3": {
+      "frozen_rules": "rules-2026-09-25.7",
+      "commit": "e7a7e1d",
+      "label_agreement": {
+        "author_vs_second_labeller": 199,
+        "cases": 200,
+        "rate": 0.995
+      },
+      "rev7_frozen": {
+        "rules": "rules-2026-09-25.7",
+        "cases": 200,
+        "exact": 160,
+        "exact_rate": 0.8,
+        "exact_ci95": [
+          0.7391,
+          0.8495
+        ],
+        "under_routed": 21,
+        "under_rate": 0.105,
+        "under_ci95": [
+          0.0697,
+          0.1552
+        ],
+        "over_routed": 19,
+        "over_rate": 0.095,
+        "expected_distribution": {
+          "highest": 80,
+          "lowest": 61,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 84,
+          "lowest": 63,
+          "middle": 53
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 65,
+          "highest->lowest": 5,
+          "highest->middle": 10,
+          "lowest->highest": 9,
+          "lowest->lowest": 52,
+          "middle->highest": 10,
+          "middle->lowest": 6,
+          "middle->middle": 43
+        },
+        "per_set": {
+          "fresh-e-2026-09-25.1": {
+            "exact": 83,
+            "under": 8,
+            "over": 9,
+            "cases": 100
+          },
+          "fresh-f-2026-09-25.1": {
+            "exact": 77,
+            "under": 13,
+            "over": 10,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": {
+          "cases": 199,
+          "exact": 159,
+          "under": 21
+        },
+        "misses": [
+          {
+            "id": "E013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "unclear_request"
+          },
+          {
+            "id": "E014",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sql_postgres"
+          },
+          {
+            "id": "E019",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "freelance_invoice"
+          },
+          {
+            "id": "E022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "incident_followup"
+          },
+          {
+            "id": "E028",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_data_handling"
+          },
+          {
+            "id": "E030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meetup_talk"
+          },
+          {
+            "id": "E044",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "vendor_evaluation"
+          },
+          {
+            "id": "E048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "django_vps"
+          },
+          {
+            "id": "E077",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E078",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E079",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resource_collection"
+          },
+          {
+            "id": "E084",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "django_vps"
+          },
+          {
+            "id": "E090",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_agreement"
+          },
+          {
+            "id": "E091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typescript_coding"
+          },
+          {
+            "id": "E095",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sheets_apps_script"
+          },
+          {
+            "id": "E098",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "stakeholder_email"
+          },
+          {
+            "id": "E099",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3003",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3005",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "research_article"
+          },
+          {
+            "id": "F3017",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "flat_scraper"
+          },
+          {
+            "id": "F3020",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_lookup"
+          },
+          {
+            "id": "F3027",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "discord_bot"
+          },
+          {
+            "id": "F3029",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3031",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "team_feedback"
+          },
+          {
+            "id": "F3041",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3043",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3044",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "experiment_results"
+          },
+          {
+            "id": "F3060",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3061",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "concept_learning"
+          },
+          {
+            "id": "F3067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "job_outreach"
+          },
+          {
+            "id": "F3068",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3072",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3080",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "F3095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recipe"
+          },
+          {
+            "id": "F3098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          }
+        ]
+      },
+      "rev6_baseline": {
+        "rules": "rules-2026-09-25.6",
+        "cases": 200,
+        "exact": 148,
+        "exact_rate": 0.74,
+        "exact_ci95": [
+          0.6751,
+          0.7959
+        ],
+        "under_routed": 24,
+        "under_rate": 0.12,
+        "under_ci95": [
+          0.082,
+          0.1723
+        ],
+        "over_routed": 28,
+        "over_rate": 0.14,
+        "expected_distribution": {
+          "highest": 80,
+          "lowest": 61,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 92,
+          "lowest": 64,
+          "middle": 44
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 65,
+          "highest->lowest": 6,
+          "highest->middle": 9,
+          "lowest->highest": 11,
+          "lowest->lowest": 49,
+          "lowest->middle": 1,
+          "middle->highest": 16,
+          "middle->lowest": 9,
+          "middle->middle": 34
+        },
+        "per_set": {
+          "fresh-e-2026-09-25.1": {
+            "exact": 78,
+            "under": 10,
+            "over": 12,
+            "cases": 100
+          },
+          "fresh-f-2026-09-25.1": {
+            "exact": 70,
+            "under": 14,
+            "over": 16,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": null,
+        "misses": [
+          {
+            "id": "E002",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "unclear_request"
+          },
+          {
+            "id": "E014",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "sql_postgres"
+          },
+          {
+            "id": "E018",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E019",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "freelance_invoice"
+          },
+          {
+            "id": "E022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "incident_followup"
+          },
+          {
+            "id": "E024",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "airtable_automation"
+          },
+          {
+            "id": "E028",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_data_handling"
+          },
+          {
+            "id": "E030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meetup_talk"
+          },
+          {
+            "id": "E044",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "vendor_evaluation"
+          },
+          {
+            "id": "E048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "django_vps"
+          },
+          {
+            "id": "E049",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_scripting"
+          },
+          {
+            "id": "E052",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E069",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E077",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E078",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E084",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "django_vps"
+          },
+          {
+            "id": "E090",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_agreement"
+          },
+          {
+            "id": "E091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typescript_coding"
+          },
+          {
+            "id": "E095",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sheets_apps_script"
+          },
+          {
+            "id": "E098",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "stakeholder_email"
+          },
+          {
+            "id": "E099",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3003",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3005",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "task_automation"
+          },
+          {
+            "id": "F3013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "research_article"
+          },
+          {
+            "id": "F3017",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "flat_scraper"
+          },
+          {
+            "id": "F3020",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_lookup"
+          },
+          {
+            "id": "F3029",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_analysis_code"
+          },
+          {
+            "id": "F3031",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "team_feedback"
+          },
+          {
+            "id": "F3037",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3041",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3043",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3044",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "experiment_results"
+          },
+          {
+            "id": "F3055",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "incident_summary"
+          },
+          {
+            "id": "F3058",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "work_message"
+          },
+          {
+            "id": "F3060",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3061",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "concept_learning"
+          },
+          {
+            "id": "F3063",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "car_loan"
+          },
+          {
+            "id": "F3067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "job_outreach"
+          },
+          {
+            "id": "F3068",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3072",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3080",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "F3091",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "concept_learning"
+          },
+          {
+            "id": "F3095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recipe"
+          },
+          {
+            "id": "F3098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          }
+        ]
+      },
+      "rev5_baseline": {
+        "rules": "rules-2026-09-25.5",
+        "cases": 200,
+        "exact": 143,
+        "exact_rate": 0.715,
+        "exact_ci95": [
+          0.6488,
+          0.7731
+        ],
+        "under_routed": 28,
+        "under_rate": 0.14,
+        "under_ci95": [
+          0.0987,
+          0.1949
+        ],
+        "over_routed": 29,
+        "over_rate": 0.145,
+        "expected_distribution": {
+          "highest": 80,
+          "lowest": 61,
+          "middle": 59
+        },
+        "observed_distribution": {
+          "highest": 91,
+          "lowest": 65,
+          "middle": 44
+        },
+        "confusion_expected_to_observed": {
+          "highest->highest": 63,
+          "highest->lowest": 7,
+          "highest->middle": 10,
+          "lowest->highest": 13,
+          "lowest->lowest": 47,
+          "lowest->middle": 1,
+          "middle->highest": 15,
+          "middle->lowest": 11,
+          "middle->middle": 33
+        },
+        "per_set": {
+          "fresh-e-2026-09-25.1": {
+            "exact": 75,
+            "under": 13,
+            "over": 12,
+            "cases": 100
+          },
+          "fresh-f-2026-09-25.1": {
+            "exact": 68,
+            "under": 15,
+            "over": 17,
+            "cases": 100
+          }
+        },
+        "labeller_agreed_subset": null,
+        "misses": [
+          {
+            "id": "E002",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E005",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "resume"
+          },
+          {
+            "id": "E013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "unclear_request"
+          },
+          {
+            "id": "E014",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_postgres"
+          },
+          {
+            "id": "E018",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E019",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "freelance_invoice"
+          },
+          {
+            "id": "E020",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "personal_brand"
+          },
+          {
+            "id": "E022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "incident_followup"
+          },
+          {
+            "id": "E024",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "airtable_automation"
+          },
+          {
+            "id": "E026",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "resume"
+          },
+          {
+            "id": "E028",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "privacy_data_handling"
+          },
+          {
+            "id": "E030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meetup_talk"
+          },
+          {
+            "id": "E044",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "vendor_evaluation"
+          },
+          {
+            "id": "E048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "django_vps"
+          },
+          {
+            "id": "E049",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "shell_scripting"
+          },
+          {
+            "id": "E052",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "E061",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "frontend_css"
+          },
+          {
+            "id": "E069",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "n8n_zapier_automation"
+          },
+          {
+            "id": "E077",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E078",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "mixed_request"
+          },
+          {
+            "id": "E090",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "rent_agreement"
+          },
+          {
+            "id": "E091",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "typescript_coding"
+          },
+          {
+            "id": "E095",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sheets_apps_script"
+          },
+          {
+            "id": "E098",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "stakeholder_email"
+          },
+          {
+            "id": "E099",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3003",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3005",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3006",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "task_automation"
+          },
+          {
+            "id": "F3010",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "meeting_notes"
+          },
+          {
+            "id": "F3013",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "research_article"
+          },
+          {
+            "id": "F3017",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "flat_scraper"
+          },
+          {
+            "id": "F3020",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "spreadsheet_formula"
+          },
+          {
+            "id": "F3022",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_lookup"
+          },
+          {
+            "id": "F3029",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "school_fees"
+          },
+          {
+            "id": "F3030",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "data_analysis_code"
+          },
+          {
+            "id": "F3031",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "team_feedback"
+          },
+          {
+            "id": "F3037",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3041",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3043",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3044",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3048",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "experiment_results"
+          },
+          {
+            "id": "F3050",
+            "expected": "lowest",
+            "observed": "middle",
+            "direction": "over",
+            "category": "shopping_list"
+          },
+          {
+            "id": "F3053",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "job_search_logistics"
+          },
+          {
+            "id": "F3056",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "ui_decision"
+          },
+          {
+            "id": "F3058",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3059",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "work_message"
+          },
+          {
+            "id": "F3060",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3063",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "car_loan"
+          },
+          {
+            "id": "F3067",
+            "expected": "highest",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "job_outreach"
+          },
+          {
+            "id": "F3068",
+            "expected": "highest",
+            "observed": "middle",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3070",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          },
+          {
+            "id": "F3072",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "notes_system"
+          },
+          {
+            "id": "F3080",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "unit_conversion"
+          },
+          {
+            "id": "F3082",
+            "expected": "middle",
+            "observed": "lowest",
+            "direction": "under",
+            "category": "sql_query"
+          },
+          {
+            "id": "F3094",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "personal_budget"
+          },
+          {
+            "id": "F3095",
+            "expected": "lowest",
+            "observed": "highest",
+            "direction": "over",
+            "category": "recipe"
+          },
+          {
+            "id": "F3098",
+            "expected": "middle",
+            "observed": "highest",
+            "direction": "over",
+            "category": "nextjs_blog"
+          }
+        ]
+      }
+    }
+  }
+}

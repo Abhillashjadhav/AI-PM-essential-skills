@@ -1,0 +1,141 @@
+{
+ "$schema": "http://json-schema.org/draft-07/schema#",
+ "oneOf": [
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "error"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "ErrorNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "turn/started"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Turn/startedNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "turn/completed"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Turn/completedNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "item/completed"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Item/completedNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "item/agentMessage/delta"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Item/agentMessage/deltaNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "account/updated"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Account/updatedNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "account/rateLimits/updated"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Account/rateLimits/updatedNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "model/rerouted"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "Model/reroutedNotification",
+   "type": "object"
+  },
+  {
+   "properties": {
+    "method": {
+     "enum": [
+      "warning"
+     ],
+     "type": "string"
+    }
+   },
+   "required": [
+    "method"
+   ],
+   "title": "WarningNotification",
+   "type": "object"
+  }
+ ],
+ "title": "ServerNotification"
+}
