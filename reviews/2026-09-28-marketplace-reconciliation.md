@@ -1,5 +1,12 @@
 # Review reconciliation and implemented scope
 
+> Status update (2026-09-30): The 50/52 catalog replay and unresolved D4/D2
+> statements below describe this historical run. Merged PR #79 superseded
+> them on main `316f02050650a3da60342a600b26ae1b99adf412`. Fresh local
+> catalog replay exits 0 with 55/55 revision and 31/31 metadata checks;
+> [catalog follow-through](2026-09-28-catalog-followthrough.md) records the
+> integrated repair. Later grader drafts and live accuracy remain unverified.
+
 Baseline: `60b61efb1294c10045f6af11ff07ce5aea5bb03b`.
 The owner authorized implementation after an independent review.
 
