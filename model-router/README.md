@@ -1,8 +1,10 @@
 # Model Router
 
-A local terminal tool that picks a suitable model tier for each new chat and keeps that choice fixed for the whole chat. When you accept an architecture, it opens a separate implementation chat for you. It never adds spend.
+A local terminal tool that picks a suitable model tier for each new chat and keeps that choice fixed for the whole chat. When you accept an architecture, it opens a separate implementation chat for you. GPT work uses the existing subscription eligibility checks. Optional TypeSafe Jev classification uses provider-managed credits.
 
-> **Status: not complete. Built and tested offline; live sends are blocked because no verified included-only mechanism exists for personal ChatGPT plans.** The router, automatic resume, one-command setup and the bounded pilot are built and tested offline (222 offline tests). The Codex adapter was verified against the real Codex CLI 0.157.0 up to sign-in. **No real model turn has been run.**
+> **TypeSafe update, 2026-09-27:** Jev integration is implemented and tested offline (252 router tests). TypeSafe enforces its credit limits; there is **no local spending cap**. The router runs on your Mac, while Jev and GPT run online. Run it inside the desktop app's integrated terminal if available. It does not intercept the native Codex/ChatGPT composer. [Architecture and activation](docs/jev-integration.md) · [Return-to-work note](docs/owner-follow-ups.md).
+
+> **Status: not complete. Built and tested offline; live sends are blocked because no verified included-only mechanism exists for personal ChatGPT plans.** The router, automatic resume, one-command setup and the bounded pilot are built and tested offline (252 offline tests, including Jev). The Codex adapter was verified against the real Codex CLI 0.157.0 up to sign-in. **No real model turn has been run.**
 >
 > On a personal plan the router can verify a zero credit balance live. It cannot verify that automatic reload is off, and it cannot guarantee that no purchase happens during a task, so the ₹0 rule keeps live sends blocked. That is a missing provider guarantee, not proof that personal plans can never work. A workspace member credit limit of 0 is a documented control, but it is **unverified** until a real account shows it working. Routing quality on unseen synthetic prompts: 78.5–81.5% exact for rules revisions 5–7, each scored once on 200 prompts it had never seen (6–10.5% under-routed). The 95% real-use goal needs real use. Details: [docs/capability-evidence.md](docs/capability-evidence.md). Routing works **only in this terminal client**.
 
@@ -72,7 +74,7 @@ Inside `chat`, you can use: `/attach`, `/fetch`, `/history`, `/cancel`, `/model`
 
 ## How routing works (plain language)
 
-1. Your first message in a new chat is classified by local rules. There's no model call and no confidence score. Quoted text and attachments count as data, never as instructions.
+1. Your first message in a new chat is classified by local rules. With optional Jev enabled, an eligible text-only first prompt also gets a structured TypeSafe classification. Rules alone use no model call or confidence score. Quoted text and attachments count as data, never as instructions.
 2. Consequences set a minimum tier. Architecture, product or UI decisions, résumés, LinkedIn posts, research articles, job applications, and coding that touches money, privacy or security go to **highest**. Ordinary implementation goes to **middle**. Routine notes, summaries, messages and literal extraction go to **lowest**. If the router isn't sure, it goes **up** and says why.
 3. The choice is saved before anything is sent, and it stays fixed for that chat. Usage changes, new models and registry updates never move an existing chat. Only you can, with `/model` or `model set`.
 4. If automatic routing takes longer than 4 seconds, your message is kept and you choose the model. A late automatic result is discarded.
@@ -81,7 +83,18 @@ The retired "80% priority + 20% usage" formula isn't used. The only usage-driven
 
 ## Optional classifier plugin
 
-The deterministic rules are the classifier; nothing else is needed. If you want, set `MODEL_ROUTER_CLASSIFIER=package.module:function` to consult another classifier (for example a local model). It can raise a role or classify a task the rules didn't recognise, but it can never lower a hard floor (credibility writing, or money, privacy or security coding, or destructive operations). If it fails, the rules take over. A local classifier doesn't change subscription access or spend.
+For the built-in TypeSafe integration:
+
+```bash
+python3 model-router/router.py jev setup    # private local key entry; no network call
+python3 model-router/router.py jev pilot    # six example Jev calls; no GPT or queued work
+python3 model-router/router.py jev status   # status and usage, no network
+python3 model-router/router.py jev disable  # return to rules
+```
+
+Provider errors stop Jev calls until you reactivate locally. Your existing model pins and GPT spend gate are unchanged. See the [complete Jev guide](docs/jev-integration.md) for limitations, credit behavior, and testing.
+
+The deterministic rules remain available without configuration. Alternatively, set `MODEL_ROUTER_CLASSIFIER=package.module:function` to consult another classifier (for example a local model). This explicit plugin takes precedence over built-in Jev; external plugins are ignored in simulation. A plugin can raise a role or classify a task the rules didn't recognise, but cannot lower a hard floor. If it fails, the rules take over. A classifier does not change GPT subscription eligibility.
 
 ## Approving models
 
@@ -109,7 +122,7 @@ Nothing runs while the router is closed or the Mac is asleep. After the Mac wake
 - Data location: `~/Library/Application Support/AI-PM-Model-Router/` on macOS, `$XDG_DATA_HOME/AI-PM-Model-Router/` (or `~/.local/share/...`) elsewhere. Override with `--data-dir` or `MODEL_ROUTER_DATA_DIR`. `--simulate` uses a separate `simulator/` subfolder.
 - The directory is `0700` and files are `0600`. **No encryption at rest is claimed** beyond what your operating system provides.
 - Conversations, résumés, usage responses and provider logs stay in that directory. They are never written to this repository. Records are kept until you delete them.
-- Credentials are handled only by Codex's own sign-in, under a dedicated `CODEX_HOME` (`<data-dir>/codex-home`). API-key environment variables are never passed to Codex.
+- GPT credentials are handled by Codex's own sign-in, under a dedicated `CODEX_HOME` (`<data-dir>/codex-home`). API-key environment variables, including TypeSafe's, are never passed to Codex. Optional Jev stores its separate private key and request audit records under `<data-dir>/jev/`; it sends eligible first-prompt text to TypeSafe.
 - **To remove the tool** without losing data: delete the `model-router/` folder. Your records stay in the data directory. **To remove the data**, delete that directory yourself. The router never deletes it. No background service is installed.
 
 ## Test inputs and expected outputs

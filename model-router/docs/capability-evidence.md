@@ -1,5 +1,13 @@
 # Capability evidence (as of 2026-09-25)
 
+## Addendum: Jev integration, 2026-09-27
+
+Draft [PR #71](https://github.com/Abhillashjadhav/AI-PM-essential-skills/pull/71) adds optional TypeSafe classification. **252 offline router tests pass**, including 30 new integration tests; the repository required checks, 107 ContextPort tests, and integrity check pass. No live Jev/GPT request was made for this change. The tested/published runtime Git tree is `4eeceaaaccf9c578996e601fa76d7f6007ba3972`.
+
+The owner explicitly selected provider-enforced TypeSafe credits with **no local cap or daily credit check**. Jev uses its own private API key, separate from GPT subscription authentication. Provider errors disable further Jev requests until local reactivation. This is not an account-wide spend guarantee; no documented TypeSafe balance endpoint or exact credit-exhaustion response was verified. The GPT spend gate below is unchanged.
+
+The simulator, redirect and timeout tests, request recovery, cross-process exclusion, secret handling, and absence of a hidden local quota are verified offline. Live classification suitability, provider cutoff behavior, end-to-end latency on the Mac and native desktop/browser composer integration remain unverified. See [the full architecture and operating guide](jev-integration.md). The sections below retain the original baseline evidence; statements about refusing API-key authentication apply to the **GPT work adapter**, not this newly authorized TypeSafe classifier.
+
 Evidence levels:
 
 - **upstream source:** the public openai/codex repository.
