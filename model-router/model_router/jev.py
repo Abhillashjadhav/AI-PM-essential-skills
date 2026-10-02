@@ -32,6 +32,7 @@ TOTAL_HTTP_SECONDS = 1.6            # includes interpreter startup, DNS, TLS, re
 MAX_PROMPT_BYTES = 16_000
 MAX_INPUT_TOKENS = 64_000           # published total request limit
 MIN_CONFIDENCE = 0.80               # provisional, not a claim of measured accuracy
+MAX_ORDINARY_CONSEQUENCES = 0.20
 
 CRITERIA = {
     "architecture": "Design/review/finalise architecture, system boundaries, interfaces, or an implementation plan with unresolved design choices.",
@@ -156,18 +157,67 @@ def parse_response(raw: dict) -> tuple[dict, dict]:
             raise ValueError()
     except (KeyError, TypeError, ValueError, OverflowError):
         raise JevUnavailable("invalid_response") from None
+    provider_choice = kind.value
     # Missing confidence in an ordinary outcome is uncertainty, not permission to lower.
     if confidence < MIN_CONFIDENCE or probs[kind.value] < MIN_CONFIDENCE:
         kind = TaskKind.UNKNOWN
-    if consequence > 0.20 and kind in {TaskKind.IMPLEMENTATION, TaskKind.ROUTINE_TEXT, TaskKind.RESOURCE_EXTRACTION}:
+    if consequence > MAX_ORDINARY_CONSEQUENCES and kind in {TaskKind.IMPLEMENTATION, TaskKind.ROUTINE_TEXT, TaskKind.RESOURCE_EXTRACTION}:
         kind = TaskKind.UNKNOWN
     answer = {
         "task_kind": kind.value,
         "reason": f"{MODEL}/{PROMPT_VERSION}; confidence={confidence:.3f}; consequences={consequence:.3f}",
     }
     evidence = {"input_tokens": inp, "output_tokens": out, "task_kind": kind.value,
+                "provider_choice": provider_choice,
                 "confidence": confidence, "consequences": consequence, "probabilities": probs}
+    answer["diagnostics"] = evidence_summary(evidence)
     return answer, evidence
+
+
+def evidence_summary(record: dict) -> dict:
+    """Only allowlisted typed scores; never echo arbitrary journal contents.
+
+    Earlier journals did not save the provider choice. Keep it unknown rather
+    than inventing it from the probability maximum (which can be tied).
+    The checks describe the unchanged current thresholds, not model accuracy.
+    """
+    try:
+        kind = TaskKind(record["task_kind"]).value
+        choice = record.get("provider_choice")
+        if choice is not None:
+            choice = TaskKind(choice).value
+        confidence, consequence = record["confidence"], record["consequences"]
+        probs = record["probabilities"]
+        if any(not _number(n) or not 0 <= n <= 1 for n in (confidence, consequence)):
+            raise ValueError()
+        if not isinstance(probs, dict) or set(probs) != set(CRITERIA):
+            raise ValueError()
+        if any(not _number(p) or not 0 <= p <= 1 for p in probs.values()) or abs(sum(probs.values()) - 1) > 0.01:
+            raise ValueError()
+        highest = max(probs.values())
+        if choice is not None and probs[choice] + 1e-6 < highest:
+            raise ValueError()
+    except (KeyError, TypeError, ValueError, OverflowError):
+        raise JevUnavailable("invalid_evidence") from None
+    return {
+        "provider_choice": choice,
+        "adapter_task_kind": kind,
+        "leading_choices": sorted(k for k, p in probs.items() if p + 1e-6 >= highest),
+        "confidence": confidence,
+        "provider_choice_probability": probs[choice] if choice is not None else None,
+        "highest_probability": highest,
+        "consequences": consequence,
+        "probabilities": {k: probs[k] for k in CRITERIA},
+        "checks": {
+            "confidence_sufficient": confidence >= MIN_CONFIDENCE,
+            "highest_probability_sufficient": highest >= MIN_CONFIDENCE,
+            "ordinary_consequences_clear": consequence <= MAX_ORDINARY_CONSEQUENCES,
+        },
+        "thresholds": {"minimum_confidence": MIN_CONFIDENCE,
+                       "minimum_choice_probability": MIN_CONFIDENCE,
+                       "maximum_ordinary_consequences": MAX_ORDINARY_CONSEQUENCES},
+        "note": "Consequence check applies to ordinary categories. Missing provider choice means an older record, not a model answer.",
+    }
 
 
 class JevClient:
