@@ -105,6 +105,9 @@ def run_tests() -> int:
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", "context-port/tests", "-v"])
     if any(Path("model-router/tests").rglob("test*.py")):
         commands.append([sys.executable, "-m", "unittest", "discover", "-s", "model-router/tests", "-q"])
+    if any(Path("tests/ai-workflow-trial").rglob("test*.py")):
+        commands.append([sys.executable, "-m", "unittest", "discover", "-s", "tests/ai-workflow-trial", "-q"])
+        commands.append([sys.executable, "pm-tactical/skills/ai-workflow-trial/tools/run_uat.py"])
     for command in commands:
         completed = subprocess.run(command, check=False)
         if completed.returncode:
