@@ -1,0 +1,22 @@
+{
+  "data_classification": "synthetic",
+  "design": "unit_randomized_parallel",
+  "eligibility_frozen": true,
+  "eligibility_rule": "All 32 fictional support tasks listed before assignment",
+  "human_effort_method": "Observed active person-minutes through the common horizon; each person's minute allocated once across stages/tasks, summed across people; passive agent waiting excluded",
+  "independence_basis": "Fictional independent tasks with no shared customer or worker carryover",
+  "labor_scope": {
+    "draft_minutes": "preparation/prompting/drafting",
+    "followup_minutes": "coordination/handoff/customer follow-up",
+    "review_minutes": "review",
+    "rework_minutes": "rework/recovery"
+  },
+  "outcome": "Correct resolution with no reopen by the fixed horizon",
+  "schema_version": 1,
+  "seed": 20261007,
+  "spillover": "no",
+  "trial_id": "fictional-support-32",
+  "unmeasured_work": [],
+  "window_end": "2026-09-08T00:00:00Z",
+  "window_start": "2026-09-01T00:00:00Z"
+}

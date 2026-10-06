@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "trial_id": "YOUR-TRIAL-ID",
+  "data_classification": "observed",
+  "design": "unit_randomized_parallel",
+  "outcome": "REPLACE with one observable binary customer outcome and its follow-up rule",
+  "window_start": "YYYY-MM-DDTHH:MM:SSZ",
+  "window_end": "YYYY-MM-DDTHH:MM:SSZ",
+  "eligibility_frozen": false,
+  "eligibility_rule": "REPLACE with the eligible population and exclusions chosen before assignment",
+  "spillover": "unknown",
+  "independence_basis": "REPLACE after checking shared customers, workers, learning and carryover",
+  "human_effort_method": "REPLACE with how people log active person-minutes through the horizon; allocate each person's minute once, sum different people's minutes, exclude passive wait",
+  "labor_scope": {
+    "draft_minutes": "REPLACE with preparation, prompting and drafting included here",
+    "review_minutes": "REPLACE with human review included here",
+    "rework_minutes": "REPLACE with corrections and failure recovery included here",
+    "followup_minutes": "REPLACE with coordination, handoff and customer follow-up included here"
+  },
+  "unmeasured_work": ["REPLACE with omitted human work, or [] only after reviewing all relevant categories"],
+  "seed": null
+}
