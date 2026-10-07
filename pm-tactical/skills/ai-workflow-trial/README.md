@@ -1,20 +1,66 @@
-# AI Workflow Trial Kit
+# AI Workflow Comparison
 
 Measure customer outcomes alongside the human work needed to produce them.
 The local tool freezes a bounded plan, creates a ready-to-fill results sheet,
 and checks that every assigned task remains in the accounting. It makes no
 workflow-winner, causal, statistical, ROI or launch decision.
 
-Python 3.11+; standard library only. No account, model calls, network or runtime
-dependency installation. This is the sixth skill in pm-tactical. An installed
-host can load [SKILL.md](SKILL.md); running the CLI does not verify host skill
-installation or live trigger quality.
+This is the sixth skill in the `pm-tactical` Claude Code plugin. It guides
+manual collection and uses a bundled Python 3.11+ standard-library tool for
+local checks. The tool makes no model calls or network requests and needs no
+account or runtime dependency installation. Claude Code host access and its
+ordinary permissions still apply; host usage is not promised to be free.
+
+## Use the installed skill
+
+Install `pm-tactical` from a marketplace revision containing this skill. The
+public `main` branch does not expose this new command until the comparison
+changes are merged; a draft PR or local commit is not a public installation.
+To try a checked-out revision in Claude Code, replace the path below with the
+absolute **repository root**, where `.claude-plugin/marketplace.json` lives:
+
+```bash
+claude plugin marketplace add /absolute/path/to/AI-PM-essential-skills
+claude plugin install pm-tactical@ai-pm-skills
+```
+
+In the user's project, ask:
+
+```text
+Compare AI-assisted support replies with our standard workflow. Help me define
+customer success, freeze eligible tasks, and collect review, rework and follow-up
+effort. Put the plan and blank results sheet in a new local comparison folder.
+```
+
+Or invoke `/pm-tactical:ai-workflow-comparison` with that request. When records
+are ready, supply the original plan and filled results CSV and ask to audit
+customer outcomes and measured human effort at the declared common cutoff.
+
+The skill first collects the outcome, eligibility, units/strata, window, seed,
+independence rationale and human-time scope. It names unresolved facts and
+helps assign recording responsibilities. It then creates a frozen plan and
+complete-ID blank results sheet from the supplied inputs. The PM logs actual
+work and customer outcomes; the assistant never fabricates observations.
+Failed, unfinished and crossover work stay under original assignment.
+Missing effort, missing tasks or incomplete follow-up block the audit.
+
+The bundled [SKILL.md](SKILL.md) resolves its script through
+`${CLAUDE_SKILL_DIR}` and writes to new paths in the local project, so using
+the plugin needs no repository-root `cd` and no separate UI. The legacy
+`ai-workflow-trial` directory, `trial_kit.py` filename and `trial_id` JSON key
+remain for compatibility; the public skill name is `ai-workflow-comparison`.
+
+These naming, path and catalogue conventions follow the official
+[Claude Code skills](https://code.claude.com/docs/en/skills) and
+[plugin marketplace](https://code.claude.com/docs/en/plugin-marketplaces)
+documentation. Native installation and trigger quality have not been tested
+here; offline copied-plugin tests verify bundled local runtime behavior only.
 
 ## Start here without code
 
 Read the [completed collection-plan example](examples/collection-plan-completed.md)
 first. It shows what to decide, who records the work, which tasks remain in the
-trial and when follow-up closes. Then draft your own collection plan using those
+comparison and when follow-up closes. Then draft your own collection plan using those
 headings: the change you want to compare, customer success rule, eligible tasks,
 common horizon, recording responsibilities and measured/omitted human work.
 Check the design with someone who can assess selection and spillover before
@@ -58,7 +104,9 @@ fictional; it is a collection method to adapt, not evidence of an AI gain.
    unsuccessful at that horizon; include all observed effort through it. Record
    the actual workflow even if it differs from assignment. Compare original
    assignment groups, never only completed tasks or only compliant tasks.
-7. **Review outcomes and labor together.** Audit only after every task's full
+7. **Review outcomes and labor together.** Reconcile each per-task effort-stage
+   total against the manual effort logs before auditing; the CLI validates
+   submitted totals, not log-to-results accuracy. Audit only after every task's full
    observation window is mature. Inspect N, successes, success rates, stage
    effort, total measured hours, deviations and outcomes/hour side by side.
    A higher ratio can coexist with fewer successful customer outcomes. Missing
@@ -72,13 +120,16 @@ infrastructure cost cannot be allocated, name it in `unmeasured_work`; the
 reported ratio then covers the declared measured scope only. `[]` is a claim
 of no omissions, not an independently verified fact.
 
-## Local quickstart
+## Optional Python quickstart
 
-From the repository root, enter this skill folder. Use a new output path for
-each artifact; the tool refuses to overwrite existing files.
+The installed skill runs these checks for the PM. For direct CLI use, enter
+this skill folder in a source checkout or installed copy. Replace the quoted
+absolute path below with the actual loaded skill directory, which may be in
+the plugin cache. Use a new output path for each artifact; the tool refuses
+to overwrite existing files.
 
 ```bash
-cd pm-tactical/skills/ai-workflow-trial
+cd "/absolute/path/to/pm-tactical/skills/ai-workflow-trial"
 python3 trial_kit.py --version
 python3 trial_kit.py plan --design examples/design.json --units examples/units.csv --out /tmp/trial-plan-new.json
 python3 trial_kit.py results-template --plan /tmp/trial-plan-new.json --out /tmp/trial-results-blank-new.csv
@@ -92,7 +143,7 @@ The last command intentionally exits **2 / BLOCKED**: one assigned unit is
 missing. The preceding commands exit 0. Add `--format json` for unrounded
 values, or `audit --out NEW_PATH` to save a JSON report. `--as-of` is the
 declared observation cutoff, not an attestation from a trusted clock. In your
-trial, replace example paths with your own filled files and actual mature
+comparison, replace example paths with your own filled files and actual mature
 horizon; never relabel the fictional fixtures as observations.
 
 ## Synthetic test input and expected output
@@ -168,9 +219,10 @@ original files, authenticate the planning time, or prove that no one rerolled
 the seed or rewrote a complete consistent plan. Preserve original files and
 obtain separate design and measurement review.
 
-## Validation and instructional demo
+## Source-checkout validation and instructional demo
 
-From the repository root:
+From the repository root of a matching source revision (the `tests/` directory
+is not bundled inside an installed plugin):
 
 ```bash
 PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/ai-workflow-trial -p 'test_*.py' -v
@@ -186,6 +238,8 @@ spreadsheet; the CLI makes missing records visible.
 
 The submitted declarations cannot establish honest logging, independent tasks,
 selection validity, interference, shared-worker learning, equal outcome
-ascertainment or cause. No installed-plugin/live-model quality result is claimed.
+ascertainment or cause. No native-host installation or live-model quality
+result is claimed.
 See [research notes](references/source-notes.md) for bounded source context and
-[the repository evidence table](../../../docs/VALIDATION.md) for product limits.
+the repository evidence table in `docs/VALIDATION.md` (a matching source
+checkout is required; this file is outside the installed plugin) for product limits.

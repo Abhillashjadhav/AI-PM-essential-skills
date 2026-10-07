@@ -1,10 +1,17 @@
 {
   "name": "pm-tactical",
-  "version": "0.3.0",
-  "description": "Six skills for model routing, frozen-spec artifact review, bounded prompt revision, connector context audit, project memory and AI workflow measurement. AI Workflow Trial Kit includes local plan/audit tools and ready-to-fill templates that show customer outcomes beside measured human effort, without a causal or launch verdict.",
+  "version": "0.3.1",
+  "description": "Six skills for model routing, frozen-spec artifact review, bounded prompt revision, connector context audit, project memory and AI Workflow Comparison. The comparison skill guides manual collection and includes local plan/audit tools and ready-to-fill templates that show customer outcomes beside measured human effort, without a causal or launch verdict.",
   "author": {
     "name": "Abhillash Jadhav",
     "url": "https://github.com/Abhillashjadhav"
   },
-  "keywords": ["product-management", "ai-pm", "evals", "model-routing", "context-engineering", "workflow-measurement"]
+  "keywords": [
+    "product-management",
+    "ai-pm",
+    "evals",
+    "model-routing",
+    "context-engineering",
+    "workflow-measurement"
+  ]
 }

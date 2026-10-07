@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Frozen, local workflow-trial planning and descriptive human-effort accounting.
+"""AI Workflow Comparison: frozen local planning and descriptive human-effort accounting.
 
 Python standard library only. No provider, network, credential or account access.
 """
@@ -95,7 +95,7 @@ def validate_design(design):
     require(design["data_classification"] in ("synthetic", "observed"),
             "data_classification", "Declare synthetic or observed data.")
     require(isinstance(design["trial_id"], str) and ID.fullmatch(design["trial_id"]),
-            "trial_id", "Use a 1–64 character ASCII trial ID.")
+            "trial_id", "Use a 1–64 character ASCII comparison ID (trial_id).")
     for key in ("outcome", "eligibility_rule", "independence_basis", "human_effort_method"):
         require(isinstance(design[key], str) and bool(design[key].strip()),
                 "missing_declaration", "Declare outcome, eligibility, independence and human-effort measurement.")
@@ -310,7 +310,7 @@ def results_template(plan):
 
 def plan_text(plan):
     label = plan["design"]["data_classification"].upper()
-    lines = [f"{label} | WORKFLOW TRIAL PLAN | descriptive accounting only",
+    lines = [f"{label} | AI WORKFLOW COMPARISON PLAN | descriptive accounting only",
              f"Frozen units: {len(plan['units'])} | seed: {plan['design']['seed']} | 1:1 within each stratum"]
     for s in sorted({u["stratum"] for u in plan["units"]}):
         counts = Counter(a["assigned_arm"] for a in plan["assignments"] if a["stratum"] == s)
@@ -347,7 +347,7 @@ def report_text(report):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--version", action="version", version=f"ai-workflow-trial {VERSION}")
+    parser.add_argument("--version", action="version", version=f"ai-workflow-comparison {VERSION}")
     sub = parser.add_subparsers(dest="command", required=True)
     p = sub.add_parser("plan", help="freeze design and balanced assignments")
     p.add_argument("--design", required=True)

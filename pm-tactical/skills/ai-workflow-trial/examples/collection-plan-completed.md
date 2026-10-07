@@ -1,8 +1,8 @@
 # Completed collection-plan example
 
 **Classification: SYNTHETIC.** This is a filled plan for the bundled fictional
-support trial, not a real experiment, observed customer record or verified
-productivity gain. Names below are roles, not people who ran a trial.
+support comparison, not a real experiment, observed customer record or verified
+productivity gain. Names below are roles, not people who ran a comparison.
 
 | Decision | Completed example |
 |---|---|
@@ -34,7 +34,7 @@ across the work. Passive waiting is not automatically labor. The blank effort
 log is a manual collection aid; the tool does not verify overlapping time.
 
 **Omitted work:** this fictional dataset declares none outside these four
-fields. That is not independently verified. Before a real trial, either allocate
+fields. That is not independently verified. Before a real comparison, either allocate
 relevant onboarding, training, shared coordination, tooling setup and recovery
 to the measured scope or explicitly list them as omitted. Then describe the
 ratio as successes per measured human hour; do not claim all human effort.

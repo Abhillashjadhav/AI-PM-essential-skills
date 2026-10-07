@@ -35,7 +35,7 @@ the supplied contract, not authenticated by this harness.
 | Plugin | Use it when you need to… | Ask Claude Code | First useful result |
 |---|---|---|---|
 | **[AI Evals for PMs](pm-verifier/)** (`pm-verifier`) | Turn a PRD, PMOS contract, traces, or an existing suite into release evidence | `Create a complete eval for this feature` | Versioned suite, trials in fresh processes, failure inspection, and `PASS`, `FAIL`, or `BLOCKED` evidence |
-| **[pm-tactical](pm-tactical/)** | Route, review and measure daily PM work | `Measure customer outcomes and human effort in my AI workflow` | Model routing, frozen-spec validation, prompt optimization, context audit, project memory, or a frozen workflow trial with fillable templates |
+| **[pm-tactical](pm-tactical/)** | Route, review and measure daily PM work | `Measure customer outcomes and human effort in my AI workflow` | Model routing, frozen-spec validation, prompt optimization, context audit, project memory, or AI Workflow Comparison with frozen assignments and fillable templates |
 | **[loop-designer](loop-designer/)** | Convert a recurring task into a bounded autonomous workflow | `Turn this recurring task into a guarded loop` | Loop specification, five guardrails, and Routine plus cron runners |
 | **[agent-graph-designer](agent-graph-designer/)** | Connect specialist loops or agents with explicit branches, handoffs, joins, and decision gates | `Design an agent graph for this workflow` | Loop-versus-graph verdict, graph contract, Mermaid topology, and runnable skeleton |
 | **[mcp-migration-auditor](mcp-migration-auditor/)** | Check MCP configurations against the 2026 specification changes | `Audit my MCP setup` | Per-server `BREAKS`, `DEGRADED`, or `SAFE` verdicts with cited fixes |

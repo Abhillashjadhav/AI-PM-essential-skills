@@ -29,7 +29,7 @@ Plugin skills fire natively once `.claude/settings.json` (marketplace + `enabled
 - Improve or tune an existing prompt → `pm-tactical/skills/prompt-optimizer-loop/SKILL.md`
 - Audit MCP connectors / context filling up too fast → `pm-tactical/skills/cli-over-mcp-auditor/SKILL.md`
 - Set up project memory / remember stakeholders across sessions → `pm-tactical/skills/pm-context-system/SKILL.md`
-- Plan an AI workflow trial / measure customer outcomes and human effort → `pm-tactical/skills/ai-workflow-trial/SKILL.md`
+- Compare AI-assisted and standard workflows / measure customer outcomes and human effort → `pm-tactical/skills/ai-workflow-trial/SKILL.md`
 - Define what correct output means so a grader can be built / "build a grader" / "what should the eval check" → `model-grader/skills/model-grader/SKILL.md`
 
 ## Session header protocol

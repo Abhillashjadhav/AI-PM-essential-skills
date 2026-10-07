@@ -130,7 +130,7 @@ def main():
         print("Actual CLI test: one assigned result row removed from the fictional input.")
         gap = run("audit", "--plan", str(plan_path), "--results", str(EXAMPLES / "results_gap.csv"), "--as-of", END, expected=2)
         print("BLOCKED [" + gap["reason"] + "]: " + gap["message"])
-        print("\n1. Copy templates/ into a new private trial folder and replace placeholders.")
+        print("\n1. Copy templates/ into a new private comparison folder and replace placeholders.")
         print("2. Freeze an appropriate eligible list and plan before assignment.")
         print("3. Fill every result from active human-time logs and observed customer outcomes.")
         print("4. At the mature common horizon, audit all original units, including failures.")
