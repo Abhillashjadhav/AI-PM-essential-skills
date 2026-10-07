@@ -8,7 +8,7 @@
     {
       "name": "pm-tactical",
       "source": "./pm-tactical",
-      "description": "Daily-workflow skills for PMs: model routing, self-QA, prompt optimization, MCP context audit, project memory."
+      "description": "Daily-workflow skills for PMs: model routing, self-QA, prompt optimization, MCP context audit, project memory and AI Workflow Comparison with customer-outcome and measured human-effort accounting."
     },
     {
       "name": "pm-verifier",

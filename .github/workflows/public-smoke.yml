@@ -31,6 +31,11 @@ jobs:
       - name: Check verifier runtime on every PR
         run: python3 -m unittest discover -s tests/eval-engine -p 'test_*.py' -q
 
+      - name: Check AI workflow trial runtime and synthetic CLI UAT
+        run: |
+          python3 -m unittest discover -s tests/ai-workflow-trial -p 'test_*.py' -q
+          python3 pm-tactical/skills/ai-workflow-trial/tools/run_uat.py
+
       - name: Check catalog reference and publication regressions
         run: |
           python3 model-grader/reference/catalog/run_checks.py
