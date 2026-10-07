@@ -42,7 +42,8 @@ independent adjudication. Tool access and write permissions are enforced by the
 host; these Markdown instructions are not a sandbox.
 
 AI Workflow Comparison adds a Python standard-library plan/audit runtime with
-synthetic tests and CLI UAT. Start with its [adaptation steps and templates](skills/ai-workflow-trial/README.md#adapt-this-to-your-own-workflow).
+synthetic core tests, CLI UAT and offline copied-plugin checks. Start with its
+[adaptation steps and templates](skills/ai-workflow-trial/README.md#adapt-this-to-your-own-workflow).
 It retains failed and unfinished units and shows customer successes alongside
 measured active person-time. It makes no workflow-winner, causal or launch verdict.
 Offline copied-plugin checks do not establish live productivity gains, native

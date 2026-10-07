@@ -229,6 +229,13 @@ PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests/ai-workflow-tria
 PYTHONDONTWRITEBYTECODE=1 python3 pm-tactical/skills/ai-workflow-trial/tools/run_uat.py
 ```
 
+The core suite has 27 tests. Five additional offline copied-plugin tests
+resolve the catalogue source, copy the plugin bundle, check local links and
+execute the skill's command recipes from an unrelated directory with spaces.
+They also exercise all three synthetic scenarios, missing-data and cutoff
+blocks, overwrite refusal, a custom four-unit comparison, UAT and walkthrough.
+They do not run Claude Code's installer or invoke its skill loader.
+
 The UAT runs actual CLI subprocesses and independently checks complete coverage,
 fixed-horizon blocking, zero-effort semantics and the synthetic accounting values.
 It makes no model calls. The [scripted CLI walkthrough](demo/README.md) uses the
