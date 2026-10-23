@@ -27,11 +27,15 @@ jobs:
         run: python3 -m unittest discover -s .github/tests -v
 
       - name: Run required checks
+        env:
+          PR_BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PR_HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: >-
           python3 .github/scripts/pr_required_checks.py
-          --base ${{ github.event.pull_request.base.sha }}
-          --head ${{ github.event.pull_request.head.sha }}
-          --head-ref ${{ github.event.pull_request.head.ref }}
+          --base "$PR_BASE_SHA"
+          --head "$PR_HEAD_SHA"
+          --head-ref "$PR_HEAD_REF"
 
   optional-claude-review:
     name: OPTIONAL Claude review
