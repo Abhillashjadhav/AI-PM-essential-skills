@@ -18,7 +18,7 @@ jobs:
     timeout-minutes: 10
     steps:
       - name: Checkout PR branch
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
@@ -47,7 +47,6 @@ jobs:
       contents: write
       pull-requests: write
       issues: write
-      id-token: write
     env:
       CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDESECRET }}
     steps:
@@ -57,14 +56,14 @@ jobs:
 
       - name: Checkout PR branch for optional review
         if: env.CLAUDE_CODE_OAUTH_TOKEN != ''
-        uses: actions/checkout@v4
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4.4.0
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
 
       - name: Run OPTIONAL Claude review
         if: env.CLAUDE_CODE_OAUTH_TOKEN != ''
-        uses: anthropics/claude-code-action@v1
+        uses: anthropics/claude-code-action@8d70a0dd265122bd65b8e09d3d959e65373ae2a1 # v1.0.260
         with:
           claude_code_oauth_token: ${{ env.CLAUDE_CODE_OAUTH_TOKEN }}
           github_token: ${{ secrets.GITHUB_TOKEN }}
